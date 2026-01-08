@@ -95,17 +95,16 @@ const AppSidebar: React.FC = () => {
   // FIXED: Active path now works for /product/add, /product/edit
 const isActive = useCallback(
   (path: string) => {
-    // Dashboard should be active ONLY on "/"
+    const current = pathname ?? ""; // safe fallback
+
     if (path === "/") {
-      return pathname === "/";
+      return current === "/";
     }
 
-    // For all others: match sub-routes (add/edit/etc)
-    return pathname.startsWith(path);
+    return current.startsWith(path);
   },
   [pathname]
 );
-
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";

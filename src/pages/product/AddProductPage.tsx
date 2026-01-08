@@ -9,7 +9,7 @@ import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 import { ChevronDownIcon } from "@/icons";
 import { useRouter } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 
 export interface SelectOption {
     value: string;
@@ -32,6 +32,7 @@ const typeOptions: SelectOption[] = [
 
 export default function AddProductPage() {
   const router = useRouter();
+const [preview, setPreview] = useState("");
 
     return (
         <>
@@ -178,17 +179,17 @@ export default function AddProductPage() {
                     <div>
                        <Label>Select Image</Label>
                         <DropzoneComponent
-                            preview={""}
-                            setPreview={""}
-                            onFileSelect={() => {}}
+                            // preview={() => {}}
+                            // setPreview={setPreview}
+                            // onFileSelect={() => {}}
                         />
                     </div>
                     <div>
                         <Label>Select Image</Label>
                         <DropzoneComponent
-                         preview={""}
-                            setPreview={""}
-                            onFileSelect={() => {}}
+                        //  preview={""}
+                            // setPreview={""}
+                            // onFileSelect={() => {}}
                             // preview={preview}
                             // setPreview={setPreview}
                             // onFileSelect={(file: File) => setMainImage(file)}
