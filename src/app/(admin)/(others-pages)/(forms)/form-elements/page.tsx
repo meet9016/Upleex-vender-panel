@@ -35,7 +35,7 @@ export default function FormElements() {
           <CheckboxComponents />
           <RadioButtons />
           <ToggleSwitch />
-          <DropzoneComponent />
+          {/* <DropzoneComponent /> */}
         </div>
       </div>
     </div>

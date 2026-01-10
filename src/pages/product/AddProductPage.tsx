@@ -21,10 +21,19 @@ export interface SelectOption {
     group?: string;
 }
 
-interface Month {
-    name: string;
-    amount: number;
-    // add other fields here
+interface MonthItem {
+    month: string;       // <-- add this
+    price: string;
+    cancelPrice: string;
+}
+interface KeyFeature {
+    key: string;
+    value: string;
+}
+
+interface FormDataType {
+    keyFeatures: KeyFeature[];
+    // other fields...
 }
 
 
@@ -49,8 +58,10 @@ export default function AddProductPage() {
         name: "",
         dayPrice: "",
         dayCancelPrice: "",
+        monthPrice: "",
+        monthCancelPrice: "",
         months: [
-            { price: "", cancelPrice: "" }
+            { month: "", price: "", cancelPrice: "" }
         ],
         description: "",
         keyFeatures: [{ key: "", value: "" }],
@@ -66,7 +77,7 @@ export default function AddProductPage() {
     // ----------------------------
     // HANDLE INPUT CHANGE
     // ----------------------------
-    const handleChange = (field, value) => {
+    const handleChange = (field: string, value: any) => {
         setFormData((prev) => ({
             ...prev,
             [field]: value,
@@ -89,7 +100,11 @@ export default function AddProductPage() {
         }));
     };
 
-    const updateItem = (index, field, value) => {
+    const updateItem = (
+        index: number,
+        field: keyof KeyFeature,
+        value: KeyFeature[keyof KeyFeature]
+    ) => {
         const updated = [...formData.keyFeatures];
         updated[index][field] = value;
 
@@ -99,15 +114,20 @@ export default function AddProductPage() {
         }));
     };
 
+
     //Month
     const addMonth = () => {
         if (formData.months.length >= 12) return;
 
         setFormData((prev) => ({
             ...prev,
-            months: [...prev.months, { price: "", cancelPrice: "" }],
+            months: [
+                ...prev.months,
+                { month: "", price: "", cancelPrice: "" }, // <-- add month field
+            ],
         }));
     };
+
 
     const removeMonth = (index: number) => {
         setFormData((prev) => ({
@@ -254,11 +274,13 @@ export default function AddProductPage() {
                                                         }
                                                     >
                                                         <option value="">Select Month</option>
-                                                        {getAvailableMonths(index, formData?.months).map((month) => (
+                                                        {getAvailableMonths(index, formData.months).map((month) => (
                                                             <option key={month} value={month}>
                                                                 Month {month}
                                                             </option>
                                                         ))}
+
+
                                                     </select>
                                                 </div>
 
