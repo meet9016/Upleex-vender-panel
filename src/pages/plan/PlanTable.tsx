@@ -1,13 +1,22 @@
-"use client"
-import React from 'react'
-import { useRouter } from 'next/navigation';
-const PlanTable = () => {
-  const router = useRouter();
-  return (
-    <div>PlanTable
-      <button onClick={() =>  router.push(`/plan/addPlan`)}>Add Plan</button>
-    </div>
-  )
-}
+"use client";
+import React, { useMemo, useState, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { AgGridReact } from "ag-grid-react";
+import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
+import { MdDelete, MdModeEdit } from "react-icons/md";
+import AgGridTable from "@/components/tables/AgGridTable";
+ModuleRegistry.registerModules([AllCommunityModule]);
 
-export default PlanTable
+const PlanTable = () => {
+  return (
+    <div>
+      <AgGridTable 
+       buttonName={"Plan"}
+       tableName={"Plan"}
+       addButtonLink={(`/plan/addPlan`)}
+      />
+    </div>
+  );
+};
+
+export default PlanTable;
