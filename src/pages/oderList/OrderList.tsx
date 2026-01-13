@@ -1,16 +1,16 @@
 "use client";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
-import AgGridTable from "@/components/tables/AgGridTable";
+// import AgGridTable from "@/components/tables/AgGridTable";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 const OrderList = () => {
   return (
     <div>
-      <AgGridTable 
+      {/* <AgGridTable 
        buttonName={""}
        tableName={"Order"}
        addButtonLink={(`/order`)}
-      />
+      /> */}
     </div>
   );
 };
