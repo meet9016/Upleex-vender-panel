@@ -288,7 +288,7 @@ const isActive = useCallback(
             <>
               <Image
                 className="dark:hidden"
-                src="/images/logo/logo.svg"
+                src="/images/logo/upleex-logo-dark.png"
                 alt="Logo"
                 width={150}
                 height={40}
