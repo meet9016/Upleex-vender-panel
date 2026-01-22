@@ -57,10 +57,14 @@ const fetchOptions = useCallback(async (type: string, search: string, page: numb
     if (type === "country") {
       res = await api.post("/vendor-country-list", formData);
     } else if (type === "state") {
-      formData.append("country_id", selectedCountry?.value);  
+      if (selectedCountry?.value) {
+        formData.append("country_id", selectedCountry.value);
+      }
       res = await api.post("/vendor-state-list", formData);
     } else if (type === "city") {
-      formData.append("state_id", selectedState?.value); 
+      if (selectedState?.value) {
+        formData.append("state_id", selectedState.value);
+      }
       res = await api.post("/vendor-city-list", formData);
     }
 
@@ -101,6 +105,7 @@ const fetchOptions = useCallback(async (type: string, search: string, page: numb
     setLoading(false);
   }
 }, [loading, selectedCountry, selectedState]);
+
 
   const debounceSearch = (type: string, value: string) => {
     if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
