@@ -57,10 +57,10 @@ const fetchOptions = useCallback(async (type: string, search: string, page: numb
     if (type === "country") {
       res = await api.post("/vendor-country-list", formData);
     } else if (type === "state") {
-      formData.append("country_id", selectedCountry?.value);  // Added country_id for state request
+      formData.append("country_id", selectedCountry?.value);  
       res = await api.post("/vendor-state-list", formData);
     } else if (type === "city") {
-      formData.append("state_id", selectedState?.value); // Added state_id for city request
+      formData.append("state_id", selectedState?.value); 
       res = await api.post("/vendor-city-list", formData);
     }
 
