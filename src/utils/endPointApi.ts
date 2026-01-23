@@ -9,7 +9,7 @@ export interface EndPointApi {
 
 // Define and export the API endpoint object
 const endPointApi: EndPointApi = {
-    login: 'auth/login',
+    login: 'vendor-login',
     register: 'auth/register',
     logout: 'auth/logout',
 

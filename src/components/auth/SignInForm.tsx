@@ -2,27 +2,135 @@
 import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
-import Button from "@/components/ui/button/Button"; 
+import Button from "@/components/ui/button/Button";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
+import { api } from "@/utils/axiosInstance";
+import endPointApi from "@/utils/endPointApi";
+import { saveToken } from "@/utils/tokenManager";
 import Link from "next/link";
 import React, { useState } from "react";
+import { toast } from "react-toastify";
+import OtpInput from 'react-otp-input';
+
+type FormData = {
+  mobile: string;
+  otp: string;
+};
+
+interface ErrorState {
+  mobile?: string;
+  otp?: string;
+}
 
 export default function SignInForm() {
+
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
-
-  const [loginData, setLoginData] = useState({
-    email: "",
-    password: "",
+  const [isLoading, setIsLoading] = useState(false); // Added loading state for button
+  const [formData, setFormData] = useState<FormData>({
+    mobile: "",
+    otp: "",
   });
+  const [otpSent, setOtpSent] = useState(false);
 
-  // Common handleChange
+  const [error, setError] = useState<ErrorState>({});
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLoginData({
-      ...loginData, 
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    // Clear the specific field error when the user starts typing
+    setError((prev) => ({
+      ...prev,
+      [name]: "",
+      message: "", // Clear general message error on input change
+    }));
   };
+
+  const signIn = async () => {
+    let newErrors: { mobile?: string } = {};
+
+    // Validation
+    if (!formData.mobile) {
+      newErrors.mobile = "Mobile number is required";
+    } else if (!/^\d{10}$/.test(formData.mobile)) {
+      newErrors.mobile = "Please enter a valid 10-digit mobile number";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setError(newErrors);
+      return;
+    }
+
+    setError({});
+    try {
+      // Use auth service to login
+      const formdata = new FormData();
+
+      formdata.append("number", formData.mobile || "");
+      const res = await api.post(`${endPointApi.login}`, formdata);
+
+      if (res.data.status == 200) {
+        toast.success(res.data.message);
+        setOtpSent(true);
+      } else {
+        toast.error(res.data.message);
+      }
+    } catch (err: any) {
+      setError(err.message || "Invalid email or password. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    const newErrors: ErrorState = {};
+
+    if (!formData.otp) {
+      newErrors.otp = "OTP is required";
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setError(newErrors);
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const formdata = new FormData();
+      formdata.append("number", formData.mobile);
+      formdata.append("otp", formData.otp);
+
+      const res = await api.post(`${endPointApi.login}`, formdata);
+      
+      if (res.data.status == 200) {
+        saveToken(res.data.data.token);
+        // localStorage.setItem(
+        //   "userData",
+        //   JSON.stringify({
+        //     full_name: res.data.data.user.full_name,
+        //     email: res.data.data.user.number,
+        //   })
+        // );
+        
+        toast.success(res.data.message);
+        // navigate("/");
+        const searchParams = new URLSearchParams(window.location.search);
+        const redirectTo = searchParams.get('redirect') || '/';
+
+        // Use window.location.href for hard redirect instead of router.push
+        window.location.href = redirectTo;
+      } else {
+        console.log("res000",res);
+        
+        toast.error(res.data.message)
+      }
+    } catch (err: any) {
+      setError(err.message || "Invalid OTP. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
@@ -46,48 +154,60 @@ export default function SignInForm() {
             </p>
           </div>
           <div>
-            <form>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault(); // 👈 stop refresh
+                otpSent ? verifyOtp() : signIn();
+              }}>
               <div className="space-y-6">
                 {/* EMAIL */}
                 <div>
                   <Label>
-                    Email <span className="text-error-500">*</span>{" "}
+                    Mobile <span className="text-error-500">*</span>{" "}
                   </Label>
                   <Input
-                    name="email"
-                    // value={loginData.email}
+                    name="mobile"
+                    placeholder="**********"
+                    value={formData.mobile}
                     onChange={handleChange}
-                    placeholder="info@gmail.com"
-                    type="email"
+                  // disabled={otpSent}
                   />
+                  {/* Display mobile number validation error */}
+                  {error.mobile && <p className="text-red-500 text-sm">{error.mobile}</p>}
                 </div>
 
-                {/* PASSWORD */}
-                <div>
-                  <Label>
-                    Password <span className="text-error-500">*</span>{" "}
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      name="password"
-                      // value={loginData.password}
-                      onChange={handleChange}
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                    />
-                    <span
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
-                    >
-                      {showPassword ? (
-                        <EyeIcon className="fill-gray-500 dark:fill-gray-400" />
-                      ) : (
-                        <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400" />
-                      )}
-                    </span>
-                  </div>
-                </div>
+                {
+                  otpSent && (
+                    <div>
+                      <Label>
+                        Otp <span className="text-error-500">*</span>{" "}
+                      </Label>
+                      {/* <Input
+                        name="otp"
+                        placeholder="Enter your otp"
+                        value={formData.otp}
+                        onChange={handleChange}
+                      /> */}
 
+                      <OtpInput
+                        value={formData.otp}
+                        onChange={(otp) => setFormData(prev => ({ ...prev, otp }))}
+                        numInputs={6}
+                        renderSeparator={<span className="text-white">-</span>}
+                        shouldAutoFocus
+                        renderInput={(props) => (
+                          <input
+                            {...props}
+                            style={{ width: "35px", height: "40px" }}
+                            className="border  border-gray-300 rounded-md text-center text-lg focus:outline-none focus:ring-2 focus:ring-[#251C4B] transition"
+                          />
+                        )}
+                      />
+
+                      {error.otp && <p className="text-red-500 text-sm">{error.otp}</p>}
+                    </div>
+                  )
+                }
                 {/* REMEMBER ME + FORGOT */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -106,8 +226,13 @@ export default function SignInForm() {
 
                 {/* SUBMIT */}
                 <div>
-                  <Button className="w-full" size="sm">
-                    Sign in
+                  <Button className="w-full bg-brand-950" size="sm">
+                    {isLoading
+                      ? "Please wait..."
+                      : otpSent
+                        ? "Login"
+                        : "Send OTP"
+                    }
                   </Button>
                 </div>
               </div>

@@ -5,6 +5,8 @@ import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
 import React from "react";
+import { ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function AdminLayout({
   children,
@@ -29,6 +31,8 @@ export default function AdminLayout({
       <div
         className={`flex-1 transition-all  duration-300 ease-in-out ${mainContentMargin}`}
       >
+          <ToastContainer position="top-right" autoClose={3000} newestOnTop style={{ zIndex: 999999, position: "fixed" }} />
+
         {/* Header */}
         <AppHeader />
         {/* Page Content */}
