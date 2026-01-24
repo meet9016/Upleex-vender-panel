@@ -6,6 +6,8 @@ import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import Input from "@/components/common/Input";
 import { api } from "@/utils/axiosInstance";
+import type { ErrorType, KycFormDataType } from '@/pages/kyc/KycPage'
+import { toast } from "react-toastify";
 
 // Types for Country, State, City Options
 type Option = {
@@ -13,7 +15,15 @@ type Option = {
   label: string;
 };
 
-export default function InputGroup() {
+type InputGroupProps = {
+  setKYCFormData: React.Dispatch<React.SetStateAction<KycFormDataType>>;
+  KYCformData: KycFormDataType;
+  errors: ErrorType;
+
+};
+
+export default function InputGroup({ setKYCFormData, KYCformData, errors }: InputGroupProps) {
+
   const [countries, setCountries] = useState<Option[]>([]);
   const [states, setStates] = useState<Option[]>([]);
   const [cities, setCities] = useState<Option[]>([]);
@@ -45,66 +55,79 @@ export default function InputGroup() {
 
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
-const fetchOptions = useCallback(async (type: string, search: string, page: number) => {
-  if (loading) return;
-  setLoading(true);
-  try {
-    const formData = new FormData();
-    formData.append("page", String(page));
-    formData.append("search", search);
 
-    let res;
-    if (type === "country") {
-      res = await api.post("/vendor-country-list", formData);
-    } else if (type === "state") {
-      if (selectedCountry?.value) {
-        formData.append("country_id", selectedCountry.value);
+  const fetchOptions = useCallback(async (type: string, search: string, page: number) => {
+
+    const errorMessages = Object.values(errors).filter(Boolean);
+
+    if (errorMessages.length) {
+      toast.error(
+        <ul style={{ paddingLeft: 16 }}>
+          {errorMessages.map((msg, i) => (
+            <li key={i}>{msg}</li>
+          ))}
+        </ul>
+      );
+    }
+    if (loading) return;
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("page", String(page));
+      formData.append("search", search);
+
+      let res;
+      if (type === "country") {
+        res = await api.post("/vendor-country-list", formData);
+      } else if (type === "state") {
+        if (selectedCountry?.value) {
+          formData.append("country_id", selectedCountry.value);
+        }
+        res = await api.post("/vendor-state-list", formData);
+      } else if (type === "city") {
+        if (selectedState?.value) {
+          formData.append("state_id", selectedState.value);
+        }
+        res = await api.post("/vendor-city-list", formData);
       }
-      res = await api.post("/vendor-state-list", formData);
-    } else if (type === "city") {
-      if (selectedState?.value) {
-        formData.append("state_id", selectedState.value);
+
+      const list = res?.data?.data || [];
+
+      if (list.length === 0) {
+        if (type === "country") setHasMoreCountries(false);
+        if (type === "state") setHasMoreStates(false);
+        if (type === "city") setHasMoreCities(false);
+        return;
       }
-      res = await api.post("/vendor-city-list", formData);
-    }
 
-    const list = res?.data?.data || [];
+      if (type === "country") {
+        setCountries((prev) => [...prev, ...list.map((item: any) => ({
+          value: String(item.id),
+          label: item.country_name
+        }))]);
+      }
+      if (type === "state") {
+        setStates((prev) => [...prev, ...list.map((item: any) => ({
+          value: String(item.id),
+          label: item.state_name
+        }))]);
+      }
+      if (type === "city") {
+        setCities((prev) => [...prev, ...list.map((item: any) => ({
+          value: String(item.id),
+          label: item.city_name
+        }))]);
+      }
 
-    if (list.length === 0) {
-      if (type === "country") setHasMoreCountries(false);
-      if (type === "state") setHasMoreStates(false);
-      if (type === "city") setHasMoreCities(false);
-      return;
+      if (type === "country") pageRefCountry.current += 1;
+      if (type === "state") pageRefState.current += 1;
+      if (type === "city") pageRefCity.current += 1;
+    } catch (err) {
+      console.error(`Failed to fetch ${type}`, err);
+    } finally {
+      setLoading(false);
     }
-
-    if (type === "country") {
-      setCountries((prev) => [...prev, ...list.map((item: any) => ({
-        value: String(item.id),
-        label: item.country_name
-      }))]);
-    }
-    if (type === "state") {
-      setStates((prev) => [...prev, ...list.map((item: any) => ({
-        value: String(item.id),
-        label: item.state_name
-      }))]);
-    }
-    if (type === "city") {
-      setCities((prev) => [...prev, ...list.map((item: any) => ({
-        value: String(item.id),
-        label: item.city_name
-      }))]);
-    }
-
-    if (type === "country") pageRefCountry.current += 1;
-    if (type === "state") pageRefState.current += 1;
-    if (type === "city") pageRefCity.current += 1;
-  } catch (err) {
-    console.error(`Failed to fetch ${type}`, err);
-  } finally {
-    setLoading(false);
-  }
-}, [loading, selectedCountry, selectedState]);
+  }, [loading, selectedCountry, selectedState]);
 
 
   const debounceSearch = (type: string, value: string) => {
@@ -145,9 +168,21 @@ const fetchOptions = useCallback(async (type: string, search: string, page: numb
   }, [searchCity]);
 
   useEffect(() => {
-    if (openCountry) fetchOptions("country", searchCountry, pageRefCountry.current);
-    if (openState) fetchOptions("state", searchState, pageRefState.current);
-    if (openCity) fetchOptions("city", searchCity, pageRefCity.current);
+    if (openCountry) {
+      fetchOptions("country", searchCountry, pageRefCountry.current)
+      setOpenState(false)
+      setOpenCity(false)
+    };
+    if (openState) {
+      fetchOptions("state", searchState, pageRefState.current)
+      setOpenCountry(false)
+      setOpenCity(false)
+    };
+    if (openCity) {
+      fetchOptions("city", searchCity, pageRefCity.current)
+      setOpenCountry(false)
+      setOpenState(false)
+    };
   }, [openCountry, openState, openCity, searchCountry, searchState, searchCity]);
 
   const filteredCountries = useMemo(() => countries, [countries]);
@@ -181,52 +216,101 @@ const fetchOptions = useCallback(async (type: string, search: string, page: numb
     <ComponentCard title="">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <Label>Full Name</Label>
-          <Input placeholder="Enter your full name" type="text" />
+          <Label>Full Name <span className="text-red-500">*</span></Label>
+
+          <Input placeholder="Enter your full name" type="text"
+            value={KYCformData.full_name}
+            onChange={(e) => {
+              setKYCFormData(prevData => ({
+                ...prevData,
+                full_name: e.target.value,
+              }));
+            }} />
+          {errors.full_name && (
+            <p className="mt-1 text-sm text-red-500">{errors.full_name}</p>
+          )}
         </div>
 
         <div>
-          <Label>Mobile Number</Label>
-          <Input placeholder="Enter your mobile number" type="text" />
+          <Label>Mobile Number<span className="text-red-500">*</span></Label>
+          <Input placeholder="Enter your mobile number" type="text"
+            value={KYCformData.mobile}
+            onChange={(e) => {
+              setKYCFormData(prevData => ({
+                ...prevData,
+                mobile: e.target.value,
+              }));
+            }} />
+          {errors.mobile && (
+            <p className="mt-1 text-sm text-red-500">{errors.mobile}</p>
+          )}
         </div>
 
         <div>
-          <Label>Address Line 1</Label>
-          <Input placeholder="Enter your Address line 1" type="text" />
+          <Label>Email<span className="text-red-500">*</span></Label>
+          <Input placeholder="Enter your email address" type="email"
+            value={KYCformData.email}
+            onChange={(e) => {
+              setKYCFormData(prevData => ({
+                ...prevData,
+                email: e.target.value,
+              }));
+            }}
+
+          />
+
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+          )}
         </div>
 
         <div>
-          <Label>Address Line 2</Label>
-          <Input placeholder="Enter your Address line 2" type="text" />
+          <Label>Address<span className="text-red-500">*</span></Label>
+          <Input placeholder="Enter your Address" type="text"
+            value={KYCformData.address}
+            onChange={(e) => {
+              setKYCFormData(prevData => ({
+                ...prevData,
+                address: e.target.value,
+              }));
+            }}
+          />
+          {errors.address && (
+            <p className="mt-1 text-sm text-red-500">{errors.address}</p>
+          )}
         </div>
 
         {/* COUNTRY DROPDOWN */}
         <div>
-          <Label>Select Country</Label>
+          <Label>Select Country<span className="text-red-500">*</span></Label>
           <div className="relative">
             <button
               type="button"
               onClick={() => setOpenCountry((v) => !v)}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
             >
-              <span className={selectedCountry ? "" : "text-gray-400"}>
-                {selectedCountry?.label || "Select Country"}
+              <span className={KYCformData.country_id.label ? "" : "text-gray-400"}>
+                {KYCformData.country_id.label || "Select Country"}
               </span>
               <ChevronDownIcon />
             </button>
             {openCountry && (
               <div className="absolute z-100 mt-1 w-full rounded-lg border bg-white shadow">
-                <div className="max-h-60 overflow-auto">
+                <div className="max-h-60 overflow-auto p-1">
                   <Input
                     type="text"
                     placeholder="Search Country"
                     onChange={(e) => debounceSearch("country", e.target.value)}
                   />
-                  {filteredCountries.map((country) => (
+                  {filteredCountries.map((country, index) => (
                     <div
-                      key={country.value}
+                      key={index}
                       onClick={() => {
                         setSelectedCountry(country);
+                        setKYCFormData(prevData => ({
+                          ...prevData,
+                          country_id: { value: country.value, label: country.label },
+                        }));
                         setOpenCountry(false);
                       }}
                       className="cursor-pointer px-4 py-2 text-sm hover:bg-gray-100"
@@ -234,6 +318,7 @@ const fetchOptions = useCallback(async (type: string, search: string, page: numb
                       {country.label}
                     </div>
                   ))}
+
                   {hasMoreCountries && (
                     <div ref={loaderRefCountry} className="px-4 py-3 text-center text-sm text-gray-400">
                       {loading ? "Loading…" : "Load more"}
@@ -243,19 +328,23 @@ const fetchOptions = useCallback(async (type: string, search: string, page: numb
               </div>
             )}
           </div>
+
+          {errors.country_id && (
+            <p className="mt-1 text-sm text-red-500">{errors.country_id}</p>
+          )}
         </div>
 
         {/* STATE DROPDOWN */}
         <div>
-          <Label>Select State</Label>
+          <Label>Select State<span className="text-red-500">*</span></Label>
           <div className="relative">
             <button
               type="button"
               onClick={() => setOpenState((v) => !v)}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
             >
-              <span className={selectedState ? "" : "text-gray-400"}>
-                {selectedState?.label || "Select State"}
+              <span className={KYCformData.state_id.label ? "" : "text-gray-400"}>
+                {KYCformData.state_id.label || "Select State"}
               </span>
               <ChevronDownIcon />
             </button>
@@ -267,11 +356,15 @@ const fetchOptions = useCallback(async (type: string, search: string, page: numb
                     placeholder="Search State"
                     onChange={(e) => debounceSearch("state", e.target.value)}
                   />
-                  {filteredStates.map((state) => (
+                  {filteredStates.map((state, index) => (
                     <div
-                      key={state.value}
+                      key={index}
                       onClick={() => {
                         setSelectedState(state);
+                        setKYCFormData(prevData => ({
+                          ...prevData, // Spread the previous form data to retain other fields
+                          state_id: { value: state.value, label: state.label }, // Set the new country_id
+                        }));
                         setOpenState(false);
                       }}
                       className="cursor-pointer px-4 py-2 text-sm hover:bg-gray-100"
@@ -288,19 +381,22 @@ const fetchOptions = useCallback(async (type: string, search: string, page: numb
               </div>
             )}
           </div>
+          {errors.state_id && (
+            <p className="mt-1 text-sm text-red-500">{errors.state_id}</p>
+          )}
         </div>
 
         {/* CITY DROPDOWN */}
         <div>
-          <Label>Select City</Label>
+          <Label>Select City<span className="text-red-500">*</span></Label>
           <div className="relative">
             <button
               type="button"
               onClick={() => setOpenCity((v) => !v)}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
             >
-              <span className={selectedCity ? "" : "text-gray-400"}>
-                {selectedCity?.label || "Select City"}
+              <span className={KYCformData.city_id.label ? "" : "text-gray-400"}>
+                {KYCformData.city_id.label || "Select City"}
               </span>
               <ChevronDownIcon />
             </button>
@@ -312,12 +408,16 @@ const fetchOptions = useCallback(async (type: string, search: string, page: numb
                     placeholder="Search City"
                     onChange={(e) => debounceSearch("city", e.target.value)}
                   />
-                  {filteredCities.map((city) => (
+                  {filteredCities.map((city, index) => (
                     <div
-                      key={city.value}
+                      key={index}
                       onClick={() => {
                         setSelectedCity(city);
                         setOpenCity(false);
+                        setKYCFormData(prevData => ({
+                          ...prevData, // Spread the previous form data to retain other fields
+                          city_id: { value: city.value, label: city.label }, // Set the new country_id
+                        }));
                       }}
                       className="cursor-pointer px-4 py-2 text-sm hover:bg-gray-100"
                     >
@@ -333,13 +433,27 @@ const fetchOptions = useCallback(async (type: string, search: string, page: numb
               </div>
             )}
           </div>
+           {errors.city_id && (
+            <p className="mt-1 text-sm text-red-500">{errors.city_id}</p>
+          )}
         </div>
 
         <div>
-          <Label>Pincode</Label>
-          <Input placeholder="Enter your Pincode" type="text" />
+          <Label>Pincode<span className="text-red-500">*</span></Label>
+          <Input placeholder="Enter your Pincode" type="text"
+            value={KYCformData.pincode}
+            onChange={(e) => {
+              setKYCFormData(prevData => ({
+                ...prevData,
+                pincode: e.target.value,
+              }));
+            }} />
+             {errors.pincode && (
+            <p className="mt-1 text-sm text-red-500">{errors.pincode}</p>
+          )}
         </div>
       </div>
-    </ComponentCard>
+
+    </ComponentCard >
   );
 }
