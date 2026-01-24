@@ -250,7 +250,9 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors }: 
                 ...prevData,
                 mobile: e.target.value,
               }));
-            }} />
+            }}
+            maxLength={10}
+          />
           {errors.mobile && (
             <p className="mt-1 text-sm text-red-500">{errors.mobile}</p>
           )}
