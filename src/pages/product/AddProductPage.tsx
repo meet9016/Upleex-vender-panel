@@ -8,10 +8,12 @@ import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 import { ChevronDownIcon } from "@/icons";
 import { useRouter } from "next/navigation";
-import { ReactNode, useState } from "react";
-import { Editor, EditorTextChangeEvent } from "primereact/editor";
+import { ReactNode, useEffect, useState } from "react";
+import { Editor } from "primereact/editor";
 import { getAvailableMonths } from "@/utils/helper";
 import { MdDelete } from "react-icons/md";
+import { api } from "@/utils/axiosInstance";
+import endPointApi from "@/utils/endPointApi";
 
 export interface SelectOption {
     value: string;
@@ -21,32 +23,29 @@ export interface SelectOption {
     group?: string;
 }
 
-interface MonthItem {
-    month: string;       // <-- add this
-    price: string;
-    cancelPrice: string;
-}
 interface KeyFeature {
     key: string;
     value: string;
 }
 
-interface FormDataType {
-    keyFeatures: KeyFeature[];
-    // other fields...
+// ---------- Types ----------
+type ID = string | number;
+
+interface CategoryOption {
+    id: ID;
+    name: string;
+    image?: string;
 }
-
-
-const options = [
-    { value: "marketing", label: "Marketing" },
-    { value: "template", label: "Template" },
-    { value: "development", label: "Development" },
-];
 
 const typeOptions: SelectOption[] = [
     { value: 'rent', label: 'Rent' },
     { value: 'sell', label: 'Sell' },
 ];
+
+export type Option = {
+  value: string | number;
+  label: string;
+};
 
 export default function AddProductPage() {
     const router = useRouter();
@@ -66,18 +65,28 @@ export default function AddProductPage() {
         description: "",
         keyFeatures: [{ key: "", value: "" }],
     });
-    console.log("formData", formData);
 
     const [mainPreview, setMainPreview] = useState<string[]>([]);
     const [subPreview, setSubPreview] = useState<string[]>([]);
+    const [categoryList, setCategoryList] = useState<CategoryOption[]>([]);
+    const [subCategoryList, setSubCategoryList] = useState<CategoryOption[]>([]);
+    const [productTypeOptions, setProductTypeOptions] = useState<Option[]>([]);
+    const [listingTypeOptions, setListingTypeOptions] = useState<Option[]>([]);
+    const [monthOptions, setMonthOptions] = useState<Option[]>([]);
 
     const [mainImage, setMainImage] = useState<File | null>(null);
     const [subImages, setSubImages] = useState<File[]>([]);
 
+    const [selectedCategory, setSelectedCategory] =
+        useState<CategoryOption | null>(null);
+
+    const [selectedSubCategory, setSelectedSubCategory] =
+        useState<CategoryOption | null>(null);
     // ----------------------------
     // HANDLE INPUT CHANGE
     // ----------------------------
     const handleChange = (field: string, value: any) => {
+
         setFormData((prev) => ({
             ...prev,
             [field]: value,
@@ -114,7 +123,6 @@ export default function AddProductPage() {
         }));
     };
 
-
     //Month
     const addMonth = () => {
         if (formData.months.length >= 12) return;
@@ -127,7 +135,6 @@ export default function AddProductPage() {
             ],
         }));
     };
-
 
     const removeMonth = (index: number) => {
         setFormData((prev) => ({
@@ -150,6 +157,110 @@ export default function AddProductPage() {
         }));
     };
 
+    // ---- Fetch Categories ----
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await api.post(endPointApi.postCategoryList, {});
+                if (res?.data?.data) {
+                    setCategoryList(res.data.data);
+
+                    // 🔥 Select-compatible format
+                    const options = res.data.data.map((item: any) => ({
+                        label: item.name,
+                        value: item.id,
+                    }));
+
+                    setCategoryList(options);
+                }
+            } catch (err) {
+                console.error("Error fetching categories", err);
+            }
+        };
+
+        fetchCategories();
+    }, []);
+
+    // ---- Fetch SubCategories ----
+    useEffect(() => {
+        const fetchSubCategories = async () => {
+            if (!selectedCategory) return;
+
+            try {
+                const formdata = new FormData();
+                formdata.append("category_id", String(selectedCategory));
+
+                const res = await api.post(endPointApi.postSubCategoryList, formdata);
+
+                if (res?.data?.data) {
+                    const subcats = res.data.data.map((item: any) => ({
+                        value: item.id,
+                        label: (
+                            <div className="flex items-center gap-3">
+                                <img
+                                    src={item.image}
+                                    alt={item.name}
+                                    className="w-6 h-6 rounded object-cover"
+                                />
+                                <span>{item.name}</span>
+                            </div>
+                        ),
+                        raw: item, // optional
+                    }));
+
+                    setSubCategoryList(subcats);
+
+                    // optional auto select
+                    if (subcats.length > 0) {
+                        setSelectedSubCategory(subcats[0].value);
+                        handleChange("subCategory", subcats[0].value);
+                    } else {
+                        setSelectedSubCategory(null);
+                        handleChange("subCategory", "");
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching subcategories", err);
+            }
+        };
+
+        fetchSubCategories();
+    }, [selectedCategory]);
+
+    // ---- Fetch Product ----
+    useEffect(() => {
+        const fetchProduct = async () => {
+            try {
+                const res = await api.post(endPointApi.postProductDropDownList, {});
+             
+                const resData = res.data.data;
+                setProductTypeOptions(
+                    resData.products_type.map((item: any) => ({
+                        value: item.id,
+                        label: item.product_type,
+                    }))
+                );
+
+                setListingTypeOptions(
+                    resData.products_listing_type.map((item: any) => ({
+                        value: item.id,
+                        label: item.name,
+                    }))
+                );
+
+                setMonthOptions(
+                    resData.products_months.map((item: any) => ({
+                        value: item.id,
+                        label: item.month_name,
+                    }))
+                );
+            } catch (err) {
+                console.error("Error fetching categories", err);
+            }
+        };
+
+        fetchProduct();
+    }, []);
     return (
         <>
             <ComponentCard title="Add Product">
@@ -158,10 +269,13 @@ export default function AddProductPage() {
                         <Label>Category</Label>
                         <div className="relative">
                             <Select
-                                options={typeOptions}
+                                options={categoryList}
                                 placeholder="Category"
                                 value={formData.category}
-                                onChange={(val) => handleChange("category", val)}
+                                onChange={(val: any) => {
+                                    handleChange("category", val.value);
+                                    setSelectedCategory(val);
+                                }}
                                 className="dark:bg-dark-900"
                             />
                             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
@@ -174,12 +288,13 @@ export default function AddProductPage() {
                         <Label>Sub Category</Label>
                         <div className="relative">
                             <Select
-                                options={typeOptions}
+                                options={subCategoryList}
                                 placeholder="Sub Category"
                                 value={formData.subCategory}
-                                onChange={(val) => handleChange("subCategory", val)}
+                                onChange={(val: any) => handleChange("subCategory", val.value)}
                                 className="dark:bg-dark-900"
                             />
+
                             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
                                 <ChevronDownIcon />
                             </span>
@@ -190,7 +305,7 @@ export default function AddProductPage() {
                         <Label>Listing Type</Label>
                         <div className="relative">
                             <Select
-                                options={typeOptions}
+                                options={productTypeOptions}
                                 placeholder="Listing Type"
                                 value={formData.listingType}
                                 onChange={(val) => handleChange("listingType", val)}
@@ -213,7 +328,8 @@ export default function AddProductPage() {
                             />
                         </div>
                     </div>
-                    {formData?.listingType === "rent" ?
+                     
+                    {formData?.listingType == 1 ?
                         <>
                             {/* DAY PRICE */}
                             <div>
@@ -274,13 +390,11 @@ export default function AddProductPage() {
                                                         }
                                                     >
                                                         <option value="">Select Month</option>
-                                                        {getAvailableMonths(index, formData.months).map((month) => (
-                                                            <option key={month} value={month}>
-                                                                Month {month}
+                                                        {monthOptions.map((month: any) => (
+                                                            <option key={month?.id} value={month?.month_name}>
+                                                                {month?.month_name}
                                                             </option>
                                                         ))}
-
-
                                                     </select>
                                                 </div>
 
