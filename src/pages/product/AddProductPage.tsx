@@ -275,9 +275,85 @@ export default function AddProductPage() {
         fetchProduct();
     }, []);
 
-    const handleSave = async () =>{
-      
+   const handleSave = async () => {
+  try {
+    const formdata = new FormData();
+
+    // ---------- EDIT MODE CHECK ----------
+    // if (formData?.product_id) {
+    //   formdata.append("product_id", formData.product_id);
+    // }
+
+    // ---------- BASIC FIELDS ----------
+    formdata.append("category_id", String(selectedCategory));
+    formdata.append("sub_category_id", String(selectedSubCategory));
+    formdata.append("product_type_id", String(formData.listingType));
+    formdata.append("product_listing_type_id", String(formData.listingType));
+    formdata.append("product_name", formData.name);
+    formdata.append("description", formData.description);
+
+    // ---------- SELL FLOW ----------
+    if (formData.listingType != 1) {
+      formdata.append("price", formData.monthPrice);
+      formdata.append("cancel_price", formData.monthCancelPrice);
     }
+
+    // ---------- RENT FLOW ----------
+    if (formData.listingType == 1) {
+      // DAY
+      if (billingType === "day") {
+        formdata.append("price", formData.dayPrice);
+        formdata.append("cancel_price", formData.dayCancelPrice);
+      }
+
+      // MONTH
+      if (billingType === "month") {
+        formData.months.forEach((m: any, index: number) => {
+          if (m.month && m.price && m.cancelPrice) {
+            formdata.append(`months_id[${index}]`, m.month);
+            formdata.append(`month_price[${index}]`, m.price);
+            formdata.append(`month_cancel_price[${index}]`, m.cancelPrice);
+          }
+        });
+      }
+    }
+
+    // ---------- SPECIFICATION ----------
+   formData.keyFeatures.forEach((item: any, index: number) => {
+  if (item.key && item.value) {
+    formdata.append(`specification[${index}]`, item.key);
+    formdata.append(`detail[${index}]`, item.value);
+
+    // EDIT TIME SPECIFICATION ID
+    if (item.specification_id) {
+      formdata.append(`specification_id[${index}]`, item.specification_id);
+    }
+  }
+});
+
+
+    // ---------- IMAGES ----------
+    if (mainImage) {
+      formdata.append("main_image", mainImage);
+    }
+
+    subImages.forEach((file, index: number) => {
+      formdata.append(`sub_images[${index}]`, file);
+    });
+
+    // ---------- API CALL ----------
+    console.log("formdata",formdata);
+    const res = await api.post(endPointApi.postVendorAddProduct, formdata);
+console.log("res....",res);
+
+    if (res?.data?.status == 200) {
+      router.push("/product");
+    }
+  } catch (error) {
+    console.error("Save product error", error);
+  }
+};
+
     return (
         <>
             <ComponentCard title="Add Product">
