@@ -10,10 +10,12 @@ type KYCFormProp = {
   setKYCFormData: React.Dispatch<React.SetStateAction<KycFormDataType>>;
   KYCformData: KycFormDataType;
   errors: ErrorType;
+  clearError: (field: keyof ErrorType) => void;
+
 };
 
 
-export default function Identity({ setKYCFormData, KYCformData, errors }: KYCFormProp) {
+export default function Identity({ setKYCFormData, KYCformData, errors, clearError }: KYCFormProp) {
 
   {/* <!-- =========================================================== UI =========================================================== --> */ }
 
@@ -31,6 +33,8 @@ export default function Identity({ setKYCFormData, KYCformData, errors }: KYCFor
             <Input
               placeholder="Enter your PAN Number"
               type="text"
+              onFocus={() => clearError("pancard_number")}
+
               value={KYCformData?.pancard_number || ""}
               onChange={(e) => {
                 setKYCFormData((prevData) => ({
@@ -52,6 +56,8 @@ export default function Identity({ setKYCFormData, KYCformData, errors }: KYCFor
             <Input
               placeholder="Enter your Aadhaar Number"
               type="text"
+              onFocus={() => clearError("aadharcard_number")}
+
               value={KYCformData?.aadharcard_number || ""}
 
               onChange={(e) => {
@@ -74,6 +80,8 @@ export default function Identity({ setKYCFormData, KYCformData, errors }: KYCFor
             <Input
               placeholder="Enter your Business Name"
               type="text"
+              onFocus={() => clearError("business_name")}
+
               value={KYCformData?.business_name || ""}
               onChange={(e) => {
                 setKYCFormData((prevData) => ({
@@ -95,6 +103,8 @@ export default function Identity({ setKYCFormData, KYCformData, errors }: KYCFor
             <Input
               placeholder="Enter your GST Number"
               type="text"
+              onFocus={() => clearError("gst_number")}
+
               value={KYCformData?.gst_number || ""}
               onChange={(e) => {
                 setKYCFormData((prevData) => ({

@@ -20,11 +20,12 @@ type KYCFormProp = {
   setKYCFormData: React.Dispatch<React.SetStateAction<KycFormDataType>>;
   KYCformData: KycFormDataType;
   errors: ErrorType;
+  clearError: (field: keyof ErrorType) => void;
 
 };
 
 
-export default function ContactDetails({ setKYCFormData, KYCformData, errors }: KYCFormProp) {
+export default function ContactDetails({ setKYCFormData, KYCformData, errors, clearError }: KYCFormProp) {
   /* <!-- =========================================== States =========================================== --> */
 
   const [countries, setCountries] = useState<Option[]>([]);
@@ -245,6 +246,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors }: 
           <Label>Mobile Number<span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your mobile number" type="text"
             value={KYCformData.mobile}
+            onFocus={() => clearError("mobile")}
+
             onChange={(e) => {
               setKYCFormData(prevData => ({
                 ...prevData,
@@ -264,6 +267,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors }: 
           <Label>Email<span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your email address" type="email"
             value={KYCformData.email}
+            onFocus={() => clearError("email")}
+
             onChange={(e) => {
               setKYCFormData(prevData => ({
                 ...prevData,
@@ -284,6 +289,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors }: 
           <Label>Address<span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your Address" type="text"
             value={KYCformData.address}
+            onFocus={() => clearError("address")}
             onChange={(e) => {
               setKYCFormData(prevData => ({
                 ...prevData,
@@ -303,7 +309,10 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors }: 
           <div className="relative">
             <button
               type="button"
-              onClick={() => setOpenCountry((v) => !v)}
+              onClick={() => {
+                clearError("country_id");
+                setOpenCountry(v => !v);
+              }}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
             >
               <span className={KYCformData.country_id.label ? "" : "text-gray-400"}>
@@ -358,7 +367,10 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors }: 
           <div className="relative">
             <button
               type="button"
-              onClick={() => setOpenState((v) => !v)}
+              onClick={() => {
+                clearError("state_id");
+                setOpenState((v) => !v)
+              }}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
             >
               <span className={KYCformData.state_id.label ? "" : "text-gray-400"}>
@@ -411,7 +423,10 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors }: 
           <div className="relative">
             <button
               type="button"
-              onClick={() => setOpenCity((v) => !v)}
+              onClick={() => {
+                clearError("city_id");
+                setOpenCity((v) => !v)
+              }}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
             >
               <span className={KYCformData.city_id.label ? "" : "text-gray-400"}>
@@ -461,6 +476,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors }: 
           <Label>Pincode<span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your Pincode" type="text"
             value={KYCformData.pincode}
+            onFocus={() => clearError("pincode")}
             onChange={(e) => {
               setKYCFormData(prevData => ({
                 ...prevData,

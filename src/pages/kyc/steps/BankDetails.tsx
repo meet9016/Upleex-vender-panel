@@ -17,10 +17,10 @@ type KYCFormProp = {
   setKYCFormData: React.Dispatch<React.SetStateAction<KycFormDataType>>;
   KYCformData: KycFormDataType;
   errors: ErrorType;
-
+  clearError: (field: keyof ErrorType) => void;
 };
 
-export default function BankDetails({ setKYCFormData, KYCformData, errors }: KYCFormProp) {
+export default function BankDetails({ setKYCFormData, KYCformData, errors, clearError }: KYCFormProp) {
 
   const [loading, setLoading] = useState(false);
   const [options, setOptions] = useState<Option[]>([])
@@ -49,7 +49,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors }: KYC
   };
 
   useEffect(() => {
-     if (options.length === 0) fetchOptions();
+    if (options.length === 0) fetchOptions();
   }, []);
 
   return (
@@ -62,6 +62,8 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors }: KYC
             <Input
               placeholder="Enter Bank Account Holder Name"
               type="text"
+              onFocus={() => clearError("account_holder_name")}
+
               value={KYCformData?.account_holder_name || ""}
               onChange={(e) => {
                 setKYCFormData((prevData) => ({
@@ -69,7 +71,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors }: KYC
                 }))
               }}
             />
-             {errors.account_holder_name && (
+            {errors.account_holder_name && (
               <p className="mt-1 text-sm text-red-500">{errors.account_holder_name}</p>
             )}
           </div>
@@ -80,6 +82,8 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors }: KYC
             <Input
               placeholder="Enter Account Number"
               type="text"
+              onFocus={() => clearError("account_number")}
+
               value={KYCformData?.account_number || ""}
               onChange={(e) => {
                 setKYCFormData((prevData) => ({
@@ -87,7 +91,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors }: KYC
                 }))
               }}
             />
-               {errors.account_number && (
+            {errors.account_number && (
               <p className="mt-1 text-sm text-red-500">{errors.account_number}</p>
             )}
 
@@ -99,6 +103,8 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors }: KYC
             <Input
               placeholder="Re-enter Account Number"
               type="text"
+              onFocus={() => clearError("confirm_account_number")}
+
               value={KYCformData?.confirm_account_number || ""}
               onChange={(e) => {
                 setKYCFormData((prevData) => ({
@@ -118,6 +124,8 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors }: KYC
             <Input
               placeholder="Enter your IFSC Code"
               type="text"
+              onFocus={() => clearError("ifsc_code")}
+
               value={KYCformData?.ifsc_code || ""}
               onChange={(e) => {
                 setKYCFormData((prevData) => ({
@@ -138,7 +146,8 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors }: KYC
               placeholder="Account Type"
               value={KYCformData?.account_type || ""}
               onChange={(value) => {
-                setKYCFormData((prev) => ({
+                clearError("account_type"); // ✅ correct place
+                setKYCFormData(prev => ({
                   ...prev,
                   account_type: value,
                 }));

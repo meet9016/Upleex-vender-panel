@@ -85,6 +85,15 @@ export default function KYCPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [errors, setErrors] = useState<ErrorType>({});
 
+  const clearError = (field: keyof ErrorType) => {
+    setErrors(prev => {
+      if (!prev[field]) return prev;
+
+      const { [field]: _, ...rest } = prev;
+      return rest;
+    });
+  };
+
 
   const [KYCformData, setKYCFormData] = useState<KycFormDataType>({
     full_name: "",
@@ -294,7 +303,7 @@ export default function KYCPage() {
 
     setErrors(newErrors);
 
-  return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0;
   };
 
   const submitFormdata = async () => {
@@ -360,11 +369,11 @@ export default function KYCPage() {
       {/* <!-- =============================================  Form Body ============================================= -->*/}
 
       <div>
-        {currentStep === 0 && <ContactDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} />}
-        {currentStep === 1 && <Identity setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} />}
-        {currentStep === 2 && <BankDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} />}
-        {currentStep === 3 && <Documents setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} />}
-        {currentStep === 4 && <StepDeclaration setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} />}
+        {currentStep === 0 && <ContactDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
+        {currentStep === 1 && <Identity setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors}   clearError={clearError} />}
+        {currentStep === 2 && <BankDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors}   clearError={clearError}/>}
+        {currentStep === 3 && <Documents setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors}  clearError={clearError} />}
+        {currentStep === 4 && <StepDeclaration setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors}   clearError={clearError}/>}
       </div>
 
       {/* <!-- =============================================  Sticky Footer ============================================= -->*/}
@@ -401,8 +410,8 @@ export default function KYCPage() {
         <button
           onClick={() => {
 
-         const isValid =  FormDataValidation()
-          if (!isValid) return;
+            const isValid = FormDataValidation()
+            if (!isValid) return;
 
             if (currentStep === steps.length - 1)
               alert("KYC Submitted")

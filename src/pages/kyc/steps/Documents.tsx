@@ -7,12 +7,15 @@ type KYCFormProp = {
   setKYCFormData: React.Dispatch<React.SetStateAction<KycFormDataType>>;
   KYCformData: KycFormDataType;
   errors: ErrorType;
+  clearError: (field: keyof ErrorType) => void;
+
 };
 
 export default function Documents({
   setKYCFormData,
   KYCformData,
   errors,
+  clearError
 }: KYCFormProp) {
   const updateFile =
     (key: keyof KycFormDataType) => (file: File | null) => {

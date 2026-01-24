@@ -14,6 +14,9 @@ interface InputProps {
   success?: boolean;
   error?: boolean;
   hint?: string;
+  onFocus?: React.FocusEventHandler<
+    HTMLInputElement | HTMLTextAreaElement
+  >;
 }
 
 
@@ -32,6 +35,7 @@ const Input: FC<InputProps> = ({
   success,
   error,
   hint,
+  onFocus
 }) => {
 
   // Determine input styles based on state (disabled, success, error)
