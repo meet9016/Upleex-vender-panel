@@ -9,20 +9,23 @@ import { api } from "@/utils/axiosInstance";
 import type { ErrorType, KycFormDataType } from '@/pages/kyc/KycPage'
 import { toast } from "react-toastify";
 
-// Types for Country, State, City Options
-type Option = {
+/* <!-- =========================================== Types for Country, State, City Options =========================================== --> */
+
+export type Option = {
   value: string;
   label: string;
 };
 
-type InputGroupProps = {
+type KYCFormProp = {
   setKYCFormData: React.Dispatch<React.SetStateAction<KycFormDataType>>;
   KYCformData: KycFormDataType;
   errors: ErrorType;
 
 };
 
-export default function InputGroup({ setKYCFormData, KYCformData, errors }: InputGroupProps) {
+
+export default function ContactDetails({ setKYCFormData, KYCformData, errors }: KYCFormProp) {
+  /* <!-- =========================================== States =========================================== --> */
 
   const [countries, setCountries] = useState<Option[]>([]);
   const [states, setStates] = useState<Option[]>([]);
@@ -45,6 +48,8 @@ export default function InputGroup({ setKYCFormData, KYCformData, errors }: Inpu
   const [searchState, setSearchState] = useState<string>('');
   const [searchCity, setSearchCity] = useState<string>('');
 
+  /* <!-- ================================================== refs ================================================== --> */
+
   const pageRefCountry = useRef(1);
   const pageRefState = useRef(1);
   const pageRefCity = useRef(1);
@@ -55,20 +60,10 @@ export default function InputGroup({ setKYCFormData, KYCformData, errors }: Inpu
 
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
+  /* <!-- ================================== fetch country, state, city from API ================================== --> */
 
   const fetchOptions = useCallback(async (type: string, search: string, page: number) => {
 
-    const errorMessages = Object.values(errors).filter(Boolean);
-
-    if (errorMessages.length) {
-      toast.error(
-        <ul style={{ paddingLeft: 16 }}>
-          {errorMessages.map((msg, i) => (
-            <li key={i}>{msg}</li>
-          ))}
-        </ul>
-      );
-    }
     if (loading) return;
     setLoading(true);
     try {
@@ -122,13 +117,15 @@ export default function InputGroup({ setKYCFormData, KYCformData, errors }: Inpu
       if (type === "country") pageRefCountry.current += 1;
       if (type === "state") pageRefState.current += 1;
       if (type === "city") pageRefCity.current += 1;
-    } catch (err) {
-      console.error(`Failed to fetch ${type}`, err);
+    } catch (error) {
+      console.error(`Failed to fetch ${type}`, error);
     } finally {
       setLoading(false);
     }
   }, [loading, selectedCountry, selectedState]);
 
+
+  /* <!-- ================================================ Debounce for serach ================================================ --> */
 
   const debounceSearch = (type: string, value: string) => {
     if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
@@ -151,6 +148,8 @@ export default function InputGroup({ setKYCFormData, KYCformData, errors }: Inpu
       }
     }, 500);
   };
+
+  /* <!-- ================================================ UseEffects for serach ================================================ --> */
 
   useEffect(() => {
     if (searchCountry === "") return;
@@ -185,6 +184,8 @@ export default function InputGroup({ setKYCFormData, KYCformData, errors }: Inpu
     };
   }, [openCountry, openState, openCity, searchCountry, searchState, searchCity]);
 
+  /* <!-- ================================================ Scroll handle ================================================ --> */
+
   const filteredCountries = useMemo(() => countries, [countries]);
   const filteredStates = useMemo(() => states, [states]);
   const filteredCities = useMemo(() => cities, [cities]);
@@ -212,9 +213,16 @@ export default function InputGroup({ setKYCFormData, KYCformData, errors }: Inpu
     if (loaderRefCity.current) handleScrollObserver(loaderRefCity, "city");
   }, [handleScrollObserver]);
 
+  /* <!-- ====================================================================== UI ====================================================================== --> */
+
   return (
+    /* <!-- =========================================================== Form component =========================================================== --> */
+
     <ComponentCard title="">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        {/* <!-- =========================================================== Full name =========================================================== --> */}
+
         <div>
           <Label>Full Name <span className="text-red-500">*</span></Label>
 
@@ -231,6 +239,8 @@ export default function InputGroup({ setKYCFormData, KYCformData, errors }: Inpu
           )}
         </div>
 
+        {/* <!-- =========================================================== Mobile name =========================================================== --> */}
+
         <div>
           <Label>Mobile Number<span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your mobile number" type="text"
@@ -245,6 +255,8 @@ export default function InputGroup({ setKYCFormData, KYCformData, errors }: Inpu
             <p className="mt-1 text-sm text-red-500">{errors.mobile}</p>
           )}
         </div>
+
+        {/* <!-- =========================================================== Email =========================================================== --> */}
 
         <div>
           <Label>Email<span className="text-red-500">*</span></Label>
@@ -264,6 +276,8 @@ export default function InputGroup({ setKYCFormData, KYCformData, errors }: Inpu
           )}
         </div>
 
+        {/* <!-- =========================================================== Address =========================================================== --> */}
+
         <div>
           <Label>Address<span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your Address" type="text"
@@ -280,7 +294,8 @@ export default function InputGroup({ setKYCFormData, KYCformData, errors }: Inpu
           )}
         </div>
 
-        {/* COUNTRY DROPDOWN */}
+        {/* <!-- =========================================================== Country =========================================================== --> */}
+
         <div>
           <Label>Select Country<span className="text-red-500">*</span></Label>
           <div className="relative">
@@ -334,7 +349,8 @@ export default function InputGroup({ setKYCFormData, KYCformData, errors }: Inpu
           )}
         </div>
 
-        {/* STATE DROPDOWN */}
+        {/* <!-- =========================================================== State =========================================================== --> */}
+
         <div>
           <Label>Select State<span className="text-red-500">*</span></Label>
           <div className="relative">
@@ -386,7 +402,8 @@ export default function InputGroup({ setKYCFormData, KYCformData, errors }: Inpu
           )}
         </div>
 
-        {/* CITY DROPDOWN */}
+        {/* <!-- =========================================================== City =========================================================== --> */}
+
         <div>
           <Label>Select City<span className="text-red-500">*</span></Label>
           <div className="relative">
@@ -433,7 +450,7 @@ export default function InputGroup({ setKYCFormData, KYCformData, errors }: Inpu
               </div>
             )}
           </div>
-           {errors.city_id && (
+          {errors.city_id && (
             <p className="mt-1 text-sm text-red-500">{errors.city_id}</p>
           )}
         </div>
@@ -448,7 +465,7 @@ export default function InputGroup({ setKYCFormData, KYCformData, errors }: Inpu
                 pincode: e.target.value,
               }));
             }} />
-             {errors.pincode && (
+          {errors.pincode && (
             <p className="mt-1 text-sm text-red-500">{errors.pincode}</p>
           )}
         </div>
