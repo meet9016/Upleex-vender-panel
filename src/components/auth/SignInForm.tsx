@@ -170,7 +170,6 @@ export default function SignInForm() {
                     placeholder="**********"
                     value={formData.mobile}
                     onChange={handleChange}
-                  // disabled={otpSent}
                   />
                   {/* Display mobile number validation error */}
                   {error.mobile && <p className="text-red-500 text-sm">{error.mobile}</p>}

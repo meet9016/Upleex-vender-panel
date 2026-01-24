@@ -8,10 +8,22 @@ import { api } from '@/utils/axiosInstance';
 import endPointApi from '@/utils/endPointApi';
 import ConfirmDeleteModal from '@/components/common/ConfirmDeleteModal';
 
+type Product = {
+  id: string;
+  product_name: string;
+  category_name: string;
+  sub_category_name: string;
+  product_type_name: string;
+  cancel_price: string;
+  product_listing_type_name: string;
+  price: number;
+};
+
 const ProductTable = () => {
   const router = useRouter();
 
-  const [productData, setProductData] = useState();
+ 
+const [productData, setProductData] = useState<Product[]>([]);
 
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
@@ -73,7 +85,7 @@ const ProductTable = () => {
   const deleteById = async (id: number | string) => {
     try {
       const formdata = new FormData();
-      formdata.append("product_id", id);
+      formdata.append("product_id", String(id));
 
       const res = await api.post(endPointApi.postDeleteVendorProductList, formdata);
       // toast.success("Deleted successfully");

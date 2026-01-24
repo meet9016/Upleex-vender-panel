@@ -6,12 +6,12 @@ export interface EndPointApi {
     //Vendor
     postVendorCityList?: string;
 
-    postCategoryList?: string;
-    postSubCategoryList?: string;
-    postProductDropDownList?: string;
-    postVendorAddProduct?: string;
-    postAllVendorProductList?: string;
-    postDeleteVendorProductList?: string;
+    postCategoryList: string;
+    postSubCategoryList: string;
+    postProductDropDownList: string;
+    postVendorAddProduct: string;
+    postAllVendorProductList: string;
+    postDeleteVendorProductList: string;
 }
 
 // Define and export the API endpoint object

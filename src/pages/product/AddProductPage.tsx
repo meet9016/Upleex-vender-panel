@@ -44,8 +44,9 @@ const typeOptions: SelectOption[] = [
 ];
 
 export type Option = {
-    value: string | number;
-    label: string;
+     value: string;
+  label: string;
+  image?: string;
 };
 
 export default function AddProductPage() {
@@ -66,13 +67,11 @@ export default function AddProductPage() {
         description: "",
         keyFeatures: [{ key: "", value: "" }],
     });
-    console.log("formData............",formData);
-    
 
     const [mainPreview, setMainPreview] = useState<string[]>([]);
     const [subPreview, setSubPreview] = useState<string[]>([]);
-    const [categoryList, setCategoryList] = useState<CategoryOption[]>([]);
-    const [subCategoryList, setSubCategoryList] = useState<CategoryOption[]>([]);
+    const [categoryList, setCategoryList] = useState<Option[]>([]);
+    const [subCategoryList, setSubCategoryList] = useState<Option[]>([]);
     const [productTypeOptions, setProductTypeOptions] = useState<Option[]>([]);
     const [listingTypeOptions, setListingTypeOptions] = useState<Option[]>([]);
     const [monthOptions, setMonthOptions] = useState<Option[]>([]);
