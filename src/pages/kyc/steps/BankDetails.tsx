@@ -27,19 +27,29 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
 
   const fetchOptions = async () => {
 
-    if (loading) return;
+    if (loading && options.length > 0) return;
     setLoading(true);
+
 
     try {
       const response = await api.post("vendor-account-type-list");
 
       const list = response?.data?.data || [];
 
-      setOptions((prev) => [...prev, ...list.map((item: any) => ({
-        value: String(item.id),
-        label: item.type_name
-      }))]);
-      console.log(options)
+      setOptions(prev => {
+        const map = new Map(prev.map(opt => [opt.value, opt]));
+
+        list.forEach((item: any) => {
+          map.set(String(item.id), {
+            value: String(item.id),
+            label: item.type_name,
+          });
+        });
+
+        return Array.from(map.values());
+      });
+
+
 
     } catch (error) {
       console.error(`Failed to fetch bank account types`, error);

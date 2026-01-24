@@ -50,16 +50,36 @@ export default function DocumentUpload({
         </label>
       ) : (
         <div className="relative p-3 border rounded-lg bg-gray-50 group">
-          {preview ? (
-            <img
-              src={preview}
-              alt="preview"
-              onClick={() => setShowModal(true)}
-              className="w-full h-32 object-cover rounded cursor-pointer"
-            />
-          ) : (
-            <div className="text-sm">{file.name}</div>
-          )}
+          <div className="relative">
+            {preview ? (
+              <>
+                <img
+                  src={preview}
+                  alt="preview"
+                  onClick={() => setShowModal(true)}
+                  className="w-full h-32 object-cover rounded cursor-pointer"
+                />
+
+                {/* Close preview */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreview(null);      // or ""
+                    setShowModal(false);   // safety
+                  }}
+                  className="absolute top-2 right-2 bg-black/60 text-white 
+                   rounded-full w-6 h-6 flex items-center justify-center
+                   hover:bg-black/80 "
+                  aria-label="Remove preview"
+                >
+                  ✕
+                </button>
+              </>
+            ) : (
+              <div className="text-sm">{file.name}</div>
+            )}
+          </div>
+
 
           <button
             onClick={() => onChange(null)}
@@ -73,7 +93,7 @@ export default function DocumentUpload({
       {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
 
       {showModal && preview && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999]">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[99999]">
           <button
             onClick={() => setShowModal(false)}
             className="absolute top-6 right-6 text-white text-3xl"

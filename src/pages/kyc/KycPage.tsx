@@ -96,23 +96,23 @@ export default function KYCPage() {
 
 
   const [KYCformData, setKYCFormData] = useState<KycFormDataType>({
-    full_name: "",
-    email: "",
-    mobile: "",
-    address: "",
-    pincode: "",
+    full_name: "test",
+    email: "test@gmail.com",
+    mobile: "9876543210",
+    address: "shopno , surat",
+    pincode: "395009",
     country_id: { value: "97", label: "India" },
     state_id: { value: "1532", label: "Gujrat" },
     city_id: { value: "42791", label: "Surat" },
-    pancard_number: "",
-    aadharcard_number: "",
-    business_name: "",
-    gst_number: "",
-    account_holder_name: "",
-    account_number: "",
-    confirm_account_number: "",
-    ifsc_code: "",
-    account_type: "",
+    pancard_number: "9876543210",
+    aadharcard_number: "987654321012",
+    business_name: "shopno ecom pvt ltd",
+    gst_number: "987654321012345",
+    account_holder_name: "Bhavik wala",
+    account_number: "1234567890",
+    confirm_account_number: "1234567890",
+    ifsc_code: "SBIN0000123",
+    account_type: "1",
     pancard_front_image: null,
     aadharcard_front_image: null,
     aadharcard_back_image: null,
@@ -300,13 +300,21 @@ export default function KYCPage() {
       }
     }
 
+    if (currentStep === 4) {
+      alert('submit')
+    }
+    // console.log("formdata => ", KYCformData, "\n ", "errors", errors, "\n " , currentStep)
+
+    console.log("step => ", currentStep)
+
 
     setErrors(newErrors);
-
     return Object.keys(newErrors).length === 0;
+
   };
 
   const submitFormdata = async () => {
+
     const formData = new FormData();
     formData.append("full_name", KYCformData.full_name);
     formData.append("email", KYCformData.email);
@@ -348,12 +356,6 @@ export default function KYCPage() {
     }
   }
 
-  /* <!-- ========================================================== Delete comment ========================================================== --> */
-
-
-  useEffect(() => {
-    console.log("formdata => ", KYCformData, "\n ", "errors", errors, "\n ")
-  }, [errors, currentStep])
 
   /* <!-- ====================================================================== UI ====================================================================== --> */
 
@@ -370,10 +372,10 @@ export default function KYCPage() {
 
       <div>
         {currentStep === 0 && <ContactDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
-        {currentStep === 1 && <Identity setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors}   clearError={clearError} />}
-        {currentStep === 2 && <BankDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors}   clearError={clearError}/>}
-        {currentStep === 3 && <Documents setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors}  clearError={clearError} />}
-        {currentStep === 4 && <StepDeclaration setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors}   clearError={clearError}/>}
+        {currentStep === 1 && <Identity setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
+        {currentStep === 2 && <BankDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
+        {currentStep === 3 && <Documents setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
+        {currentStep === 4 && <StepDeclaration setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
       </div>
 
       {/* <!-- =============================================  Sticky Footer ============================================= -->*/}
@@ -411,20 +413,20 @@ export default function KYCPage() {
           onClick={() => {
 
             const isValid = FormDataValidation()
+            if (isValid && currentStep < steps.length - 1) {
+              setCurrentStep((s) => s + 1)
+            }
             if (!isValid) return;
-
-            if (currentStep === steps.length - 1)
-              alert("KYC Submitted")
           }}
 
-          className="px-8 py-2 w-full md:w-auto 
-              rounded-lg bg-blue-600 text-white
+          className="px-8 py-2 w-full md:w-auto
+        rounded-lg bg-blue-600 text-white
               hover:bg-blue-700 transition font-medium">
 
-          {currentStep === steps.length - 1 ? "Submit KYC" : "Next"}
+          {currentStep === steps.length - 1 && KYCformData.terms_conditions === 1 ? "Submit KYC" : "Next"}
         </button>
       </div>
 
-    </ComponentCard>
+    </ComponentCard >
   );
 }
