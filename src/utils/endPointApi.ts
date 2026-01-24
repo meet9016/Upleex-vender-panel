@@ -9,6 +9,9 @@ export interface EndPointApi {
     postCategoryList?: string;
     postSubCategoryList?: string;
     postProductDropDownList?: string;
+    postVendorAddProduct?: string;
+    postAllVendorProductList?: string;
+    postDeleteVendorProductList?: string;
 }
 
 // Define and export the API endpoint object
@@ -24,6 +27,9 @@ const endPointApi: EndPointApi = {
     postCategoryList: 'vendor-category-list',
     postSubCategoryList: 'vendor-sub-category-list',
     postProductDropDownList: 'vendor-product-drop-down-list',
+    postVendorAddProduct: 'vendor-add-product',
+    postAllVendorProductList: 'vendor-product-list',
+    postDeleteVendorProductList: 'vendor-delete-product',
 };
 
 export default endPointApi;

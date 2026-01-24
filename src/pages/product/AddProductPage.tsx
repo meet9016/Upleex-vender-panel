@@ -14,6 +14,7 @@ import { getAvailableMonths } from "@/utils/helper";
 import { MdDelete } from "react-icons/md";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
+import Radio from "@/components/form/input/Radio";
 
 export interface SelectOption {
     value: string;
@@ -43,8 +44,8 @@ const typeOptions: SelectOption[] = [
 ];
 
 export type Option = {
-  value: string | number;
-  label: string;
+    value: string | number;
+    label: string;
 };
 
 export default function AddProductPage() {
@@ -65,6 +66,8 @@ export default function AddProductPage() {
         description: "",
         keyFeatures: [{ key: "", value: "" }],
     });
+    console.log("formData............",formData);
+    
 
     const [mainPreview, setMainPreview] = useState<string[]>([]);
     const [subPreview, setSubPreview] = useState<string[]>([]);
@@ -73,6 +76,7 @@ export default function AddProductPage() {
     const [productTypeOptions, setProductTypeOptions] = useState<Option[]>([]);
     const [listingTypeOptions, setListingTypeOptions] = useState<Option[]>([]);
     const [monthOptions, setMonthOptions] = useState<Option[]>([]);
+    const [billingType, setBillingType] = useState<"day" | "month" | "">("");
 
     const [mainImage, setMainImage] = useState<File | null>(null);
     const [subImages, setSubImages] = useState<File[]>([]);
@@ -157,6 +161,16 @@ export default function AddProductPage() {
         }));
     };
 
+    const handleRadioChange = (value: "day" | "month") => {
+        setBillingType(value);
+
+        // agar formData me bhi store karna ho
+        setFormData((prev) => ({
+            ...prev,
+            billingType: value,
+        }));
+    };
+
     // ---- Fetch Categories ----
     useEffect(() => {
         const fetchCategories = async () => {
@@ -232,7 +246,7 @@ export default function AddProductPage() {
         const fetchProduct = async () => {
             try {
                 const res = await api.post(endPointApi.postProductDropDownList, {});
-             
+
                 const resData = res.data.data;
                 setProductTypeOptions(
                     resData.products_type.map((item: any) => ({
@@ -261,6 +275,10 @@ export default function AddProductPage() {
 
         fetchProduct();
     }, []);
+
+    const handleSave = async () =>{
+      
+    }
     return (
         <>
             <ComponentCard title="Add Product">
@@ -328,147 +346,172 @@ export default function AddProductPage() {
                             />
                         </div>
                     </div>
-                     
-                    {formData?.listingType == 1 ?
-                        <>
-                            {/* DAY PRICE */}
-                            <div>
-                                <Label>Day Price</Label>
-                                <div className="relative">
-                                    <Input
-                                        placeholder="Enter Day Price"
-                                        type="text"
-                                        value={formData.dayPrice}
-                                        onChange={(e) => handleChange("dayPrice", e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            {/* DAY CANCEL PRICE */}
-                            <div>
-                                <Label>Day Cancel Price</Label>
-                                <div className="relative">
-                                    <Input
-                                        placeholder="Enter Day Cancel Price"
-                                        type="text"
-                                        value={formData.dayCancelPrice}
-                                        onChange={(e) => handleChange("dayCancelPrice", e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            {/* MONTH PRICE */}
-                            <div className="col-span-3 mt-4">
-                                <div className="flex items-center justify-between mb-3">
-                                    <Label className="text-lg font-semibold">Monthly Pricing (1–12 Months)</Label>
 
-                                    {formData.months.length < 12 && (
-                                        <button
-                                            type="button"
-                                            className="bg-[#ffcb07] px-4 py-1 rounded-md font-bold"
-                                            onClick={addMonth}
-                                        >
-                                            + Add Month
-                                        </button>
-                                    )}
-                                </div>
+                    {formData?.listingType == 1 && (
+                        <div className="flex flex-wrap items-center gap-8">
+                            <Radio
+                                id="radio-day"
+                                name="billingType"
+                                value="day"
+                                checked={billingType === "day"}
+                                onChange={() => handleRadioChange("day")}
+                                label="Day"
+                            />
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {formData.months.map((m, index) => (
-                                        <div
-                                            key={index}
-                                            className="border rounded-md p-4 relative bg-gray-50"
-                                        >
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <Radio
+                                id="radio-month"
+                                name="billingType"
+                                value="month"
+                                checked={billingType === "month"}
+                                onChange={() => handleRadioChange("month")}
+                                label="Month"
+                            />
+                        </div>
+                    )}
 
-                                                {/* MONTH SELECT */}
-                                                <div>
-                                                    <Label>Month</Label>
-                                                    <select
-                                                        className="border rounded-md px-3 py-2 w-full"
-                                                        value={m.month}
-                                                        onChange={(e) =>
-                                                            updateMonth(index, "month", e.target.value)
-                                                        }
-                                                    >
-                                                        <option value="">Select Month</option>
-                                                        {monthOptions.map((month: any) => (
-                                                            <option key={month?.id} value={month?.month_name}>
-                                                                {month?.month_name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
+               {/* RENT FLOW */}
+{formData?.listingType == 1 && (
+  <>
+    {/* DAY PRICING */}
+    {billingType === "day" && (
+      <>
+        <div>
+          <Label>Day Price</Label>
+          <Input
+            placeholder="Enter Day Price"
+            type="number"
+            value={formData.dayPrice}
+            onChange={(e) => handleChange("dayPrice", e.target.value)}
+          />
+        </div>
 
-                                                {/* PRICE */}
-                                                <div>
-                                                    <Label>Price</Label>
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Enter Price"
-                                                        value={m.price}
-                                                        onChange={(e) =>
-                                                            updateMonth(index, "price", e.target.value)
-                                                        }
-                                                    />
-                                                </div>
+        <div>
+          <Label>Day Cancel Price</Label>
+          <Input
+            placeholder="Enter Day Cancel Price"
+            type="number"
+            value={formData.dayCancelPrice}
+            onChange={(e) => handleChange("dayCancelPrice", e.target.value)}
+          />
+        </div>
+      </>
+    )}
 
-                                                {/* CANCEL PRICE */}
-                                                <div>
-                                                    <Label>Cancel Price</Label>
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Enter Cancel Price"
-                                                        value={m.cancelPrice}
-                                                        onChange={(e) =>
-                                                            updateMonth(index, "cancelPrice", e.target.value)
-                                                        }
-                                                    />
-                                                </div>
+    {/* MONTHLY PRICING */}
+    {billingType === "month" && (
+      <div className="col-span-3 mt-4">
+        <div className="flex items-center justify-between mb-3">
+          <Label className="text-lg font-semibold">
+            Monthly Pricing (1–12 Months)
+          </Label>
 
-                                            </div>
+          {formData.months.length < 12 && (
+            <button
+              type="button"
+              className="bg-[#ffcb07] px-4 py-1 rounded-md font-bold"
+              onClick={addMonth}
+            >
+              + Add Month
+            </button>
+          )}
+        </div>
 
-                                            {/* REMOVE BUTTON */}
-                                            {formData.months.length > 1 && (
-                                                <button
-                                                    className="absolute right-4 top-4 text-red-500 text-xl"
-                                                    onClick={() => removeMonth(index)}
-                                                >
-                                                    <MdDelete />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-
-                            </div>
-                        </>
-                        :
-                        <>
-                            {/* Sell PRICE */}
-                            <div>
-                                <Label>Price</Label>
-                                <div className="relative">
-                                    <Input
-                                        placeholder="Enter Sell Price"
-                                        type="text"
-                                        value={formData.monthPrice}
-                                        onChange={(e) => handleChange("monthPrice", e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            {/* Sell CANCEL PRICE */}
-                            <div>
-                                <Label>Cancel Price</Label>
-                                <div className="relative">
-                                    <Input
-                                        placeholder="Enter Sell Cancel Price"
-                                        type="text"
-                                        value={formData.monthCancelPrice}
-                                        onChange={(e) => handleChange("monthCancelPrice", e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        </>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {formData.months.map((m, index) => (
+            <div
+              key={index}
+              className="border rounded-md p-4 relative bg-gray-50"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* MONTH SELECT */}
+                <div>
+                  <Label>Month</Label>
+                  <select
+                    className="border rounded-md px-3 py-2 w-full"
+                    value={m.month}
+                    onChange={(e) =>
+                      updateMonth(index, "month", e.target.value)
                     }
+                  >
+                    <option value="">Select Month</option>
+                    {monthOptions.map((month: any) => (
+                      <option key={month.value} value={month.value}>
+                        {month.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* PRICE */}
+                <div>
+                  <Label>Price</Label>
+                  <Input
+                    type="number"
+                    placeholder="Enter Price"
+                    value={m.price}
+                    onChange={(e) =>
+                      updateMonth(index, "price", e.target.value)
+                    }
+                  />
+                </div>
+
+                {/* CANCEL PRICE */}
+                <div>
+                  <Label>Cancel Price</Label>
+                  <Input
+                    type="number"
+                    placeholder="Enter Cancel Price"
+                    value={m.cancelPrice}
+                    onChange={(e) =>
+                      updateMonth(index, "cancelPrice", e.target.value)
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* REMOVE */}
+              {formData.months.length > 1 && (
+                <button
+                  type="button"
+                  className="absolute right-4 top-4 text-red-500 text-xl"
+                  onClick={() => removeMonth(index)}
+                >
+                  <MdDelete />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </>
+)}
+
+{/* SELL FLOW */}
+{formData?.listingType != 1 && (
+  <>
+    <div>
+      <Label>Price</Label>
+      <Input
+        placeholder="Enter Sell Price"
+        type="number"
+        value={formData.monthPrice}
+        onChange={(e) => handleChange("monthPrice", e.target.value)}
+      />
+    </div>
+
+    <div>
+      <Label>Cancel Price</Label>
+      <Input
+        placeholder="Enter Sell Cancel Price"
+        type="number"
+        value={formData.monthCancelPrice}
+        onChange={(e) => handleChange("monthCancelPrice", e.target.value)}
+      />
+    </div>
+  </>
+)}
+
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -568,7 +611,7 @@ export default function AddProductPage() {
             </ComponentCard >
             <div className="flex items-center gap-5">
                 <Button size="sm" variant="primary"
-                // onClick={handleSave}
+                onClick={handleSave}
                 >
                     Save
                 </Button>
