@@ -1,12 +1,10 @@
 import React, { FC } from "react";
-
 interface InputProps {
   type?: "text" | "number" | "email" | "password" | "date" | "time" | string;
   id?: string;
   name?: string;
   placeholder?: string;
-  value?: string | number; 
-  defaultValue?: string | number;
+  value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
   min?: string;
@@ -15,26 +13,31 @@ interface InputProps {
   disabled?: boolean;
   success?: boolean;
   error?: boolean;
-  hint?: string; // Optional hint text
+  hint?: string;
+  onFocus?: React.FocusEventHandler<
+    HTMLInputElement | HTMLTextAreaElement
+  >;
 }
 
+
 const Input: FC<InputProps> = ({
-  type = "text",
+  type,
   id,
   name,
   placeholder,
   value,
-  defaultValue,
   onChange,
-  className = "",
+  className,
   min,
   max,
   step,
-  disabled = false,
-  success = false,
-  error = false,
+  disabled,
+  success,
+  error,
   hint,
+  onFocus
 }) => {
+
   // Determine input styles based on state (disabled, success, error)
   let inputClasses = `h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${className}`;
 
@@ -56,8 +59,7 @@ const Input: FC<InputProps> = ({
         id={id}
         name={name}
         placeholder={placeholder}
-        value={value}
-        defaultValue={defaultValue}
+        value={value ?? ""}        // ✅ controlled
         onChange={onChange}
         min={min}
         max={max}
@@ -66,16 +68,16 @@ const Input: FC<InputProps> = ({
         className={inputClasses}
       />
 
+
       {/* Optional Hint Text */}
       {hint && (
         <p
-          className={`mt-1.5 text-xs ${
-            error
+          className={`mt-1.5 text-xs ${error
               ? "text-error-500"
               : success
-              ? "text-success-500"
-              : "text-gray-500"
-          }`}
+                ? "text-success-500"
+                : "text-gray-500"
+            }`}
         >
           {hint}
         </p>
