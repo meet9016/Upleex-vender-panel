@@ -33,10 +33,10 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
             <Input
               placeholder="Enter your PAN Number"
               type="text"
-              onFocus={() => clearError("pancard_number")}
 
               value={KYCformData?.pancard_number || ""}
               onChange={(e) => {
+                clearError("pancard_number")
                 setKYCFormData((prevData) => ({
                   ...prevData, pancard_number: e.target.value,
                 }))
@@ -56,11 +56,9 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
             <Input
               placeholder="Enter your Aadhaar Number"
               type="text"
-              onFocus={() => clearError("aadharcard_number")}
-
               value={KYCformData?.aadharcard_number || ""}
-
               onChange={(e) => {
+                clearError("aadharcard_number")
                 setKYCFormData((prevData) => ({
                   ...prevData, aadharcard_number: e.target.value,
                 }))
@@ -80,10 +78,9 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
             <Input
               placeholder="Enter your Business Name"
               type="text"
-              onFocus={() => clearError("business_name")}
-
               value={KYCformData?.business_name || ""}
               onChange={(e) => {
+                 clearError("business_name")
                 setKYCFormData((prevData) => ({
                   ...prevData, business_name: e.target.value,
                 }))
@@ -103,10 +100,9 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
             <Input
               placeholder="Enter your GST Number"
               type="text"
-              onFocus={() => clearError("gst_number")}
-
               value={KYCformData?.gst_number || ""}
               onChange={(e) => {
+                clearError("gst_number")
                 setKYCFormData((prevData) => ({
                   ...prevData, gst_number: e.target.value,
                 }))

@@ -230,8 +230,9 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
 
           <Input placeholder="Enter your full name" type="text"
             value={KYCformData.full_name}
-            onFocus={() => clearError("full_name")}
+
             onChange={(e) => {
+              clearError("full_name")
               setKYCFormData(prevData => ({
                 ...prevData,
                 full_name: e.target.value,
@@ -248,8 +249,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Label>Mobile Number<span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your mobile number" type="text"
             value={KYCformData.mobile}
-            onFocus={() => clearError("mobile")}
             onChange={(e) => {
+              clearError("mobile")
               setKYCFormData(prevData => ({
                 ...prevData,
                 mobile: e.target.value,
@@ -268,9 +269,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Label>Email<span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your email address" type="email"
             value={KYCformData.email}
-            onFocus={() => clearError("email")}
-
             onChange={(e) => {
+              clearError("email")
               setKYCFormData(prevData => ({
                 ...prevData,
                 email: e.target.value,
@@ -290,8 +290,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Label>Address<span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your Address" type="text"
             value={KYCformData.address}
-            onFocus={() => clearError("address")}
             onChange={(e) => {
+              clearError("address")
               setKYCFormData(prevData => ({
                 ...prevData,
                 address: e.target.value,
@@ -311,7 +311,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             <button
               type="button"
               onClick={() => {
-                clearError("country_id");
+   
                 setOpenCountry(v => !v);
               }}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
@@ -333,6 +333,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                     <div
                       key={index}
                       onClick={() => {
+                                     clearError("country_id");
                         setSelectedCountry(country);
                         setKYCFormData(prevData => ({
                           ...prevData,
@@ -369,7 +370,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             <button
               type="button"
               onClick={() => {
-                clearError("state_id");
+               
                 setOpenState((v) => !v)
               }}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
@@ -391,6 +392,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                     <div
                       key={index}
                       onClick={() => {
+                         clearError("state_id");
                         setSelectedState(state);
                         setKYCFormData(prevData => ({
                           ...prevData, // Spread the previous form data to retain other fields
@@ -425,7 +427,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             <button
               type="button"
               onClick={() => {
-                clearError("city_id");
+             
                 setOpenCity((v) => !v)
               }}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
@@ -447,6 +449,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                     <div
                       key={index}
                       onClick={() => {
+                           clearError("city_id");
                         setSelectedCity(city);
                         setOpenCity(false);
                         setKYCFormData(prevData => ({

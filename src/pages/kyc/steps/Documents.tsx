@@ -19,6 +19,8 @@ export default function Documents({
 }: KYCFormProp) {
   const updateFile =
     (key: keyof KycFormDataType) => (file: File | null) => {
+    clearError(key);
+
       setKYCFormData((prev) => ({
         ...prev,
         [key]: file,

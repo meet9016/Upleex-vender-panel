@@ -38,6 +38,7 @@ export default function DocumentUpload({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] || null;
     onChange(selected);
+    console.log(selected)
     clearError("pancard_front_image");
     clearError("aadharcard_front_image");
     clearError("aadharcard_back_image");
@@ -67,21 +68,7 @@ export default function DocumentUpload({
                   onClick={() => setShowModal(true)}
                   className="w-full h-32 object-cover rounded cursor-pointer"
                 />
-
-                {/* Close preview */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPreview(null);      // or ""
-                    setShowModal(false);   // safety
-                  }}
-                  className="absolute top-2 right-2 bg-black/60 text-white 
-                   rounded-full w-6 h-6 flex items-center justify-center
-                   hover:bg-black/80 "
-                  aria-label="Remove preview"
-                >
-                  ✕
-                </button>
+   
               </>
             ) : (
               <div className="text-sm">{file.name}</div>
@@ -104,7 +91,7 @@ export default function DocumentUpload({
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[99999]">
           <button
             onClick={() => setShowModal(false)}
-            className="absolute top-6 right-6 text-white text-3xl"
+        className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white text-2xl sm:text-3xl bg-red-600 rounded-full w-8 h-8 sm:w-10 sm:h-10"
           >
             ✕
           </button>

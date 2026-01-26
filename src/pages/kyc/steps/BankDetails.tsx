@@ -39,7 +39,6 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
 
       setOptions(prev => {
         const map = new Map(prev.map(opt => [opt.value, opt]));
-
         list.forEach((item: any) => {
           map.set(String(item.id), {
             value: String(item.id),
@@ -73,10 +72,9 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
             <Input
               placeholder="Enter Bank Account Holder Name"
               type="text"
-              onFocus={() => clearError("account_holder_name")}
-
               value={KYCformData?.account_holder_name || ""}
               onChange={(e) => {
+                clearError("account_holder_name")
                 setKYCFormData((prevData) => ({
                   ...prevData, account_holder_name: e.target.value,
                 }))
@@ -93,10 +91,9 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
             <Input
               placeholder="Enter Account Number"
               type="text"
-              onFocus={() => clearError("account_number")}
-
               value={KYCformData?.account_number || ""}
               onChange={(e) => {
+                clearError("account_number")
                 setKYCFormData((prevData) => ({
                   ...prevData, account_number: e.target.value,
                 }))
@@ -114,10 +111,9 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
             <Input
               placeholder="Re-enter Account Number"
               type="text"
-              onFocus={() => clearError("confirm_account_number")}
-
               value={KYCformData?.confirm_account_number || ""}
               onChange={(e) => {
+                clearError("confirm_account_number")
                 setKYCFormData((prevData) => ({
                   ...prevData, confirm_account_number: e.target.value,
                 }))
@@ -135,10 +131,9 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
             <Input
               placeholder="Enter your IFSC Code"
               type="text"
-              onFocus={() => clearError("ifsc_code")}
-
               value={KYCformData?.ifsc_code || ""}
               onChange={(e) => {
+                clearError("ifsc_code")
                 setKYCFormData((prevData) => ({
                   ...prevData, ifsc_code: e.target.value.toUpperCase(),
                 }))
