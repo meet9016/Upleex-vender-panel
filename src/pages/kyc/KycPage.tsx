@@ -83,7 +83,7 @@ export type ErrorType = {
 export default function KYCPage() {
   /* <!-- ========================================================== States ========================================================== --> */
 
-  const [currentStep, setCurrentStep] = useState(3);
+  const [currentStep, setCurrentStep] = useState(0);
   const [errors, setErrors] = useState<ErrorType>({});
 
   const [KYCformData, setKYCFormData] = useState<KycFormDataType>({
@@ -114,6 +114,10 @@ export default function KYCPage() {
 
 
   const router = useRouter();
+
+  useEffect(() => {
+    fetchKYCFormdata();
+  }, []);
 
   /* <!-- ========================================================== Clear error  ========================================================== --> */
 
@@ -318,7 +322,7 @@ export default function KYCPage() {
 
   /* <!-- ========================================================== FormSubmit ========================================================== --> */
 
-  const submitFormdata = async () => {
+  const submitKYCFormdata = async () => {
     const formData = new FormData();
     formData.append("page", String(currentStep + 1) || "");
     formData.append("full_name", KYCformData.full_name || "");
@@ -355,7 +359,7 @@ export default function KYCPage() {
     try {
       const response = await api.post(`${endPointApi.postVendorKYCFormSubmit}`, formData)
 
-      if (response.status == 200) {
+      if (response.data.status == 200) {
 
         const isLastStep = currentStep === steps.length - 1;
         if (!isLastStep) {
@@ -363,9 +367,38 @@ export default function KYCPage() {
           return;
         }
         setTimeout(() => {
-          toast.success("KYC Submitted Successfully");
+          toast.success(response.data.message);
           router.push("/");
         }, 1500);
+
+      } else {
+        toast.error(response.data.message);
+
+      }
+    } catch (error) {
+      console.error("Failed submit Form", error)
+      // toast.error(error)
+    }
+  }
+
+  /* <!-- ===================================================== Fetch submitted data ===================================================== --> */
+
+  const fetchKYCFormdata = async () => {
+    const formData = new FormData();
+
+    try {
+      const response = await api.post(`${endPointApi.postFetchVendorKYCFormData}`, formData)
+
+      if (response.status == 200) {
+
+
+        console.log("Fetched KYC Data:", response.data.data);
+
+        setKYCFormData(response.data.data);
+        setKYCFormData((prev) => ({
+          ...prev,
+          confirm_account_number: response.data.data.account_number
+        }));
       }
     } catch (error) {
       console.error("Failed submit Form", error)
@@ -428,7 +461,7 @@ export default function KYCPage() {
             const isValid = await FormDataValidation();
             if (isValid) {
 
-              await submitFormdata();
+              await submitKYCFormdata();
 
             } else if (!isValid) {
               return;
