@@ -4,6 +4,9 @@ export interface EndPointApi {
     logout: string;
 
     //Vendor
+    postVendorKYCFormSubmit?: string;
+    postVendorCountryList?: String;
+    postVendorStateList?: String;
     postVendorCityList?: string;
 
     postCategoryList: string;
@@ -21,7 +24,11 @@ const endPointApi: EndPointApi = {
     logout: 'auth/logout',
 
     //Vendor
+    postVendorKYCFormSubmit: 'vendor-kyc',
+    postVendorCountryList: 'vendor-country-list',
+    postVendorStateList: 'vendor-state-list',
     postVendorCityList: 'vendor-city-list',
+
 
     //Category 
     postCategoryList: 'vendor-category-list',

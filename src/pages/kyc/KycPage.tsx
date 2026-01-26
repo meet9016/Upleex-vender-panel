@@ -10,6 +10,7 @@ import StepDeclaration from "./steps/StepDeclaration";
 import ComponentCard from "@/components/common/ComponentCard";
 import { toast } from "react-toastify";
 import { api } from "@/utils/axiosInstance";
+import endPointApi from "@/utils/endPointApi";
 
 const steps = [
   "Contact Details",
@@ -44,7 +45,6 @@ export type KycFormDataType = {
   confirm_account_number: string;
   ifsc_code: string;
   account_type: string;
-
   pancard_front_image: File | null;
   aadharcard_front_image: File | null;
   aadharcard_back_image: File | null;
@@ -313,6 +313,8 @@ export default function KYCPage() {
 
   };
 
+  /* <!-- ========================================================== FormSubmit ========================================================== --> */
+
   const submitFormdata = async () => {
 
     const formData = new FormData();
@@ -348,7 +350,7 @@ export default function KYCPage() {
     formData.append("terms_conditions", String(KYCformData.terms_conditions));
 
     try {
-      const response = await api.post("/vendor-kyc", formData)
+      const response = await api.post(`${endPointApi.postVendorKYCFormSubmit}`, formData)
 
       console.log(response)
     } catch (error) {

@@ -6,6 +6,7 @@ import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import Input from "@/components/common/Input";
 import { api } from "@/utils/axiosInstance";
+import endPointApi from "@/utils/endPointApi";
 import type { ErrorType, KycFormDataType } from '@/pages/kyc/KycPage'
 import { toast } from "react-toastify";
 
@@ -74,15 +75,15 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
 
       let res;
       if (type === "country") {
-        res = await api.post("/vendor-country-list", formData);
+        res = await api.post(`${endPointApi.postVendorCountryList}`, formData);
       } else if (type === "state") {
         if (selectedCountry?.value) {
           formData.append("country_id", selectedCountry.value);
         }
-        res = await api.post("/vendor-state-list", formData);
+        res = await api.post(`${endPointApi.postVendorStateList}`, formData);
       } else if (type === "city") {
         if (selectedState?.value) {
-          formData.append("state_id", selectedState.value);
+          formData.append(`${endPointApi.postVendorCityList}`, selectedState.value);
         }
         res = await api.post("/vendor-city-list", formData);
       }
