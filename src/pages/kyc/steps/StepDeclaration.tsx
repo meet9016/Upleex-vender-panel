@@ -23,12 +23,13 @@ export default function StepDeclaration({
           type="checkbox"
           checked={KYCformData.terms_conditions === 1}
           onChange={(e) => {
+             clearError("terms_conditions")
             setKYCFormData((prev) => ({
               ...prev,
               terms_conditions: e.target.checked ? 1 : 0,
             }));
           }}
-          onFocus={() => clearError("terms_conditions")}
+
         />
         I confirm all details are correct
       </label>

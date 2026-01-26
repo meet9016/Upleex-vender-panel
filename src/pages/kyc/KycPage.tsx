@@ -283,13 +283,10 @@ export default function KYCPage() {
         newErrors.aadharcard_back_image = "Aadhaar back image is required";
       }
 
-      // GST Certificate (required only if GST number exists)
-      if (
-        KYCformData.gst_number &&
-        !isFileValid(KYCformData.gst_certificate_image)
-      ) {
+      // GST Certificate
+      if (!isFileValid(KYCformData.gst_certificate_image)) {
         newErrors.gst_certificate_image =
-          "GST certificate is required when GST number is provided";
+          "GST certificate image is required ";
       }
     }
     // ---------------- STEP 3 ----------------

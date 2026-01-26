@@ -480,9 +480,11 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Label>Pincode<span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your Pincode" type="text"
             value={KYCformData.pincode}
-            onFocus={() => clearError("pincode")}
+   
             onChange={(e) => {
+              clearError("pincode")
               setKYCFormData(prevData => ({
+
                 ...prevData,
                 pincode: e.target.value,
               }));
