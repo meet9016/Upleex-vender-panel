@@ -11,6 +11,7 @@ import ComponentCard from "@/components/common/ComponentCard";
 import { toast } from "react-toastify";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
+import { useRouter } from "next/navigation";
 
 const steps = [
   "Contact Details",
@@ -85,6 +86,8 @@ export default function KYCPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [errors, setErrors] = useState<ErrorType>({});
 
+  const router = useRouter();
+
   const clearError = (field: keyof ErrorType) => {
     setErrors(prev => {
       if (!prev[field]) return prev;
@@ -97,34 +100,35 @@ export default function KYCPage() {
 
   const [KYCformData, setKYCFormData] = useState<KycFormDataType>({
 
-    full_name: "Rajesh Kumar",
-    email: "rajesh.kumar@example.com",
-    mobile: "9876543210",
-    address: "123 MG Road, Vastrapur, Ahmedabad",
-    pincode: "380015",
-    country_id: { value: "1", label: "India" },
-    state_id: { value: "12", label: "Gujarat" },
-    city_id: { value: "45", label: "Ahmedabad" },
-    pancard_number: "ABCDE1234F",
-    aadharcard_number: "2234 5678 9012",
-    business_name: "Kumar Enterprises",
-    gst_number: "24ABCDE1234F1Z5",
-    account_holder_name: "Rajesh Kumar",
-    account_number: "123456789012",
-    confirm_account_number: "123456789012",
-    ifsc_code: "SBIN0125620",
-    account_type: "1",
-    pancard_front_image: null, // Will be File object when uploaded
-    aadharcard_front_image: null, // Will be File object when uploaded
-    aadharcard_back_image: null, // Will be File object when uploaded
-    gst_certificate_image: null, // Will be File object when uploaded
-    terms_conditions: 1,
+    full_name: "",
+    email: "",
+    mobile: "",
+    address: "",
+    pincode: "",
+    country_id: { value: "", label: "" },
+    state_id: { value: "", label: "" },
+    city_id: { value: "", label: "" },
+    pancard_number: "",
+    aadharcard_number: "",
+    business_name: "",
+    gst_number: "",
+    account_holder_name: "",
+    account_number: "",
+    confirm_account_number: "",
+    ifsc_code: "",
+    account_type: "",
+    pancard_front_image: null,
+    aadharcard_front_image: null,
+    aadharcard_back_image: null,
+    gst_certificate_image: null,
+    terms_conditions: 0,
   });
 
 
   /* <!-- ========================================================== validation ========================================================== --> */
 
   const FormDataValidation = async () => {
+
     const newErrors: ErrorType = {};
 
     // helpers
@@ -147,8 +151,6 @@ export default function KYCPage() {
         newErrors.full_name = "Name is required";
       } else if (!isOnlyLetters(KYCformData.full_name)) {
         newErrors.full_name = "Name should contain only letters and spaces";
-      } else if (KYCformData.full_name.trim().length < 2) {
-        newErrors.full_name = "Name must be at least 2 characters";
       }
 
       if (isEmpty(KYCformData.email)) {
@@ -189,7 +191,8 @@ export default function KYCPage() {
       if (!KYCformData.city_id?.value) {
         newErrors.city_id = "City is required";
       }
-
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
     }
 
     // ---------------- STEP 1 ----------------
@@ -217,6 +220,9 @@ export default function KYCPage() {
       } else if (!isGSTValid(KYCformData.gst_number)) {
         newErrors.gst_number = "Enter a valid GST number (15 characters)";
       }
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+
     }
 
     // ---------------- STEP 2 ----------------
@@ -265,6 +271,8 @@ export default function KYCPage() {
       if (isEmpty(KYCformData.account_type)) {
         newErrors.account_type = "Account type is required";
       }
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
     }
 
     // ---------------- STEP 3 ----------------
@@ -291,6 +299,8 @@ export default function KYCPage() {
       if (!isFileValid(KYCformData.gst_certificate_image)) {
         newErrors.gst_certificate_image = "GST certificate image is required";
       }
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
     }
 
     // ---------------- STEP 4 ----------------
@@ -298,34 +308,34 @@ export default function KYCPage() {
       if (KYCformData.terms_conditions !== 1) {
         newErrors.terms_conditions = "Please accept the declaration to continue";
       }
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
     }
 
-    setErrors(newErrors);
-    console.log(Object.keys(newErrors).length === 0)
-    return Object.keys(newErrors).length === 0;
   };
 
   /* <!-- ========================================================== FormSubmit ========================================================== --> */
 
   const submitFormdata = async () => {
     const formData = new FormData();
-    formData.append("full_name", KYCformData.full_name);
-    formData.append("email", KYCformData.email);
-    formData.append("mobile", KYCformData.mobile);
-    formData.append("address", KYCformData.address);
-    formData.append("pincode", KYCformData.pincode);
-    formData.append("country_id", KYCformData.country_id?.value);
-    formData.append("state_id", KYCformData.state_id.value);
-    formData.append("city_id", KYCformData.city_id?.value);
-    formData.append("pancard_number", KYCformData.pancard_number);
-    formData.append("aadharcard_number", KYCformData.aadharcard_number);
-    formData.append("business_name", KYCformData.business_name);
-    formData.append("gst_number", KYCformData.gst_number);
-    formData.append("account_holder_name", KYCformData.account_holder_name);
-    formData.append("account_number", KYCformData.account_number);
-    formData.append("confirm_account_number", KYCformData.confirm_account_number);
-    formData.append("ifsc_code", KYCformData.ifsc_code);
-    formData.append("account_type", KYCformData.account_type);
+    formData.append("page", String(currentStep + 1) || "");
+    formData.append("full_name", KYCformData.full_name || "");
+    formData.append("email", KYCformData.email || "");
+    formData.append("mobile", KYCformData.mobile || "");
+    formData.append("address", KYCformData.address || "");
+    formData.append("pincode", KYCformData.pincode || "");
+    formData.append("country_id", KYCformData.country_id?.value || "");
+    formData.append("state_id", KYCformData.state_id.value || "");
+    formData.append("city_id", KYCformData.city_id?.value || "");
+    formData.append("pancard_number", KYCformData.pancard_number || "");
+    formData.append("aadharcard_number", KYCformData.aadharcard_number || "");
+    formData.append("business_name", KYCformData.business_name || "");
+    formData.append("gst_number", KYCformData.gst_number || "");
+    formData.append("account_holder_name", KYCformData.account_holder_name || "");
+    formData.append("account_number", KYCformData.account_number || "");
+    formData.append("confirm_account_number", KYCformData.confirm_account_number || "");
+    formData.append("ifsc_code", KYCformData.ifsc_code || "");
+    formData.append("account_type", KYCformData.account_type || "");
     if (KYCformData.pancard_front_image) {
       formData.append("pancard_front_image", KYCformData.pancard_front_image)
     }
@@ -335,13 +345,28 @@ export default function KYCPage() {
     if (KYCformData.aadharcard_back_image) {
       formData.append("aadharcard_back_image", KYCformData.aadharcard_back_image)
     } if (KYCformData.gst_certificate_image) {
-      formData.append("gst_certificate_image", KYCformData.gst_certificate_image)
+      formData.append("gst_certificate_image", KYCformData.gst_certificate_image || "")
     }
 
     formData.append("terms_conditions", String(KYCformData.terms_conditions));
 
     try {
       const response = await api.post(`${endPointApi.postVendorKYCFormSubmit}`, formData)
+
+      if (response.status == 200) {
+
+        const isLastStep = currentStep === steps.length - 1;
+        if (!isLastStep) {
+          setCurrentStep((s) => s + 1);
+          return;
+        }
+        setTimeout(() => {
+          toast.success("KYC Submitted Successfully");
+          router.push("/"); // home page
+
+        }, 1500);
+      }
+
 
     } catch (error) {
       console.error("Failed submit Form", error)
@@ -404,17 +429,14 @@ export default function KYCPage() {
         <button
           onClick={async () => {
             const isValid = await FormDataValidation();
+            if (isValid) {
 
-            if (!isValid) return;
+              await submitFormdata();
 
-            const isLastStep = currentStep === steps.length - 1;
-
-            if (!isLastStep) {
-              setCurrentStep((s) => s + 1);
+            } else if (!isValid) {
               return;
             }
 
-            await submitFormdata();
           }}
           className="px-8 py-2 w-full md:w-auto
         rounded-lg bg-blue-600 text-white
