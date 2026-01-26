@@ -83,9 +83,9 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         res = await api.post(`${endPointApi.postVendorStateList}`, formData);
       } else if (type === "city") {
         if (selectedState?.value) {
-          formData.append(`${endPointApi.postVendorCityList}`, selectedState.value);
+          formData.append("state_id", selectedState.value);
         }
-        res = await api.post("/vendor-city-list", formData);
+        res = await api.post(`${endPointApi.postVendorCityList}`, formData);
       }
 
       const list = res?.data?.data || [];
@@ -229,9 +229,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Label>Full Name <span className="text-red-500">*</span></Label>
 
           <Input placeholder="Enter your full name" type="text"
-            onFocus={() => clearError("mobile")}
-
             value={KYCformData.full_name}
+            onFocus={() => clearError("full_name")}
             onChange={(e) => {
               setKYCFormData(prevData => ({
                 ...prevData,
@@ -250,7 +249,6 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Input placeholder="Enter your mobile number" type="text"
             value={KYCformData.mobile}
             onFocus={() => clearError("mobile")}
-
             onChange={(e) => {
               setKYCFormData(prevData => ({
                 ...prevData,

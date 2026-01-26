@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { ErrorType, KycFormDataType } from "@/pages/kyc/KycPage";
 
 type Props = {
   label: string;
   file: File | null;
   onChange: (file: File | null) => void;
   error?: string;
+  clearError: (field: keyof ErrorType) => void;
 };
 
 export default function DocumentUpload({
@@ -14,6 +16,7 @@ export default function DocumentUpload({
   file,
   onChange,
   error,
+  clearError
 }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -35,6 +38,11 @@ export default function DocumentUpload({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] || null;
     onChange(selected);
+    clearError("pancard_front_image");
+    clearError("aadharcard_front_image");
+    clearError("aadharcard_back_image");
+    clearError("gst_certificate_image");
+
   };
 
   return (
