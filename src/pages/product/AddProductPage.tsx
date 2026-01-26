@@ -178,7 +178,7 @@ export default function AddProductPage() {
                 if (res?.data?.data) {
                     setCategoryList(res.data.data);
 
-                    // 🔥 Select-compatible format
+                    // Select-compatible format
                     const options = res.data.data.map((item: any) => ({
                         label: item.name,
                         value: item.id,
@@ -471,7 +471,6 @@ console.log("res....",res);
         </div>
       </>
     )}
-
     {/* MONTHLY PRICING */}
     {billingType === "month" && (
       <div className="col-span-3 mt-4">
@@ -480,7 +479,7 @@ console.log("res....",res);
             Monthly Pricing (1–12 Months)
           </Label>
 
-          {formData.months.length < 12 && (
+          {formData?.months?.length < 12 && (
             <button
               type="button"
               className="bg-[#ffcb07] px-4 py-1 rounded-md font-bold"
@@ -492,7 +491,7 @@ console.log("res....",res);
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {formData.months.map((m, index) => (
+          {formData?.months?.map((m, index) => (
             <div
               key={index}
               className="border rounded-md p-4 relative bg-gray-50"
@@ -619,7 +618,7 @@ console.log("res....",res);
 
                         {/* SCROLLABLE BOX */}
                         <div className="border border-gray-200 rounded-md p-3 overflow-y-auto flex-1">
-                            {formData.keyFeatures.map((item, index) => (
+                            {formData?.keyFeatures?.map((item, index) => (
                                 <div key={index} className="grid grid-cols-2 gap-3 relative mb-4">
 
                                     <Input

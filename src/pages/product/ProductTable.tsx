@@ -41,12 +41,11 @@ const [productData, setProductData] = useState<Product[]>([]);
       width: 130,
       cellRenderer: (params: any) => {
         const id = params.data.product_id;
-        console.log("params", params);
 
         return (
           <div className="flex items-center gap-3 w-full h-full">
             <button
-              // onClick={() => (onEdit ? onEdit(id) : router.push(`/plan/edit/${id}`))}
+              onClick={() => router.push(`/product/addProduct?id=${id}`)}
               className="text-xl text-blue-600"
             >
               <MdModeEdit />

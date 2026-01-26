@@ -15,6 +15,7 @@ export interface EndPointApi {
     postSubCategoryList: string;
     postProductDropDownList: string;
     postVendorAddProduct: string;
+    postVendorProductDetails: string;
     postAllVendorProductList: string;
     postDeleteVendorProductList: string;
 }
@@ -39,6 +40,7 @@ const endPointApi: EndPointApi = {
     postSubCategoryList: 'vendor-sub-category-list',
     postProductDropDownList: 'vendor-product-drop-down-list',
     postVendorAddProduct: 'vendor-add-product',
+    postVendorProductDetails: 'vendor-product-details',
     postAllVendorProductList: 'vendor-product-list',
     postDeleteVendorProductList: 'vendor-delete-product',
 };
