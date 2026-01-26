@@ -227,17 +227,22 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
 
         <div>
           <Label>Full Name <span className="text-red-500">*</span></Label>
-
-          <Input placeholder="Enter your full name" type="text"
+          <Input
+            placeholder="Enter your full name"
+            type="text"
             value={KYCformData.full_name}
-
             onChange={(e) => {
-              clearError("full_name")
-              setKYCFormData(prevData => ({
-                ...prevData,
-                full_name: e.target.value,
-              }));
-            }} />
+              const value = e.target.value;
+              // Only allow letters and spaces
+              if (/^[a-zA-Z\s]*$/.test(value)) {
+                clearError("full_name");
+                setKYCFormData(prevData => ({
+                  ...prevData,
+                  full_name: value,
+                }));
+              }
+            }}
+          />
           {errors.full_name && (
             <p className="mt-1 text-sm text-red-500">{errors.full_name}</p>
           )}
@@ -250,11 +255,14 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Input placeholder="Enter your mobile number" type="text"
             value={KYCformData.mobile}
             onChange={(e) => {
-              clearError("mobile")
-              setKYCFormData(prevData => ({
-                ...prevData,
-                mobile: e.target.value,
-              }));
+              const value = e.target.value;
+              if (/^\d*$/.test(value)) {
+                clearError("mobile");
+                setKYCFormData(prevData => ({
+                  ...prevData,
+                  mobile: value,
+                }));
+              }
             }}
             maxLength={10}
           />
@@ -267,16 +275,38 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
 
         <div>
           <Label>Email<span className="text-red-500">*</span></Label>
-          <Input placeholder="Enter your email address" type="email"
+          <Input
+            placeholder="Enter your email address"
+            type="email"
             value={KYCformData.email}
             onChange={(e) => {
-              clearError("email")
-              setKYCFormData(prevData => ({
-                ...prevData,
-                email: e.target.value,
-              }));
-            }}
+              const value = e.target.value;
 
+              // Allow empty input
+              if (value === "") {
+                clearError("email");
+                setKYCFormData(prevData => ({
+                  ...prevData,
+                  email: value,
+                }));
+                return;
+              }
+
+              // Validate against the standard email format pattern
+              // Allow partial valid patterns while typing
+              const partialEmailPattern = /^[A-Z0-9._%+-]*@?[A-Z0-9.-]*\.?[A-Z]*$/i;
+              const noConsecutiveDots = !/\.\./.test(value);
+              const noStartingDot = !value.startsWith('.');
+              const noMultipleAt = (value.match(/@/g) || []).length <= 1;
+
+              if (partialEmailPattern.test(value) && noConsecutiveDots && noStartingDot && noMultipleAt) {
+                clearError("email");
+                setKYCFormData(prevData => ({
+                  ...prevData,
+                  email: value,
+                }));
+              }
+            }}
           />
 
           {errors.email && (
@@ -311,7 +341,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             <button
               type="button"
               onClick={() => {
-   
+
                 setOpenCountry(v => !v);
               }}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
@@ -333,7 +363,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                     <div
                       key={index}
                       onClick={() => {
-                                     clearError("country_id");
+                        clearError("country_id");
                         setSelectedCountry(country);
                         setKYCFormData(prevData => ({
                           ...prevData,
@@ -370,7 +400,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             <button
               type="button"
               onClick={() => {
-               
+
                 setOpenState((v) => !v)
               }}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
@@ -392,7 +422,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                     <div
                       key={index}
                       onClick={() => {
-                         clearError("state_id");
+                        clearError("state_id");
                         setSelectedState(state);
                         setKYCFormData(prevData => ({
                           ...prevData, // Spread the previous form data to retain other fields
@@ -427,7 +457,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             <button
               type="button"
               onClick={() => {
-             
+
                 setOpenCity((v) => !v)
               }}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
@@ -449,7 +479,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                     <div
                       key={index}
                       onClick={() => {
-                           clearError("city_id");
+                        clearError("city_id");
                         setSelectedCity(city);
                         setOpenCity(false);
                         setKYCFormData(prevData => ({
@@ -478,17 +508,23 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
 
         <div>
           <Label>Pincode<span className="text-red-500">*</span></Label>
-          <Input placeholder="Enter your Pincode" type="text"
+          <Input
+            placeholder="Enter your Pincode"
+            type="text"
             value={KYCformData.pincode}
-   
+            maxLength={6}
             onChange={(e) => {
-              clearError("pincode")
-              setKYCFormData(prevData => ({
-
-                ...prevData,
-                pincode: e.target.value,
-              }));
-            }} />
+              const value = e.target.value;
+              // Only allow digits (whole numbers)
+              if (/^\d*$/.test(value)) {
+                clearError("pincode");
+                setKYCFormData(prevData => ({
+                  ...prevData,
+                  pincode: value,
+                }));
+              }
+            }}
+          />
           {errors.pincode && (
             <p className="mt-1 text-sm text-red-500">{errors.pincode}</p>
           )}

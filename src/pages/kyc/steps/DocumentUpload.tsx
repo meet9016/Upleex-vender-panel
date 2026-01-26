@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ErrorType, KycFormDataType } from "@/pages/kyc/KycPage";
+import { toast } from "react-toastify";
 
 type Props = {
   label: string;
@@ -35,16 +36,23 @@ export default function DocumentUpload({
     }
   }, [file]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0] || null;
-    onChange(selected);
-    console.log(selected)
-    clearError("pancard_front_image");
-    clearError("aadharcard_front_image");
-    clearError("aadharcard_back_image");
-    clearError("gst_certificate_image");
-
-  };
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const selected = e.target.files?.[0] || null;
+  
+  // Validate if file is an image
+  if (selected && !selected.type.startsWith("image/")) {
+    toast.error("Please upload only image files (PNG, JPG, JPEG, GIF, etc.)");
+    e.target.value = ""; // Clear the input
+    return;
+  }
+  
+  onChange(selected);
+  console.log(selected);
+  clearError("pancard_front_image");
+  clearError("aadharcard_front_image");
+  clearError("aadharcard_back_image");
+  clearError("gst_certificate_image");
+};
 
   return (
     <div className="w-full relative">
