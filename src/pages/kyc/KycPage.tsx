@@ -311,7 +311,6 @@ export default function KYCPage() {
   /* <!-- ========================================================== FormSubmit ========================================================== --> */
 
   const submitFormdata = async () => {
-alert("hi")
     const formData = new FormData();
     formData.append("full_name", KYCformData.full_name);
     formData.append("email", KYCformData.email);
