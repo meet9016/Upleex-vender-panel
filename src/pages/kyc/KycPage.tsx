@@ -405,19 +405,20 @@ export default function KYCPage() {
 
         {/* Next / Submit */}
         <button
-          onClick={() => {
+          onClick={async () => {
+            const isValid = FormDataValidation();
 
-            const isValid = FormDataValidation()
-
-            if (isValid && currentStep < steps.length - 1) {
-              setCurrentStep((s) => s + 1)            
-            }
-              if (currentStep === 4) {
-                submitFormdata()
-              }
             if (!isValid) return;
-          }}
 
+            const isLastStep = currentStep === steps.length - 1;
+
+            if (!isLastStep) {
+              setCurrentStep((s) => s + 1);
+              return;
+            }
+
+            await submitFormdata();
+          }}
           className="px-8 py-2 w-full md:w-auto
         rounded-lg bg-blue-600 text-white
               hover:bg-blue-700 transition font-medium">
