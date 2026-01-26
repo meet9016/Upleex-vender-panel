@@ -5,6 +5,7 @@ export interface EndPointApi {
 
     //Vendor
     postVendorKYCFormSubmit?: string;
+    postFetchVendorKYCFormData?: string;
     postVendorCountryList?: String;
     postVendorStateList?: String;
     postVendorCityList?: string;
@@ -27,6 +28,7 @@ const endPointApi: EndPointApi = {
 
     //Vendor
     postVendorKYCFormSubmit: 'vendor-kyc',
+    postFetchVendorKYCFormData: 'vendor-single-details',
     postVendorCountryList: 'vendor-country-list',
     postVendorStateList: 'vendor-state-list',
     postVendorCityList: 'vendor-city-list',
