@@ -149,33 +149,9 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
               type="text"
               value={KYCformData?.ifsc_code || ""}
               onChange={(e) => {
-                const value = e.target.value.toUpperCase(); // Auto convert to uppercase
+                const value = e.target.value.toUpperCase(); 
 
-                // Allow empty input
-                if (value === "") {
-                  clearError("ifsc_code");
-                  setKYCFormData((prevData) => ({
-                    ...prevData,
-                    ifsc_code: value,
-                  }));
-                  return;
-                }
-
-                // Validate IFSC format while typing: ^[A-Z]{4}0[A-Z0-9]{6}$
-                let isValid = false;
-
-                if (value.length <= 4) {
-                  // First 4 characters must be letters (Bank code)
-                  isValid = /^[A-Z]{0,4}$/.test(value);
-                } else if (value.length === 5) {
-                  // 5th character must be '0'
-                  isValid = /^[A-Z]{4}0$/.test(value);
-                } else if (value.length <= 11) {
-                  // First 4 letters + '0' + next 6 alphanumeric characters (branch code)
-                  isValid = /^[A-Z]{4}0[A-Z0-9]{0,6}$/.test(value);
-                }
-
-                if (isValid && value.length <= 11) {
+                if (value.length <= 11) {
                   clearError("ifsc_code");
                   setKYCFormData((prevData) => ({
                     ...prevData,

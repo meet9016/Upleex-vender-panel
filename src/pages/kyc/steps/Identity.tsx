@@ -36,33 +36,9 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               value={KYCformData?.pancard_number || ""}
               maxLength={10}
               onChange={(e) => {
-                const value = e.target.value.toUpperCase(); // Auto convert to uppercase
+                const value = e.target.value.toUpperCase(); 
 
-                // Allow empty input
-                if (value === "") {
-                  clearError("pancard_number");
-                  setKYCFormData((prevData) => ({
-                    ...prevData,
-                    pancard_number: value,
-                  }));
-                  return;
-                }
-
-                // Validate PAN format while typing: [A-Z]{5}[0-9]{4}[A-Z]{1}
-                let isValid = false;
-
-                if (value.length <= 5) {
-                  // First 5 characters must be letters
-                  isValid = /^[A-Z]{0,5}$/.test(value);
-                } else if (value.length <= 9) {
-                  // First 5 letters + next 4 digits
-                  isValid = /^[A-Z]{5}[0-9]{0,4}$/.test(value);
-                } else if (value.length === 10) {
-                  // Complete PAN: 5 letters + 4 digits + 1 letter
-                  isValid = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value);
-                }
-
-                if (isValid) {
+                if (value) {
                   clearError("pancard_number");
                   setKYCFormData((prevData) => ({
                     ...prevData,
@@ -164,50 +140,11 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               maxLength={15}
               onChange={(e) => {
                 const value = e.target.value.toUpperCase(); // Auto convert to uppercase
-
-                // Allow empty input
-                if (value === "") {
                   clearError("gst_number");
                   setKYCFormData((prevData) => ({
                     ...prevData,
                     gst_number: value,
-                  }));
-                  return;
-                }
-
-                // Validate GST format while typing: ^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$
-                let isValid = false;
-
-                if (value.length <= 2) {
-                  // First 2 characters must be digits (state code)
-                  isValid = /^[0-9]{0,2}$/.test(value);
-                } else if (value.length <= 7) {
-                  // First 2 digits + next 5 letters (PAN)
-                  isValid = /^[0-9]{2}[A-Z]{0,5}$/.test(value);
-                } else if (value.length <= 11) {
-                  // 2 digits + 5 letters + next 4 digits
-                  isValid = /^[0-9]{2}[A-Z]{5}[0-9]{0,4}$/.test(value);
-                } else if (value.length === 12) {
-                  // + 1 letter (entity code)
-                  isValid = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value);
-                } else if (value.length === 13) {
-                  // + 1 character (1-9 or A-Z)
-                  isValid = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}$/.test(value);
-                } else if (value.length === 14) {
-                  // + must be 'Z'
-                  isValid = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z$/.test(value);
-                } else if (value.length === 15) {
-                  // Complete GST: + last character (0-9 or A-Z)
-                  isValid = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
-                }
-
-                if (isValid) {
-                  clearError("gst_number");
-                  setKYCFormData((prevData) => ({
-                    ...prevData,
-                    gst_number: value,
-                  }));
-                }
+                  }));                
               }}
             />
             {errors.gst_number && (

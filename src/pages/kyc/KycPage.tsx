@@ -96,211 +96,214 @@ export default function KYCPage() {
 
 
   const [KYCformData, setKYCFormData] = useState<KycFormDataType>({
-   
- full_name: "",
-    email: "",
-    mobile: "",
-    address: "",
-    pincode: "",
-    country_id: { value: "", label: "" },
-    state_id: { value: "", label: "" },
-    city_id: { value: "", label: "" },
-    pancard_number: "",
-    aadharcard_number: "",
-    business_name: "",
-    gst_number: "",
-    account_holder_name: "",
-    account_number: "",
-    confirm_account_number: "",
-    ifsc_code: "",
-    account_type: "",
-    pancard_front_image: null,
-    aadharcard_front_image: null,
-    aadharcard_back_image: null,
-    gst_certificate_image: null,
-    terms_conditions: 0,
+
+    full_name: "Rajesh Kumar",
+    email: "rajesh.kumar@example.com",
+    mobile: "9876543210",
+    address: "123 MG Road, Vastrapur, Ahmedabad",
+    pincode: "380015",
+    country_id: { value: "1", label: "India" },
+    state_id: { value: "12", label: "Gujarat" },
+    city_id: { value: "45", label: "Ahmedabad" },
+    pancard_number: "ABCDE1234F",
+    aadharcard_number: "2234 5678 9012",
+    business_name: "Kumar Enterprises",
+    gst_number: "24ABCDE1234F1Z5",
+    account_holder_name: "Rajesh Kumar",
+    account_number: "123456789012",
+    confirm_account_number: "123456789012",
+    ifsc_code: "SBIN0125620",
+    account_type: "1",
+    pancard_front_image: null, // Will be File object when uploaded
+    aadharcard_front_image: null, // Will be File object when uploaded
+    aadharcard_back_image: null, // Will be File object when uploaded
+    gst_certificate_image: null, // Will be File object when uploaded
+    terms_conditions: 1,
   });
 
 
   /* <!-- ========================================================== validation ========================================================== --> */
 
-const FormDataValidation = () => {
-  const newErrors: ErrorType = {};
+  const FormDataValidation = async () => {
+    const newErrors: ErrorType = {};
 
-  // helpers
-  const isEmpty = (val: string) => !val.trim();
-  const hasNumber = (val: string) => /\d/.test(val);
-  const isEmailValid = (val: string) =>
-    /^(?!\.)(?!.*\.\.)[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(val);
-  const isOnlyDigits = (val: string) => /^\d+$/.test(val);
-  const isOnlyLetters = (val: string) => /^[a-zA-Z\s]*$/.test(val);
-  const isPANValid = (val: string) => /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(val);
-  const isAadhaarValid = (val: string) => /^[2-9]{1}[0-9]{3}\s[0-9]{4}\s[0-9]{4}$/.test(val);
-  const isGSTValid = (val: string) => /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(val);
-  const isIFSCValid = (val: string) => /^[A-Z]{4}0[A-Z0-9]{6}$/.test(val);
-  const isMobileValid = (val: string) => /^[6-9][0-9]{9}$/.test(val);
+    // helpers
+    const isEmpty = (val: string) => !val.trim();
+    const hasNumber = (val: string) => /\d/.test(val);
+    const isEmailValid = (val: string) =>
+      /^(?!\.)(?!.*\.\.)[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(val);
+    const isOnlyDigits = (val: string) => /^\d+$/.test(val);
+    const isOnlyLetters = (val: string) => /^[a-zA-Z\s]*$/.test(val);
+    const isPANValid = (val: string) => /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(val);
+    const isAadhaarValid = (val: string) => /^[2-9]{1}[0-9]{3}\s[0-9]{4}\s[0-9]{4}$/.test(val);
+    const isGSTValid = (val: string) => /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(val);
+    const isIFSCValid = (val: string) => /^[A-Z]{4}0[A-Z0-9]{6}$/.test(val);
+    const isMobileValid = (val: string) => /^[6-9][0-9]{9}$/.test(val);
 
-  // ---------------- STEP 0 ----------------
-  if (currentStep === 0) {
-    if (isEmpty(KYCformData.full_name)) {
-      newErrors.full_name = "Name is required";
-    } else if (!isOnlyLetters(KYCformData.full_name)) {
-      newErrors.full_name = "Name should contain only letters and spaces";
-    } else if (KYCformData.full_name.trim().length < 2) {
-      newErrors.full_name = "Name must be at least 2 characters";
+    // ---------------- STEP 0 ----------------
+
+    if (currentStep === 0) {
+      if (isEmpty(KYCformData.full_name)) {
+        newErrors.full_name = "Name is required";
+      } else if (!isOnlyLetters(KYCformData.full_name)) {
+        newErrors.full_name = "Name should contain only letters and spaces";
+      } else if (KYCformData.full_name.trim().length < 2) {
+        newErrors.full_name = "Name must be at least 2 characters";
+      }
+
+      if (isEmpty(KYCformData.email)) {
+        newErrors.email = "Email is required";
+      } else if (!isEmailValid(KYCformData.email)) {
+        newErrors.email = "Enter a valid email address";
+      }
+
+      if (isEmpty(KYCformData.mobile)) {
+        newErrors.mobile = "Mobile number is required";
+      } else if (!isMobileValid(KYCformData.mobile)) {
+        newErrors.mobile = "Mobile number must be 10 digits starting with 6-9";
+      }
+
+      if (isEmpty(KYCformData.address)) {
+        newErrors.address = "Address is required";
+      } else if (KYCformData.address.trim().length < 10) {
+        newErrors.address = "Address must be at least 10 characters";
+      }
+
+      if (isEmpty(KYCformData.pincode)) {
+        newErrors.pincode = "Pincode is required";
+      } else if (
+        !isOnlyDigits(KYCformData.pincode) ||
+        KYCformData.pincode.length !== 6
+      ) {
+        newErrors.pincode = "Pincode must be exactly 6 digits";
+      }
+
+      if (!KYCformData.country_id?.value) {
+        newErrors.country_id = "Country is required";
+      }
+
+      if (!KYCformData.state_id?.value) {
+        newErrors.state_id = "State is required";
+      }
+
+      if (!KYCformData.city_id?.value) {
+        newErrors.city_id = "City is required";
+      }
+
     }
 
-    if (isEmpty(KYCformData.email)) {
-      newErrors.email = "Email is required";
-    } else if (!isEmailValid(KYCformData.email)) {
-      newErrors.email = "Enter a valid email address";
+    // ---------------- STEP 1 ----------------
+    if (currentStep === 1) {
+      if (isEmpty(KYCformData.pancard_number)) {
+        newErrors.pancard_number = "PAN card number is required";
+      } else if (!isPANValid(KYCformData.pancard_number)) {
+        newErrors.pancard_number = "Enter a valid PAN card number (e.g., ABCDE1234F)";
+      }
+
+      if (isEmpty(KYCformData.aadharcard_number)) {
+        newErrors.aadharcard_number = "Aadhar card number is required";
+      } else if (!isAadhaarValid(KYCformData.aadharcard_number)) {
+        newErrors.aadharcard_number = "Enter a valid Aadhar number (e.g., 2234 5678 9012)";
+      }
+
+      if (isEmpty(KYCformData.business_name)) {
+        newErrors.business_name = "Business name is required";
+      } else if (KYCformData.business_name.trim().length < 3) {
+        newErrors.business_name = "Business name must be at least 3 characters";
+      }
+
+      if (isEmpty(KYCformData.gst_number)) {
+        newErrors.gst_number = "GST number is required";
+      } else if (!isGSTValid(KYCformData.gst_number)) {
+        newErrors.gst_number = "Enter a valid GST number (15 characters)";
+      }
     }
 
-    if (isEmpty(KYCformData.mobile)) {
-      newErrors.mobile = "Mobile number is required";
-    } else if (!isMobileValid(KYCformData.mobile)) {
-      newErrors.mobile = "Mobile number must be 10 digits starting with 6-9";
+    // ---------------- STEP 2 ----------------
+    if (currentStep === 2) {
+      // ---------------- Account Holder Name ----------------
+      if (isEmpty(KYCformData.account_holder_name)) {
+        newErrors.account_holder_name = "Account holder name is required";
+      } else if (!isOnlyLetters(KYCformData.account_holder_name)) {
+        newErrors.account_holder_name = "Account holder name should contain only letters and spaces";
+      } else if (KYCformData.account_holder_name.trim().length < 3) {
+        newErrors.account_holder_name = "Account holder name must be at least 3 characters";
+      }
+
+      // ---------------- Account Number ----------------
+      if (isEmpty(KYCformData.account_number)) {
+        newErrors.account_number = "Account number is required";
+      } else if (!isOnlyDigits(KYCformData.account_number)) {
+        newErrors.account_number = "Account number must contain digits only";
+      } else if (
+        KYCformData.account_number.length < 9 ||
+        KYCformData.account_number.length > 18
+      ) {
+        newErrors.account_number = "Account number must be between 9 and 18 digits";
+      }
+
+      // ---------------- Confirm Account Number ----------------
+      if (isEmpty(KYCformData.confirm_account_number)) {
+        newErrors.confirm_account_number = "Please confirm account number";
+      } else if (!isOnlyDigits(KYCformData.confirm_account_number)) {
+        newErrors.confirm_account_number = "Account number must contain digits only";
+      } else if (
+        !newErrors.account_number &&
+        KYCformData.account_number !== KYCformData.confirm_account_number
+      ) {
+        newErrors.confirm_account_number = "Account numbers do not match";
+      }
+
+      // ---------------- IFSC Code ----------------
+      if (isEmpty(KYCformData.ifsc_code)) {
+        newErrors.ifsc_code = "IFSC code is required";
+      } else if (!isIFSCValid(KYCformData.ifsc_code)) {
+        newErrors.ifsc_code = "Enter a valid IFSC code (e.g., SBIN0125620)";
+      }
+
+      // ---------------- Account Type ----------------
+      if (isEmpty(KYCformData.account_type)) {
+        newErrors.account_type = "Account type is required";
+      }
     }
 
-    if (isEmpty(KYCformData.address)) {
-      newErrors.address = "Address is required";
-    } else if (KYCformData.address.trim().length < 10) {
-      newErrors.address = "Address must be at least 10 characters";
+    // ---------------- STEP 3 ----------------
+    if (currentStep === 3) {
+      const isFileValid = (file: File | null) =>
+        file instanceof File && file.type.startsWith("image/");
+
+      // PAN Card
+      if (!isFileValid(KYCformData.pancard_front_image)) {
+        newErrors.pancard_front_image = "PAN card image is required";
+      }
+
+      // Aadhaar Front
+      if (!isFileValid(KYCformData.aadharcard_front_image)) {
+        newErrors.aadharcard_front_image = "Aadhaar front image is required";
+      }
+
+      // Aadhaar Back
+      if (!isFileValid(KYCformData.aadharcard_back_image)) {
+        newErrors.aadharcard_back_image = "Aadhaar back image is required";
+      }
+
+      // GST Certificate
+      if (!isFileValid(KYCformData.gst_certificate_image)) {
+        newErrors.gst_certificate_image = "GST certificate image is required";
+      }
     }
 
-    if (isEmpty(KYCformData.pincode)) {
-      newErrors.pincode = "Pincode is required";
-    } else if (
-      !isOnlyDigits(KYCformData.pincode) ||
-      KYCformData.pincode.length !== 6
-    ) {
-      newErrors.pincode = "Pincode must be exactly 6 digits";
+    // ---------------- STEP 4 ----------------
+    if (currentStep === 4) {
+      if (KYCformData.terms_conditions !== 1) {
+        newErrors.terms_conditions = "Please accept the declaration to continue";
+      }
     }
 
-    if (!KYCformData.country_id?.value) {
-      newErrors.country_id = "Country is required";
-    }
-
-    if (!KYCformData.state_id?.value) {
-      newErrors.state_id = "State is required";
-    }
-
-    if (!KYCformData.city_id?.value) {
-      newErrors.city_id = "City is required";
-    }
-  }
-
-  // ---------------- STEP 1 ----------------
-  if (currentStep === 1) {
-    if (isEmpty(KYCformData.pancard_number)) {
-      newErrors.pancard_number = "PAN card number is required";
-    } else if (!isPANValid(KYCformData.pancard_number)) {
-      newErrors.pancard_number = "Enter a valid PAN card number (e.g., ABCDE1234F)";
-    }
-
-    if (isEmpty(KYCformData.aadharcard_number)) {
-      newErrors.aadharcard_number = "Aadhar card number is required";
-    } else if (!isAadhaarValid(KYCformData.aadharcard_number)) {
-      newErrors.aadharcard_number = "Enter a valid Aadhar number (e.g., 2234 5678 9012)";
-    }
-
-    if (isEmpty(KYCformData.business_name)) {
-      newErrors.business_name = "Business name is required";
-    } else if (KYCformData.business_name.trim().length < 3) {
-      newErrors.business_name = "Business name must be at least 3 characters";
-    }
-
-    if (isEmpty(KYCformData.gst_number)) {
-      newErrors.gst_number = "GST number is required";
-    } else if (!isGSTValid(KYCformData.gst_number)) {
-      newErrors.gst_number = "Enter a valid GST number (15 characters)";
-    }
-  }
-
-  // ---------------- STEP 2 ----------------
-  if (currentStep === 2) {
-    // ---------------- Account Holder Name ----------------
-    if (isEmpty(KYCformData.account_holder_name)) {
-      newErrors.account_holder_name = "Account holder name is required";
-    } else if (!isOnlyLetters(KYCformData.account_holder_name)) {
-      newErrors.account_holder_name = "Account holder name should contain only letters and spaces";
-    } else if (KYCformData.account_holder_name.trim().length < 3) {
-      newErrors.account_holder_name = "Account holder name must be at least 3 characters";
-    }
-
-    // ---------------- Account Number ----------------
-    if (isEmpty(KYCformData.account_number)) {
-      newErrors.account_number = "Account number is required";
-    } else if (!isOnlyDigits(KYCformData.account_number)) {
-      newErrors.account_number = "Account number must contain digits only";
-    } else if (
-      KYCformData.account_number.length < 9 ||
-      KYCformData.account_number.length > 18
-    ) {
-      newErrors.account_number = "Account number must be between 9 and 18 digits";
-    }
-
-    // ---------------- Confirm Account Number ----------------
-    if (isEmpty(KYCformData.confirm_account_number)) {
-      newErrors.confirm_account_number = "Please confirm account number";
-    } else if (!isOnlyDigits(KYCformData.confirm_account_number)) {
-      newErrors.confirm_account_number = "Account number must contain digits only";
-    } else if (
-      !newErrors.account_number &&
-      KYCformData.account_number !== KYCformData.confirm_account_number
-    ) {
-      newErrors.confirm_account_number = "Account numbers do not match";
-    }
-
-    // ---------------- IFSC Code ----------------
-    if (isEmpty(KYCformData.ifsc_code)) {
-      newErrors.ifsc_code = "IFSC code is required";
-    } else if (!isIFSCValid(KYCformData.ifsc_code)) {
-      newErrors.ifsc_code = "Enter a valid IFSC code (e.g., SBIN0125620)";
-    }
-
-    // ---------------- Account Type ----------------
-    if (isEmpty(KYCformData.account_type)) {
-      newErrors.account_type = "Account type is required";
-    }
-  }
-
-  // ---------------- STEP 3 ----------------
-  if (currentStep === 3) {
-    const isFileValid = (file: File | null) => 
-      file instanceof File && file.type.startsWith("image/");
-
-    // PAN Card
-    if (!isFileValid(KYCformData.pancard_front_image)) {
-      newErrors.pancard_front_image = "PAN card image is required";
-    }
-
-    // Aadhaar Front
-    if (!isFileValid(KYCformData.aadharcard_front_image)) {
-      newErrors.aadharcard_front_image = "Aadhaar front image is required";
-    }
-
-    // Aadhaar Back
-    if (!isFileValid(KYCformData.aadharcard_back_image)) {
-      newErrors.aadharcard_back_image = "Aadhaar back image is required";
-    }
-
-    // GST Certificate
-    if (!isFileValid(KYCformData.gst_certificate_image)) {
-      newErrors.gst_certificate_image = "GST certificate image is required";
-    }
-  }
-
-  // ---------------- STEP 4 ----------------
-  if (currentStep === 4) {
-    if (KYCformData.terms_conditions !== 1) {
-      newErrors.terms_conditions = "Please accept the declaration to continue";
-    }
-  }
-
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
-};
+    setErrors(newErrors);
+    console.log(Object.keys(newErrors).length === 0)
+    return Object.keys(newErrors).length === 0;
+  };
 
   /* <!-- ========================================================== FormSubmit ========================================================== --> */
 
@@ -400,7 +403,7 @@ const FormDataValidation = () => {
         {/* Next / Submit */}
         <button
           onClick={async () => {
-            const isValid = FormDataValidation();
+            const isValid = await FormDataValidation();
 
             if (!isValid) return;
 
