@@ -36,23 +36,22 @@ export default function DocumentUpload({
     }
   }, [file]);
 
-const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const selected = e.target.files?.[0] || null;
-  
-  // Validate if file is an image
-  if (selected && !selected.type.startsWith("image/")) {
-    toast.error("Please upload only image files (PNG, JPG, JPEG, GIF, etc.)");
-    e.target.value = ""; // Clear the input
-    return;
-  }
-  
-  onChange(selected);
-  console.log(selected);
-  clearError("pancard_front_image");
-  clearError("aadharcard_front_image");
-  clearError("aadharcard_back_image");
-  clearError("gst_certificate_image");
-};
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0] || null;
+
+    // Validate if file is an image
+    if (selected && !selected.type.startsWith("image/")) {
+      toast.error("Please upload only image files (PNG, JPG, JPEG, GIF, etc.)");
+      e.target.value = ""; // Clear the input
+      return;
+    }
+
+    onChange(selected);
+    clearError("pancard_front_image");
+    clearError("aadharcard_front_image");
+    clearError("aadharcard_back_image");
+    clearError("gst_certificate_image");
+  };
 
   return (
     <div className="w-full relative">
@@ -63,7 +62,13 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       {!file ? (
         <label className="border border-dashed border-gray-400 rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition text-center">
           <span className="text-gray-600 text-sm">Click to upload</span>
-          <input type="file" className="hidden" onChange={handleFileChange} />
+
+<input 
+  type="file" 
+  className="hidden" 
+  onChange={handleFileChange}
+  accept="image/*"
+/>
         </label>
       ) : (
         <div className="relative p-3 border rounded-lg bg-gray-50 group">
@@ -76,7 +81,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                   onClick={() => setShowModal(true)}
                   className="w-full h-32 object-cover rounded cursor-pointer"
                 />
-   
+
               </>
             ) : (
               <div className="text-sm">{file.name}</div>
@@ -99,7 +104,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[99999]">
           <button
             onClick={() => setShowModal(false)}
-        className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white text-2xl sm:text-3xl bg-red-600 rounded-full w-8 h-8 sm:w-10 sm:h-10"
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white text-2xl sm:text-3xl bg-red-600 rounded-full w-8 h-8 sm:w-10 sm:h-10"
           >
             ✕
           </button>

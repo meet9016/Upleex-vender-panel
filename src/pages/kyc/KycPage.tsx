@@ -83,20 +83,8 @@ export type ErrorType = {
 export default function KYCPage() {
   /* <!-- ========================================================== States ========================================================== --> */
 
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(3);
   const [errors, setErrors] = useState<ErrorType>({});
-
-  const router = useRouter();
-
-  const clearError = (field: keyof ErrorType) => {
-    setErrors(prev => {
-      if (!prev[field]) return prev;
-
-      const { [field]: _, ...rest } = prev;
-      return rest;
-    });
-  };
-
 
   const [KYCformData, setKYCFormData] = useState<KycFormDataType>({
 
@@ -125,6 +113,20 @@ export default function KYCPage() {
   });
 
 
+  const router = useRouter();
+
+  /* <!-- ========================================================== Clear error  ========================================================== --> */
+
+  const clearError = (field: keyof ErrorType) => {
+    setErrors(prev => {
+      if (!prev[field]) return prev;
+
+      const { [field]: _, ...rest } = prev;
+      return rest;
+    });
+  };
+
+
   /* <!-- ========================================================== validation ========================================================== --> */
 
   const FormDataValidation = async () => {
@@ -135,7 +137,7 @@ export default function KYCPage() {
     const isEmpty = (val: string) => !val.trim();
     const hasNumber = (val: string) => /\d/.test(val);
     const isEmailValid = (val: string) =>
-      /^(?!\.)(?!.*\.\.)[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(val);
+      /^(?!\.)(?!.*\.\.)[A-Z0-9._%+-]+@[A-Z0-9.-]+\.(in|com)$/i.test(val);
     const isOnlyDigits = (val: string) => /^\d+$/.test(val);
     const isOnlyLetters = (val: string) => /^[a-zA-Z\s]*$/.test(val);
     const isPANValid = (val: string) => /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(val);
@@ -362,12 +364,9 @@ export default function KYCPage() {
         }
         setTimeout(() => {
           toast.success("KYC Submitted Successfully");
-          router.push("/"); // home page
-
+          router.push("/");
         }, 1500);
       }
-
-
     } catch (error) {
       console.error("Failed submit Form", error)
     }
@@ -408,8 +407,6 @@ export default function KYCPage() {
           "
       >
         {/* <!-- =============================================  Buttons ============================================= -->*/}
-
-
         {currentStep > 0 ? (
           <button
             onClick={() => setCurrentStep((s) => s - 1)}
