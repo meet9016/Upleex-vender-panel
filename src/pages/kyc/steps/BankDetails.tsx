@@ -7,6 +7,7 @@ import { ChevronDownIcon } from "@/icons";
 import { api } from "@/utils/axiosInstance";
 import { useEffect, useState } from "react";
 import type { ErrorType, KycFormDataType } from '@/pages/kyc/KycPage'
+import endPointApi from "@/utils/endPointApi";
 
 export type Option = {
   value: string;
@@ -32,7 +33,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
 
 
     try {
-      const response = await api.post("vendor-account-type-list");
+      const response = await api.post(`${endPointApi.postBankAccountTypeList}`);
 
       const list = response?.data?.data || [];
 

@@ -8,6 +8,8 @@ export interface EndPointApi {
     postVendorCountryList?: String;
     postVendorStateList?: String;
     postVendorCityList?: string;
+    postBankAccountTypeList?: string;
+
 
     postCategoryList: string;
     postSubCategoryList: string;
@@ -28,6 +30,8 @@ const endPointApi: EndPointApi = {
     postVendorCountryList: 'vendor-country-list',
     postVendorStateList: 'vendor-state-list',
     postVendorCityList: 'vendor-city-list',
+    postBankAccountTypeList: 'vendor-account-type-list',
+
 
 
     //Category 

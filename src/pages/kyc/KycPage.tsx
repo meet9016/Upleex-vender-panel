@@ -298,14 +298,9 @@ export default function KYCPage() {
         newErrors.terms_conditions = 'Please accept the declaration to continue';
 
       }
+
     }
 
-    if (currentStep === 4) {
-      alert('submit')
-    }
-    // console.log("formdata => ", KYCformData, "\n ", "errors", errors, "\n " , currentStep)
-
-    console.log("step => ", currentStep)
 
 
     setErrors(newErrors);
@@ -316,7 +311,7 @@ export default function KYCPage() {
   /* <!-- ========================================================== FormSubmit ========================================================== --> */
 
   const submitFormdata = async () => {
-
+alert("hi")
     const formData = new FormData();
     formData.append("full_name", KYCformData.full_name);
     formData.append("email", KYCformData.email);
@@ -352,7 +347,6 @@ export default function KYCPage() {
     try {
       const response = await api.post(`${endPointApi.postVendorKYCFormSubmit}`, formData)
 
-      console.log(response)
     } catch (error) {
       console.error("Failed submit Form", error)
     }
@@ -415,9 +409,13 @@ export default function KYCPage() {
           onClick={() => {
 
             const isValid = FormDataValidation()
+
             if (isValid && currentStep < steps.length - 1) {
-              setCurrentStep((s) => s + 1)
+              setCurrentStep((s) => s + 1)            
             }
+              if (currentStep === 4) {
+                submitFormdata()
+              }
             if (!isValid) return;
           }}
 
