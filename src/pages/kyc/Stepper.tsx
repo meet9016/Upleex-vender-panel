@@ -8,50 +8,48 @@ export default function Stepper({
   currentStep,
 }: Props) {
   return (
-    <div className="relative flex flex-col md:flex-row md:justify-between items-start w-full gap-6 md:gap-0">
-      {steps.map((label, index) => {
-        const isActive = index <= currentStep;
-        const isCompleted = index < currentStep;
-
-        return (
-          <div
-            key={index}
-            className="relative flex flex-col items-center flex-1"
-          >
-            {/* Horizontal Line for Desktop */}
-            {index !== steps.length - 1 && (
-              <div
-                className={`hidden md:block absolute top-5 left-1/2 w-full h-1 
-                  ${isCompleted ? "bg-blue-600" : "bg-gray-300"}`}
-              />
-            )}
-
-            {/* Vertical Line for Mobile */}
-            {index !== steps.length - 1 && (
-              <div
-                className={`md:hidden absolute top-10 left-1/2 -translate-x-1/2 w-1 h-6 
-                  ${isCompleted ? "bg-blue-600" : "bg-gray-300"}`}
-              />
-            )}
-
-            {/* STEP CIRCLE */}
+    <div className="w-full px-2 md:px-0">
+      <div className="flex items-start md:items-center justify-between">
+        {steps.map((label, index) => {
+          const isActive = index <= currentStep;
+          const isCompleted = index < currentStep;
+          return (
             <div
-              className={`z-10 w-10 h-10 flex items-center justify-center
-              rounded-full text-sm font-semibold
-              ${isActive
-                ? "bg-blue-600 text-white"
-                : "bg-gray-300 text-gray-600"}`}
+              key={index}
+              className="relative flex flex-col items-center flex-1"
             >
-              {index + 1}
+              {/* Horizontal connector line */}
+              {index !== steps.length - 1 && (
+                <div
+                  className={`absolute top-4 md:top-5 h-0.5 w-full left-[calc(50%+12px)] md:left-[calc(50%+20px)] md:w-[calc(100%-40px)]
+                    ${isCompleted ? "bg-blue-600" : "bg-gray-300"}`}
+                  style={{
+                    width: 'calc(100% - 24px)'
+                  }}
+                />
+              )}
+              
+              {/* Step circle */}
+              <div
+                className={`relative z-10 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center
+                  rounded-full text-xs md:text-sm font-semibold
+                  ${
+                    isActive
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-300 text-gray-600"
+                  }`}
+              >
+                {index + 1}
+              </div>
+              
+              {/* Label */}
+              <span className="mt-2 md:mt-3 text-[10px] md:text-xs text-gray-700 text-center leading-tight px-1 max-w-[60px] md:max-w-[120px]">
+                {label}
+              </span>
             </div>
-
-            {/* LABEL */}
-            <span className="mt-2 text-xs text-center text-gray-700 max-w-[120px]">
-              {label}
-            </span>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
