@@ -27,6 +27,7 @@ type KYCFormProp = {
 
 
 export default function ContactDetails({ setKYCFormData, KYCformData, errors, clearError }: KYCFormProp) {
+
   /* <!-- =========================================== States =========================================== --> */
 
   const [countries, setCountries] = useState<Option[]>([]);
@@ -293,8 +294,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }
 
               // Validate against the standard email format pattern
-              // Allow partial valid patterns while typing
-              const partialEmailPattern = /^[A-Z0-9._%+-]*@?[A-Z0-9.-]*\.?[A-Z]*$/i;
+              const partialEmailPattern = /^[A-Z0-9._%+-]*@?[A-Z0-9.-]*\.?(in|com|i|c|co|IN|COM|I|C|CO)?$/i;
               const noConsecutiveDots = !/\.\./.test(value);
               const noStartingDot = !value.startsWith('.');
               const noMultipleAt = (value.match(/@/g) || []).length <= 1;
@@ -386,7 +386,6 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               </div>
             )}
           </div>
-
           {errors.country_id && (
             <p className="mt-1 text-sm text-red-500">{errors.country_id}</p>
           )}
@@ -400,7 +399,6 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             <button
               type="button"
               onClick={() => {
-
                 setOpenState((v) => !v)
               }}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
@@ -425,8 +423,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                         clearError("state_id");
                         setSelectedState(state);
                         setKYCFormData(prevData => ({
-                          ...prevData, // Spread the previous form data to retain other fields
-                          state_id: { value: state.value, label: state.label }, // Set the new country_id
+                          ...prevData,
+                          state_id: { value: state.value, label: state.label },
                         }));
                         setOpenState(false);
                       }}
@@ -483,8 +481,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                         setSelectedCity(city);
                         setOpenCity(false);
                         setKYCFormData(prevData => ({
-                          ...prevData, // Spread the previous form data to retain other fields
-                          city_id: { value: city.value, label: city.label }, // Set the new country_id
+                          ...prevData,
+                          city_id: { value: city.value, label: city.label },
                         }));
                       }}
                       className="cursor-pointer px-4 py-2 text-sm hover:bg-gray-100"
@@ -515,7 +513,6 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             maxLength={6}
             onChange={(e) => {
               const value = e.target.value;
-              // Only allow digits (whole numbers)
               if (/^\d*$/.test(value)) {
                 clearError("pincode");
                 setKYCFormData(prevData => ({
