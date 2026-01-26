@@ -229,6 +229,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Label>Full Name <span className="text-red-500">*</span></Label>
 
           <Input placeholder="Enter your full name" type="text"
+            onFocus={() => clearError("mobile")}
+
             value={KYCformData.full_name}
             onChange={(e) => {
               setKYCFormData(prevData => ({
