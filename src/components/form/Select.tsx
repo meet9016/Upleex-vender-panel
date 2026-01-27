@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Option {
   value: string;
@@ -10,7 +10,7 @@ interface SelectProps {
   placeholder?: string;
   onChange: (value: string) => void;
   className?: string;
-  value?: string | null; // added
+  value?: string | null;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -21,6 +21,11 @@ const Select: React.FC<SelectProps> = ({
   value,
 }) => {
   const [selectedValue, setSelectedValue] = useState<string>(value ?? "");
+
+  // Sync internal state with prop changes
+  useEffect(() => {
+    setSelectedValue(value ?? "");
+  }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;

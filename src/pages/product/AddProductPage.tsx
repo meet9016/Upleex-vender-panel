@@ -7,7 +7,7 @@ import Label from "@/components/form/Label";
 import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 import { ChevronDownIcon } from "@/icons";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import { Editor } from "primereact/editor";
 import { getAvailableMonths } from "@/utils/helper";
@@ -15,6 +15,7 @@ import { MdDelete } from "react-icons/md";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import Radio from "@/components/form/input/Radio";
+import { toast } from "react-toastify";
 
 export interface SelectOption {
     value: string;
@@ -44,13 +45,17 @@ const typeOptions: SelectOption[] = [
 ];
 
 export type Option = {
-     value: string;
-  label: string;
-  image?: string;
+    value: string;
+    label: string;
+    image?: string;
 };
 
 export default function AddProductPage() {
+
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const productId = searchParams?.get("id") ?? null;
+    const isEditMode = !!productId;
 
     const [formData, setFormData] = useState({
         category: null,
@@ -170,6 +175,77 @@ export default function AddProductPage() {
         }));
     };
 
+    useEffect(() => {
+        if (selectedCategory) {
+            console.log("Updated selectedCategory:", selectedCategory, formData.category);
+        }
+    }, [selectedCategory]);
+
+
+    useEffect(() => {
+        if (!isEditMode) return;
+
+        const fetchProductDetails = async () => {
+            const formData = new FormData()
+            formData.append("product_id", productId || "")
+            try {
+                const response = await api.post(endPointApi.postVendorProductDetails, formData);
+                if (response?.data?.status == 200) {
+                    const data = response.data.data;
+
+
+                    setBillingType(data.product_listing_type_id === "1" ? "day" : "month");
+
+                    setFormData({
+                        category: data.category_id,
+                        subCategory: data.sub_category_id,
+                        listingType: data.product_type_id,
+                        name: data.product_name,
+                        dayPrice: data.product_listing_type_id === "1" ? data.price : "",
+                        dayCancelPrice: data.product_listing_type_id === "1" ? data.cancel_price : "",
+                        monthPrice: data.product_listing_type_id !== "1" ? data.price : "",
+                        monthCancelPrice: data.product_listing_type_id !== "1" ? data.cancel_price : "",
+
+
+                        months: data.month_arrr?.length
+                            ? data.month_arrr.map((m: any) => ({
+                                month: String(m.months_id),
+                                price: m.price,
+                                cancelPrice: m.cancel_price,
+                            }))
+                            : [{ month: "", price: "", cancelPrice: "" }],
+                        description: data.description,
+                        keyFeatures: data.product_details?.length
+                            ? data.product_details.map((item: any) => ({
+                                specification_id: item.specification_id,
+                                key: item.specification,
+                                value: item.detail,
+                            }))
+                            : [{ key: "", value: "" }],
+                    });
+
+
+                    setSelectedCategory(data.category_id);
+
+
+                    if (data.main_image) {
+                        setMainPreview([data.main_image]);
+                    }
+                    if (data.sub_images?.length) {
+                        setSubPreview(data.sub_images);
+                    }
+                } else {
+                    toast.error(response?.data?.message)
+                }
+            } catch (err) {
+                console.error("Error fetching Product detail to edit", err);
+            }
+        };
+
+        fetchProductDetails();
+    }, [productId, isEditMode]);
+
+
     // ---- Fetch Categories ----
     useEffect(() => {
         const fetchCategories = async () => {
@@ -194,7 +270,7 @@ export default function AddProductPage() {
         fetchCategories();
     }, []);
 
-    // ---- Fetch SubCategories ----
+    // Update the SubCategories useEffect to handle edit mode properly:
     useEffect(() => {
         const fetchSubCategories = async () => {
             if (!selectedCategory) return;
@@ -202,7 +278,6 @@ export default function AddProductPage() {
             try {
                 const formdata = new FormData();
                 formdata.append("category_id", String(selectedCategory));
-
                 const res = await api.post(endPointApi.postSubCategoryList, formdata);
 
                 if (res?.data?.data) {
@@ -218,18 +293,16 @@ export default function AddProductPage() {
                                 <span>{item.name}</span>
                             </div>
                         ),
-                        raw: item, // optional
+                        raw: item,
                     }));
-
                     setSubCategoryList(subcats);
 
-                    // optional auto select
-                    if (subcats.length > 0) {
+                    // Don't auto-select in edit mode if subCategory is already set
+                    if (!isEditMode && subcats.length > 0) {
                         setSelectedSubCategory(subcats[0].value);
                         handleChange("subCategory", subcats[0].value);
-                    } else {
-                        setSelectedSubCategory(null);
-                        handleChange("subCategory", "");
+                    } else if (isEditMode && formData.subCategory) {
+                        setSelectedSubCategory(formData.subCategory);
                     }
                 }
             } catch (err) {
@@ -275,88 +348,87 @@ export default function AddProductPage() {
         fetchProduct();
     }, []);
 
-   const handleSave = async () => {
-  try {
-    const formdata = new FormData();
+    const handleSave = async () => {
+        try {
+            const formdata = new FormData();
 
-    // ---------- EDIT MODE CHECK ----------
-    // if (formData?.product_id) {
-    //   formdata.append("product_id", formData.product_id);
-    // }
+            // ---------- EDIT MODE CHECK ----------
+            // if (formData?.product_id) {
+            //   formdata.append("product_id", formData.product_id);
+            // }
 
-    // ---------- BASIC FIELDS ----------
-    formdata.append("category_id", String(selectedCategory));
-    formdata.append("sub_category_id", String(selectedSubCategory));
-    formdata.append("product_type_id", String(formData.listingType));
-    formdata.append("product_listing_type_id", String(formData.listingType));
-    formdata.append("product_name", formData.name);
-    formdata.append("description", formData.description);
+            // ---------- BASIC FIELDS ----------
+            formdata.append("category_id", String(selectedCategory));
+            formdata.append("sub_category_id", String(selectedSubCategory));
+            formdata.append("product_type_id", String(formData.listingType));
+            formdata.append("product_listing_type_id", String(formData.listingType));
+            formdata.append("product_name", formData.name);
+            formdata.append("description", formData.description);
 
-    // ---------- SELL FLOW ----------
-    if (formData.listingType != 1) {
-      formdata.append("price", formData.monthPrice);
-      formdata.append("cancel_price", formData.monthCancelPrice);
-    }
+            // ---------- SELL FLOW ----------
+            if (formData.listingType != 1) {
+                formdata.append("price", formData.monthPrice);
+                formdata.append("cancel_price", formData.monthCancelPrice);
+            }
 
-    // ---------- RENT FLOW ----------
-    if (formData.listingType == 1) {
-      // DAY
-      if (billingType === "day") {
-        formdata.append("price", formData.dayPrice);
-        formdata.append("cancel_price", formData.dayCancelPrice);
-      }
+            // ---------- RENT FLOW ----------
+            if (formData.listingType == 1) {
+                // DAY
+                if (billingType === "day") {
+                    formdata.append("price", formData.dayPrice);
+                    formdata.append("cancel_price", formData.dayCancelPrice);
+                }
 
-      // MONTH
-      if (billingType === "month") {
-        formData.months.forEach((m: any, index: number) => {
-          if (m.month && m.price && m.cancelPrice) {
-            formdata.append(`months_id[${index}]`, m.month);
-            formdata.append(`month_price[${index}]`, m.price);
-            formdata.append(`month_cancel_price[${index}]`, m.cancelPrice);
-          }
-        });
-      }
-    }
+                // MONTH
+                if (billingType === "month") {
+                    formData.months.forEach((m: any, index: number) => {
+                        if (m.month && m.price && m.cancelPrice) {
+                            formdata.append(`months_id[${index}]`, m.month);
+                            formdata.append(`month_price[${index}]`, m.price);
+                            formdata.append(`month_cancel_price[${index}]`, m.cancelPrice);
+                        }
+                    });
+                }
+            }
 
-    // ---------- SPECIFICATION ----------
-   formData.keyFeatures.forEach((item: any, index: number) => {
-  if (item.key && item.value) {
-    formdata.append(`specification[${index}]`, item.key);
-    formdata.append(`detail[${index}]`, item.value);
+            // ---------- SPECIFICATION ----------
+            formData.keyFeatures.forEach((item: any, index: number) => {
+                if (item.key && item.value) {
+                    formdata.append(`specification[${index}]`, item.key);
+                    formdata.append(`detail[${index}]`, item.value);
 
-    // EDIT TIME SPECIFICATION ID
-    if (item.specification_id) {
-      formdata.append(`specification_id[${index}]`, item.specification_id);
-    }
-  }
-});
+                    // EDIT TIME SPECIFICATION ID
+                    if (item.specification_id) {
+                        formdata.append(`specification_id[${index}]`, item.specification_id);
+                    }
+                }
+            });
 
 
-    // ---------- IMAGES ----------
-    if (mainImage) {
-      formdata.append("main_image", mainImage);
-    }
+            // ---------- IMAGES ----------
+            if (mainImage) {
+                formdata.append("main_image", mainImage);
+            }
 
-    subImages.forEach((file, index: number) => {
-      formdata.append(`sub_images[${index}]`, file);
-    });
+            subImages.forEach((file, index: number) => {
+                formdata.append(`sub_images[${index}]`, file);
+            });
 
-    // ---------- API CALL ----------
-    console.log("formdata",formdata);
-    const res = await api.post(endPointApi.postVendorAddProduct, formdata);
-console.log("res....",res);
+            // ---------- API CALL ----------
+            const res = await api.post(endPointApi.postVendorAddProduct, formdata);
 
-    if (res?.data?.status == 200) {
-      router.push("/product");
-    }
-  } catch (error) {
-    console.error("Save product error", error);
-  }
-};
+            if (res?.data?.status == 200) {
+                router.push("/product");
+            }
+
+        } catch (error) {
+            console.error("Save product error", error);
+        }
+    };
 
     return (
         <>
-            <ComponentCard title="Add Product">
+            <ComponentCard title={isEditMode ? "Edit Product" : "Add Product"}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <Label>Category</Label>
@@ -367,10 +439,11 @@ console.log("res....",res);
                                 value={formData.category}
                                 onChange={(val: any) => {
                                     handleChange("category", val.value);
-                                    setSelectedCategory(val);
+                                    setSelectedCategory(val.value); // Changed from val to val.value
                                 }}
                                 className="dark:bg-dark-900"
                             />
+
                             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
                                 <ChevronDownIcon />
                             </span>
@@ -444,147 +517,147 @@ console.log("res....",res);
                         </div>
                     )}
 
-               {/* RENT FLOW */}
-{formData?.listingType == 1 && (
-  <>
-    {/* DAY PRICING */}
-    {billingType === "day" && (
-      <>
-        <div>
-          <Label>Day Price</Label>
-          <Input
-            placeholder="Enter Day Price"
-            type="number"
-            value={formData.dayPrice}
-            onChange={(e) => handleChange("dayPrice", e.target.value)}
-          />
-        </div>
+                    {/* RENT FLOW */}
+                    {formData?.listingType == 1 && (
+                        <>
+                            {/* DAY PRICING */}
+                            {billingType === "day" && (
+                                <>
+                                    <div>
+                                        <Label>Day Price</Label>
+                                        <Input
+                                            placeholder="Enter Day Price"
+                                            type="number"
+                                            value={formData.dayPrice}
+                                            onChange={(e) => handleChange("dayPrice", e.target.value)}
+                                        />
+                                    </div>
 
-        <div>
-          <Label>Day Cancel Price</Label>
-          <Input
-            placeholder="Enter Day Cancel Price"
-            type="number"
-            value={formData.dayCancelPrice}
-            onChange={(e) => handleChange("dayCancelPrice", e.target.value)}
-          />
-        </div>
-      </>
-    )}
-    {/* MONTHLY PRICING */}
-    {billingType === "month" && (
-      <div className="col-span-3 mt-4">
-        <div className="flex items-center justify-between mb-3">
-          <Label className="text-lg font-semibold">
-            Monthly Pricing (1–12 Months)
-          </Label>
+                                    <div>
+                                        <Label>Day Cancel Price</Label>
+                                        <Input
+                                            placeholder="Enter Day Cancel Price"
+                                            type="number"
+                                            value={formData.dayCancelPrice}
+                                            onChange={(e) => handleChange("dayCancelPrice", e.target.value)}
+                                        />
+                                    </div>
+                                </>
+                            )}
+                            {/* MONTHLY PRICING */}
+                            {billingType === "month" && (
+                                <div className="col-span-3 mt-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <Label className="text-lg font-semibold">
+                                            Monthly Pricing (1–12 Months)
+                                        </Label>
 
-          {formData?.months?.length < 12 && (
-            <button
-              type="button"
-              className="bg-[#ffcb07] px-4 py-1 rounded-md font-bold"
-              onClick={addMonth}
-            >
-              + Add Month
-            </button>
-          )}
-        </div>
+                                        {formData?.months?.length < 12 && (
+                                            <button
+                                                type="button"
+                                                className="bg-[#ffcb07] px-4 py-1 rounded-md font-bold"
+                                                onClick={addMonth}
+                                            >
+                                                + Add Month
+                                            </button>
+                                        )}
+                                    </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {formData?.months?.map((m, index) => (
-            <div
-              key={index}
-              className="border rounded-md p-4 relative bg-gray-50"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* MONTH SELECT */}
-                <div>
-                  <Label>Month</Label>
-                  <select
-                    className="border rounded-md px-3 py-2 w-full"
-                    value={m.month}
-                    onChange={(e) =>
-                      updateMonth(index, "month", e.target.value)
-                    }
-                  >
-                    <option value="">Select Month</option>
-                    {monthOptions.map((month: any) => (
-                      <option key={month.value} value={month.value}>
-                        {month.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {formData?.months?.map((m, index) => (
+                                            <div
+                                                key={index}
+                                                className="border rounded-md p-4 relative bg-gray-50"
+                                            >
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    {/* MONTH SELECT */}
+                                                    <div>
+                                                        <Label>Month</Label>
+                                                        <select
+                                                            className="border rounded-md px-3 py-2 w-full"
+                                                            value={m.month}
+                                                            onChange={(e) =>
+                                                                updateMonth(index, "month", e.target.value)
+                                                            }
+                                                        >
+                                                            <option value="">Select Month</option>
+                                                            {monthOptions.map((month: any) => (
+                                                                <option key={month.value} value={month.value}>
+                                                                    {month.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
 
-                {/* PRICE */}
-                <div>
-                  <Label>Price</Label>
-                  <Input
-                    type="number"
-                    placeholder="Enter Price"
-                    value={m.price}
-                    onChange={(e) =>
-                      updateMonth(index, "price", e.target.value)
-                    }
-                  />
-                </div>
+                                                    {/* PRICE */}
+                                                    <div>
+                                                        <Label>Price</Label>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Enter Price"
+                                                            value={m.price}
+                                                            onChange={(e) =>
+                                                                updateMonth(index, "price", e.target.value)
+                                                            }
+                                                        />
+                                                    </div>
 
-                {/* CANCEL PRICE */}
-                <div>
-                  <Label>Cancel Price</Label>
-                  <Input
-                    type="number"
-                    placeholder="Enter Cancel Price"
-                    value={m.cancelPrice}
-                    onChange={(e) =>
-                      updateMonth(index, "cancelPrice", e.target.value)
-                    }
-                  />
-                </div>
-              </div>
+                                                    {/* CANCEL PRICE */}
+                                                    <div>
+                                                        <Label>Cancel Price</Label>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Enter Cancel Price"
+                                                            value={m.cancelPrice}
+                                                            onChange={(e) =>
+                                                                updateMonth(index, "cancelPrice", e.target.value)
+                                                            }
+                                                        />
+                                                    </div>
+                                                </div>
 
-              {/* REMOVE */}
-              {formData.months.length > 1 && (
-                <button
-                  type="button"
-                  className="absolute right-4 top-4 text-red-500 text-xl"
-                  onClick={() => removeMonth(index)}
-                >
-                  <MdDelete />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-  </>
-)}
+                                                {/* REMOVE */}
+                                                {formData.months.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        className="absolute right-4 top-4 text-red-500 text-xl"
+                                                        onClick={() => removeMonth(index)}
+                                                    >
+                                                        <MdDelete />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
 
-{/* SELL FLOW */}
-{formData?.listingType != 1 && (
-  <>
-    <div>
-      <Label>Price</Label>
-      <Input
-        placeholder="Enter Sell Price"
-        type="number"
-        value={formData.monthPrice}
-        onChange={(e) => handleChange("monthPrice", e.target.value)}
-      />
-    </div>
+                    {/* SELL FLOW */}
+                    {formData?.listingType != 1 && (
+                        <>
+                            <div>
+                                <Label>Price</Label>
+                                <Input
+                                    placeholder="Enter Sell Price"
+                                    type="number"
+                                    value={formData.monthPrice}
+                                    onChange={(e) => handleChange("monthPrice", e.target.value)}
+                                />
+                            </div>
 
-    <div>
-      <Label>Cancel Price</Label>
-      <Input
-        placeholder="Enter Sell Cancel Price"
-        type="number"
-        value={formData.monthCancelPrice}
-        onChange={(e) => handleChange("monthCancelPrice", e.target.value)}
-      />
-    </div>
-  </>
-)}
+                            <div>
+                                <Label>Cancel Price</Label>
+                                <Input
+                                    placeholder="Enter Sell Cancel Price"
+                                    type="number"
+                                    value={formData.monthCancelPrice}
+                                    onChange={(e) => handleChange("monthCancelPrice", e.target.value)}
+                                />
+                            </div>
+                        </>
+                    )}
 
                 </div>
 
@@ -594,6 +667,7 @@ console.log("res....",res);
                     <div className="">
                         <Label>Description</Label>
                         <Editor
+                            value={formData.description} // Add this line
                             style={{ height: "280px" }}
                             className="border border-gray-200 rounded-md"
                             onTextChange={(e) => handleChange("description", e.htmlValue)}
@@ -659,6 +733,13 @@ console.log("res....",res);
                     {/* MAIN IMAGE (Large Preview) */}
                     <div>
                         <Label>Main Image</Label>
+
+                        <img src={"https:\/\/upleex.2min.cloud\/upload\/product_images\/2026\/01\/2026-01-22\/fb8b7c56ce6d9150a8d6c86fc56d3035.webp"} />
+
+
+
+
+
                         <DropzoneComponent
                             preview={mainPreview}
                             setPreview={setMainPreview}
@@ -685,7 +766,7 @@ console.log("res....",res);
             </ComponentCard >
             <div className="flex items-center gap-5">
                 <Button size="sm" variant="primary"
-                onClick={handleSave}
+                    onClick={handleSave}
                 >
                     Save
                 </Button>
