@@ -354,8 +354,10 @@ export default function KYCPage() {
       formData.append("gst_certificate_image", KYCformData.gst_certificate_image || "")
     }
 
-    formData.append("terms_conditions", String(KYCformData.terms_conditions));
-
+    if (KYCformData.terms_conditions) {
+      formData.append("terms_conditions", String(KYCformData.terms_conditions));
+    }
+    
     try {
       const response = await api.post(`${endPointApi.postVendorKYCFormSubmit}`, formData)
 
@@ -391,13 +393,11 @@ export default function KYCPage() {
 
       if (response.status == 200) {
 
-
-        console.log("Fetched KYC Data:", response.data.data);
-
         setKYCFormData(response.data.data);
         setKYCFormData((prev) => ({
           ...prev,
-          confirm_account_number: response.data.data.account_number
+          confirm_account_number: response.data.data.account_number,
+
         }));
       }
     } catch (error) {
