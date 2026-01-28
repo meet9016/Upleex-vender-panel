@@ -85,6 +85,17 @@ export default function AddProductPage() {
     const [mainImage, setMainImage] = useState<File | null>(null);
     const [subImages, setSubImages] = useState<File[]>([]);
 
+    // Add this helper function after your state declarations (around line 60)
+const getAvailableMonthsForIndex = (currentIndex: number): Option[] => {
+    const selectedMonths = formData.months
+        .map((m, idx) => (idx !== currentIndex ? m.month : null))
+        .filter(Boolean);
+    
+    return monthOptions.filter(
+        (option) => !selectedMonths.includes(option.value)
+    );
+};
+
     const [selectedCategory, setSelectedCategory] =
         useState<CategoryOption | null>(null);
 
@@ -558,7 +569,7 @@ export default function AddProductPage() {
                                                     <div>
                                                         <Label>Month</Label>
                                                         <Select
-                                                            options={monthOptions}
+                                                           options={getAvailableMonthsForIndex(index)} 
                                                             placeholder="Select Month"
                                                             value={m.month}
                                                             onChange={(val) => updateMonth(index, "month", val)}
