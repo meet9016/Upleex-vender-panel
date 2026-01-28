@@ -274,10 +274,10 @@ export default function AddProductPage() {
                 const res = await api.post(endPointApi.postSubCategoryList, formdata);
 
                 if (res?.data?.data) {
-        const subcats = res.data.data.map((item: any) => ({
-  value: item.id,
-  label: item.name, // ✅ TEXT ONLY
-}));
+                    const subcats = res.data.data.map((item: any) => ({
+                        value: item.id,
+                        label: item.name, // ✅ TEXT ONLY
+                    }));
 
                     setSubCategoryList(subcats);
 
@@ -557,20 +557,13 @@ export default function AddProductPage() {
                                                     {/* MONTH SELECT */}
                                                     <div>
                                                         <Label>Month</Label>
-                                                        <select
-                                                            className="border rounded-md px-3 py-2 w-full"
+                                                        <Select
+                                                            options={monthOptions}
+                                                            placeholder="Select Month"
                                                             value={m.month}
-                                                            onChange={(e) =>
-                                                                updateMonth(index, "month", e.target.value)
-                                                            }
-                                                        >
-                                                            <option value="">Select Month</option>
-                                                            {monthOptions.map((month: any) => (
-                                                                <option key={month.value} value={month.value}>
-                                                                    {month.label}
-                                                                </option>
-                                                            ))}
-                                                        </select>
+                                                            onChange={(val) => updateMonth(index, "month", val)}
+                                                        />
+
                                                     </div>
 
                                                     {/* PRICE */}
