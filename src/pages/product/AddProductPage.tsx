@@ -281,20 +281,11 @@ export default function AddProductPage() {
                 const res = await api.post(endPointApi.postSubCategoryList, formdata);
 
                 if (res?.data?.data) {
-                    const subcats = res.data.data.map((item: any) => ({
-                        value: item.id,
-                        label: (
-                            <div className="flex items-center gap-3">
-                                <img
-                                    src={item.image}
-                                    alt={item.name}
-                                    className="w-6 h-6 rounded object-cover"
-                                />
-                                <span>{item.name}</span>
-                            </div>
-                        ),
-                        raw: item,
-                    }));
+        const subcats = res.data.data.map((item: any) => ({
+  value: item.id,
+  label: item.name, // ✅ TEXT ONLY
+}));
+
                     setSubCategoryList(subcats);
 
                     // Don't auto-select in edit mode if subCategory is already set
