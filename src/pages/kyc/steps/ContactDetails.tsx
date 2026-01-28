@@ -231,7 +231,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Input
             placeholder="Enter your full name"
             type="text"
-            value={KYCformData.full_name}
+            value={KYCformData?.full_name}
             onChange={(e) => {
               const value = e.target.value;
               // Only allow letters and spaces
@@ -244,7 +244,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }
             }}
           />
-          {errors.full_name && (
+          {errors?.full_name && (
             <p className="mt-1 text-sm text-red-500">{errors.full_name}</p>
           )}
         </div>
@@ -254,7 +254,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         <div>
           <Label>Mobile Number<span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your mobile number" type="text"
-            value={KYCformData.mobile}
+            value={KYCformData?.mobile}
             onChange={(e) => {
               const value = e.target.value;
               if (/^\d*$/.test(value)) {
@@ -267,7 +267,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             }}
             maxLength={10}
           />
-          {errors.mobile && (
+          {errors?.mobile && (
             <p className="mt-1 text-sm text-red-500">{errors.mobile}</p>
           )}
         </div>
@@ -279,7 +279,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Input
             placeholder="Enter your email address"
             type="email"
-            value={KYCformData.email}
+            value={KYCformData?.email}
             onChange={(e) => {
               const value = e.target.value;
 
@@ -309,7 +309,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             }}
           />
 
-          {errors.email && (
+          {errors?.email && (
             <p className="mt-1 text-sm text-red-500">{errors.email}</p>
           )}
         </div>
@@ -319,7 +319,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         <div>
           <Label>Address<span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your Address" type="text"
-            value={KYCformData.address}
+            value={KYCformData?.address}
             onChange={(e) => {
               clearError("address")
               setKYCFormData(prevData => ({
@@ -328,7 +328,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }));
             }}
           />
-          {errors.address && (
+          {errors?.address && (
             <p className="mt-1 text-sm text-red-500">{errors.address}</p>
           )}
         </div>
@@ -346,8 +346,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
             >
-              <span className={KYCformData.country_id.label ? "" : "text-gray-400"}>
-                {KYCformData.country_id.label || "Select Country"}
+              <span className={KYCformData?.country_id.label ? "" : "text-gray-400"}>
+                {KYCformData?.country_id.label || "Select Country"}
               </span>
               <ChevronDownIcon />
             </button>
@@ -359,7 +359,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                     placeholder="Search Country"
                     onChange={(e) => debounceSearch("country", e.target.value)}
                   />
-                  {filteredCountries.map((country, index) => (
+                  {filteredCountries?.map((country, index) => (
                     <div
                       key={index}
                       onClick={() => {
@@ -386,7 +386,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               </div>
             )}
           </div>
-          {errors.country_id && (
+          {errors?.country_id && (
             <p className="mt-1 text-sm text-red-500">{errors.country_id}</p>
           )}
         </div>
@@ -403,8 +403,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
             >
-              <span className={KYCformData.state_id.label ? "" : "text-gray-400"}>
-                {KYCformData.state_id.label || "Select State"}
+              <span className={KYCformData?.state_id.label ? "" : "text-gray-400"}>
+                {KYCformData?.state_id.label || "Select State"}
               </span>
               <ChevronDownIcon />
             </button>
@@ -416,7 +416,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                     placeholder="Search State"
                     onChange={(e) => debounceSearch("state", e.target.value)}
                   />
-                  {filteredStates.map((state, index) => (
+                  {filteredStates?.map((state, index) => (
                     <div
                       key={index}
                       onClick={() => {
@@ -442,7 +442,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               </div>
             )}
           </div>
-          {errors.state_id && (
+          {errors?.state_id && (
             <p className="mt-1 text-sm text-red-500">{errors.state_id}</p>
           )}
         </div>
@@ -460,8 +460,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }}
               className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
             >
-              <span className={KYCformData.city_id.label ? "" : "text-gray-400"}>
-                {KYCformData.city_id.label || "Select City"}
+              <span className={KYCformData?.city_id.label ? "" : "text-gray-400"}>
+                {KYCformData?.city_id.label || "Select City"}
               </span>
               <ChevronDownIcon />
             </button>
@@ -499,7 +499,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               </div>
             )}
           </div>
-          {errors.city_id && (
+          {errors?.city_id && (
             <p className="mt-1 text-sm text-red-500">{errors.city_id}</p>
           )}
         </div>
@@ -509,7 +509,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Input
             placeholder="Enter your Pincode"
             type="text"
-            value={KYCformData.pincode}
+            value={KYCformData?.pincode}
             maxLength={6}
             onChange={(e) => {
               const value = e.target.value;
@@ -522,7 +522,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }
             }}
           />
-          {errors.pincode && (
+          {errors?.pincode && (
             <p className="mt-1 text-sm text-red-500">{errors.pincode}</p>
           )}
         </div>

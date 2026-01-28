@@ -287,12 +287,12 @@ export default function KYCPage() {
         file instanceof File && file.type.startsWith("image/");
 
       // PAN Card
-      if (!isFileValid(KYCformData.pancard_front_image)) {
+      if (!isFileValid(KYCformData?.pancard_front_image)) {
         newErrors.pancard_front_image = "PAN card image is required";
       }
 
       // Aadhaar Front
-      if (!isFileValid(KYCformData.aadharcard_front_image)) {
+      if (!isFileValid(KYCformData?.aadharcard_front_image)) {
         newErrors.aadharcard_front_image = "Aadhaar front image is required";
       }
 
@@ -311,7 +311,7 @@ export default function KYCPage() {
 
     // ---------------- STEP 4 ----------------
     if (currentStep === 4) {
-      if (KYCformData.terms_conditions !== 1) {
+      if (KYCformData?.terms_conditions !== 1) {
         newErrors.terms_conditions = "Please accept the declaration to continue";
       }
       setErrors(newErrors);
@@ -342,8 +342,8 @@ export default function KYCPage() {
     formData.append("confirm_account_number", KYCformData.confirm_account_number || "");
     formData.append("ifsc_code", KYCformData.ifsc_code || "");
     formData.append("account_type", KYCformData.account_type || "");
-    if (KYCformData.pancard_front_image) {
-      formData.append("pancard_front_image", KYCformData.pancard_front_image)
+    if (KYCformData?.pancard_front_image) {
+      formData.append("pancard_front_image", KYCformData?.pancard_front_image)
     }
     if (KYCformData.aadharcard_front_image) {
       formData.append("aadharcard_front_image", KYCformData.aadharcard_front_image)
@@ -354,8 +354,8 @@ export default function KYCPage() {
       formData.append("gst_certificate_image", KYCformData.gst_certificate_image || "")
     }
 
-    if (KYCformData.terms_conditions) {
-      formData.append("terms_conditions", String(KYCformData.terms_conditions));
+    if (KYCformData?.terms_conditions) {
+      formData.append("terms_conditions", String(KYCformData?.terms_conditions));
     }
     
     try {
@@ -472,7 +472,7 @@ export default function KYCPage() {
         rounded-lg bg-blue-600 text-white
               hover:bg-blue-700 transition font-medium">
 
-          {currentStep === steps.length - 1 && KYCformData.terms_conditions === 1 ? "Submit KYC" : "Next"}
+          {currentStep === steps.length - 1 && KYCformData?.terms_conditions === 1 ? "Submit KYC" : "Next"}
         </button>
       </div>
 
