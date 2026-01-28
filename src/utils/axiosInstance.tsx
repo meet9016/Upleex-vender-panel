@@ -29,9 +29,17 @@ apiAdminInstance.interceptors.response.use(
   error => {
     const { response } = error;
 
-    if (response.status === 401) {
-      localStorage.removeItem('auth_token');
-      window.location.href = '/login';
+    // if (response.status === 401) {
+    //   localStorage.removeItem('auth_token');
+    //   window.location.href = '/login';
+    // }
+
+     if (response?.status === 401) {
+      // optional: avoid infinite redirect
+      if (window.location.pathname !== '/login') {
+        localStorage.removeItem('auth_token');
+        window.location.replace('/login');
+      }
     }
     return Promise.reject(error);
   }
