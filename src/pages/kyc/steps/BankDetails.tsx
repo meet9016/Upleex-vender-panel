@@ -85,7 +85,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
                 }
               }}
             />
-            {errors.account_holder_name && (
+            {errors?.account_holder_name && (
               <p className="mt-1 text-sm text-red-500">{errors.account_holder_name}</p>
             )}
           </div>
@@ -109,7 +109,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
                 }
               }}
             />
-            {errors.account_number && (
+            {errors?.account_number && (
               <p className="mt-1 text-sm text-red-500">{errors.account_number}</p>
             )}
 
@@ -135,7 +135,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
               }}
 
             />
-            {errors.confirm_account_number && (
+            {errors?.confirm_account_number && (
               <p className="mt-1 text-sm text-red-500">{errors.confirm_account_number}</p>
             )}
           </div>
@@ -160,7 +160,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
                 }
               }}
             />
-            {errors.ifsc_code && (
+            {errors?.ifsc_code && (
               <p className="mt-1 text-sm text-red-500">{errors.ifsc_code}</p>
             )}
           </div>
@@ -185,7 +185,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
               <ChevronDownIcon />
             </span>
-            {errors.account_type && (
+            {errors?.account_type && (
               <p className="mt-1 text-sm text-red-500">{errors.account_type}</p>
             )}
           </div>

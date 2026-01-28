@@ -47,7 +47,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
                 }
               }}
             />
-            {errors.pancard_number && (
+            {errors?.pancard_number && (
               <p className="mt-1 text-sm text-red-500">{errors.pancard_number}</p>
             )}
           </div>
@@ -100,7 +100,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
                 }
               }}
             />
-            {errors.aadharcard_number && (
+            {errors?.aadharcard_number && (
               <p className="mt-1 text-sm text-red-500">{errors.aadharcard_number}</p>
             )}
           </div>
@@ -122,7 +122,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
                 }))
               }}
             />
-            {errors.business_name && (
+            {errors?.business_name && (
               <p className="mt-1 text-sm text-red-500">{errors.business_name}</p>
             )}
           </div>
@@ -147,7 +147,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
                   }));                
               }}
             />
-            {errors.gst_number && (
+            {errors?.gst_number && (
               <p className="mt-1 text-sm text-red-500">{errors.gst_number}</p>
             )}
           </div>
