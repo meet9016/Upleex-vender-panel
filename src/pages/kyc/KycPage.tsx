@@ -50,7 +50,8 @@ export type KycFormDataType = {
   aadharcard_front_image: File | null;
   aadharcard_back_image: File | null;
   gst_certificate_image: File | null;
-
+  vendor_image: File | null;
+  business_logo_image: File | null;
   terms_conditions: number;
 };
 
@@ -76,6 +77,8 @@ export type ErrorType = {
   aadharcard_front_image?: string;
   aadharcard_back_image?: string;
   gst_certificate_image?: string;
+  vendor_image?: string;
+  business_logo_image?: string;
   terms_conditions?: string;
 };
 
@@ -83,11 +86,10 @@ export type ErrorType = {
 export default function KYCPage() {
   /* <!-- ========================================================== States ========================================================== --> */
 
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(3);
   const [errors, setErrors] = useState<ErrorType>({});
 
   const [KYCformData, setKYCFormData] = useState<KycFormDataType>({
-
     full_name: "",
     email: "",
     mobile: "",
@@ -109,6 +111,8 @@ export default function KYCPage() {
     aadharcard_front_image: null,
     aadharcard_back_image: null,
     gst_certificate_image: null,
+    vendor_image: null,
+    business_logo_image: null,
     terms_conditions: 0,
   });
 
@@ -305,6 +309,18 @@ export default function KYCPage() {
       if (!isFileValid(KYCformData.gst_certificate_image)) {
         newErrors.gst_certificate_image = "GST certificate image is required";
       }
+
+      // Vendor image
+      if (!isFileValid(KYCformData.vendor_image)) {
+        newErrors.vendor_image = "Vendor is required";
+      }
+
+      // Logo
+      if (!isFileValid(KYCformData.business_logo_image)) {
+        newErrors.business_logo_image = "Logo is required";
+      }
+
+
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
     }
@@ -352,12 +368,16 @@ export default function KYCPage() {
       formData.append("aadharcard_back_image", KYCformData.aadharcard_back_image)
     } if (KYCformData.gst_certificate_image) {
       formData.append("gst_certificate_image", KYCformData.gst_certificate_image || "")
+    } if (KYCformData.vendor_image) {
+      formData.append("vendor_image", KYCformData.vendor_image || "")
+    } if (KYCformData.business_logo_image) {
+      formData.append("business_logo_image", KYCformData.business_logo_image || "")
     }
 
     if (KYCformData?.terms_conditions) {
       formData.append("terms_conditions", String(KYCformData?.terms_conditions));
     }
-    
+
     try {
       const response = await api.post(`${endPointApi.postVendorKYCFormSubmit}`, formData)
 
