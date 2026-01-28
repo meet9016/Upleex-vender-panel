@@ -176,13 +176,6 @@ export default function AddProductPage() {
     };
 
     useEffect(() => {
-        if (selectedCategory) {
-            console.log("Updated selectedCategory:", selectedCategory, formData.category);
-        }
-    }, [selectedCategory]);
-
-
-    useEffect(() => {
         if (!isEditMode) return;
 
         const fetchProductDetails = async () => {
