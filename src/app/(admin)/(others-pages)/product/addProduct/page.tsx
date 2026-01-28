@@ -1,9 +1,14 @@
-import AddProductPage from '@/pages/product/AddProductPage'
 import React from 'react'
+import { Suspense } from "react";
+import AddProductPage from '@/pages/product/AddProductPage'
 
 const page = () => {
   return (
-    <div><AddProductPage /></div>
+    <div>
+          <Suspense fallback={null}>
+      <AddProductPage />
+    </Suspense>
+    </div>
   )
 }
 
