@@ -19,7 +19,7 @@ export default function Documents({
 }: KYCFormProp) {
   const updateFile =
     (key: keyof KycFormDataType) => (file: File | null) => {
-    clearError(key);
+      clearError(key);
 
       setKYCFormData((prev) => ({
         ...prev,
@@ -60,6 +60,24 @@ export default function Documents({
         error={errors?.gst_certificate_image}
         clearError={clearError}
       />
+
+      <DocumentUpload
+        label="Business logo"
+        file={KYCformData?.business_logo_image}
+        onChange={updateFile("business_logo_image")}
+        error={errors?.business_logo_image}
+        clearError={clearError}
+      />
+
+      <DocumentUpload
+        label="Vendor image"
+        file={KYCformData?.vendor_image}
+        onChange={updateFile("vendor_image")}
+        error={errors?.vendor_image}
+        clearError={clearError}
+      />
+
+
     </div>
   );
 }
