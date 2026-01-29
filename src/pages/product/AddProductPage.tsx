@@ -232,6 +232,7 @@ export default function AddProductPage() {
 
                     setMainPreview([data.product_main_image]);
 
+                    setSubPreview(data.images.map((item:any)=>(item.image)));
 
                 } else {
                     toast.error(response?.data?.message)
@@ -269,9 +270,9 @@ export default function AddProductPage() {
 
     // Update the SubCategories useEffect to handle edit mode properly:
     useEffect(() => {
+       
         const fetchSubCategories = async () => {
-            if (!selectedCategory) return;
-
+         
             try {
                 const formdata = new FormData();
                 formdata.append("category_id", String(selectedCategory));
@@ -299,7 +300,7 @@ export default function AddProductPage() {
         };
 
         fetchSubCategories();
-    }, [selectedCategory]);
+    }, [formData.category,selectedCategory]);
 
     // ---- Fetch Product ----
     useEffect(() => {
@@ -399,7 +400,7 @@ export default function AddProductPage() {
             }
 
             subImages.forEach((file, index: number) => {
-                formdata.append(`images[${index}]`, file);
+                formdata.append(`image[${index}]`, file);
             });
 
             // ---------- API CALL ----------
@@ -427,7 +428,7 @@ export default function AddProductPage() {
                                 value={formData.category}
                                 onChange={(val: any) => {
                                     handleChange("category", val.value);
-                                    setSelectedCategory(val.value); // Changed from val to val.value
+                                    setSelectedCategory(val); // Changed from val to val.value
                                 }}
                                 className="dark:bg-dark-900"
                             />
