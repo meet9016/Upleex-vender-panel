@@ -162,6 +162,8 @@ export default function AddProductPage() {
         }));
     };
 
+
+
     const updateMonth = (
         index: number,
         field: keyof typeof formData.months[number],
@@ -232,7 +234,7 @@ export default function AddProductPage() {
 
                     setMainPreview([data.product_main_image]);
 
-                    setSubPreview(data.images.map((item:any)=>(item.image)));
+                    setSubPreview(data.images.map((item: any) => (item.image)));
 
                 } else {
                     toast.error(response?.data?.message)
@@ -270,9 +272,9 @@ export default function AddProductPage() {
 
     // Update the SubCategories useEffect to handle edit mode properly:
     useEffect(() => {
-       
+
         const fetchSubCategories = async () => {
-         
+
             try {
                 const formdata = new FormData();
                 formdata.append("category_id", String(selectedCategory));
@@ -300,7 +302,7 @@ export default function AddProductPage() {
         };
 
         fetchSubCategories();
-    }, [formData.category,selectedCategory]);
+    }, [formData.category, selectedCategory]);
 
     // ---- Fetch Product ----
     useEffect(() => {
@@ -336,6 +338,9 @@ export default function AddProductPage() {
 
         fetchProduct();
     }, []);
+
+
+
 
     const handleSave = async () => {
         try {
@@ -727,12 +732,13 @@ export default function AddProductPage() {
 
                     {/* SUB IMAGES (Small Preview + Remove button) */}
                     <div>
-                        <Label>Sub Images</Label>
+                        <Label>Sub Images (Max 4)</Label>
                         <DropzoneComponent
                             preview={subPreview}
                             setPreview={setSubPreview}
                             multiple={true}
                             smallPreview={true}
+                            maxFiles={4}
                             onFileSelect={(files) => setSubImages((prev) => [...prev, ...files])}
                         />
                     </div>

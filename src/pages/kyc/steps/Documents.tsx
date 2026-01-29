@@ -34,7 +34,6 @@ export default function Documents({
         file={KYCformData?.pancard_front_image}
         onChange={updateFile("pancard_front_image")}
         error={errors?.pancard_front_image}
-        clearError={clearError}
       />
 
       <DocumentUpload
@@ -42,7 +41,6 @@ export default function Documents({
         file={KYCformData?.aadharcard_front_image}
         onChange={updateFile("aadharcard_front_image")}
         error={errors?.aadharcard_front_image}
-        clearError={clearError}
       />
 
       <DocumentUpload
@@ -50,7 +48,6 @@ export default function Documents({
         file={KYCformData?.aadharcard_back_image}
         onChange={updateFile("aadharcard_back_image")}
         error={errors?.aadharcard_back_image}
-        clearError={clearError}
       />
 
       <DocumentUpload
@@ -58,7 +55,6 @@ export default function Documents({
         file={KYCformData?.gst_certificate_image}
         onChange={updateFile("gst_certificate_image")}
         error={errors?.gst_certificate_image}
-        clearError={clearError}
       />
 
       <DocumentUpload
@@ -66,7 +62,6 @@ export default function Documents({
         file={KYCformData?.business_logo_image}
         onChange={updateFile("business_logo_image")}
         error={errors?.business_logo_image}
-        clearError={clearError}
       />
 
       <DocumentUpload
@@ -74,7 +69,6 @@ export default function Documents({
         file={KYCformData?.vendor_image}
         onChange={updateFile("vendor_image")}
         error={errors?.vendor_image}
-        clearError={clearError}
       />
 
 

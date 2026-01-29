@@ -9,6 +9,7 @@ interface DropzoneProps {
   onFileSelect?: (files: File[]) => void;
   multiple?: boolean;
   smallPreview?: boolean; // multi image size
+  maxFiles?: number; // Add this new prop
 }
 
 const DropzoneComponent: React.FC<DropzoneProps> = ({
@@ -17,6 +18,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
   onFileSelect,
   multiple = false,
   smallPreview = false,
+  maxFiles, // Add this
 }) => {
   const onDrop = (acceptedFiles: File[]) => {
     if (!multiple) {
@@ -26,10 +28,33 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
       setPreview([imgUrl]);
       onFileSelect?.([file]);
     } else {
-      // Multi image
-      const newImages = acceptedFiles.map((f) => URL.createObjectURL(f));
-      setPreview((prev) => [...prev, ...newImages]);
-      onFileSelect?.(acceptedFiles);
+      // Multi image with max limit check
+      if (maxFiles) {
+        const remainingSlots = maxFiles - preview.length;
+        
+        if (remainingSlots <= 0) {
+          alert(`Maximum ${maxFiles} images allowed. Please remove some images first.`);
+          return;
+        }
+        
+        if (acceptedFiles.length > remainingSlots) {
+          alert(`You can only add ${remainingSlots} more image(s). Maximum limit is ${maxFiles} images.`);
+          const filesToAdd = acceptedFiles.slice(0, remainingSlots);
+          const newImages = filesToAdd.map((f) => URL.createObjectURL(f));
+          setPreview((prev) => [...prev, ...newImages]);
+          onFileSelect?.(filesToAdd);
+          return;
+        }
+        
+        const newImages = acceptedFiles.map((f) => URL.createObjectURL(f));
+        setPreview((prev) => [...prev, ...newImages]);
+        onFileSelect?.(acceptedFiles);
+      } else {
+        // No limit - original behavior
+        const newImages = acceptedFiles.map((f) => URL.createObjectURL(f));
+        setPreview((prev) => [...prev, ...newImages]);
+        onFileSelect?.(acceptedFiles);
+      }
     }
   };
 
@@ -37,6 +62,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
     setPreview((prev) => prev.filter((_, i) => i !== index));
   };
 
+const isLimitReached = Boolean(maxFiles && preview.length >= maxFiles);
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     multiple,
@@ -46,6 +72,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
       "image/webp": [],
       "image/svg+xml": [],
     },
+    disabled: isLimitReached, // Disable when limit reached
   });
 
   return (
@@ -57,13 +84,12 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
           transition-all duration-300 ease-in-out
           border-1  rounded-md 
           p-8 flex flex-col items-center justify-center 
-          cursor-pointer min-h-[320px] w-full
+          ${isLimitReached ? 'cursor-not-allowed ' : 'cursor-pointer'} min-h-[320px] w-full
           group
           
         `}
       >
         <input {...getInputProps()} />
-
         {/* Preview Section */}
         {preview.length > 0 ? (
           <div className="w-full">
@@ -103,7 +129,6 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                 </div>
               </div>
             )}
-
             {/* Multiple Images Preview */}
             {multiple && (
               <div className={`
@@ -125,7 +150,6 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                       alt={`Preview ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
-
                     {/* Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 
                                   opacity-0 group-hover/image:opacity-100 transition-all duration-300">
@@ -154,12 +178,22 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                 ))}
               </div>
             )}
-
             {/* Add More Images Hint */}
-            {multiple && (
+            {multiple && !isLimitReached && (
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-500 font-medium">
-                  Click or drag to add more images
+                  {maxFiles 
+                    ? `Click or drag to add more images (${preview.length}/${maxFiles})`
+                    : "Click or drag to add more images"
+                  }
+                </p>
+              </div>
+            )}
+            {/* Limit Reached Message */}
+            {multiple && isLimitReached && (
+              <div className="mt-6 text-center">
+                <p className="text-sm text-green-700 font-medium">
+                  Maximum limit of {maxFiles} images reached
                 </p>
               </div>
             )}
@@ -184,22 +218,17 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                 />
               </svg>
             </div>
-
             {/* Text Content */}
             <div>
-
               <h4 className="text-sm text-gray-600 mb-3">
                 {multiple
                   ? "Drag & drop multiple images or click to browse"
                   : "Drag & drop an image or click to browse"
                 }
               </h4>
-
             </div>
-
             {/* Browse Button */}
             <Button size="sm" variant="primary"
-
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600  text-white font-semibold rounded-xl"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,12 +239,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
             </Button>
           </div>
         )}
-
-
       </div>
-
-
-
     </div>
   );
 };

@@ -86,7 +86,7 @@ export type ErrorType = {
 export default function KYCPage() {
   /* <!-- ========================================================== States ========================================================== --> */
 
-  const [currentStep, setCurrentStep] = useState(3);
+  const [currentStep, setCurrentStep] = useState(0);
   const [errors, setErrors] = useState<ErrorType>({});
 
   const [KYCformData, setKYCFormData] = useState<KycFormDataType>({
