@@ -47,10 +47,7 @@ export default function DocumentUpload({
     }
 
     onChange(selected);
-    clearError("pancard_front_image");
-    clearError("aadharcard_front_image");
-    clearError("aadharcard_back_image");
-    clearError("gst_certificate_image");
+
   };
 
   return (
