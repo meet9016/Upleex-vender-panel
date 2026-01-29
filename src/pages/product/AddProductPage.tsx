@@ -229,7 +229,7 @@ export default function AddProductPage() {
                     });
 
                     setSelectedCategory(data.category_id);
-                    
+
                     setMainPreview([data.product_main_image]);
 
 
@@ -244,7 +244,6 @@ export default function AddProductPage() {
         fetchProductDetails();
     }, [productId, isEditMode]);
 
-    // ---- Fetch Categories ----
     useEffect(() => {
         const fetchCategories = async () => {
             try {
