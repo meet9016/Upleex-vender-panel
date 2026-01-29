@@ -86,15 +86,15 @@ export default function AddProductPage() {
     const [subImages, setSubImages] = useState<File[]>([]);
 
     // Add this helper function after your state declarations (around line 60)
-const getAvailableMonthsForIndex = (currentIndex: number): Option[] => {
-    const selectedMonths = formData.months
-        .map((m, idx) => (idx !== currentIndex ? m.month : null))
-        .filter(Boolean);
-    
-    return monthOptions.filter(
-        (option) => !selectedMonths.includes(option.value)
-    );
-};
+    const getAvailableMonthsForIndex = (currentIndex: number): Option[] => {
+        const selectedMonths = formData.months
+            .map((m, idx) => (idx !== currentIndex ? m.month : null))
+            .filter(Boolean);
+
+        return monthOptions.filter(
+            (option) => !selectedMonths.includes(option.value)
+        );
+    };
 
     const [selectedCategory, setSelectedCategory] =
         useState<CategoryOption | null>(null);
@@ -228,16 +228,11 @@ const getAvailableMonthsForIndex = (currentIndex: number): Option[] => {
                             : [{ key: "", value: "" }],
                     });
 
-
                     setSelectedCategory(data.category_id);
+                    
+                    setMainPreview([data.product_main_image]);
 
 
-                    if (data.main_image) {
-                        setMainPreview([data.main_image]);
-                    }
-                    if (data.sub_images?.length) {
-                        setSubPreview(data.sub_images);
-                    }
                 } else {
                     toast.error(response?.data?.message)
                 }
@@ -248,7 +243,6 @@ const getAvailableMonthsForIndex = (currentIndex: number): Option[] => {
 
         fetchProductDetails();
     }, [productId, isEditMode]);
-
 
     // ---- Fetch Categories ----
     useEffect(() => {
@@ -402,11 +396,11 @@ const getAvailableMonthsForIndex = (currentIndex: number): Option[] => {
 
             // ---------- IMAGES ----------
             if (mainImage) {
-                formdata.append("main_image", mainImage);
+                formdata.append("product_main_image", mainImage);
             }
 
             subImages.forEach((file, index: number) => {
-                formdata.append(`sub_images[${index}]`, file);
+                formdata.append(`images[${index}]`, file);
             });
 
             // ---------- API CALL ----------
@@ -569,7 +563,7 @@ const getAvailableMonthsForIndex = (currentIndex: number): Option[] => {
                                                     <div>
                                                         <Label>Month</Label>
                                                         <Select
-                                                           options={getAvailableMonthsForIndex(index)} 
+                                                            options={getAvailableMonthsForIndex(index)}
                                                             placeholder="Select Month"
                                                             value={m.month}
                                                             onChange={(val) => updateMonth(index, "month", val)}
@@ -721,12 +715,6 @@ const getAvailableMonthsForIndex = (currentIndex: number): Option[] => {
                     {/* MAIN IMAGE (Large Preview) */}
                     <div>
                         <Label>Main Image</Label>
-
-                        <img src={"https:\/\/upleex.2min.cloud\/upload\/product_images\/2026\/01\/2026-01-22\/fb8b7c56ce6d9150a8d6c86fc56d3035.webp"} />
-
-
-
-
 
                         <DropzoneComponent
                             preview={mainPreview}
