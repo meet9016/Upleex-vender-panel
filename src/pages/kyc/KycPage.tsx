@@ -379,9 +379,9 @@ export default function KYCPage() {
     }
 
     try {
-      const response = await api.post(`${endPointApi.postVendorKYCFormSubmit}`, formData)
+      const res = await api.post(`${endPointApi.postVendorKYCFormSubmit}`, formData)
 
-      if (response.data.status == 200) {
+      if (res.data.status == 200) {
 
         const isLastStep = currentStep === steps.length - 1;
         if (!isLastStep) {
@@ -389,12 +389,12 @@ export default function KYCPage() {
           return;
         }
         setTimeout(() => {
-          toast.success(response.data.message);
+          toast.success(res.data.message);
           router.push("/");
         }, 1500);
 
       } else {
-        toast.error(response.data.message);
+        toast.error(res.data.message);
 
       }
     } catch (error) {
@@ -409,14 +409,14 @@ export default function KYCPage() {
     const formData = new FormData();
 
     try {
-      const response = await api.post(`${endPointApi.postFetchVendorKYCFormData}`, formData)
+      const res = await api.post(`${endPointApi.postFetchVendorKYCFormData}`, formData)
 
-      if (response.status == 200) {
+      if (res.status == 200) {
 
-        setKYCFormData(response.data.data);
+        setKYCFormData(res.data.data);
         setKYCFormData((prev) => ({
           ...prev,
-          confirm_account_number: response.data.data.account_number,
+          confirm_account_number: res.data.data.account_number,
 
         }));
       }

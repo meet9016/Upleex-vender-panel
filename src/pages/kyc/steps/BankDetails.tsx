@@ -33,9 +33,9 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
 
 
     try {
-      const response = await api.post(`${endPointApi.postBankAccountTypeList}`);
+      const res = await api.post(`${endPointApi.postBankAccountTypeList}`);
 
-      const list = response?.data?.data || [];
+      const list = res?.data?.data || [];
 
       setOptions(prev => {
         const map = new Map(prev.map(opt => [opt.value, opt]));
