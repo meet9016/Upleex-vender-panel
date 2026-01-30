@@ -121,10 +121,10 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
         `}
       >
         <input {...getInputProps()} />
-        {/* Preview Section */}
-        {preview.length > 0 ? (
+        {/* image Section */}
+        {preview.length > 0 && preview[0] !== "" ? (
           <div className="w-full ">
-            {/* Single Image Preview */}
+            {/* main Image Preview */}
             {!multiple && (
               <div className="flex justify-center items-center">
                 <div className="relative group/image">
