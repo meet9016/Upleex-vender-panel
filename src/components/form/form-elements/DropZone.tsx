@@ -102,7 +102,6 @@ const removeImage = async (productImageId: string) => {
     disabled: isLimitReached,
   });
 
-  console.log(preview)
   return (
     <div className="w-full space-y-4 ">
       <div
