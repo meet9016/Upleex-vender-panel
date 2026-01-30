@@ -102,6 +102,7 @@ const removeImage = async (productImageId: string) => {
     disabled: isLimitReached,
   });
 
+  console.log(preview)
   return (
     <div className="w-full space-y-4 ">
       <div
@@ -118,10 +119,10 @@ const removeImage = async (productImageId: string) => {
       >
         <input {...getInputProps()} />
         {/* image Section */}
-        {preview.length > 0 && preview[0] !== "" ? (
+        {preview.length > 0 && preview[0].image !== "" ?(
           <div className="w-full ">
             {/* main Image Preview */}
-            {!multiple && preview[0] !== "" && (
+            {!multiple && preview[0]&& (
               <div className="flex justify-center items-center">
                 <div className="relative group/image">
                   <img
