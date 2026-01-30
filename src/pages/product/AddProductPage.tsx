@@ -44,6 +44,11 @@ const typeOptions: SelectOption[] = [
     { value: 'sell', label: 'Sell' },
 ];
 
+interface mainImg {
+    product_image_id: string;
+    image: any;
+}
+
 export type Option = {
     value: string;
     label: string;
@@ -73,7 +78,7 @@ export default function AddProductPage() {
         keyFeatures: [{ key: "", value: "" }],
     });
 
-    const [mainPreview, setMainPreview] = useState<string[]>([]);
+    const [mainPreview, setMainPreview] = useState<mainImg[]>([]);
     const [subPreview, setSubPreview] = useState<string[]>([]);
     const [categoryList, setCategoryList] = useState<Option[]>([]);
     const [subCategoryList, setSubCategoryList] = useState<Option[]>([]);
@@ -142,7 +147,6 @@ export default function AddProductPage() {
         }));
     };
 
-    //Month
     const addMonth = () => {
         if (formData.months.length >= 12) return;
 
@@ -161,8 +165,6 @@ export default function AddProductPage() {
             months: prev.months.filter((_, i) => i !== index),
         }));
     };
-
-
 
     const updateMonth = (
         index: number,
@@ -232,7 +234,8 @@ export default function AddProductPage() {
 
                     setSelectedCategory(data.category_id);
 
-                    setMainPreview([data.product_main_image]);
+                          const mainImg = { product_image_id: 'temp_1', image: data.product_main_image }
+                    setMainPreview([mainImg]);
 
                     setSubPreview(data.images);
 
@@ -270,7 +273,6 @@ export default function AddProductPage() {
         fetchCategories();
     }, []);
 
-    // Update the SubCategories useEffect to handle edit mode properly:
     useEffect(() => {
 
         const fetchSubCategories = async () => {
@@ -304,7 +306,6 @@ export default function AddProductPage() {
         fetchSubCategories();
     }, [formData.category, selectedCategory]);
 
-    // ---- Fetch Product ----
     useEffect(() => {
         const fetchProduct = async () => {
             try {
@@ -338,9 +339,6 @@ export default function AddProductPage() {
 
         fetchProduct();
     }, []);
-
-
-
 
     const handleSave = async () => {
         try {
@@ -726,7 +724,7 @@ export default function AddProductPage() {
                             multiple={false}
                             smallPreview={false}
                             onFileSelect={(files) => setMainImage(files[0])}
-                            isEditMode
+                            isEditMode={isEditMode}
                         />
                     </div>
 
@@ -740,14 +738,14 @@ export default function AddProductPage() {
                             smallPreview={true}
                             maxFiles={4}
                             onFileSelect={(files) => setSubImages((prev) => [...prev, ...files])}
-                            isEditMode
+                            isEditMode={isEditMode}
                         />
                     </div>
 
                 </div>
 
             </ComponentCard >
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-5 mt-5 justify-end ">
                 <Button size="sm" variant="primary"
                     onClick={handleSave}
                 >

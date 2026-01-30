@@ -7,8 +7,8 @@ import endPointApi from "@/utils/endPointApi";
 import { api } from "@/utils/axiosInstance";
 
 interface DropzoneProps {
-  preview: string[];
-  setPreview: React.Dispatch<React.SetStateAction<string[]>>;
+  preview: any;
+  setPreview: any;
   onFileSelect?: (files: File[]) => void;
   multiple?: boolean;
   smallPreview?: boolean; // multi image size
@@ -28,85 +28,70 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
 
 
 }) => {
-  useEffect(()=>{
-    console.log(preview,"preview")
-  },[preview])
+
   // console.log(preview,"preview")
-const onDrop = (acceptedFiles: File[]) => {
-  if (!multiple) {
-    // Single image
-    const file = acceptedFiles[0];
-    const imgUrl = URL.createObjectURL(file);
-    
-    setPreview([imgUrl])
-    
-    onFileSelect?.([file]);
-  } else {
-    // Multi image with max limit check
-    if (maxFiles) {
-      const remainingSlots = maxFiles - preview.length;
-      if (remainingSlots <= 0) {
-        toast.error(`Maximum ${maxFiles} images allowed. Please remove some images first.`);
-        return;
-      }
-      if (acceptedFiles.length > remainingSlots) {
-        toast.error(`Maximum limit is ${maxFiles} images.`);
-        const filesToAdd = acceptedFiles.slice(0, remainingSlots);
-        const newImages = filesToAdd.map((f, idx) => ({
+  const onDrop = (acceptedFiles: File[]) => {
+    if (!multiple) {
+      // Single image
+      const file = acceptedFiles[0];
+      const imgUrl = URL.createObjectURL(file);
+      const mainImg = { product_image_id: 'temp_1', image: imgUrl }
+      setPreview([mainImg])
+
+      onFileSelect?.([file]);
+    } else {
+      // Multi image with max limit check
+      if (maxFiles) {
+        const remainingSlots = maxFiles - preview.length;
+        if (remainingSlots <= 0) {
+          toast.error(`Maximum ${maxFiles} images allowed. Please remove some images first.`);
+          return;
+        }
+        if (acceptedFiles.length > remainingSlots) {
+          toast.error(`Maximum limit is ${maxFiles} images.`);
+          const filesToAdd = acceptedFiles.slice(0, remainingSlots);
+          const newImages = filesToAdd.map((f, idx) => ({
+            product_image_id: `temp_${preview.length + idx}`,
+            image: URL.createObjectURL(f)
+          }));
+          setPreview((prev: any) => [...prev, ...newImages]);
+          onFileSelect?.(filesToAdd);
+          return;
+        }
+        const newImages = acceptedFiles.map((f, idx) => ({
           product_image_id: `temp_${preview.length + idx}`,
           image: URL.createObjectURL(f)
         }));
-        setPreview((prev:any) => [...prev, ...newImages]);
-        onFileSelect?.(filesToAdd);
-        return;
+        setPreview((prev: any) => [...prev, ...newImages]);
+        onFileSelect?.(acceptedFiles);
+      } else {
+        // No limit - original behavior
+        const newImages = acceptedFiles.map((f, idx) => ({
+          product_image_id: `temp_${preview.length + idx}`,
+          image: URL.createObjectURL(f)
+        }));
+        setPreview((prev: any) => [...prev, ...newImages]);
+        onFileSelect?.(acceptedFiles);
       }
-      const newImages = acceptedFiles.map((f, idx) => ({
-        product_image_id: `temp_${preview.length + idx}`,
-        image: URL.createObjectURL(f)
-      }));
-      setPreview((prev:any) => [...prev, ...newImages]);
-      onFileSelect?.(acceptedFiles);
-    } else {
-      // No limit - original behavior
-      const newImages = acceptedFiles.map((f, idx) => ({
-        product_image_id: `temp_${preview.length + idx}`,
-        image: URL.createObjectURL(f)
-      }));
-      setPreview((prev:any) => [...prev, ...newImages]);
-      onFileSelect?.(acceptedFiles);
+    }
+  };
+
+const removeImage = async (productImageId: string) => {
+  setPreview((prev: any) => prev.filter((img: any) => img.product_image_id !== productImageId));
+  
+  if (isEditMode && productImageId && !productImageId.startsWith('temp_')) {
+    try {
+      const formdata = new FormData();
+      formdata.append("product_image_id", productImageId);  
+      const res = await api.post(endPointApi.postSubImageDelete, formdata);
+      console.log(res.data);
+    } catch (err) {
+      console.error("Error deleting image", err);
     }
   }
 };
-
-  const removeImage = async (index: number) => {
-    setPreview((prev) => prev.filter((_, i) => i !== index));
-    if (isEditMode === true) {
-      console.log(isEditMode, index)
-
-      // try {
-      //   const formdata = new FormData();
-      //   formdata.append("product_image_id", "10");
-      //   const res = await api.post(endPointApi.postSubImageDelete, formdata);
-
-
-      //   if (res?.data?.data) {
-      //     const subcats = res.data.data.map((item: any) => ({
-      //       value: item.id,
-      //       label: item.name, // ✅ TEXT ONLY
-      //     }));
-
-
-
-      //   }
-      // } catch (err) {
-      //   console.error("Error fetching subcategories", err);
-      // }
-    }
-
-  };
-
   const isLimitReached = Boolean(maxFiles && preview.length >= maxFiles);
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     multiple,
     accept: {
@@ -115,7 +100,7 @@ const onDrop = (acceptedFiles: File[]) => {
       "image/webp": [],
       "image/svg+xml": [],
     },
-    disabled: isLimitReached, // Disable when limit reached
+    disabled: isLimitReached,
   });
 
   return (
@@ -137,11 +122,11 @@ const onDrop = (acceptedFiles: File[]) => {
         {preview.length > 0 && preview[0] !== "" ? (
           <div className="w-full ">
             {/* main Image Preview */}
-            {!multiple && (
+            {!multiple && preview[0] !== "" && (
               <div className="flex justify-center items-center">
                 <div className="relative group/image">
                   <img
-                    src={preview[0]}
+                    src={preview[0].image}
                     alt="Preview"
                     className="rounded-xl object-cover shadow-2xl max-h-[280px] w-auto max-w-full 
                               ring-4 ring-gray-100 transition-transform duration-300 
@@ -154,7 +139,7 @@ const onDrop = (acceptedFiles: File[]) => {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeImage(0);
+                        removeImage(preview[0].product_image_id);
                       }}
                       className="opacity-0 group-hover/image:opacity-100 
                                bg-red-500 hover:bg-red-600 text-white 
@@ -181,9 +166,9 @@ const onDrop = (acceptedFiles: File[]) => {
                   : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2"
                 }
               `}>
-                {preview.filter((img:any) => img && img.image && img.image !== "").map((img:any, index) => (
+                {preview.filter((img: any) => img && img.image && img.image !== "").map((img: any, index: any) => (
                   <div
-                    key={img.product_image_id}
+                    key={index}
                     className="relative group/image aspect-square overflow-hidden rounded-xl 
                              bg-gray-100 shadow-md hover:shadow-xl transition-all duration-300
                              transform hover:scale-[1.02]"
@@ -204,7 +189,7 @@ const onDrop = (acceptedFiles: File[]) => {
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            removeImage(index);
+                            removeImage(img.product_image_id);
                           }}
                           className="bg-red-500 hover:bg-red-600 text-white 
                                    p-1.5 rounded-lg transition-all duration-200
