@@ -352,7 +352,7 @@ export default function AddProductPage() {
             formdata.append("category_id", String(selectedCategory));
             formdata.append("sub_category_id", String(selectedSubCategory));
             formdata.append("product_type_id", String(formData.listingType));
-            formdata.append("product_listing_type_id", String(formData.listingType));
+            formdata.append("product_listing_type_id", String(billingType === "month"?"2":billingType === "day"?"1":""));
             formdata.append("product_name", formData.name);
             formdata.append("description", formData.description);
 
