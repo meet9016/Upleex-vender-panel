@@ -72,7 +72,7 @@ export default function AddProductPage() {
         monthPrice: "",
         monthCancelPrice: "",
         months: [
-            { month: "", price: "", cancelPrice: "" }
+            { month: "", price: "", productMonthsId: "", cancelPrice: "" }
         ],
         description: "",
         keyFeatures: [{ key: "", value: "" }],
@@ -154,7 +154,7 @@ export default function AddProductPage() {
             ...prev,
             months: [
                 ...prev.months,
-                { month: "", price: "", cancelPrice: "" }, // <-- add month field
+                { month: "", price: "", productMonthsId: "", cancelPrice: "" }, // <-- add month field
             ],
         }));
     };
@@ -219,9 +219,10 @@ export default function AddProductPage() {
                             ? data.month_arrr.map((m: any) => ({
                                 month: String(m.months_id),
                                 price: m.price,
+                                productMonthsId: m.product_months_id,
                                 cancelPrice: m.cancel_price,
                             }))
-                            : [{ month: "", price: "", cancelPrice: "" }],
+                            : [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
                         description: data.description,
                         keyFeatures: data.product_details?.length
                             ? data.product_details.map((item: any) => ({
@@ -234,7 +235,7 @@ export default function AddProductPage() {
 
                     setSelectedCategory(data.category_id);
 
-                          const mainImg = { product_image_id: 'temp_1', image: data.product_main_image }
+                    const mainImg = { product_image_id: 'temp_1', image: data.product_main_image }
                     setMainPreview([mainImg]);
 
                     setSubPreview(data.images);
@@ -343,16 +344,16 @@ export default function AddProductPage() {
     const handleSave = async () => {
         try {
             const formdata = new FormData();
-            
+
             if (isEditMode === true) {
-              formdata.append("product_id", String(productId));
+                formdata.append("product_id", String(productId));
             }
 
             // ---------- BASIC FIELDS ----------
             formdata.append("category_id", String(selectedCategory));
             formdata.append("sub_category_id", String(selectedSubCategory));
             formdata.append("product_type_id", String(formData.listingType));
-            formdata.append("product_listing_type_id", String(billingType === "month"?"2":billingType === "day"?"1":""));
+            formdata.append("product_listing_type_id", String(billingType === "month" ? "2" : billingType === "day" ? "1" : ""));
             formdata.append("product_name", formData.name);
             formdata.append("description", formData.description);
 
@@ -377,6 +378,9 @@ export default function AddProductPage() {
                             formdata.append(`months_id[${index}]`, m.month);
                             formdata.append(`month_price[${index}]`, m.price);
                             formdata.append(`month_cancel_price[${index}]`, m.cancelPrice);
+                            if (isEditMode === true) {
+                                formdata.append(`product_months_id[${index}]`, m.cancelPrice);
+                            }
                         }
                     });
                 }
