@@ -234,7 +234,7 @@ export default function AddProductPage() {
 
                     setMainPreview([data.product_main_image]);
 
-                    setSubPreview(data.images.map((item: any) => (item.image)));
+                    setSubPreview(data.images);
 
                 } else {
                     toast.error(response?.data?.message)
@@ -345,11 +345,10 @@ export default function AddProductPage() {
     const handleSave = async () => {
         try {
             const formdata = new FormData();
-
-            // ---------- EDIT MODE CHECK ----------
-            // if (formData?.product_id) {
-            //   formdata.append("product_id", formData.product_id);
-            // }
+            
+            if (isEditMode === true) {
+              formdata.append("product_id", String(productId));
+            }
 
             // ---------- BASIC FIELDS ----------
             formdata.append("category_id", String(selectedCategory));
@@ -727,6 +726,7 @@ export default function AddProductPage() {
                             multiple={false}
                             smallPreview={false}
                             onFileSelect={(files) => setMainImage(files[0])}
+                            isEditMode
                         />
                     </div>
 
@@ -740,6 +740,7 @@ export default function AddProductPage() {
                             smallPreview={true}
                             maxFiles={4}
                             onFileSelect={(files) => setSubImages((prev) => [...prev, ...files])}
+                            isEditMode
                         />
                     </div>
 

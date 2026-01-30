@@ -2,6 +2,9 @@
 import React from "react";
 import { useDropzone } from "react-dropzone";
 import Button from "@/components/ui/button/Button";
+import { toast } from "react-toastify";
+import endPointApi from "@/utils/endPointApi";
+import { api } from "@/utils/axiosInstance";
 
 interface DropzoneProps {
   preview: string[];
@@ -10,6 +13,8 @@ interface DropzoneProps {
   multiple?: boolean;
   smallPreview?: boolean; // multi image size
   maxFiles?: number; // Add this new prop
+  isEditMode?: boolean; // ✅ ADD
+
 }
 
 const DropzoneComponent: React.FC<DropzoneProps> = ({
@@ -19,7 +24,11 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
   multiple = false,
   smallPreview = false,
   maxFiles, // Add this
+  isEditMode = false
+
+
 }) => {
+  console.log(preview)
   const onDrop = (acceptedFiles: File[]) => {
     if (!multiple) {
       // Single image
@@ -27,25 +36,26 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
       const imgUrl = URL.createObjectURL(file);
       setPreview([imgUrl]);
       onFileSelect?.([file]);
+
     } else {
       // Multi image with max limit check
       if (maxFiles) {
         const remainingSlots = maxFiles - preview.length;
-        
+
         if (remainingSlots <= 0) {
-          alert(`Maximum ${maxFiles} images allowed. Please remove some images first.`);
+          toast.error(`Maximum ${maxFiles} images allowed. Please remove some images first.`);
           return;
         }
-        
+
         if (acceptedFiles.length > remainingSlots) {
-          alert(`You can only add ${remainingSlots} more image(s). Maximum limit is ${maxFiles} images.`);
+          toast.error(`Maximum limit is ${maxFiles} images.`);
           const filesToAdd = acceptedFiles.slice(0, remainingSlots);
           const newImages = filesToAdd.map((f) => URL.createObjectURL(f));
           setPreview((prev) => [...prev, ...newImages]);
           onFileSelect?.(filesToAdd);
           return;
         }
-        
+
         const newImages = acceptedFiles.map((f) => URL.createObjectURL(f));
         setPreview((prev) => [...prev, ...newImages]);
         onFileSelect?.(acceptedFiles);
@@ -58,11 +68,32 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
     }
   };
 
-  const removeImage = (index: number) => {
+  const removeImage = async (index: number) => {
     setPreview((prev) => prev.filter((_, i) => i !== index));
+    if (isEditMode === true) {
+      try {
+        const formdata = new FormData();
+        formdata.append("product_image_id", "10");
+        const res = await api.post(endPointApi.postSubImageDelete, formdata);
+
+
+        if (res?.data?.data) {
+          const subcats = res.data.data.map((item: any) => ({
+            value: item.id,
+            label: item.name, // ✅ TEXT ONLY
+          }));
+
+
+
+        }
+      } catch (err) {
+        console.error("Error fetching subcategories", err);
+      }
+    }
+
   };
 
-const isLimitReached = Boolean(maxFiles && preview.length >= maxFiles);
+  const isLimitReached = Boolean(maxFiles && preview.length >= maxFiles);
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     multiple,
@@ -76,7 +107,7 @@ const isLimitReached = Boolean(maxFiles && preview.length >= maxFiles);
   });
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-4 ">
       <div
         {...getRootProps()}
         className={`
@@ -92,7 +123,7 @@ const isLimitReached = Boolean(maxFiles && preview.length >= maxFiles);
         <input {...getInputProps()} />
         {/* Preview Section */}
         {preview.length > 0 ? (
-          <div className="w-full">
+          <div className="w-full ">
             {/* Single Image Preview */}
             {!multiple && (
               <div className="flex justify-center items-center">
@@ -132,21 +163,21 @@ const isLimitReached = Boolean(maxFiles && preview.length >= maxFiles);
             {/* Multiple Images Preview */}
             {multiple && (
               <div className={`
-                grid gap-4 w-full
+                grid gap-4 w-full flex flex-row
                 ${smallPreview
-                  ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                  ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4"
+                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2"
                 }
               `}>
-                {preview.filter((img) => img && img !== "").map((img, index) => (
+                {preview.filter((img:any) => img && img.image && img.image !== "").map((img:any, index) => (
                   <div
-                    key={index}
+                    key={img.product_image_id}
                     className="relative group/image aspect-square overflow-hidden rounded-xl 
                              bg-gray-100 shadow-md hover:shadow-xl transition-all duration-300
                              transform hover:scale-[1.02]"
                   >
                     <img
-                      src={img}
+                      src={img.image}
                       alt={`Preview ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
@@ -182,7 +213,7 @@ const isLimitReached = Boolean(maxFiles && preview.length >= maxFiles);
             {multiple && !isLimitReached && (
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-500 font-medium">
-                  {maxFiles 
+                  {maxFiles
                     ? `Click or drag to add more images (${preview.length}/${maxFiles})`
                     : "Click or drag to add more images"
                   }
