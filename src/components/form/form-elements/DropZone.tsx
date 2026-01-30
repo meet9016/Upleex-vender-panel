@@ -29,7 +29,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
 
 }) => {
 
-  // console.log(preview,"preview")
+
   const onDrop = (acceptedFiles: File[]) => {
     if (!multiple) {
       // Single image
@@ -83,8 +83,7 @@ const removeImage = async (productImageId: string) => {
     try {
       const formdata = new FormData();
       formdata.append("product_image_id", productImageId);  
-      const res = await api.post(endPointApi.postSubImageDelete, formdata);
-      console.log(res.data);
+    await api.post(endPointApi.postSubImageDelete, formdata);
     } catch (err) {
       console.error("Error deleting image", err);
     }

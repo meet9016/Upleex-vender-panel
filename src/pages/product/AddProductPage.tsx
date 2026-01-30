@@ -437,6 +437,8 @@ export default function AddProductPage() {
                                     setSelectedCategory(val); // Changed from val to val.value
                                 }}
                                 className="dark:bg-dark-900"
+                               
+
                             />
 
                             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
@@ -454,6 +456,7 @@ export default function AddProductPage() {
                                 value={formData.subCategory}
                                 onChange={(val: any) => handleChange("subCategory", val.value)}
                                 className="dark:bg-dark-900"
+                            
                             />
 
                             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
@@ -471,6 +474,8 @@ export default function AddProductPage() {
                                 value={formData.listingType}
                                 onChange={(val) => handleChange("listingType", val)}
                                 className="dark:bg-dark-900"
+                                disabled={isEditMode}
+
                             />
                             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
                                 <ChevronDownIcon />
@@ -499,6 +504,8 @@ export default function AddProductPage() {
                                 checked={billingType === "day"}
                                 onChange={() => handleRadioChange("day")}
                                 label="Day"
+                                                                disabled={isEditMode}
+
                             />
 
                             <Radio
