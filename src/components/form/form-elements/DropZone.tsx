@@ -11,9 +11,9 @@ interface DropzoneProps {
   setPreview: any;
   onFileSelect?: (files: File[]) => void;
   multiple?: boolean;
-  smallPreview?: boolean; // multi image size
-  maxFiles?: number; // Add this new prop
-  isEditMode?: boolean; // ✅ ADD
+  smallPreview?: boolean;
+  maxFiles?: number;
+  isEditMode?: boolean; 
 
 }
 
@@ -76,19 +76,21 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
     }
   };
 
-const removeImage = async (productImageId: string) => {
-  setPreview((prev: any) => prev.filter((img: any) => img.product_image_id !== productImageId));
-  
-  if (isEditMode && productImageId && !productImageId.startsWith('temp_')) {
-    try {
-      const formdata = new FormData();
-      formdata.append("product_image_id", productImageId);  
-    await api.post(endPointApi.postSubImageDelete, formdata);
-    } catch (err) {
-      console.error("Error deleting image", err);
+  { /* <!-- ======================================================  main Image  ====================================================== -->*/ }
+
+  const removeImage = async (productImageId: string) => {
+    setPreview((prev: any) => prev.filter((img: any) => img.product_image_id !== productImageId));
+
+    if (isEditMode && productImageId && !productImageId.startsWith('temp_')) {
+      try {
+        const formdata = new FormData();
+        formdata.append("product_image_id", productImageId);
+        await api.post(endPointApi.postSubImageDelete, formdata);
+      } catch (err) {
+        console.error("Error deleting image", err);
+      }
     }
-  }
-};
+  };
   const isLimitReached = Boolean(maxFiles && preview.length >= maxFiles);
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
@@ -117,11 +119,13 @@ const removeImage = async (productImageId: string) => {
         `}
       >
         <input {...getInputProps()} />
-        {/* image Section */}
-        {preview.length > 0 && preview[0].image !== "" ?(
+
+        {preview.length > 0 && preview[0].image !== "" ? (
           <div className="w-full ">
-            {/* main Image Preview */}
-            {!multiple && preview[0]&& (
+            { /* <!-- ======================================================  main Image  ====================================================== -->*/}
+
+
+            {!multiple && preview[0].image !== "" && (
               <div className="flex justify-center items-center">
                 <div className="relative group/image">
                   <img
@@ -131,7 +135,9 @@ const removeImage = async (productImageId: string) => {
                               ring-4 ring-gray-100 transition-transform duration-300 
                               group-hover/image:scale-[1.02]"
                   />
-                  {/* Overlay on Hover */}
+                  { /* <!-- ======================================================  Overlay on Hover  ====================================================== -->*/}
+
+
                   <div className="absolute bottom-2 right-2  bg-opacity-0 group-hover/image:bg-opacity-20 
                                 transition-all duration-300 rounded-xl flex items-center justify-center">
                     <button
@@ -156,7 +162,9 @@ const removeImage = async (productImageId: string) => {
                 </div>
               </div>
             )}
-            {/* Multiple Images Preview */}
+
+            { /* <!-- ======================================================  Multiple Images  ====================================================== -->*/}
+
             {multiple && (
               <div className={`
                 grid gap-4 w-full flex flex-row
@@ -205,7 +213,9 @@ const removeImage = async (productImageId: string) => {
                 ))}
               </div>
             )}
-            {/* Add More Images Hint */}
+            { /* <!-- ======================================================  Add More Images Hint ====================================================== -->*/}
+
+
             {multiple && !isLimitReached && (
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-500 font-medium">
@@ -216,7 +226,9 @@ const removeImage = async (productImageId: string) => {
                 </p>
               </div>
             )}
-            {/* Limit Reached Message */}
+
+            { /* <!-- ======================================================  Limit Reached Message ====================================================== -->*/}
+
             {multiple && isLimitReached && (
               <div className="mt-6 text-center">
                 <p className="text-sm text-green-700 font-medium">
@@ -225,9 +237,10 @@ const removeImage = async (productImageId: string) => {
               </div>
             )}
           </div>
-        ) : (
-          // Empty State
-          <div className="text-center space-y-4">
+        ) :
+          /* <!-- ====================================================== Sub Images  ====================================================== -->*/
+
+          (<div className="text-center space-y-4">
             {/* Upload Icon */}
             <div className="bg-brand-300 mx-auto w-20 h-20 rounded-full 
                           flex items-center justify-center ">
@@ -265,7 +278,7 @@ const removeImage = async (productImageId: string) => {
               Browse Files
             </Button>
           </div>
-        )}
+          )}
       </div>
     </div>
   );

@@ -17,6 +17,8 @@ import endPointApi from "@/utils/endPointApi";
 import Radio from "@/components/form/input/Radio";
 import { toast } from "react-toastify";
 
+/* <!-- ========================================================== Types ========================================================== --> */
+
 export interface SelectOption {
     value: string;
     label: string;
@@ -57,6 +59,8 @@ export type Option = {
 
 export default function AddProductPage() {
 
+    /* <!-- ========================================================== States ========================================================== --> */
+
     const router = useRouter();
     const searchParams = useSearchParams();
     const productId = searchParams?.get("id") ?? null;
@@ -90,7 +94,13 @@ export default function AddProductPage() {
     const [mainImage, setMainImage] = useState<File | null>(null);
     const [subImages, setSubImages] = useState<File[]>([]);
 
-    // Add this helper function after your state declarations (around line 60)
+    const [selectedCategory, setSelectedCategory] =
+        useState<CategoryOption | null>(null);
+
+    const [selectedSubCategory, setSelectedSubCategory] =
+        useState<CategoryOption | null>(null);
+    /* <!-- ========================================================== disable unavailable months ========================================================== --> */
+
     const getAvailableMonthsForIndex = (currentIndex: number): Option[] => {
         const selectedMonths = formData.months
             .map((m, idx) => (idx !== currentIndex ? m.month : null))
@@ -101,14 +111,9 @@ export default function AddProductPage() {
         );
     };
 
-    const [selectedCategory, setSelectedCategory] =
-        useState<CategoryOption | null>(null);
 
-    const [selectedSubCategory, setSelectedSubCategory] =
-        useState<CategoryOption | null>(null);
-    // ----------------------------
-    // HANDLE INPUT CHANGE
-    // ----------------------------
+    /* <!-- ========================================================== Input change ========================================================== --> */
+
     const handleChange = (field: string, value: any) => {
 
         setFormData((prev) => ({
@@ -116,24 +121,25 @@ export default function AddProductPage() {
             [field]: value,
         }));
     };
-    // ----------------------------
-    // HANDLE KEY FEATURE add/remove/update
-    // ----------------------------
-    const addItem = () => {
+
+    /* <!-- =================================================== handle add, change ,remove Feature =================================================== --> */
+
+    const addFeatureField = () => {
         setFormData((prev) => ({
             ...prev,
             keyFeatures: [...prev.keyFeatures, { key: "", value: "" }],
         }));
     };
 
-    const removeItem = (index: number) => {
+
+    const removeFeature = (index: number) => {
         setFormData((prev) => ({
             ...prev,
             keyFeatures: prev.keyFeatures.filter((_, i) => i !== index),
         }));
     };
 
-    const updateItem = (
+    const UpdateFeatureField = (
         index: number,
         field: keyof KeyFeature,
         value: KeyFeature[keyof KeyFeature]
@@ -147,6 +153,10 @@ export default function AddProductPage() {
         }));
     };
 
+
+    /* <!-- ============================================ handle add, update, remove Month ============================================ --> */
+
+
     const addMonth = () => {
         if (formData.months.length >= 12) return;
 
@@ -158,6 +168,7 @@ export default function AddProductPage() {
             ],
         }));
     };
+
 
     const removeMonth = (index: number) => {
         setFormData((prev) => ({
@@ -180,15 +191,20 @@ export default function AddProductPage() {
         }));
     };
 
+    /* <!-- ============================================ handle select rent time ============================================ --> */
+
     const handleRadioChange = (value: "day" | "month") => {
         setBillingType(value);
 
-        // agar formData me bhi store karna ho
+
         setFormData((prev) => ({
             ...prev,
             billingType: value,
         }));
     };
+
+    /* <!-- ============================================ Fetch product detail on edit mode  ============================================ --> */
+
 
     useEffect(() => {
         if (!isEditMode) return;
@@ -197,9 +213,9 @@ export default function AddProductPage() {
             const formData = new FormData()
             formData.append("product_id", productId || "")
             try {
-                const response = await api.post(endPointApi.postVendorProductDetails, formData);
-                if (response?.data?.status == 200) {
-                    const data = response.data.data;
+                const res = await api.post(endPointApi.postVendorProductDetails, formData);
+                if (res?.data?.status == 200) {
+                    const data = res.data.data;
 
 
                     setBillingType(data.product_listing_type_id === "1" ? "day" : "month");
@@ -241,7 +257,7 @@ export default function AddProductPage() {
                     setSubPreview(data.images);
 
                 } else {
-                    toast.error(response?.data?.message)
+                    toast.error(res?.data?.message)
                 }
             } catch (err) {
                 console.error("Error fetching Product detail to edit", err);
@@ -258,7 +274,6 @@ export default function AddProductPage() {
                 if (res?.data?.data) {
                     setCategoryList(res.data.data);
 
-                    // Select-compatible format
                     const options = res.data.data.map((item: any) => ({
                         label: item.name,
                         value: item.id,
@@ -273,6 +288,8 @@ export default function AddProductPage() {
 
         fetchCategories();
     }, []);
+
+    /* <!-- ============================================ Fetch subcategories  ============================================ --> */
 
     useEffect(() => {
 
@@ -291,7 +308,7 @@ export default function AddProductPage() {
 
                     setSubCategoryList(subcats);
 
-                    // Don't auto-select in edit mode if subCategory is already set
+
                     if (!isEditMode && subcats.length > 0) {
                         setSelectedSubCategory(subcats[0].value);
                         handleChange("subCategory", subcats[0].value);
@@ -306,6 +323,8 @@ export default function AddProductPage() {
 
         fetchSubCategories();
     }, [formData.category, selectedCategory]);
+
+    /* <!-- ============================================ Fetch dropdown options  ============================================ --> */
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -341,7 +360,10 @@ export default function AddProductPage() {
         fetchProduct();
     }, []);
 
-    const handleSave = async () => {
+    /* <!-- ============================================ Handle save ============================================ --> */
+
+
+    const handleSubmit = async () => {
         try {
             const formdata = new FormData();
 
@@ -421,10 +443,14 @@ export default function AddProductPage() {
         }
     };
 
+    /* <!-- ======================================================================== UI  ======================================================================== --> */
+
     return (
         <>
             <ComponentCard title={isEditMode ? "Edit Product" : "Add Product"}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* <!-- ========================================================  Category ======================================================== -->*/}
+
                     <div>
                         <Label>Category</Label>
                         <div className="relative">
@@ -434,11 +460,9 @@ export default function AddProductPage() {
                                 value={formData.category}
                                 onChange={(val: any) => {
                                     handleChange("category", val.value);
-                                    setSelectedCategory(val); // Changed from val to val.value
+                                    setSelectedCategory(val);
                                 }}
                                 className="dark:bg-dark-900"
-                               
-
                             />
 
                             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
@@ -446,7 +470,8 @@ export default function AddProductPage() {
                             </span>
                         </div>
                     </div>
-                    {/* SUB CATEGORY */}
+                    {/* <!-- ======================================================== Sub Category ======================================================== -->*/}
+
                     <div>
                         <Label>Sub Category</Label>
                         <div className="relative">
@@ -456,7 +481,7 @@ export default function AddProductPage() {
                                 value={formData.subCategory}
                                 onChange={(val: any) => handleChange("subCategory", val.value)}
                                 className="dark:bg-dark-900"
-                            
+
                             />
 
                             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
@@ -464,7 +489,9 @@ export default function AddProductPage() {
                             </span>
                         </div>
                     </div>
-                    {/* LISTING TYPE */}
+
+                    {/* <!-- ======================================================== Listing Type ======================================================== -->*/}
+
                     <div>
                         <Label>Listing Type</Label>
                         <div className="relative">
@@ -482,7 +509,8 @@ export default function AddProductPage() {
                             </span>
                         </div>
                     </div>
-                    {/* NAME */}
+                    {/* <!-- ======================================================== Item Name ======================================================== -->*/}
+
                     <div>
                         <Label>Item / Property Name</Label>
                         <div className="relative">
@@ -504,7 +532,7 @@ export default function AddProductPage() {
                                 checked={billingType === "day"}
                                 onChange={() => handleRadioChange("day")}
                                 label="Day"
-                                                                disabled={isEditMode}
+                                disabled={isEditMode}
 
                             />
 
@@ -519,10 +547,13 @@ export default function AddProductPage() {
                         </div>
                     )}
 
-                    {/* RENT FLOW */}
+                    {/* <!-- ======================================================== Rent Flow  ======================================================== -->*/}
+
                     {formData?.listingType == 1 && (
                         <>
-                            {/* DAY PRICING */}
+                            {/* <!-- ======================================================== Day Price  ======================================================== -->*/}
+
+
                             {billingType === "day" && (
                                 <>
                                     <div>
@@ -546,7 +577,10 @@ export default function AddProductPage() {
                                     </div>
                                 </>
                             )}
-                            {/* MONTHLY PRICING */}
+
+                            {/* <!-- ======================================================== MONTHLY Price  ======================================================== -->*/}
+
+
                             {billingType === "month" && (
                                 <div className="col-span-3 mt-4">
                                     <div className="flex items-center justify-between mb-3">
@@ -629,7 +663,8 @@ export default function AddProductPage() {
                         </>
                     )}
 
-                    {/* SELL FLOW */}
+                    {/* <!-- ============================================= Sell Flow  ============================================= -->*/}
+
                     {formData?.listingType != 1 && (
                         <>
                             <div>
@@ -658,6 +693,8 @@ export default function AddProductPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
+                    {/* <!-- ======================================================== Description  ======================================================== -->*/}
+
                     {/* LEFT → DESCRIPTION */}
                     <div className="">
                         <Label>Description</Label>
@@ -669,21 +706,22 @@ export default function AddProductPage() {
                         />
                     </div>
 
-                    {/* RIGHT → KEY FEATURES */}
-                    <div className="h-[350px] flex flex-col">
+                    {/* <!-- ======================================================== Features  ======================================================== -->*/}
 
-                        {/* HEADER (Label + Add Button OUTSIDE box) */}
+                    <div className="h-[350px] flex flex-col">
                         <div className="flex items-center justify-between mb-2">
                             <Label>Key Features</Label>
 
                             <button
                                 type="button"
                                 className="bg-[#ffcb07] w-8 h-8 flex items-center justify-center rounded-md hover:bg-[#e6b800]"
-                                onClick={addItem}
+                                onClick={addFeatureField}
                             >
                                 +
                             </button>
                         </div>
+
+
 
                         {/* SCROLLABLE BOX */}
                         <div className="border border-gray-200 rounded-md p-3 overflow-y-auto flex-1">
@@ -694,7 +732,7 @@ export default function AddProductPage() {
                                         type="text"
                                         placeholder="Enter Key"
                                         value={item.key}
-                                        onChange={(e) => updateItem(index, "key", e.target.value)}
+                                        onChange={(e) => UpdateFeatureField(index, "key", e.target.value)}
                                     />
 
                                     <div className="relative">
@@ -702,13 +740,13 @@ export default function AddProductPage() {
                                             type="text"
                                             placeholder="Enter Value"
                                             value={item.value}
-                                            onChange={(e) => updateItem(index, "value", e.target.value)}
+                                            onChange={(e) => UpdateFeatureField(index, "value", e.target.value)}
                                         />
 
                                         {formData.keyFeatures.length > 1 && (
                                             <button
                                                 type="button"
-                                                onClick={() => removeItem(index)}
+                                                onClick={() => removeFeature(index)}
                                                 className="absolute right-3 top-1/2 -translate-y-1/2 border border-[#ffcb07] text-[#ffcb07] w-8 h-8 rounded-md"
                                             >
                                                 -
@@ -723,9 +761,13 @@ export default function AddProductPage() {
                     </div>
                 </div>
 
+                {/* <!-- ======================================================== Images  ======================================================== -->*/}
+
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                    {/* MAIN IMAGE (Large Preview) */}
+                    {/* <!-- ======================================================== Main Images  ======================================================== -->*/}
+
                     <div>
                         <Label>Main Image</Label>
 
@@ -738,8 +780,8 @@ export default function AddProductPage() {
                             isEditMode={isEditMode}
                         />
                     </div>
+                    {/* <!-- ======================================================== Sub Images  ======================================================== -->*/}
 
-                    {/* SUB IMAGES (Small Preview + Remove button) */}
                     <div>
                         <Label>Sub Images (Max 4)</Label>
                         <DropzoneComponent
@@ -758,9 +800,9 @@ export default function AddProductPage() {
             </ComponentCard >
             <div className="flex items-center gap-5 mt-5 justify-end ">
                 <Button size="sm" variant="primary"
-                    onClick={handleSave}
+                    onClick={handleSubmit}
                 >
-                    Save
+                    {isEditMode ? "Update" : "Save"}
                 </Button>
                 <Button size="sm" variant="outline"
                     onClick={() => router.push("/product")}
