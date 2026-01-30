@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import Button from "@/components/ui/button/Button";
 import { toast } from "react-toastify";
@@ -28,67 +28,79 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
 
 
 }) => {
-  console.log(preview)
-  const onDrop = (acceptedFiles: File[]) => {
-    if (!multiple) {
-      // Single image
-      const file = acceptedFiles[0];
-      const imgUrl = URL.createObjectURL(file);
-      setPreview([imgUrl]);
-      onFileSelect?.([file]);
-
-    } else {
-      // Multi image with max limit check
-      if (maxFiles) {
-        const remainingSlots = maxFiles - preview.length;
-
-        if (remainingSlots <= 0) {
-          toast.error(`Maximum ${maxFiles} images allowed. Please remove some images first.`);
-          return;
-        }
-
-        if (acceptedFiles.length > remainingSlots) {
-          toast.error(`Maximum limit is ${maxFiles} images.`);
-          const filesToAdd = acceptedFiles.slice(0, remainingSlots);
-          const newImages = filesToAdd.map((f) => URL.createObjectURL(f));
-          setPreview((prev) => [...prev, ...newImages]);
-          onFileSelect?.(filesToAdd);
-          return;
-        }
-
-        const newImages = acceptedFiles.map((f) => URL.createObjectURL(f));
-        setPreview((prev) => [...prev, ...newImages]);
-        onFileSelect?.(acceptedFiles);
-      } else {
-        // No limit - original behavior
-        const newImages = acceptedFiles.map((f) => URL.createObjectURL(f));
-        setPreview((prev) => [...prev, ...newImages]);
-        onFileSelect?.(acceptedFiles);
+  useEffect(()=>{
+    console.log(preview,"preview")
+  },[preview])
+  // console.log(preview,"preview")
+const onDrop = (acceptedFiles: File[]) => {
+  if (!multiple) {
+    // Single image
+    const file = acceptedFiles[0];
+    const imgUrl = URL.createObjectURL(file);
+    
+    setPreview([imgUrl])
+    
+    onFileSelect?.([file]);
+  } else {
+    // Multi image with max limit check
+    if (maxFiles) {
+      const remainingSlots = maxFiles - preview.length;
+      if (remainingSlots <= 0) {
+        toast.error(`Maximum ${maxFiles} images allowed. Please remove some images first.`);
+        return;
       }
+      if (acceptedFiles.length > remainingSlots) {
+        toast.error(`Maximum limit is ${maxFiles} images.`);
+        const filesToAdd = acceptedFiles.slice(0, remainingSlots);
+        const newImages = filesToAdd.map((f, idx) => ({
+          product_image_id: `temp_${preview.length + idx}`,
+          image: URL.createObjectURL(f)
+        }));
+        setPreview((prev:any) => [...prev, ...newImages]);
+        onFileSelect?.(filesToAdd);
+        return;
+      }
+      const newImages = acceptedFiles.map((f, idx) => ({
+        product_image_id: `temp_${preview.length + idx}`,
+        image: URL.createObjectURL(f)
+      }));
+      setPreview((prev:any) => [...prev, ...newImages]);
+      onFileSelect?.(acceptedFiles);
+    } else {
+      // No limit - original behavior
+      const newImages = acceptedFiles.map((f, idx) => ({
+        product_image_id: `temp_${preview.length + idx}`,
+        image: URL.createObjectURL(f)
+      }));
+      setPreview((prev:any) => [...prev, ...newImages]);
+      onFileSelect?.(acceptedFiles);
     }
-  };
+  }
+};
 
   const removeImage = async (index: number) => {
     setPreview((prev) => prev.filter((_, i) => i !== index));
     if (isEditMode === true) {
-      try {
-        const formdata = new FormData();
-        formdata.append("product_image_id", "10");
-        const res = await api.post(endPointApi.postSubImageDelete, formdata);
+      console.log(isEditMode, index)
+
+      // try {
+      //   const formdata = new FormData();
+      //   formdata.append("product_image_id", "10");
+      //   const res = await api.post(endPointApi.postSubImageDelete, formdata);
 
 
-        if (res?.data?.data) {
-          const subcats = res.data.data.map((item: any) => ({
-            value: item.id,
-            label: item.name, // ✅ TEXT ONLY
-          }));
+      //   if (res?.data?.data) {
+      //     const subcats = res.data.data.map((item: any) => ({
+      //       value: item.id,
+      //       label: item.name, // ✅ TEXT ONLY
+      //     }));
 
 
 
-        }
-      } catch (err) {
-        console.error("Error fetching subcategories", err);
-      }
+      //   }
+      // } catch (err) {
+      //   console.error("Error fetching subcategories", err);
+      // }
     }
 
   };
