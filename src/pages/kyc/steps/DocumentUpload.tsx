@@ -9,7 +9,7 @@ type Props = {
   file: File | null;
   onChange: (file: File | null) => void;
   error?: string;
-  clearError: (field: keyof ErrorType) => void;
+
 };
 
 export default function DocumentUpload({
@@ -17,7 +17,7 @@ export default function DocumentUpload({
   file,
   onChange,
   error,
-  clearError
+
 }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -39,18 +39,14 @@ export default function DocumentUpload({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] || null;
 
-    // Validate if file is an image
     if (selected && !selected.type.startsWith("image/")) {
       toast.error("Please upload only image files (PNG, JPG, JPEG, GIF, etc.)");
-      e.target.value = ""; // Clear the input
+      e.target.value = ""; 
       return;
     }
 
     onChange(selected);
-    clearError("pancard_front_image");
-    clearError("aadharcard_front_image");
-    clearError("aadharcard_back_image");
-    clearError("gst_certificate_image");
+
   };
 
   return (

@@ -44,6 +44,11 @@ const typeOptions: SelectOption[] = [
     { value: 'sell', label: 'Sell' },
 ];
 
+interface mainImg {
+    product_image_id: string;
+    image: any;
+}
+
 export type Option = {
     value: string;
     label: string;
@@ -73,7 +78,7 @@ export default function AddProductPage() {
         keyFeatures: [{ key: "", value: "" }],
     });
 
-    const [mainPreview, setMainPreview] = useState<string[]>([]);
+    const [mainPreview, setMainPreview] = useState<mainImg[]>([]);
     const [subPreview, setSubPreview] = useState<string[]>([]);
     const [categoryList, setCategoryList] = useState<Option[]>([]);
     const [subCategoryList, setSubCategoryList] = useState<Option[]>([]);
@@ -84,6 +89,17 @@ export default function AddProductPage() {
 
     const [mainImage, setMainImage] = useState<File | null>(null);
     const [subImages, setSubImages] = useState<File[]>([]);
+
+    // Add this helper function after your state declarations (around line 60)
+    const getAvailableMonthsForIndex = (currentIndex: number): Option[] => {
+        const selectedMonths = formData.months
+            .map((m, idx) => (idx !== currentIndex ? m.month : null))
+            .filter(Boolean);
+
+        return monthOptions.filter(
+            (option) => !selectedMonths.includes(option.value)
+        );
+    };
 
     const [selectedCategory, setSelectedCategory] =
         useState<CategoryOption | null>(null);
@@ -131,7 +147,6 @@ export default function AddProductPage() {
         }));
     };
 
-    //Month
     const addMonth = () => {
         if (formData.months.length >= 12) return;
 
@@ -217,16 +232,13 @@ export default function AddProductPage() {
                             : [{ key: "", value: "" }],
                     });
 
-
                     setSelectedCategory(data.category_id);
 
+                          const mainImg = { product_image_id: 'temp_1', image: data.product_main_image }
+                    setMainPreview([mainImg]);
 
-                    if (data.main_image) {
-                        setMainPreview([data.main_image]);
-                    }
-                    if (data.sub_images?.length) {
-                        setSubPreview(data.sub_images);
-                    }
+                    setSubPreview(data.images);
+
                 } else {
                     toast.error(response?.data?.message)
                 }
@@ -238,8 +250,6 @@ export default function AddProductPage() {
         fetchProductDetails();
     }, [productId, isEditMode]);
 
-
-    // ---- Fetch Categories ----
     useEffect(() => {
         const fetchCategories = async () => {
             try {
@@ -263,10 +273,9 @@ export default function AddProductPage() {
         fetchCategories();
     }, []);
 
-    // Update the SubCategories useEffect to handle edit mode properly:
     useEffect(() => {
+
         const fetchSubCategories = async () => {
-            if (!selectedCategory) return;
 
             try {
                 const formdata = new FormData();
@@ -295,9 +304,8 @@ export default function AddProductPage() {
         };
 
         fetchSubCategories();
-    }, [selectedCategory]);
+    }, [formData.category, selectedCategory]);
 
-    // ---- Fetch Product ----
     useEffect(() => {
         const fetchProduct = async () => {
             try {
@@ -335,11 +343,10 @@ export default function AddProductPage() {
     const handleSave = async () => {
         try {
             const formdata = new FormData();
-
-            // ---------- EDIT MODE CHECK ----------
-            // if (formData?.product_id) {
-            //   formdata.append("product_id", formData.product_id);
-            // }
+            
+            if (isEditMode === true) {
+              formdata.append("product_id", String(productId));
+            }
 
             // ---------- BASIC FIELDS ----------
             formdata.append("category_id", String(selectedCategory));
@@ -391,11 +398,11 @@ export default function AddProductPage() {
 
             // ---------- IMAGES ----------
             if (mainImage) {
-                formdata.append("main_image", mainImage);
+                formdata.append("product_main_image", mainImage);
             }
 
             subImages.forEach((file, index: number) => {
-                formdata.append(`sub_images[${index}]`, file);
+                formdata.append(`image[${index}]`, file);
             });
 
             // ---------- API CALL ----------
@@ -423,7 +430,7 @@ export default function AddProductPage() {
                                 value={formData.category}
                                 onChange={(val: any) => {
                                     handleChange("category", val.value);
-                                    setSelectedCategory(val.value); // Changed from val to val.value
+                                    setSelectedCategory(val); // Changed from val to val.value
                                 }}
                                 className="dark:bg-dark-900"
                             />
@@ -558,7 +565,7 @@ export default function AddProductPage() {
                                                     <div>
                                                         <Label>Month</Label>
                                                         <Select
-                                                            options={monthOptions}
+                                                            options={getAvailableMonthsForIndex(index)}
                                                             placeholder="Select Month"
                                                             value={m.month}
                                                             onChange={(val) => updateMonth(index, "month", val)}
@@ -711,37 +718,34 @@ export default function AddProductPage() {
                     <div>
                         <Label>Main Image</Label>
 
-                        <img src={"https:\/\/upleex.2min.cloud\/upload\/product_images\/2026\/01\/2026-01-22\/fb8b7c56ce6d9150a8d6c86fc56d3035.webp"} />
-
-
-
-
-
                         <DropzoneComponent
                             preview={mainPreview}
                             setPreview={setMainPreview}
                             multiple={false}
                             smallPreview={false}
                             onFileSelect={(files) => setMainImage(files[0])}
+                            isEditMode={isEditMode}
                         />
                     </div>
 
                     {/* SUB IMAGES (Small Preview + Remove button) */}
                     <div>
-                        <Label>Sub Images</Label>
+                        <Label>Sub Images (Max 4)</Label>
                         <DropzoneComponent
                             preview={subPreview}
                             setPreview={setSubPreview}
                             multiple={true}
                             smallPreview={true}
+                            maxFiles={4}
                             onFileSelect={(files) => setSubImages((prev) => [...prev, ...files])}
+                            isEditMode={isEditMode}
                         />
                     </div>
 
                 </div>
 
             </ComponentCard >
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-5 mt-5 justify-end ">
                 <Button size="sm" variant="primary"
                     onClick={handleSave}
                 >
