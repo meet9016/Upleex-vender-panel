@@ -72,6 +72,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
             <Input
               placeholder="Enter Bank Account Holder Name"
               type="text"
+               
               value={KYCformData?.account_holder_name || ""}
               onChange={(e) => {
                 const value = e.target.value;
@@ -84,6 +85,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
                   }));
                 }
               }}
+              
             />
             {errors?.account_holder_name && (
               <p className="mt-1 text-sm text-red-500">{errors.account_holder_name}</p>

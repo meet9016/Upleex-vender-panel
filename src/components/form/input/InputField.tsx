@@ -66,6 +66,7 @@ const Input: FC<InputProps> = ({
         step={step}
         disabled={disabled}
         className={inputClasses}
+        style={{ height: "42px" }}
       />
 
 

@@ -35,8 +35,9 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               type="text"
               value={KYCformData?.pancard_number || ""}
               maxLength={10}
+
               onChange={(e) => {
-                const value = e.target.value.toUpperCase(); 
+                const value = e.target.value.toUpperCase();
 
                 if (value) {
                   clearError("pancard_number");
@@ -61,6 +62,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
             <Input
               placeholder="Enter your Aadhaar Number"
               type="text"
+
               value={KYCformData?.aadharcard_number || ""}
               maxLength={14} // 12 digits + 2 spaces
               onChange={(e) => {
@@ -114,6 +116,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
             <Input
               placeholder="Enter your Business Name"
               type="text"
+
               value={KYCformData?.business_name || ""}
               onChange={(e) => {
                 clearError("business_name")
@@ -136,15 +139,17 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
             <Input
               placeholder="Enter your GST Number"
               type="text"
+
+
               value={KYCformData?.gst_number || ""}
               maxLength={15}
               onChange={(e) => {
                 const value = e.target.value.toUpperCase(); // Auto convert to uppercase
-                  clearError("gst_number");
-                  setKYCFormData((prevData) => ({
-                    ...prevData,
-                    gst_number: value,
-                  }));                
+                clearError("gst_number");
+                setKYCFormData((prevData) => ({
+                  ...prevData,
+                  gst_number: value,
+                }));
               }}
             />
             {errors?.gst_number && (

@@ -99,7 +99,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
       }
 
       if (type === "country") {
-        setCountries(() => [ ...list.map((item: any) => ({
+        setCountries(() => [...list.map((item: any) => ({
           value: String(item.id),
           label: item.country_name
         }))]);
@@ -111,7 +111,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         }))]);
       }
       if (type === "city") {
-        setCities(() => [ ...list.map((item: any) => ({
+        setCities(() => [...list.map((item: any) => ({
           value: String(item.id),
           label: item.city_name
         }))]);
@@ -186,10 +186,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
       setOpenState(false)
     };
   }, [openCountry, openState, openCity, searchCountry, searchState, searchCity]);
-useEffect(()=>{
-  console.log(countries,"countries")
 
-},[countries])
   /* <!-- ================================================ Scroll handle ================================================ --> */
 
   const filteredCountries = useMemo(() => countries, [countries]);
@@ -233,7 +230,7 @@ useEffect(()=>{
           <Label>Full Name <span className="text-red-500">*</span></Label>
           <Input
             placeholder="Enter your full name"
-            className="py-3"  style={{ height: "42px" }}
+            className="py-3"
 
             type="text"
             value={KYCformData?.full_name}
@@ -259,7 +256,7 @@ useEffect(()=>{
         <div>
           <Label>Mobile Number <span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your mobile number" type="text"
-            value={KYCformData?.mobile}  style={{ height: "42px" }}
+            value={KYCformData?.mobile}
             onChange={(e) => {
               const value = e.target.value;
               if (/^\d*$/.test(value)) {
@@ -283,7 +280,7 @@ useEffect(()=>{
         <div>
           <Label>Email <span className="text-red-500">*</span></Label>
           <Input
-            className="py-3"  style={{ height: "42px" }}
+            className="py-3"
 
             placeholder="Enter your email address"
             type="email"
@@ -300,7 +297,7 @@ useEffect(()=>{
                 }));
                 return;
               }
-              
+
 
               // Validate against the standard email format pattern
               const partialEmailPattern = /^[A-Z0-9._%+-]*@?[A-Z0-9.-]*\.?(in|com|i|c|co|IN|COM|I|C|CO)?$/i;
@@ -327,7 +324,7 @@ useEffect(()=>{
 
         <div>
           <Label>Address <span className="text-red-500">*</span></Label>
-          <Input placeholder="Enter your Address" type="text"  style={{ height: "42px" }}
+          <Input placeholder="Enter your Address" type="text"
             className="py-3"
             value={KYCformData?.address}
             onChange={(e) => {
@@ -349,7 +346,7 @@ useEffect(()=>{
           <Label>Select Country <span className="text-red-500">*</span></Label>
           <div className="relative">
             <button
-              type="button"  style={{ height: "42px" }}
+              type="button"
               onClick={() => {
 
                 setOpenCountry(v => !v);
@@ -407,7 +404,7 @@ useEffect(()=>{
           <Label>Select State <span className="text-red-500">*</span></Label>
           <div className="relative">
             <button
-              type="button"  style={{ height: "42px" }}
+              type="button"
               onClick={() => {
                 setOpenState((v) => !v)
               }}
@@ -463,7 +460,7 @@ useEffect(()=>{
           <Label>Select City <span className="text-red-500">*</span></Label>
           <div className="relative">
             <button
-              type="button"  style={{ height: "42px" }}
+              type="button"
               onClick={() => {
 
                 setOpenCity((v) => !v)
@@ -518,7 +515,7 @@ useEffect(()=>{
           <Label>Pincode <span className="text-red-500">*</span></Label>
           <Input
             placeholder="Enter your Pincode"
-            type="text"  style={{ height: "42px" }}
+            type="text"
             value={KYCformData?.pincode}
             maxLength={6}
             onChange={(e) => {
