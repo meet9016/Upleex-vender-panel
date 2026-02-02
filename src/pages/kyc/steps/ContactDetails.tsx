@@ -99,19 +99,19 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
       }
 
       if (type === "country") {
-        setCountries((prev) => [...prev, ...list.map((item: any) => ({
+        setCountries(() => [ ...list.map((item: any) => ({
           value: String(item.id),
           label: item.country_name
         }))]);
       }
       if (type === "state") {
-        setStates((prev) => [...prev, ...list.map((item: any) => ({
+        setStates(() => [...list.map((item: any) => ({
           value: String(item.id),
           label: item.state_name
         }))]);
       }
       if (type === "city") {
-        setCities((prev) => [...prev, ...list.map((item: any) => ({
+        setCities(() => [ ...list.map((item: any) => ({
           value: String(item.id),
           label: item.city_name
         }))]);
@@ -186,7 +186,10 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
       setOpenState(false)
     };
   }, [openCountry, openState, openCity, searchCountry, searchState, searchCity]);
+useEffect(()=>{
+  console.log(countries,"countries")
 
+},[countries])
   /* <!-- ================================================ Scroll handle ================================================ --> */
 
   const filteredCountries = useMemo(() => countries, [countries]);
@@ -230,6 +233,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Label>Full Name <span className="text-red-500">*</span></Label>
           <Input
             placeholder="Enter your full name"
+            className="py-3"  style={{ height: "42px" }}
+
             type="text"
             value={KYCformData?.full_name}
             onChange={(e) => {
@@ -252,9 +257,9 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== Mobile name =========================================================== --> */}
 
         <div>
-          <Label>Mobile Number<span className="text-red-500">*</span></Label>
+          <Label>Mobile Number <span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your mobile number" type="text"
-            value={KYCformData?.mobile}
+            value={KYCformData?.mobile}  style={{ height: "42px" }}
             onChange={(e) => {
               const value = e.target.value;
               if (/^\d*$/.test(value)) {
@@ -266,6 +271,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }
             }}
             maxLength={10}
+            className="py-3"
           />
           {errors?.mobile && (
             <p className="mt-1 text-sm text-red-500">{errors.mobile}</p>
@@ -275,8 +281,10 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== Email =========================================================== --> */}
 
         <div>
-          <Label>Email<span className="text-red-500">*</span></Label>
+          <Label>Email <span className="text-red-500">*</span></Label>
           <Input
+            className="py-3"  style={{ height: "42px" }}
+
             placeholder="Enter your email address"
             type="email"
             value={KYCformData?.email}
@@ -292,6 +300,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                 }));
                 return;
               }
+              
 
               // Validate against the standard email format pattern
               const partialEmailPattern = /^[A-Z0-9._%+-]*@?[A-Z0-9.-]*\.?(in|com|i|c|co|IN|COM|I|C|CO)?$/i;
@@ -317,8 +326,9 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== Address =========================================================== --> */}
 
         <div>
-          <Label>Address<span className="text-red-500">*</span></Label>
-          <Input placeholder="Enter your Address" type="text"
+          <Label>Address <span className="text-red-500">*</span></Label>
+          <Input placeholder="Enter your Address" type="text"  style={{ height: "42px" }}
+            className="py-3"
             value={KYCformData?.address}
             onChange={(e) => {
               clearError("address")
@@ -336,10 +346,10 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== Country =========================================================== --> */}
 
         <div>
-          <Label>Select Country<span className="text-red-500">*</span></Label>
+          <Label>Select Country <span className="text-red-500">*</span></Label>
           <div className="relative">
             <button
-              type="button"
+              type="button"  style={{ height: "42px" }}
               onClick={() => {
 
                 setOpenCountry(v => !v);
@@ -394,10 +404,10 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== State =========================================================== --> */}
 
         <div>
-          <Label>Select State<span className="text-red-500">*</span></Label>
+          <Label>Select State <span className="text-red-500">*</span></Label>
           <div className="relative">
             <button
-              type="button"
+              type="button"  style={{ height: "42px" }}
               onClick={() => {
                 setOpenState((v) => !v)
               }}
@@ -450,10 +460,10 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== City =========================================================== --> */}
 
         <div>
-          <Label>Select City<span className="text-red-500">*</span></Label>
+          <Label>Select City <span className="text-red-500">*</span></Label>
           <div className="relative">
             <button
-              type="button"
+              type="button"  style={{ height: "42px" }}
               onClick={() => {
 
                 setOpenCity((v) => !v)
@@ -505,10 +515,10 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         </div>
 
         <div>
-          <Label>Pincode<span className="text-red-500">*</span></Label>
+          <Label>Pincode <span className="text-red-500">*</span></Label>
           <Input
             placeholder="Enter your Pincode"
-            type="text"
+            type="text"  style={{ height: "42px" }}
             value={KYCformData?.pincode}
             maxLength={6}
             onChange={(e) => {
@@ -521,6 +531,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                 }));
               }
             }}
+            className="py-3"
           />
           {errors?.pincode && (
             <p className="mt-1 text-sm text-red-500">{errors.pincode}</p>
