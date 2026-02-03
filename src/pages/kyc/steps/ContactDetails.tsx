@@ -64,62 +64,64 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   /* <!-- ================================== fetch country, state, city from API ================================== --> */
-
   const fetchOptions = useCallback(async (type: string, search: string, page: number) => {
-
     if (loading) return;
     setLoading(true);
     try {
       const formData = new FormData();
       formData.append("page", String(page));
       formData.append("search", search);
-
       let res;
       if (type === "country") {
-        res = await api.post(`${endPointApi.postVendorCountryList}`, formData);
+        if (!endPointApi.postVendorCountryList) {
+          throw new Error("Country endpoint not configured");
+        }
+        res = await api.post(endPointApi.postVendorCountryList as string, formData);
       } else if (type === "state") {
+        if (!endPointApi.postVendorStateList) {
+          throw new Error("State endpoint not configured");
+        }
         if (selectedCountry?.value) {
           formData.append("country_id", selectedCountry.value);
         }
-        res = await api.post(`${endPointApi.postVendorStateList}`, formData);
+        res = await api.post(endPointApi.postVendorStateList as string, formData);
       } else if (type === "city") {
+        if (!endPointApi.postVendorCityList) {
+          throw new Error("City endpoint not configured");
+        }
         if (selectedState?.value) {
           formData.append("state_id", selectedState.value);
         }
-        res = await api.post(`${endPointApi.postVendorCityList}`, formData);
+        res = await api.post(endPointApi.postVendorCityList as string, formData);
       }
-
       const list = res?.data?.data || [];
-
       if (list.length === 0) {
         if (type === "country") setHasMoreCountries(false);
         if (type === "state") setHasMoreStates(false);
         if (type === "city") setHasMoreCities(false);
         return;
       }
-
       if (type === "country") {
-        setCountries(() => [...list.map((item: any) => ({
-          value: String(item.id),
-          label: item.country_name
-        }))]);
+        setCountries((prev) => page === 1 ?
+          list.map((item: any) => ({ value: String(item.id), label: item.country_name })) :
+          [...prev, ...list.map((item: any) => ({ value: String(item.id), label: item.country_name }))]
+        );
+        pageRefCountry.current += 1;
       }
       if (type === "state") {
-        setStates(() => [...list.map((item: any) => ({
-          value: String(item.id),
-          label: item.state_name
-        }))]);
+        setStates((prev) => page === 1 ?
+          list.map((item: any) => ({ value: String(item.id), label: item.state_name })) :
+          [...prev, ...list.map((item: any) => ({ value: String(item.id), label: item.state_name }))]
+        );
+        pageRefState.current += 1;
       }
       if (type === "city") {
-        setCities(() => [...list.map((item: any) => ({
-          value: String(item.id),
-          label: item.city_name
-        }))]);
+        setCities((prev) => page === 1 ?
+          list.map((item: any) => ({ value: String(item.id), label: item.city_name })) :
+          [...prev, ...list.map((item: any) => ({ value: String(item.id), label: item.city_name }))]
+        );
+        pageRefCity.current += 1;
       }
-
-      if (type === "country") pageRefCountry.current += 1;
-      if (type === "state") pageRefState.current += 1;
-      if (type === "city") pageRefCity.current += 1;
     } catch (error) {
       console.error(`Failed to fetch ${type}`, error);
     } finally {
@@ -198,17 +200,23 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        if (entry.isIntersecting) {
-          if (type === "country") fetchOptions("country", searchCountry, pageRefCountry.current);
-          if (type === "state") fetchOptions("state", searchState, pageRefState.current);
-          if (type === "city") fetchOptions("city", searchCity, pageRefCity.current);
+        if (entry.isIntersecting && !loading) {
+          if (type === "country" && hasMoreCountries) {
+            fetchOptions("country", searchCountry, pageRefCountry.current);
+          }
+          if (type === "state" && hasMoreStates) {
+            fetchOptions("state", searchState, pageRefState.current);
+          }
+          if (type === "city" && hasMoreCities) {
+            fetchOptions("city", searchCity, pageRefCity.current);
+          }
         }
       },
       { rootMargin: "100px" }
     );
     observer.observe(ref.current);
     return () => observer.disconnect();
-  }, [searchCountry, searchState, searchCity, fetchOptions]);
+  }, [searchCountry, searchState, searchCity, fetchOptions, loading, hasMoreCountries, hasMoreStates, hasMoreCities]);
 
   useEffect(() => {
     if (loaderRefCountry.current) handleScrollObserver(loaderRefCountry, "country");

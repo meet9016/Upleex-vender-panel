@@ -38,20 +38,20 @@ const [productData, setProductData] = useState<Product[]>([]);
     {
       headerName: "Action",
       pinned: "right",
-      width: 130,
+      width: 80,
       cellRenderer: (params: any) => {
         const id = params.data.product_id;
 
         return (
-          <div className="flex items-center gap-3 w-full h-full">
+          <div className="flex items-center gap-2 w-full h-full">
             <button
               onClick={() => router.push(`/product/addProduct?id=${id}`)}
-              className="text-xl text-blue-600"
+              className="text-xl text-brand-600"
             >
               <MdModeEdit />
             </button>
             <button
-              className="text-xl text-red-600"
+              className="text-xl text-error-600"
               onClick={() => openDeletePopup(id)}
             >
               <MdDelete />

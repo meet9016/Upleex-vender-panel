@@ -417,7 +417,13 @@ export default function KYCPage() {
         setKYCFormData((prev) => ({
           ...prev,
           confirm_account_number: res.data.data.account_number,
+        }));
 
+        setKYCFormData(prevData => ({
+          ...prevData,
+          country_id: { value: res.data.data.country_id, label: res.data.data.country_name },
+          state_id: { value: res.data.data.state_id, label: res.data.data.state_name },
+          city_id: { value: res.data.data.city_id, label: res.data.data.city_name },
         }));
       }
     } catch (error) {
@@ -489,8 +495,8 @@ export default function KYCPage() {
 
           }}
           className="px-8 py-2 w-full md:w-auto
-        rounded-lg bg-blue-600 text-white
-              hover:bg-blue-700 transition font-medium">
+        rounded-lg bg-brand-600 text-white
+              hover:bg-brand-700 transition font-medium">
 
           {currentStep === steps.length - 1 && KYCformData?.terms_conditions === 1 ? "Submit KYC" : "Next"}
         </button>
