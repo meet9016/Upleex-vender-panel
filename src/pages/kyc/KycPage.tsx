@@ -342,7 +342,7 @@ export default function KYCPage() {
 
     const formData = new FormData();
 
-    formData.append("page",currentStep !== 3? String(currentStep) :String(currentStep + 1) || "");
+    formData.append("page",currentStep === 3 ? String(currentStep) : currentStep === 4 ? String(currentStep) : String(currentStep+1));
     formData.append("full_name", KYCformData.full_name || "");
     formData.append("email", KYCformData.email || "");
     formData.append("mobile", KYCformData.mobile || "");
