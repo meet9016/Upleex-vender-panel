@@ -339,8 +339,10 @@ export default function KYCPage() {
   /* <!-- ========================================================== FormSubmit ========================================================== --> */
 
   const submitKYCFormdata = async () => {
+
     const formData = new FormData();
-    formData.append("page", String(currentStep + 1) || "");
+
+    formData.append("page",currentStep !== 3? String(currentStep) :String(currentStep + 1) || "");
     formData.append("full_name", KYCformData.full_name || "");
     formData.append("email", KYCformData.email || "");
     formData.append("mobile", KYCformData.mobile || "");
@@ -486,13 +488,15 @@ export default function KYCPage() {
           onClick={async () => {
             const isValid = await FormDataValidation();
             if (isValid) {
-
-              await submitKYCFormdata();
-
+              if (currentStep === 3) {
+                setCurrentStep((s) => s + 1);
+                return;
+              } else {
+                await submitKYCFormdata();
+              }
             } else if (!isValid) {
               return;
             }
-
           }}
           className="px-8 py-2 w-full md:w-auto
         rounded-lg bg-brand-600 text-white
