@@ -29,16 +29,15 @@ const [productData, setProductData] = useState<Product[]>([]);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const columns: ColDef[] = [
     { field: "product_name", headerName: "Product Name", width: 300 },
-    { field: "category_name", headerName: "Category Name", width: 200 },
-    { field: "sub_category_name", headerName: "Sub Category", width: 200 },
-    { field: "product_type_name", headerName: "Product Type", width: 300 },
-    { field: "price", headerName: "Price", width: 200 },
-    { field: "cancel_price", headerName: "Cancel Price", width: 200 },
-    { field: "product_listing_type_name", headerName: "Listing Type", width: 200 },
+    { field: "category_name", headerName: "Category Name", width: 300 },
+    { field: "sub_category_name", headerName: "Sub Category", width: 300 },
+    { field: "product_type_name", headerName: "Product Type", width: 140 },
+    { field: "price", headerName: "Price", width: 150 },
+    { field: "product_listing_type_name", headerName: "Listing Type", width: 140 },
     {
       headerName: "Action",
       pinned: "right",
-      width: 80,
+      width: 100,
       cellRenderer: (params: any) => {
         const id = params.data.product_id;
 
