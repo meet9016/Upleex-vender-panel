@@ -137,28 +137,28 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                   />
                   { /* <!-- ======================================================  Overlay on Hover  ====================================================== -->*/}
 
+<div className="absolute bottom-2 right-2 bg-opacity-0 group-hover/image:bg-opacity-20 
+                transition-all duration-300 rounded-xl flex items-center justify-center">
+  <button
+    type="button"
+    onClick={(e) => {
+      e.stopPropagation();
+      removeImage(preview[0].product_image_id);
+    }}
+    className="opacity-0 group-hover/image:opacity-100
+               bg-[rgb(58,140,237)] hover:bg-[rgb(37,115,210)] text-white
+               px-3 py-2 rounded-lg font-bold
+               transform scale-90 group-hover/image:scale-100
+               transition-all duration-300 shadow-xl
+               flex items-center gap-2"
+  >
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+    {/* Remove */}
+  </button>
+</div>
 
-                  <div className="absolute bottom-2 right-2  bg-opacity-0 group-hover/image:bg-opacity-20 
-                                transition-all duration-300 rounded-xl flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeImage(preview[0].product_image_id);
-                      }}
-                      className="opacity-0 group-hover/image:opacity-100 
-                               bg-error-500 hover:bg-error-600 text-white 
-                               px-4 py-2 rounded-lg font-medium
-                               transform scale-90 group-hover/image:scale-100
-                               transition-all duration-300 shadow-xl
-                               flex items-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      Remove
-                    </button>
-                  </div>
                 </div>
               </div>
             )}
@@ -187,28 +187,29 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                     />
                     {/* Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 
-                                  opacity-0 group-hover/image:opacity-100 transition-all duration-300">
-                      <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
-                        <span className="text-white text-xs font-medium bg-black/40 px-2 py-1 rounded">
-                          #{index + 1}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeImage(img.product_image_id);
-                          }}
-                          className="bg-error-500 hover:bg-error-600 text-white 
-                                   p-1.5 rounded-lg transition-all duration-200
-                                   transform hover:scale-110 shadow-lg"
-                          aria-label="Remove image"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
+                opacity-0 group-hover/image:opacity-100 transition-all duration-300">
+  <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
+    <span className="text-white text-xs font-medium bg-black/40 px-2 py-1 rounded">
+      #{index + 1}
+    </span>
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        removeImage(img.product_image_id);
+      }}
+      className="bg-[rgb(58,140,237)] hover:bg-[rgb(37,115,210)] text-white 
+                 p-1.5 rounded-lg transition-all duration-200
+                 transform hover:scale-110 shadow-lg font-bold"
+      aria-label="Remove image"
+    >
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+</div>
+
                   </div>
                 ))}
               </div>

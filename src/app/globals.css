@@ -756,3 +756,28 @@ span.flatpickr-weekday,
   justify-content: center;
   align-items: center;
 }
+.cute-ag-grid {
+  --ag-header-background-color: #eef9ff;
+  --ag-header-foreground-color: #1f2937;
+  --ag-border-color: #dbeafe;
+  --ag-row-border-color: #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.cute-ag-grid .ag-header-cell {
+  border-right: 1px solid #dbeafe;
+}
+
+.cute-ag-grid .ag-cell {
+  border-right: 1px dashed #e5e7eb;
+}
+
+.cute-ag-grid .ag-row:hover {
+  background-color: #f8fafc;
+}
+
+.cute-ag-grid .ag-paging-panel {
+  background-color: #f8fafc;
+  border-top: 1px solid #e5e7eb;
+}

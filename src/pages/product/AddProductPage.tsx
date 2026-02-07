@@ -11,11 +11,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import { Editor } from "primereact/editor";
 import { getAvailableMonths } from "@/utils/helper";
-import { MdDelete } from "react-icons/md";
+import { MdDelete, } from "react-icons/md";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import Radio from "@/components/form/input/Radio";
 import { toast } from "react-toastify";
+import { IoClose } from "react-icons/io5";
 
 /* <!-- ========================================================== Types ========================================================== --> */
 
@@ -66,7 +67,19 @@ export default function AddProductPage() {
     const productId = searchParams?.get("id") ?? null;
     const isEditMode = !!productId;
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        category: string | null;
+        subCategory: string | null;
+        listingType: string | null;
+        name: string;
+        dayPrice: string;
+        dayCancelPrice: string;
+        monthPrice: string;
+        monthCancelPrice: string;
+        months: { month: string; price: string; productMonthsId: string; cancelPrice: string }[];
+        description: string;
+        keyFeatures: { key: string; value: string; specification_id?: string }[];
+    }>({
         category: null,
         subCategory: null,
         listingType: null,
@@ -95,10 +108,10 @@ export default function AddProductPage() {
     const [subImages, setSubImages] = useState<File[]>([]);
 
     const [selectedCategory, setSelectedCategory] =
-        useState<CategoryOption | null>(null);
+        useState<string | null>(null);
 
     const [selectedSubCategory, setSelectedSubCategory] =
-        useState<CategoryOption | null>(null);
+        useState<string | null>(null);
     /* <!-- ========================================================== disable unavailable months ========================================================== --> */
 
     const getAvailableMonthsForIndex = (currentIndex: number): Option[] => {
@@ -221,9 +234,9 @@ export default function AddProductPage() {
                     setBillingType(data.product_listing_type_id === "1" ? "day" : "month");
 
                     setFormData({
-                        category: data.category_id,
-                        subCategory: data.sub_category_id,
-                        listingType: data.product_type_id,
+                        category: String(data.category_id),
+                        subCategory: String(data.sub_category_id),
+                        listingType: String(data.product_type_id),
                         name: data.product_name,
                         dayPrice: data.product_listing_type_id === "1" ? data.price : "",
                         dayCancelPrice: data.product_listing_type_id === "1" ? data.cancel_price : "",
@@ -249,7 +262,7 @@ export default function AddProductPage() {
                             : [{ key: "", value: "" }],
                     });
 
-                    setSelectedCategory(data.category_id);
+                    setSelectedCategory(String(data.category_id));
 
                     const mainImg = { product_image_id: 'temp_1', image: data.product_main_image }
                     setMainPreview([mainImg]);
@@ -380,13 +393,13 @@ export default function AddProductPage() {
             formdata.append("description", formData.description);
 
             // ---------- SELL FLOW ----------
-            if (formData.listingType != 1) {
+            if (formData.listingType != "1") {
                 formdata.append("price", formData.monthPrice);
                 formdata.append("cancel_price", formData.monthCancelPrice);
             }
 
             // ---------- RENT FLOW ----------
-            if (formData.listingType == 1) {
+            if (formData.listingType == "1") {
                 // DAY
                 if (billingType === "day") {
                     formdata.append("price", formData.dayPrice);
@@ -400,8 +413,8 @@ export default function AddProductPage() {
                             formdata.append(`months_id[${index}]`, m.month);
                             formdata.append(`month_price[${index}]`, m.price);
                             formdata.append(`month_cancel_price[${index}]`, m.cancelPrice);
-                            if (isEditMode === true) {
-                                formdata.append(`product_months_id[${index}]`, m.cancelPrice);
+                            if (isEditMode === true && m.productMonthsId) {
+                                formdata.append(`product_months_id[${index}]`, m.productMonthsId);
                             }
                         }
                     });
@@ -443,8 +456,6 @@ export default function AddProductPage() {
         }
     };
 
-    /* <!-- ======================================================================== UI  ======================================================================== --> */
-
     return (
         <>
             <ComponentCard title={isEditMode ? "Edit Product" : "Add Product"}>
@@ -457,10 +468,12 @@ export default function AddProductPage() {
                             <Select
                                 options={categoryList}
                                 placeholder="Category"
-                                value={formData.category}
-                                onChange={(val: any) => {
-                                    handleChange("category", val.value);
+                                value={formData.category ?? ""}
+                                onChange={(val: string) => {
+                                    handleChange("category", val);
                                     setSelectedCategory(val);
+                                    handleChange("subCategory", null);
+                                    setSelectedSubCategory(null);
                                 }}
                                 className="dark:bg-dark-900"
                             />
@@ -478,10 +491,12 @@ export default function AddProductPage() {
                             <Select
                                 options={subCategoryList}
                                 placeholder="Sub Category"
-                                value={formData.subCategory}
-                                onChange={(val: any) => handleChange("subCategory", val.value)}
+                                value={formData.subCategory ?? ""}
+                                onChange={(val: string) => {
+                                    handleChange("subCategory", val);
+                                    setSelectedSubCategory(val);
+                                }}
                                 className="dark:bg-dark-900"
-
                             />
 
                             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
@@ -498,11 +513,9 @@ export default function AddProductPage() {
                             <Select
                                 options={productTypeOptions}
                                 placeholder="Listing Type"
-                                value={formData.listingType}
-                                onChange={(val) => handleChange("listingType", val)}
+                                value={formData.listingType ?? ""}
+                                onChange={(val: string) => handleChange("listingType", val)}
                                 className="dark:bg-dark-900"
-                                disabled={isEditMode}
-
                             />
                             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
                                 <ChevronDownIcon />
@@ -523,7 +536,7 @@ export default function AddProductPage() {
                         </div>
                     </div>
 
-                    {formData?.listingType == 1 && (
+                    {formData?.listingType === "1" && (
                         <div className="flex flex-wrap items-center gap-8">
                             <Radio
                                 id="radio-day"
@@ -532,8 +545,6 @@ export default function AddProductPage() {
                                 checked={billingType === "day"}
                                 onChange={() => handleRadioChange("day")}
                                 label="Day"
-                                disabled={isEditMode}
-
                             />
 
                             <Radio
@@ -543,15 +554,13 @@ export default function AddProductPage() {
                                 checked={billingType === "month"}
                                 onChange={() => handleRadioChange("month")}
                                 label="Month"
-                                disabled={isEditMode}
-
                             />
                         </div>
                     )}
 
                     {/* <!-- ======================================================== Rent Flow  ======================================================== -->*/}
 
-                    {formData?.listingType == 1 && (
+                    {formData?.listingType === "1" && (
                         <>
                             {/* <!-- ======================================================== Day Price  ======================================================== -->*/}
 
@@ -584,90 +593,117 @@ export default function AddProductPage() {
 
 
                             {billingType === "month" && (
-                                <div className="col-span-3 mt-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <Label className="text-lg font-semibold">
-                                            Monthly Pricing (1–12 Months)
-                                        </Label>
+                                <div className="col-span-3 mt-8">
+                                    {/* HEADER */}
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div>
+                                            <Label className="text-xl font-bold text-gray-800">
+                                                Monthly Pricing
+                                            </Label>
+                                            <p className="text-sm text-gray-500">
+                                                Configure price for each month (1–12)
+                                            </p>
+                                        </div>
 
                                         {formData?.months?.length < 12 && (
                                             <button
                                                 type="button"
-                                                className="bg-[#ffcb07] px-4 py-1 rounded-md font-bold"
                                                 onClick={addMonth}
+                                                className="flex items-center gap-2 px-5 py-2 rounded-xl text-white font-semibold shadow-md transition-transform hover:scale-105"
+                                                style={{
+                                                    background: "linear-gradient(135deg, rgb(53,66,237), rgb(90,102,255))",
+                                                }}
                                             >
                                                 + Add Month
                                             </button>
                                         )}
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {formData?.months?.map((m, index) => (
-                                            <div
-                                                key={index}
-                                                className="border rounded-md p-4 relative bg-gray-50"
-                                            >
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    {/* MONTH SELECT */}
-                                                    <div>
-                                                        <Label>Month</Label>
-                                                        <Select
-                                                            options={getAvailableMonthsForIndex(index)}
-                                                            placeholder="Select Month"
-                                                            value={m.month}
-                                                            onChange={(val) => updateMonth(index, "month", val)}
-                                                        />
+                                    {/* MONTH CARDS */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {formData?.months?.map((m, index) => {
+                                            const monthError = !m.month ? "Month is required" : "";
+                                            const priceError = m.month && !m.price ? "Price is required" : "";
+                                            const cancelError = m.month && !m.cancelPrice ? "Cancel Price is required" : "";
 
-                                                    </div>
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className="relative rounded-2xl p-6 bg-white/80 backdrop-blur border border-gray-200 shadow-md hover:shadow-xl transition flex flex-col gap-5"
+                                                >
+                                                    {/* REMOVE CROSS BUTTON */}
+                                                  {formData.months.length > 1 && (
+    <button
+        type="button"
+        onClick={() => removeMonth(index)}
+        className="absolute top-3 right-3 text-gray-600 hover:text-[rgb(58,140,237)] font-extrabold text-2xl transition"
+        title="Remove Month"
+    >
+        <IoClose />
+    </button>
+)}
 
-                                                    {/* PRICE */}
-                                                    <div>
-                                                        <Label>Price</Label>
-                                                        <Input
-                                                            type="number"
-                                                            placeholder="Enter Price"
-                                                            value={m.price}
-                                                            onChange={(e) =>
-                                                                updateMonth(index, "price", e.target.value)
-                                                            }
-                                                        />
-                                                    </div>
 
-                                                    {/* CANCEL PRICE */}
-                                                    <div>
-                                                        <Label>Cancel Price</Label>
-                                                        <Input
-                                                            type="number"
-                                                            placeholder="Enter Cancel Price"
-                                                            value={m.cancelPrice}
-                                                            onChange={(e) =>
-                                                                updateMonth(index, "cancelPrice", e.target.value)
-                                                            }
-                                                        />
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                        {/* MONTH */}
+                                                        <div>
+                                                            <Label className="text-xs text-gray-500 uppercase">
+                                                                Select Month
+                                                            </Label>
+                                                            <Select
+                                                                options={getAvailableMonthsForIndex(index)}
+                                                                placeholder="Select Month"
+                                                                value={m.month}
+                                                                onChange={(val) => updateMonth(index, "month", val)}
+                                                                className="mt-1"
+                                                            />
+                                                            {monthError && <p className="text-red-500 text-xs mt-1">{monthError}</p>}
+                                                        </div>
+
+                                                        {/* PRICE */}
+                                                        <div>
+                                                            <Label className="text-xs text-gray-500 uppercase">
+                                                                Price
+                                                            </Label>
+                                                            <Input
+                                                                type="number"
+                                                                placeholder="₹ Price"
+                                                                value={m.price}
+                                                                className="focus:ring-2 focus:ring-[rgb(53,66,237)] mt-1"
+                                                                onChange={(e) => updateMonth(index, "price", e.target.value)}
+                                                            />
+                                                            {priceError && <p className="text-red-500 text-xs mt-1">{priceError}</p>}
+                                                        </div>
+
+                                                        {/* CANCEL PRICE */}
+                                                        <div>
+                                                            <Label className="text-xs text-gray-500 uppercase">
+                                                                Cancel Price
+                                                            </Label>
+                                                            <Input
+                                                                type="number"
+                                                                placeholder="₹ Cancel"
+                                                                value={m.cancelPrice}
+                                                                className="focus:ring-2 focus:ring-[rgb(53,66,237)] mt-1"
+                                                                onChange={(e) => updateMonth(index, "cancelPrice", e.target.value)}
+                                                            />
+                                                            {cancelError && <p className="text-red-500 text-xs mt-1">{cancelError}</p>}
+                                                        </div>
                                                     </div>
                                                 </div>
-
-                                                {/* REMOVE */}
-                                                {formData.months.length > 1 && (
-                                                    <button
-                                                        type="button"
-                                                        className="absolute right-4 top-4 text-red-500 text-xl"
-                                                        onClick={() => removeMonth(index)}
-                                                    >
-                                                        <MdDelete />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
+
                         </>
                     )}
 
                     {/* <!-- ============================================= Sell Flow  ============================================= -->*/}
 
-                    {formData?.listingType != 1 && (
+                    {formData?.listingType !== "1" && formData?.listingType != null && (
                         <>
                             <div>
                                 <Label>Price</Label>
@@ -726,54 +762,77 @@ export default function AddProductPage() {
 
                     {/* <!-- ======================================================== Features  ======================================================== -->*/}
 
-                    <div className="h-[350px] flex flex-col">
+                    <div className="h-[380px] flex flex-col">
+                        {/* HEADER */}
+                        <div className="flex items-center justify-between mb-4">
+                            <Label className="text-lg font-bold text-gray-800">
+                                Key Features
+                            </Label>
+                            <button
+                                type="button"
+                                onClick={addFeatureField}
+                                className="flex items-center gap-2 px-5 py-2 rounded-xl text-white font-semibold shadow-md transition-transform hover:scale-105"
+                                style={{
+                                    background: "linear-gradient(135deg, rgb(53,66,237), rgb(90,102,255))",
+                                }}
+                            >
+                                + Add Feature
+                            </button>
+                        </div>
 
-                        <Label>Key Features</Label>
-
-
-                        {/* SCROLLABLE BOX */}
-                        <div className="border border-gray-200 rounded-xl p-3 overflow-y-auto flex-1">
+                        {/* SCROLLABLE AREA */}
+                        <div className="flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-4 space-y-4">
                             {formData?.keyFeatures?.map((item, index) => (
-                               <div key={index} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-center relative mb-4">
-                                    <Input
-                                        type="text"
-                                        placeholder="Enter Key"
-                                        value={item.key}
-                                        onChange={(e) => UpdateFeatureField(index, "key", e.target.value)}
-                                    />
-
-                                    <div className="relative">
-                                        <Input
-                                            type="text"
-                                            placeholder="Enter Value"
-                                            value={item.value}
-                                            onChange={(e) => UpdateFeatureField(index, "value", e.target.value)}
-                                        />
-
-
-                                    </div>
-                                    {formData.keyFeatures.length > 1 && formData.keyFeatures.length - 1 !== index ? (
+                                <div
+                                    key={index}
+                                    className="relative rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-lg transition p-4 flex flex-col md:flex-row gap-4 items-center"
+                                >
+                                    {/* REMOVE CROSS BUTTON */}
+                                    {formData.keyFeatures.length > 1 && (
                                         <button
                                             type="button"
                                             onClick={() => removeFeature(index)}
-                                            className="bg-brand-500  w-8 h-10 flex items-center text-white font-bold  justify-center rounded-md hover:bg-error-600"
+                                            className="absolute top-2 right-2 text-gray-600 hover:text-[rgb(58,140,237)] text-2xl font-extrabold transition"
+                                            title="Remove Feature"
                                         >
-                                            -
+                                            <IoClose />
                                         </button>
-                                    ) :
-                                        <button
-                                            type="button"
-                                            className="bg-brand-500  w-8 h-10 flex items-center text-white font-bold  justify-center rounded-md hover:bg-success-600"
-                                            onClick={addFeatureField}
-                                        >
-                                            +
-                                        </button>}
+                                    )}
 
 
+                                    {/* KEY */}
+                                    <div className="flex-1">
+                                        <Label className="text-xs text-gray-500 uppercase">
+                                            Feature
+                                        </Label>
+                                        <Input
+                                            type="text"
+                                            placeholder="e.g. Free Delivery"
+                                            value={item.key}
+                                            className="focus:ring-2 focus:ring-[rgb(53,66,237)]"
+                                            onChange={(e) =>
+                                                UpdateFeatureField(index, "key", e.target.value)
+                                            }
+                                        />
+                                    </div>
 
+                                    {/* VALUE */}
+                                    <div className="flex-1">
+                                        <Label className="text-xs text-gray-500 uppercase">
+                                            Description
+                                        </Label>
+                                        <Input
+                                            type="text"
+                                            placeholder="e.g. Up to 10km radius"
+                                            value={item.value}
+                                            className="focus:ring-2 focus:ring-[rgb(53,66,237)]"
+                                            onChange={(e) =>
+                                                UpdateFeatureField(index, "value", e.target.value)
+                                            }
+                                        />
+                                    </div>
                                 </div>
                             ))}
-
                         </div>
                     </div>
                 </div>

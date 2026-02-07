@@ -43,20 +43,26 @@ const [productData, setProductData] = useState<Product[]>([]);
         const id = params.data.product_id;
 
         return (
-          <div className="flex items-center gap-2 w-full h-full">
-            <button
-              onClick={() => router.push(`/product/addProduct?id=${id}`)}
-              className="text-xl text-brand-600"
-            >
-              <MdModeEdit />
-            </button>
-            <button
-              className="text-xl text-error-600"
-              onClick={() => openDeletePopup(id)}
-            >
-              <MdDelete />
-            </button>
-          </div>
+        <div className="flex items-center gap-3 w-full h-full">
+  <button
+    onClick={() => router.push(`/product/addProduct?id=${id}`)}
+    className="text-xl transition"
+    style={{ color: 'rgb(58, 140, 237)' }}
+    title="Edit"
+  >
+    <MdModeEdit />
+  </button>
+
+  <button
+    onClick={() => openDeletePopup(id)}
+    className="text-xl transition opacity-80 hover:opacity-100"
+    style={{ color: 'rgb(58, 140, 237)' }}
+    title="Delete"
+  >
+    <MdDelete />
+  </button>
+</div>
+
         );
       },
     },

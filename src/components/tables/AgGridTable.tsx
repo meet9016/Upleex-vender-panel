@@ -2,10 +2,14 @@
 import React, { useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AgGridReact } from "ag-grid-react";
-import { AllCommunityModule, ColDef, ModuleRegistry, RowSelectionOptions } from "ag-grid-community";
+import {
+  AllCommunityModule,
+  ColDef,
+  ModuleRegistry,
+  RowSelectionOptions,
+} from "ag-grid-community";
 import { MdDelete, MdModeEdit } from "react-icons/md";
 
-// Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 interface AgGridTableProps {
@@ -32,47 +36,53 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   const router = useRouter();
   const gridRef = useRef<any>(null);
 
-  // Default column definitions
+  // 🔥 CLEAN DEFAULT COLUMN SETTINGS
   const defaultColDef = useMemo(
     () => ({
       sortable: true,
       filter: filter,
-      resizable: false, // fixed width
-      cellClass: "flex items-center", // vertical center
+      suppressMenu: true,
+      resizable: true,
+      flex: 1,
+      minWidth: 120,
+      cellClass: "flex items-center text-sm",
+      headerClass: "font-semibold text-slate-700",
     }),
     []
   );
 
-  // Default columns if none provided
+
+  // 🔥 DEFAULT COLUMNS (NO WIDTHS)
   const defaultColumns: ColDef[] = [
-    { field: "planName", headerName: "Plan Name", width: 150 },
-    { field: "price", headerName: "Price", width: 120 },
-    { field: "duration", headerName: "Duration", width: 140 },
-    { field: "day", headerName: "Day", width: 100 },
-    { field: "month", headerName: "Month", width: 100 },
-    { field: "rocket", headerName: "Rocket", width: 300 },
+    { field: "planName", headerName: "Plan Name" },
+    { field: "price", headerName: "Price" },
+    { field: "duration", headerName: "Duration" },
+    { field: "day", headerName: "Day" },
+    { field: "month", headerName: "Month" },
+    { field: "rocket", headerName: "Rocket", flex: 2 },
     {
       headerName: "Action",
       pinned: "right",
-      width: 130,
-//       cellStyle: {
-//     display: "flex",
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
+      minWidth: 120,
       cellRenderer: (params: any) => {
         const id = params.data.id;
         return (
-          <div className="flex items-center justify-center gap-3 w-full h-full">
+          <div className="flex items-center justify-center gap-3 w-full">
             <button
-              onClick={() => (onEdit ? onEdit(id) : router.push(`/plan/edit/${id}`))}
-              className="text-xl text-brand-600"
+              onClick={() =>
+                onEdit ? onEdit(id) : router.push(`/plan/edit/${id}`)
+              }
+              className="text-lg text-slate-500 hover:text-brand-600 transition"
             >
               <MdModeEdit />
             </button>
             <button
-              onClick={() => (onDelete ? onDelete(id) : alert(`Delete clicked for ID: ${id}`))}
-              className="text-xl text-red-600"
+              onClick={() =>
+                onDelete
+                  ? onDelete(id)
+                  : alert(`Delete clicked for ID: ${id}`)
+              }
+              className="text-lg text-slate-400 hover:text-red-500 transition"
             >
               <MdDelete />
             </button>
@@ -82,17 +92,20 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
     },
   ];
 
-   const rowSelection = useMemo<
-    RowSelectionOptions | "single" | "multiple"
-  >(() => {
-    return { mode: "multiRow" };
-  }, []);
+  const rowSelection = useMemo<RowSelectionOptions>(
+    () => ({ mode: "multiRow" }),
+    []
+  );
+  const onGridReady = (params: any) => {
+    params.api.sizeColumnsToFit();
+  };
+
 
   return (
     <div>
       {/* HEADER */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">{tableName} Table</h2>
+        <h2 className="text-xl font-bold">{tableName}</h2>
 
         {buttonName && (
           <button
@@ -104,16 +117,21 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
         )}
       </div>
 
-      {/* AG-GRID */}
-      <div style={{ width: "100%", height: "80vh" }}>
+      {/* AG GRID */}
+      <div
+        className="ag-theme-alpine cute-ag-grid"
+        style={{ width: "100%", height: "80vh" }}
+      >
         <AgGridReact
           ref={gridRef}
           rowData={rowData}
           columnDefs={columns || defaultColumns}
           defaultColDef={defaultColDef}
-          pagination={true}
+          pagination
           paginationPageSize={10}
           rowSelection={rowSelection}
+          suppressHorizontalScroll={true}   // 🔒 NO H-SCROLL
+          onGridReady={onGridReady}
         />
       </div>
     </div>
