@@ -56,18 +56,17 @@ export default function DocumentUpload({
       </label>
 
       {!file ? (
-        <label className="border border-dashed border-gray-400 rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition text-center">
+        <label className={`border border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition text-center ${error ? "border-red-500 ring-2 ring-red-500/20" : "border-gray-400"}`}>
           <span className="text-gray-600 text-sm">Click to upload</span>
-
-<input 
-  type="file" 
-  className="hidden" 
-  onChange={handleFileChange}
-  accept="image/*"
-/>
+          <input
+            type="file"
+            className="hidden"
+            onChange={handleFileChange}
+            accept="image/*"
+          />
         </label>
       ) : (
-        <div className="relative p-3 border rounded-lg bg-gray-50 group">
+        <div className={`relative p-3 border rounded-lg bg-gray-50 group ${error ? "border-red-500 ring-2 ring-red-500/20" : "border-gray-200"}`}>
           <div className="relative">
             {preview ? (
               <>

@@ -112,6 +112,9 @@ export default function AddProductPage() {
 
     const [selectedSubCategory, setSelectedSubCategory] =
         useState<string | null>(null);
+
+    const [submitAttempted, setSubmitAttempted] = useState(false);
+
     /* <!-- ========================================================== disable unavailable months ========================================================== --> */
 
     const getAvailableMonthsForIndex = (currentIndex: number): Option[] => {
@@ -376,7 +379,44 @@ export default function AddProductPage() {
     /* <!-- ============================================ Handle save ============================================ --> */
 
 
+    const validateForm = (): boolean => {
+        if (!formData.category) return false;
+        if (!formData.subCategory) return false;
+        if (!formData.listingType) return false;
+        if (!formData.name?.trim()) return false;
+        if (!formData.description?.trim()) return false;
+        if (!mainImage && (!mainPreview || mainPreview.length === 0)) return false;
+
+        if (formData.listingType === "1") {
+            if (billingType === "day") {
+                if (!formData.dayPrice?.trim() || !formData.dayCancelPrice?.trim()) return false;
+            }
+            if (billingType === "month") {
+                const hasCompleteRow = formData.months.some(
+                    (m) => m.month && m.price?.trim() && m.cancelPrice?.trim()
+                );
+                if (!hasCompleteRow) return false;
+                const invalidMonthRows = formData.months.some(
+                    (m) => (m.price?.trim() || m.cancelPrice?.trim()) && !m.month
+                );
+                if (invalidMonthRows) return false;
+            }
+            if (!billingType) return false;
+        }
+
+        if (formData.listingType && formData.listingType !== "1") {
+            if (!formData.monthPrice?.trim() || !formData.monthCancelPrice?.trim()) return false;
+        }
+
+        return true;
+    };
+
     const handleSubmit = async () => {
+        setSubmitAttempted(true);
+        if (!validateForm()) {
+            toast.error("Please fill all required fields correctly.");
+            return;
+        }
         try {
             const formdata = new FormData();
 
@@ -475,7 +515,7 @@ export default function AddProductPage() {
                                     handleChange("subCategory", null);
                                     setSelectedSubCategory(null);
                                 }}
-                                className="dark:bg-dark-900"
+                                className={`dark:bg-dark-900 ${submitAttempted && !formData.category ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : ""}`}
                             />
 
                             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
@@ -496,7 +536,7 @@ export default function AddProductPage() {
                                     handleChange("subCategory", val);
                                     setSelectedSubCategory(val);
                                 }}
-                                className="dark:bg-dark-900"
+                                className={`dark:bg-dark-900 ${submitAttempted && !formData.subCategory ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : ""}`}
                             />
 
                             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
@@ -513,9 +553,11 @@ export default function AddProductPage() {
                             <Select
                                 options={productTypeOptions}
                                 placeholder="Listing Type"
-                                value={formData.listingType ?? ""}
-                                onChange={(val: string) => handleChange("listingType", val)}
-                                className="dark:bg-dark-900"
+                                value={formData.listingType}
+                                onChange={(val) => handleChange("listingType", val)}
+                                className={`dark:bg-dark-900 ${submitAttempted && !formData.listingType ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : ""}`}
+                                disabled={isEditMode}
+
                             />
                             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
                                 <ChevronDownIcon />
@@ -532,29 +574,36 @@ export default function AddProductPage() {
                                 type="text"
                                 value={formData.name}
                                 onChange={(e) => handleChange("name", e.target.value)}
+                                error={submitAttempted && !formData.name?.trim()}
+                                errorMessage={submitAttempted && !formData.name?.trim() ? "Item name is required" : undefined}
                             />
                         </div>
                     </div>
 
                     {formData?.listingType === "1" && (
-                        <div className="flex flex-wrap items-center gap-8">
-                            <Radio
-                                id="radio-day"
-                                name="billingType"
-                                value="day"
-                                checked={billingType === "day"}
-                                onChange={() => handleRadioChange("day")}
-                                label="Day"
-                            />
+                        <div className="flex flex-col gap-1">
+                            <div className="flex flex-wrap items-center gap-8">
+                                <Radio
+                                    id="radio-day"
+                                    name="billingType"
+                                    value="day"
+                                    checked={billingType === "day"}
+                                    onChange={() => handleRadioChange("day")}
+                                    label="Day"
+                                    disabled={isEditMode}
+                                />
 
-                            <Radio
-                                id="radio-month"
-                                name="billingType"
-                                value="month"
-                                checked={billingType === "month"}
-                                onChange={() => handleRadioChange("month")}
-                                label="Month"
-                            />
+                                <Radio
+                                    id="radio-month"
+                                    name="billingType"
+                                    value="month"
+                                    checked={billingType === "month"}
+                                    onChange={() => handleRadioChange("month")}
+                                    label="Month"
+                                    disabled={isEditMode}
+                                />
+                            </div>
+                            {submitAttempted && !billingType && <p className="text-red-500 text-xs">Please select Day or Month</p>}
                         </div>
                     )}
 
@@ -574,6 +623,8 @@ export default function AddProductPage() {
                                             type="number"
                                             value={formData.dayPrice}
                                             onChange={(e) => handleChange("dayPrice", e.target.value)}
+                                            error={submitAttempted && !formData.dayPrice?.trim()}
+                                            errorMessage={submitAttempted && !formData.dayPrice?.trim() ? "Day price is required" : undefined}
                                         />
                                     </div>
 
@@ -584,6 +635,8 @@ export default function AddProductPage() {
                                             type="number"
                                             value={formData.dayCancelPrice}
                                             onChange={(e) => handleChange("dayCancelPrice", e.target.value)}
+                                            error={submitAttempted && !formData.dayCancelPrice?.trim()}
+                                            errorMessage={submitAttempted && !formData.dayCancelPrice?.trim() ? "Day cancel price is required" : undefined}
                                         />
                                     </div>
                                 </>
@@ -622,9 +675,10 @@ export default function AddProductPage() {
                                     {/* MONTH CARDS */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {formData?.months?.map((m, index) => {
-                                            const monthError = !m.month ? "Month is required" : "";
-                                            const priceError = m.month && !m.price ? "Price is required" : "";
-                                            const cancelError = m.month && !m.cancelPrice ? "Cancel Price is required" : "";
+                                            // Select Month: validated only when Save/Update is clicked
+                                            const monthErrorOnSave = submitAttempted && !m.month;
+                                            const priceErrorImmediate = Boolean(m.month && !m.price?.trim());
+                                            const cancelErrorImmediate = Boolean(m.month && !m.cancelPrice?.trim());
 
                                             return (
                                                 <div
@@ -632,21 +686,21 @@ export default function AddProductPage() {
                                                     className="relative rounded-2xl p-6 bg-white/80 backdrop-blur border border-gray-200 shadow-md hover:shadow-xl transition flex flex-col gap-5"
                                                 >
                                                     {/* REMOVE CROSS BUTTON */}
-                                                  {formData.months.length > 1 && (
-    <button
-        type="button"
-        onClick={() => removeMonth(index)}
-        className="absolute top-3 right-3 text-gray-600 hover:text-[rgb(58,140,237)] font-extrabold text-2xl transition"
-        title="Remove Month"
-    >
-        <IoClose />
-    </button>
-)}
+                                                    {formData.months.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeMonth(index)}
+                                                            className="absolute top-3 right-3 text-gray-600 hover:text-[rgb(58,140,237)] font-extrabold text-2xl transition"
+                                                            title="Remove Month"
+                                                        >
+                                                            <IoClose />
+                                                        </button>
+                                                    )}
 
 
 
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                        {/* MONTH */}
+                                                        {/* MONTH - error only on Save/Update */}
                                                         <div>
                                                             <Label className="text-xs text-gray-500 uppercase">
                                                                 Select Month
@@ -656,12 +710,12 @@ export default function AddProductPage() {
                                                                 placeholder="Select Month"
                                                                 value={m.month}
                                                                 onChange={(val) => updateMonth(index, "month", val)}
-                                                                className="mt-1"
+                                                                className={`mt-1 ${monthErrorOnSave ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : ""}`}
                                                             />
-                                                            {monthError && <p className="text-red-500 text-xs mt-1">{monthError}</p>}
+                                                            {monthErrorOnSave && <p className="text-red-500 text-xs mt-1">Month is required</p>}
                                                         </div>
 
-                                                        {/* PRICE */}
+                                                        {/* PRICE - validate immediately after month is selected */}
                                                         <div>
                                                             <Label className="text-xs text-gray-500 uppercase">
                                                                 Price
@@ -672,11 +726,12 @@ export default function AddProductPage() {
                                                                 value={m.price}
                                                                 className="focus:ring-2 focus:ring-[rgb(53,66,237)] mt-1"
                                                                 onChange={(e) => updateMonth(index, "price", e.target.value)}
+                                                                error={priceErrorImmediate}
+                                                                errorMessage={priceErrorImmediate ? "Price is required" : undefined}
                                                             />
-                                                            {priceError && <p className="text-red-500 text-xs mt-1">{priceError}</p>}
                                                         </div>
 
-                                                        {/* CANCEL PRICE */}
+                                                        {/* CANCEL PRICE - validate immediately after month is selected */}
                                                         <div>
                                                             <Label className="text-xs text-gray-500 uppercase">
                                                                 Cancel Price
@@ -687,8 +742,9 @@ export default function AddProductPage() {
                                                                 value={m.cancelPrice}
                                                                 className="focus:ring-2 focus:ring-[rgb(53,66,237)] mt-1"
                                                                 onChange={(e) => updateMonth(index, "cancelPrice", e.target.value)}
+                                                                error={cancelErrorImmediate}
+                                                                errorMessage={cancelErrorImmediate ? "Cancel Price is required" : undefined}
                                                             />
-                                                            {cancelError && <p className="text-red-500 text-xs mt-1">{cancelError}</p>}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -712,6 +768,8 @@ export default function AddProductPage() {
                                     type="number"
                                     value={formData.monthPrice}
                                     onChange={(e) => handleChange("monthPrice", e.target.value)}
+                                    error={submitAttempted && !formData.monthPrice?.trim()}
+                                    errorMessage={submitAttempted && !formData.monthPrice?.trim() ? "Price is required" : undefined}
                                 />
                             </div>
 
@@ -722,6 +780,8 @@ export default function AddProductPage() {
                                     type="number"
                                     value={formData.monthCancelPrice}
                                     onChange={(e) => handleChange("monthCancelPrice", e.target.value)}
+                                    error={submitAttempted && !formData.monthCancelPrice?.trim()}
+                                    errorMessage={submitAttempted && !formData.monthCancelPrice?.trim() ? "Cancel price is required" : undefined}
                                 />
                             </div>
                         </>
@@ -736,28 +796,31 @@ export default function AddProductPage() {
                     {/* LEFT → DESCRIPTION */}
                     <div className="">
                         <Label>Description</Label>
-                        <Editor
-                            value={formData.description}
-                            style={{ height: "280px" }}
-                            onTextChange={(e) => handleChange("description", e.htmlValue)}
-                            pt={{
-                                toolbar: {
-                                    style: {
-                                        borderTopLeftRadius: '0.75rem',
-                                        borderTopRightRadius: '0.75rem',
-                                        border: '1px solid #e5e7eb'
+                        <div className={`rounded-xl overflow-hidden transition-colors ${submitAttempted && !formData.description?.trim() ? "ring-2 ring-red-500 border-2 border-red-500" : ""}`}>
+                            <Editor
+                                value={formData.description}
+                                style={{ height: "280px" }}
+                                onTextChange={(e) => handleChange("description", e.htmlValue)}
+                                pt={{
+                                    toolbar: {
+                                        style: {
+                                            borderTopLeftRadius: '0.75rem',
+                                            borderTopRightRadius: '0.75rem',
+                                            border: submitAttempted && !formData.description?.trim() ? '1px solid rgb(239 68 68)' : '1px solid #e5e7eb'
+                                        }
+                                    },
+                                    content: {
+                                        style: {
+                                            borderBottomLeftRadius: '0.75rem',
+                                            borderBottomRightRadius: '0.75rem',
+                                            border: submitAttempted && !formData.description?.trim() ? '1px solid rgb(239 68 68)' : '1px solid #e5e7eb',
+                                            borderTop: 'none'
+                                        }
                                     }
-                                },
-                                content: {
-                                    style: {
-                                        borderBottomLeftRadius: '0.75rem',
-                                        borderBottomRightRadius: '0.75rem',
-                                        border: '1px solid #e5e7eb',
-                                        borderTop: 'none'
-                                    }
-                                }
-                            }}
-                        />
+                                }}
+                            />
+                        </div>
+                        {submitAttempted && !formData.description?.trim() && <p className="text-red-500 text-xs mt-1">Description is required</p>}
                     </div>
 
                     {/* <!-- ======================================================== Features  ======================================================== -->*/}
@@ -846,14 +909,17 @@ export default function AddProductPage() {
 
                     <div>
                         <Label>Main Image</Label>
-                        <DropzoneComponent
-                            preview={mainPreview}
-                            setPreview={setMainPreview}
-                            multiple={false}
-                            smallPreview={false}
-                            onFileSelect={(files) => setMainImage(files[0])}
-                            isEditMode={isEditMode}
-                        />
+                        <div className={`rounded-lg transition-colors ${submitAttempted && !mainImage && (!mainPreview || mainPreview.length === 0) ? "ring-2 ring-red-500 border-2 border-red-500 p-1" : ""}`}>
+                            <DropzoneComponent
+                                preview={mainPreview}
+                                setPreview={setMainPreview}
+                                multiple={false}
+                                smallPreview={false}
+                                onFileSelect={(files) => setMainImage(files[0])}
+                                isEditMode={isEditMode}
+                            />
+                        </div>
+                        {submitAttempted && !mainImage && (!mainPreview || mainPreview.length === 0) && <p className="text-red-500 text-xs mt-1">Main image is required</p>}
                     </div>
                     {/* <!-- ======================================================== Sub Images  ======================================================== -->*/}
 

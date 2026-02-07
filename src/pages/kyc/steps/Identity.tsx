@@ -35,7 +35,8 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               type="text"
               value={KYCformData?.pancard_number || ""}
               maxLength={10}
-
+              error={!!errors?.pancard_number}
+              errorMessage={errors?.pancard_number}
               onChange={(e) => {
                 const value = e.target.value.toUpperCase();
 
@@ -64,7 +65,9 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               type="text"
 
               value={KYCformData?.aadharcard_number || ""}
-              maxLength={14} // 12 digits + 2 spaces
+              maxLength={14}
+              error={!!errors?.aadharcard_number}
+              errorMessage={errors?.aadharcard_number}
               onChange={(e) => {
                 let value = e.target.value;
 
@@ -118,11 +121,14 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               type="text"
 
               value={KYCformData?.business_name || ""}
+              error={!!errors?.business_name}
+              errorMessage={errors?.business_name}
               onChange={(e) => {
-                clearError("business_name")
+                clearError("business_name");
                 setKYCFormData((prevData) => ({
-                  ...prevData, business_name: e.target.value,
-                }))
+                  ...prevData,
+                  business_name: e.target.value,
+                }));
               }}
             />
             {errors?.business_name && (
@@ -143,6 +149,8 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
 
               value={KYCformData?.gst_number || ""}
               maxLength={15}
+              error={!!errors?.gst_number}
+              errorMessage={errors?.gst_number}
               onChange={(e) => {
                 const value = e.target.value.toUpperCase(); // Auto convert to uppercase
                 clearError("gst_number");

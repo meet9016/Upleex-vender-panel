@@ -253,6 +253,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                 }));
               }
             }}
+            error={!!errors?.full_name}
+            errorMessage={errors?.full_name}
           />
           {errors?.full_name && (
             <p className="mt-1 text-sm text-red-500">{errors.full_name}</p>
@@ -277,6 +279,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             }}
             maxLength={10}
             className="py-3"
+            error={!!errors?.mobile}
+            errorMessage={errors?.mobile}
           />
           {errors?.mobile && (
             <p className="mt-1 text-sm text-red-500">{errors.mobile}</p>
@@ -293,6 +297,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             placeholder="Enter your email address"
             type="email"
             value={KYCformData?.email}
+            error={!!errors?.email}
+            errorMessage={errors?.email}
             onChange={(e) => {
               const value = e.target.value;
 
@@ -342,6 +348,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                 address: e.target.value,
               }));
             }}
+            error={!!errors?.address}
+            errorMessage={errors?.address}
           />
           {errors?.address && (
             <p className="mt-1 text-sm text-red-500">{errors.address}</p>
@@ -355,11 +363,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <div className="relative">
             <button
               type="button"
-              onClick={() => {
-
-                setOpenCountry(v => !v);
-              }}
-              className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
+              onClick={() => setOpenCountry(v => !v)}
+              className={`flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm ${errors?.country_id ? "border-red-500 focus:ring-red-500/20" : "border-gray-300"}`}
             >
               <span className={KYCformData?.country_id.label ? "" : "text-gray-400"}>
                 {KYCformData?.country_id.label || "Select Country"}
@@ -413,10 +418,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <div className="relative">
             <button
               type="button"
-              onClick={() => {
-                setOpenState((v) => !v)
-              }}
-              className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
+              onClick={() => setOpenState((v) => !v)}
+              className={`flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm ${errors?.state_id ? "border-red-500 focus:ring-red-500/20" : "border-gray-300"}`}
             >
               <span className={KYCformData?.state_id.label ? "" : "text-gray-400"}>
                 {KYCformData?.state_id.label || "Select State"}
@@ -469,11 +472,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <div className="relative">
             <button
               type="button"
-              onClick={() => {
-
-                setOpenCity((v) => !v)
-              }}
-              className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
+              onClick={() => setOpenCity((v) => !v)}
+              className={`flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm ${errors?.city_id ? "border-red-500 focus:ring-red-500/20" : "border-gray-300"}`}
             >
               <span className={KYCformData?.city_id.label ? "" : "text-gray-400"}>
                 {KYCformData?.city_id.label || "Select City"}
@@ -537,6 +537,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }
             }}
             className="py-3"
+            error={!!errors?.pincode}
+            errorMessage={errors?.pincode}
           />
           {errors?.pincode && (
             <p className="mt-1 text-sm text-red-500">{errors.pincode}</p>
