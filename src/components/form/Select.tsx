@@ -41,6 +41,7 @@ const Select: React.FC<SelectProps> = ({
       value={selectedValue}
       onChange={handleChange}
       disabled={disabled}
+      style={{ height: "42px" }}
     >
       <option value="" disabled>
         {placeholder}

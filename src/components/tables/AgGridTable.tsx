@@ -66,7 +66,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
           <div className="flex items-center justify-center gap-3 w-full h-full">
             <button
               onClick={() => (onEdit ? onEdit(id) : router.push(`/plan/edit/${id}`))}
-              className="text-xl text-blue-600"
+              className="text-xl text-brand-600"
             >
               <MdModeEdit />
             </button>
@@ -97,7 +97,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
         {buttonName && (
           <button
             onClick={() => router.push(addButtonLink)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md"
+            className="px-4 py-2 bg-brand-600 text-white rounded-md"
           >
             + Add {buttonName}
           </button>

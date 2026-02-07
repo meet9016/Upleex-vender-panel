@@ -147,7 +147,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                         removeImage(preview[0].product_image_id);
                       }}
                       className="opacity-0 group-hover/image:opacity-100 
-                               bg-red-500 hover:bg-red-600 text-white 
+                               bg-error-500 hover:bg-error-600 text-white 
                                px-4 py-2 rounded-lg font-medium
                                transform scale-90 group-hover/image:scale-100
                                transition-all duration-300 shadow-xl
@@ -198,7 +198,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                             e.stopPropagation();
                             removeImage(img.product_image_id);
                           }}
-                          className="bg-red-500 hover:bg-red-600 text-white 
+                          className="bg-error-500 hover:bg-error-600 text-white 
                                    p-1.5 rounded-lg transition-all duration-200
                                    transform hover:scale-110 shadow-lg"
                           aria-label="Remove image"
@@ -231,7 +231,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
 
             {multiple && isLimitReached && (
               <div className="mt-6 text-center">
-                <p className="text-sm text-green-700 font-medium">
+                <p className="text-sm text-success-700 font-medium">
                   Maximum limit of {maxFiles} images reached
                 </p>
               </div>
@@ -269,7 +269,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
             </div>
             {/* Browse Button */}
             <Button size="sm" variant="primary"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600  text-white font-semibold rounded-xl"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-brand-500  text-white font-semibold rounded-xl"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

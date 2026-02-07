@@ -543,6 +543,8 @@ export default function AddProductPage() {
                                 checked={billingType === "month"}
                                 onChange={() => handleRadioChange("month")}
                                 label="Month"
+                                disabled={isEditMode}
+
                             />
                         </div>
                     )}
@@ -699,35 +701,40 @@ export default function AddProductPage() {
                     <div className="">
                         <Label>Description</Label>
                         <Editor
-                            value={formData.description} // Add this line
+                            value={formData.description}
                             style={{ height: "280px" }}
-                            className="border border-gray-200 rounded-md"
                             onTextChange={(e) => handleChange("description", e.htmlValue)}
+                            pt={{
+                                toolbar: {
+                                    style: {
+                                        borderTopLeftRadius: '0.75rem',
+                                        borderTopRightRadius: '0.75rem',
+                                        border: '1px solid #e5e7eb'
+                                    }
+                                },
+                                content: {
+                                    style: {
+                                        borderBottomLeftRadius: '0.75rem',
+                                        borderBottomRightRadius: '0.75rem',
+                                        border: '1px solid #e5e7eb',
+                                        borderTop: 'none'
+                                    }
+                                }
+                            }}
                         />
                     </div>
 
                     {/* <!-- ======================================================== Features  ======================================================== -->*/}
 
                     <div className="h-[350px] flex flex-col">
-                        <div className="flex items-center justify-between mb-2">
-                            <Label>Key Features</Label>
 
-                            <button
-                                type="button"
-                                className="bg-[#ffcb07] w-8 h-8 flex items-center justify-center rounded-md hover:bg-[#e6b800]"
-                                onClick={addFeatureField}
-                            >
-                                +
-                            </button>
-                        </div>
-
+                        <Label>Key Features</Label>
 
 
                         {/* SCROLLABLE BOX */}
-                        <div className="border border-gray-200 rounded-md p-3 overflow-y-auto flex-1">
+                        <div className="border border-gray-200 rounded-xl p-3 overflow-y-auto flex-1">
                             {formData?.keyFeatures?.map((item, index) => (
-                                <div key={index} className="grid grid-cols-2 gap-3 relative mb-4">
-
+                               <div key={index} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-center relative mb-4">
                                     <Input
                                         type="text"
                                         placeholder="Enter Key"
@@ -743,16 +750,26 @@ export default function AddProductPage() {
                                             onChange={(e) => UpdateFeatureField(index, "value", e.target.value)}
                                         />
 
-                                        {formData.keyFeatures.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => removeFeature(index)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 border border-[#ffcb07] text-[#ffcb07] w-8 h-8 rounded-md"
-                                            >
-                                                -
-                                            </button>
-                                        )}
+
                                     </div>
+                                    {formData.keyFeatures.length > 1 && formData.keyFeatures.length - 1 !== index ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeFeature(index)}
+                                            className="bg-brand-500  w-8 h-10 flex items-center text-white font-bold  justify-center rounded-md hover:bg-error-600"
+                                        >
+                                            -
+                                        </button>
+                                    ) :
+                                        <button
+                                            type="button"
+                                            className="bg-brand-500  w-8 h-10 flex items-center text-white font-bold  justify-center rounded-md hover:bg-success-600"
+                                            onClick={addFeatureField}
+                                        >
+                                            +
+                                        </button>}
+
+
 
                                 </div>
                             ))}
@@ -770,7 +787,6 @@ export default function AddProductPage() {
 
                     <div>
                         <Label>Main Image</Label>
-
                         <DropzoneComponent
                             preview={mainPreview}
                             setPreview={setMainPreview}

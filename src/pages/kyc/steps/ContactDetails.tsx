@@ -64,62 +64,64 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   /* <!-- ================================== fetch country, state, city from API ================================== --> */
-
   const fetchOptions = useCallback(async (type: string, search: string, page: number) => {
-
     if (loading) return;
     setLoading(true);
     try {
       const formData = new FormData();
       formData.append("page", String(page));
       formData.append("search", search);
-
       let res;
       if (type === "country") {
-        res = await api.post(`${endPointApi.postVendorCountryList}`, formData);
+        if (!endPointApi.postVendorCountryList) {
+          throw new Error("Country endpoint not configured");
+        }
+        res = await api.post(endPointApi.postVendorCountryList as string, formData);
       } else if (type === "state") {
+        if (!endPointApi.postVendorStateList) {
+          throw new Error("State endpoint not configured");
+        }
         if (selectedCountry?.value) {
           formData.append("country_id", selectedCountry.value);
         }
-        res = await api.post(`${endPointApi.postVendorStateList}`, formData);
+        res = await api.post(endPointApi.postVendorStateList as string, formData);
       } else if (type === "city") {
+        if (!endPointApi.postVendorCityList) {
+          throw new Error("City endpoint not configured");
+        }
         if (selectedState?.value) {
           formData.append("state_id", selectedState.value);
         }
-        res = await api.post(`${endPointApi.postVendorCityList}`, formData);
+        res = await api.post(endPointApi.postVendorCityList as string, formData);
       }
-
       const list = res?.data?.data || [];
-
       if (list.length === 0) {
         if (type === "country") setHasMoreCountries(false);
         if (type === "state") setHasMoreStates(false);
         if (type === "city") setHasMoreCities(false);
         return;
       }
-
       if (type === "country") {
-        setCountries((prev) => [...prev, ...list.map((item: any) => ({
-          value: String(item.id),
-          label: item.country_name
-        }))]);
+        setCountries((prev) => page === 1 ?
+          list.map((item: any) => ({ value: String(item.id), label: item.country_name })) :
+          [...prev, ...list.map((item: any) => ({ value: String(item.id), label: item.country_name }))]
+        );
+        pageRefCountry.current += 1;
       }
       if (type === "state") {
-        setStates((prev) => [...prev, ...list.map((item: any) => ({
-          value: String(item.id),
-          label: item.state_name
-        }))]);
+        setStates((prev) => page === 1 ?
+          list.map((item: any) => ({ value: String(item.id), label: item.state_name })) :
+          [...prev, ...list.map((item: any) => ({ value: String(item.id), label: item.state_name }))]
+        );
+        pageRefState.current += 1;
       }
       if (type === "city") {
-        setCities((prev) => [...prev, ...list.map((item: any) => ({
-          value: String(item.id),
-          label: item.city_name
-        }))]);
+        setCities((prev) => page === 1 ?
+          list.map((item: any) => ({ value: String(item.id), label: item.city_name })) :
+          [...prev, ...list.map((item: any) => ({ value: String(item.id), label: item.city_name }))]
+        );
+        pageRefCity.current += 1;
       }
-
-      if (type === "country") pageRefCountry.current += 1;
-      if (type === "state") pageRefState.current += 1;
-      if (type === "city") pageRefCity.current += 1;
     } catch (error) {
       console.error(`Failed to fetch ${type}`, error);
     } finally {
@@ -198,17 +200,23 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        if (entry.isIntersecting) {
-          if (type === "country") fetchOptions("country", searchCountry, pageRefCountry.current);
-          if (type === "state") fetchOptions("state", searchState, pageRefState.current);
-          if (type === "city") fetchOptions("city", searchCity, pageRefCity.current);
+        if (entry.isIntersecting && !loading) {
+          if (type === "country" && hasMoreCountries) {
+            fetchOptions("country", searchCountry, pageRefCountry.current);
+          }
+          if (type === "state" && hasMoreStates) {
+            fetchOptions("state", searchState, pageRefState.current);
+          }
+          if (type === "city" && hasMoreCities) {
+            fetchOptions("city", searchCity, pageRefCity.current);
+          }
         }
       },
       { rootMargin: "100px" }
     );
     observer.observe(ref.current);
     return () => observer.disconnect();
-  }, [searchCountry, searchState, searchCity, fetchOptions]);
+  }, [searchCountry, searchState, searchCity, fetchOptions, loading, hasMoreCountries, hasMoreStates, hasMoreCities]);
 
   useEffect(() => {
     if (loaderRefCountry.current) handleScrollObserver(loaderRefCountry, "country");
@@ -230,6 +238,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Label>Full Name <span className="text-red-500">*</span></Label>
           <Input
             placeholder="Enter your full name"
+            className="py-3"
+
             type="text"
             value={KYCformData?.full_name}
             onChange={(e) => {
@@ -252,7 +262,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== Mobile name =========================================================== --> */}
 
         <div>
-          <Label>Mobile Number<span className="text-red-500">*</span></Label>
+          <Label>Mobile Number <span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your mobile number" type="text"
             value={KYCformData?.mobile}
             onChange={(e) => {
@@ -266,6 +276,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }
             }}
             maxLength={10}
+            className="py-3"
           />
           {errors?.mobile && (
             <p className="mt-1 text-sm text-red-500">{errors.mobile}</p>
@@ -275,8 +286,10 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== Email =========================================================== --> */}
 
         <div>
-          <Label>Email<span className="text-red-500">*</span></Label>
+          <Label>Email <span className="text-red-500">*</span></Label>
           <Input
+            className="py-3"
+
             placeholder="Enter your email address"
             type="email"
             value={KYCformData?.email}
@@ -292,6 +305,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                 }));
                 return;
               }
+
 
               // Validate against the standard email format pattern
               const partialEmailPattern = /^[A-Z0-9._%+-]*@?[A-Z0-9.-]*\.?(in|com|i|c|co|IN|COM|I|C|CO)?$/i;
@@ -317,8 +331,9 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== Address =========================================================== --> */}
 
         <div>
-          <Label>Address<span className="text-red-500">*</span></Label>
+          <Label>Address <span className="text-red-500">*</span></Label>
           <Input placeholder="Enter your Address" type="text"
+            className="py-3"
             value={KYCformData?.address}
             onChange={(e) => {
               clearError("address")
@@ -336,7 +351,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== Country =========================================================== --> */}
 
         <div>
-          <Label>Select Country<span className="text-red-500">*</span></Label>
+          <Label>Select Country <span className="text-red-500">*</span></Label>
           <div className="relative">
             <button
               type="button"
@@ -394,7 +409,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== State =========================================================== --> */}
 
         <div>
-          <Label>Select State<span className="text-red-500">*</span></Label>
+          <Label>Select State <span className="text-red-500">*</span></Label>
           <div className="relative">
             <button
               type="button"
@@ -450,7 +465,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== City =========================================================== --> */}
 
         <div>
-          <Label>Select City<span className="text-red-500">*</span></Label>
+          <Label>Select City <span className="text-red-500">*</span></Label>
           <div className="relative">
             <button
               type="button"
@@ -505,7 +520,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         </div>
 
         <div>
-          <Label>Pincode<span className="text-red-500">*</span></Label>
+          <Label>Pincode <span className="text-red-500">*</span></Label>
           <Input
             placeholder="Enter your Pincode"
             type="text"
@@ -521,6 +536,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                 }));
               }
             }}
+            className="py-3"
           />
           {errors?.pincode && (
             <p className="mt-1 text-sm text-red-500">{errors.pincode}</p>

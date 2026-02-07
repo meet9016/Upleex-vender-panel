@@ -339,8 +339,10 @@ export default function KYCPage() {
   /* <!-- ========================================================== FormSubmit ========================================================== --> */
 
   const submitKYCFormdata = async () => {
+
     const formData = new FormData();
-    formData.append("page", String(currentStep + 1) || "");
+
+    formData.append("page",currentStep === 3 ? String(currentStep) : currentStep === 4 ? String(currentStep) : String(currentStep+1));
     formData.append("full_name", KYCformData.full_name || "");
     formData.append("email", KYCformData.email || "");
     formData.append("mobile", KYCformData.mobile || "");
@@ -417,7 +419,13 @@ export default function KYCPage() {
         setKYCFormData((prev) => ({
           ...prev,
           confirm_account_number: res.data.data.account_number,
+        }));
 
+        setKYCFormData(prevData => ({
+          ...prevData,
+          country_id: { value: res.data.data.country_id, label: res.data.data.country_name },
+          state_id: { value: res.data.data.state_id, label: res.data.data.state_name },
+          city_id: { value: res.data.data.city_id, label: res.data.data.city_name },
         }));
       }
     } catch (error) {
@@ -480,17 +488,19 @@ export default function KYCPage() {
           onClick={async () => {
             const isValid = await FormDataValidation();
             if (isValid) {
-
-              await submitKYCFormdata();
-
+              if (currentStep === 3) {
+                setCurrentStep((s) => s + 1);
+                return;
+              } else {
+                await submitKYCFormdata();
+              }
             } else if (!isValid) {
               return;
             }
-
           }}
           className="px-8 py-2 w-full md:w-auto
-        rounded-lg bg-blue-600 text-white
-              hover:bg-blue-700 transition font-medium">
+        rounded-lg bg-brand-600 text-white
+              hover:bg-brand-700 transition font-medium">
 
           {currentStep === steps.length - 1 && KYCformData?.terms_conditions === 1 ? "Submit KYC" : "Next"}
         </button>
