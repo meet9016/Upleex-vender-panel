@@ -499,15 +499,15 @@ export default function AddProductPage() {
     return (
         <>
             <ComponentCard title={isEditMode ? "Edit Product" : "Add Product"}>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* <!-- ========================================================  Category ======================================================== -->*/}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
+                    {/* ================= Row 1: Category & Sub Category ================= */}
                     <div>
-                        <Label>Category</Label>
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Category</Label>
                         <div className="relative">
                             <Select
                                 options={categoryList}
-                                placeholder="Category"
+                                placeholder="Select Category"
                                 value={formData.category ?? ""}
                                 onChange={(val: string) => {
                                     handleChange("category", val);
@@ -515,74 +515,78 @@ export default function AddProductPage() {
                                     handleChange("subCategory", null);
                                     setSelectedSubCategory(null);
                                 }}
-                                className={`dark:bg-dark-900 ${submitAttempted && !formData.category ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : ""}`}
+                                className={`rounded-lg py-2 px-3 w-full dark:bg-dark-900 ${submitAttempted && !formData.category
+                                        ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+                                    }`}
                             />
-
-                            <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300">
                                 <ChevronDownIcon />
                             </span>
                         </div>
                     </div>
-                    {/* <!-- ======================================================== Sub Category ======================================================== -->*/}
 
-                    <div>
-                        <Label>Sub Category</Label>
+                    <div >
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Sub Category</Label>
                         <div className="relative">
                             <Select
                                 options={subCategoryList}
-                                placeholder="Sub Category"
+                                placeholder="Select Sub Category"
                                 value={formData.subCategory ?? ""}
                                 onChange={(val: string) => {
                                     handleChange("subCategory", val);
                                     setSelectedSubCategory(val);
                                 }}
-                                className={`dark:bg-dark-900 ${submitAttempted && !formData.subCategory ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : ""}`}
+                                className={`rounded-lg py-2 px-3 w-full dark:bg-dark-900 ${submitAttempted && !formData.subCategory
+                                        ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+                                    }`}
                             />
-
-                            <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300">
                                 <ChevronDownIcon />
                             </span>
                         </div>
                     </div>
 
-                    {/* <!-- ======================================================== Listing Type ======================================================== -->*/}
-
-                    <div>
-                        <Label>Listing Type</Label>
+                    {/* ================= Row 2: Listing Type & Name ================= */}
+                    <div >
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Listing Type</Label>
                         <div className="relative">
                             <Select
                                 options={productTypeOptions}
-                                placeholder="Listing Type"
+                                placeholder="Select Listing Type"
                                 value={formData.listingType}
                                 onChange={(val) => handleChange("listingType", val)}
-                                className={`dark:bg-dark-900 ${submitAttempted && !formData.listingType ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : ""}`}
                                 disabled={isEditMode}
-
+                                className={`rounded-lg py-2 px-3 w-full dark:bg-dark-900 ${submitAttempted && !formData.listingType
+                                        ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+                                    }`}
                             />
-                            <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300">
                                 <ChevronDownIcon />
                             </span>
                         </div>
                     </div>
-                    {/* <!-- ======================================================== Item Name ======================================================== -->*/}
 
-                    <div>
-                        <Label>Item / Property Name</Label>
-                        <div className="relative">
-                            <Input
-                                placeholder="Enter your Item / Property Name"
-                                type="text"
-                                value={formData.name}
-                                onChange={(e) => handleChange("name", e.target.value)}
-                                error={submitAttempted && !formData.name?.trim()}
-                                errorMessage={submitAttempted && !formData.name?.trim() ? "Item name is required" : undefined}
-                            />
-                        </div>
+                    <div >
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Item / Property Name</Label>
+                        <Input
+                            placeholder="Enter Item / Property Name"
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => handleChange("name", e.target.value)}
+                            error={submitAttempted && !formData.name?.trim()}
+                            errorMessage={submitAttempted && !formData.name?.trim() ? "Item name is required" : undefined}
+                            className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                        />
                     </div>
 
+                    {/* ================= Row 3: Rent Type ================= */}
                     {formData?.listingType === "1" && (
-                        <div className="flex flex-col gap-1">
-                            <div className="flex flex-wrap items-center gap-8">
+                        <div className="col-span-2 p-4 bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-dark-700 dark:to-dark-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Billing Type</Label>
+                            <div className="flex items-center gap-6">
                                 <Radio
                                     id="radio-day"
                                     name="billingType"
@@ -592,7 +596,6 @@ export default function AddProductPage() {
                                     label="Day"
                                     disabled={isEditMode}
                                 />
-
                                 <Radio
                                     id="radio-month"
                                     name="billingType"
@@ -603,191 +606,143 @@ export default function AddProductPage() {
                                     disabled={isEditMode}
                                 />
                             </div>
-                            {submitAttempted && !billingType && <p className="text-red-500 text-xs">Please select Day or Month</p>}
+                            {submitAttempted && !billingType && (
+                                <p className="text-red-500 text-xs mt-1">Please select Day or Month</p>
+                            )}
                         </div>
                     )}
 
-                    {/* <!-- ======================================================== Rent Flow  ======================================================== -->*/}
-
-                    {formData?.listingType === "1" && (
+                    {/* ================= Rent Flow: Day ================= */}
+                    {formData?.listingType === "1" && billingType === "day" && (
                         <>
-                            {/* <!-- ======================================================== Day Price  ======================================================== -->*/}
+                            <div className="p-4 bg-white/70 dark:bg-dark-800 backdrop-blur rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                                <Label>Day Price</Label>
+                                <Input
+                                    placeholder="Enter Day Price"
+                                    type="number"
+                                    value={formData.dayPrice}
+                                    onChange={(e) => handleChange("dayPrice", e.target.value)}
+                                    error={submitAttempted && !formData.dayPrice?.trim()}
+                                />
+                            </div>
 
-
-                            {billingType === "day" && (
-                                <>
-                                    <div>
-                                        <Label>Day Price</Label>
-                                        <Input
-                                            placeholder="Enter Day Price"
-                                            type="number"
-                                            value={formData.dayPrice}
-                                            onChange={(e) => handleChange("dayPrice", e.target.value)}
-                                            error={submitAttempted && !formData.dayPrice?.trim()}
-                                            errorMessage={submitAttempted && !formData.dayPrice?.trim() ? "Day price is required" : undefined}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <Label>Day Cancel Price</Label>
-                                        <Input
-                                            placeholder="Enter Day Cancel Price"
-                                            type="number"
-                                            value={formData.dayCancelPrice}
-                                            onChange={(e) => handleChange("dayCancelPrice", e.target.value)}
-                                            error={submitAttempted && !formData.dayCancelPrice?.trim()}
-                                            errorMessage={submitAttempted && !formData.dayCancelPrice?.trim() ? "Day cancel price is required" : undefined}
-                                        />
-                                    </div>
-                                </>
-                            )}
-
-                            {/* <!-- ======================================================== MONTHLY Price  ======================================================== -->*/}
-
-
-                            {billingType === "month" && (
-                                <div className="col-span-3 mt-8">
-                                    {/* HEADER */}
-                                    <div className="flex items-center justify-between mb-6">
-                                        <div>
-                                            <Label className="text-xl font-bold text-gray-800">
-                                                Monthly Pricing
-                                            </Label>
-                                            <p className="text-sm text-gray-500">
-                                                Configure price for each month (1–12)
-                                            </p>
-                                        </div>
-
-                                        {formData?.months?.length < 12 && (
-                                            <button
-                                                type="button"
-                                                onClick={addMonth}
-                                                className="flex items-center gap-2 px-5 py-2 rounded-xl text-white font-semibold shadow-md transition-transform hover:scale-105"
-                                                style={{
-                                                    background: "linear-gradient(135deg, rgb(53,66,237), rgb(90,102,255))",
-                                                }}
-                                            >
-                                                + Add Month
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    {/* MONTH CARDS */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {formData?.months?.map((m, index) => {
-                                            // Select Month: validated only when Save/Update is clicked
-                                            const monthErrorOnSave = submitAttempted && !m.month;
-                                            const priceErrorImmediate = Boolean(m.month && !m.price?.trim());
-                                            const cancelErrorImmediate = Boolean(m.month && !m.cancelPrice?.trim());
-
-                                            return (
-                                                <div
-                                                    key={index}
-                                                    className="relative rounded-2xl p-6 bg-white/80 backdrop-blur border border-gray-200 shadow-md hover:shadow-xl transition flex flex-col gap-5"
-                                                >
-                                                    {/* REMOVE CROSS BUTTON */}
-                                                    {formData.months.length > 1 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeMonth(index)}
-                                                            className="absolute top-3 right-3 text-gray-600 hover:text-[rgb(58,140,237)] font-extrabold text-2xl transition"
-                                                            title="Remove Month"
-                                                        >
-                                                            <IoClose />
-                                                        </button>
-                                                    )}
-
-
-
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                        {/* MONTH - error only on Save/Update */}
-                                                        <div>
-                                                            <Label className="text-xs text-gray-500 uppercase">
-                                                                Select Month
-                                                            </Label>
-                                                            <Select
-                                                                options={getAvailableMonthsForIndex(index)}
-                                                                placeholder="Select Month"
-                                                                value={m.month}
-                                                                onChange={(val) => updateMonth(index, "month", val)}
-                                                                className={`mt-1 ${monthErrorOnSave ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : ""}`}
-                                                            />
-                                                            {monthErrorOnSave && <p className="text-red-500 text-xs mt-1">Month is required</p>}
-                                                        </div>
-
-                                                        {/* PRICE - validate immediately after month is selected */}
-                                                        <div>
-                                                            <Label className="text-xs text-gray-500 uppercase">
-                                                                Price
-                                                            </Label>
-                                                            <Input
-                                                                type="number"
-                                                                placeholder="₹ Price"
-                                                                value={m.price}
-                                                                className="focus:ring-2 focus:ring-[rgb(53,66,237)] mt-1"
-                                                                onChange={(e) => updateMonth(index, "price", e.target.value)}
-                                                                error={priceErrorImmediate}
-                                                                errorMessage={priceErrorImmediate ? "Price is required" : undefined}
-                                                            />
-                                                        </div>
-
-                                                        {/* CANCEL PRICE - validate immediately after month is selected */}
-                                                        <div>
-                                                            <Label className="text-xs text-gray-500 uppercase">
-                                                                Cancel Price
-                                                            </Label>
-                                                            <Input
-                                                                type="number"
-                                                                placeholder="₹ Cancel"
-                                                                value={m.cancelPrice}
-                                                                className="focus:ring-2 focus:ring-[rgb(53,66,237)] mt-1"
-                                                                onChange={(e) => updateMonth(index, "cancelPrice", e.target.value)}
-                                                                error={cancelErrorImmediate}
-                                                                errorMessage={cancelErrorImmediate ? "Cancel Price is required" : undefined}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-
+                            <div className="p-4 bg-white/70 dark:bg-dark-800 backdrop-blur rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                                <Label>Day Cancel Price</Label>
+                                <Input
+                                    placeholder="Enter Day Cancel Price"
+                                    type="number"
+                                    value={formData.dayCancelPrice}
+                                    onChange={(e) => handleChange("dayCancelPrice", e.target.value)}
+                                    error={submitAttempted && !formData.dayCancelPrice?.trim()}
+                                />
+                            </div>
                         </>
                     )}
 
-                    {/* <!-- ============================================= Sell Flow  ============================================= -->*/}
+                    {/* ================= Rent Flow: Month ================= */}
+                   {formData?.listingType === "1" && billingType === "month" && (
+  <div className="col-span-2 p-4 bg-white/70 dark:bg-dark-800 backdrop-blur rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+    <div className="flex items-center justify-between mb-3">
+      <div>
+        <Label className="text-lg font-bold text-gray-800 dark:text-gray-100">
+          Monthly Pricing
+        </Label>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Configure price for each month (1–12)
+        </p>
+      </div>
+      {formData?.months?.length < 12 && (
+        <button
+          type="button"
+          onClick={addMonth}
+          className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-white font-semibold shadow-md hover:scale-105 transition"
+          style={{ background: "linear-gradient(135deg, rgb(53,66,237), rgb(90,102,255))" }}
+        >
+          + Add Month
+        </button>
+      )}
+    </div>
 
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {formData?.months?.map((m, index) => (
+        <div
+          key={index}
+          className="rounded-xl p-3 bg-white/80 dark:bg-dark-700 backdrop-blur border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col gap-2"
+        >
+          {/* HEADER ROW INSIDE CARD */}
+          <div className="flex justify-between items-center">
+            <span className="font-medium text-gray-700 dark:text-gray-200 text-sm">
+              Month {index + 1}
+            </span>
+            {formData.months.length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeMonth(index)}
+                className="text-gray-600 hover:text-red-500 font-bold text-lg"
+                title="Remove Month"
+              >
+                <IoClose />
+              </button>
+            )}
+          </div>
+
+          {/* INPUTS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <Select
+              options={getAvailableMonthsForIndex(index)}
+              placeholder="Select Month"
+              value={m.month}
+              onChange={(val) => updateMonth(index, "month", val)}
+              className="text-sm"
+            />
+            <Input
+              type="number"
+              placeholder="₹ Price"
+              value={m.price}
+              onChange={(e) => updateMonth(index, "price", e.target.value)}
+              className="text-sm"
+            />
+            <Input
+              type="number"
+              placeholder="₹ Cancel"
+              value={m.cancelPrice}
+              onChange={(e) => updateMonth(index, "cancelPrice", e.target.value)}
+              className="text-sm"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+
+                    {/* ================= Sell Flow ================= */}
                     {formData?.listingType !== "1" && formData?.listingType != null && (
                         <>
-                            <div>
+                            <div className="p-4 bg-white/70 dark:bg-dark-800 backdrop-blur rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
                                 <Label>Price</Label>
                                 <Input
                                     placeholder="Enter Sell Price"
                                     type="number"
                                     value={formData.monthPrice}
                                     onChange={(e) => handleChange("monthPrice", e.target.value)}
-                                    error={submitAttempted && !formData.monthPrice?.trim()}
-                                    errorMessage={submitAttempted && !formData.monthPrice?.trim() ? "Price is required" : undefined}
                                 />
                             </div>
-
-                            <div>
+                            <div className="p-4 bg-white/70 dark:bg-dark-800 backdrop-blur rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
                                 <Label>Cancel Price</Label>
                                 <Input
                                     placeholder="Enter Sell Cancel Price"
                                     type="number"
                                     value={formData.monthCancelPrice}
                                     onChange={(e) => handleChange("monthCancelPrice", e.target.value)}
-                                    error={submitAttempted && !formData.monthCancelPrice?.trim()}
-                                    errorMessage={submitAttempted && !formData.monthCancelPrice?.trim() ? "Cancel price is required" : undefined}
                                 />
                             </div>
                         </>
                     )}
-
                 </div>
+
+
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -796,7 +751,14 @@ export default function AddProductPage() {
                     {/* LEFT → DESCRIPTION */}
                     <div className="">
                         <Label>Description</Label>
-                        <div className={`rounded-xl overflow-hidden transition-colors ${submitAttempted && !formData.description?.trim() ? "ring-2 ring-red-500 border-2 border-red-500" : ""}`}>
+
+                        <div
+                            className={`rounded-xl overflow-hidden transition-all duration-200
+      border ${submitAttempted && !formData.description?.trim()
+                                    ? "border-red-500 focus-within:ring-red-500 focus-within:ring-2"
+                                    : "border-gray-300 focus-within:ring-[rgb(53,66,237)] focus-within:ring-2"
+                                }`}
+                        >
                             <Editor
                                 value={formData.description}
                                 style={{ height: "280px" }}
@@ -804,24 +766,27 @@ export default function AddProductPage() {
                                 pt={{
                                     toolbar: {
                                         style: {
-                                            borderTopLeftRadius: '0.75rem',
-                                            borderTopRightRadius: '0.75rem',
-                                            border: submitAttempted && !formData.description?.trim() ? '1px solid rgb(239 68 68)' : '1px solid #e5e7eb'
-                                        }
+                                            borderTopLeftRadius: "0.75rem",
+                                            borderTopRightRadius: "0.75rem",
+                                            border: "none", // outer div handles border
+                                        },
                                     },
                                     content: {
                                         style: {
-                                            borderBottomLeftRadius: '0.75rem',
-                                            borderBottomRightRadius: '0.75rem',
-                                            border: submitAttempted && !formData.description?.trim() ? '1px solid rgb(239 68 68)' : '1px solid #e5e7eb',
-                                            borderTop: 'none'
-                                        }
-                                    }
+                                            borderBottomLeftRadius: "0.5rem",
+                                            borderBottomRightRadius: "0.5rem",
+                                            border: "none", // outer div handles border
+                                        },
+                                    },
                                 }}
                             />
                         </div>
-                        {submitAttempted && !formData.description?.trim() && <p className="text-red-500 text-xs mt-1">Description is required</p>}
+
+                        {submitAttempted && !formData.description?.trim() && (
+                            <p className="text-red-500 text-xs mt-1">Description is required</p>
+                        )}
                     </div>
+
 
                     {/* <!-- ======================================================== Features  ======================================================== -->*/}
 
@@ -909,7 +874,13 @@ export default function AddProductPage() {
 
                     <div>
                         <Label>Main Image</Label>
-                        <div className={`rounded-lg transition-colors ${submitAttempted && !mainImage && (!mainPreview || mainPreview.length === 0) ? "ring-2 ring-red-500 border-2 border-red-500 p-1" : ""}`}>
+                        <div
+                            className={`rounded-lg transition-all duration-200
+      border ${submitAttempted && !mainImage && (!mainPreview || mainPreview.length === 0)
+                                    ? "border-red-500 focus-within:ring-red-500 focus-within:ring-2"
+                                    : "border-gray-300 focus-within:ring-[rgb(53,66,237)] focus-within:ring-2"
+                                }`}
+                        >
                             <DropzoneComponent
                                 preview={mainPreview}
                                 setPreview={setMainPreview}
@@ -919,8 +890,12 @@ export default function AddProductPage() {
                                 isEditMode={isEditMode}
                             />
                         </div>
-                        {submitAttempted && !mainImage && (!mainPreview || mainPreview.length === 0) && <p className="text-red-500 text-xs mt-1">Main image is required</p>}
+
+                        {submitAttempted && !mainImage && (!mainPreview || mainPreview.length === 0) && (
+                            <p className="text-red-500 text-xs mt-1">Main image is required</p>
+                        )}
                     </div>
+
                     {/* <!-- ======================================================== Sub Images  ======================================================== -->*/}
 
                     <div>

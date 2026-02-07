@@ -253,7 +253,6 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                 }));
               }
             }}
-            error={!!errors?.full_name}
             errorMessage={errors?.full_name}
           />
           {errors?.full_name && (
@@ -279,7 +278,6 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             }}
             maxLength={10}
             className="py-3"
-            error={!!errors?.mobile}
             errorMessage={errors?.mobile}
           />
           {errors?.mobile && (
@@ -297,7 +295,6 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             placeholder="Enter your email address"
             type="email"
             value={KYCformData?.email}
-            error={!!errors?.email}
             errorMessage={errors?.email}
             onChange={(e) => {
               const value = e.target.value;
@@ -348,8 +345,6 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                 address: e.target.value,
               }));
             }}
-            error={!!errors?.address}
-            errorMessage={errors?.address}
           />
           {errors?.address && (
             <p className="mt-1 text-sm text-red-500">{errors.address}</p>
@@ -537,7 +532,6 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }
             }}
             className="py-3"
-            error={!!errors?.pincode}
             errorMessage={errors?.pincode}
           />
           {errors?.pincode && (

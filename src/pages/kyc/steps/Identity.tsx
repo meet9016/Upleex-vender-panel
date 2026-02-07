@@ -16,9 +16,6 @@ type KYCFormProp = {
 
 
 export default function Identity({ setKYCFormData, KYCformData, errors, clearError }: KYCFormProp) {
-
-  {/* <!-- =========================================================== UI =========================================================== --> */ }
-
   return (
 
     <div className="w-full">
@@ -35,7 +32,6 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               type="text"
               value={KYCformData?.pancard_number || ""}
               maxLength={10}
-              error={!!errors?.pancard_number}
               errorMessage={errors?.pancard_number}
               onChange={(e) => {
                 const value = e.target.value.toUpperCase();
@@ -66,7 +62,6 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
 
               value={KYCformData?.aadharcard_number || ""}
               maxLength={14}
-              error={!!errors?.aadharcard_number}
               errorMessage={errors?.aadharcard_number}
               onChange={(e) => {
                 let value = e.target.value;
@@ -121,7 +116,6 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               type="text"
 
               value={KYCformData?.business_name || ""}
-              error={!!errors?.business_name}
               errorMessage={errors?.business_name}
               onChange={(e) => {
                 clearError("business_name");
@@ -149,8 +143,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
 
               value={KYCformData?.gst_number || ""}
               maxLength={15}
-              error={!!errors?.gst_number}
-              errorMessage={errors?.gst_number}
+                errorMessage={errors?.gst_number}
               onChange={(e) => {
                 const value = e.target.value.toUpperCase(); // Auto convert to uppercase
                 clearError("gst_number");
