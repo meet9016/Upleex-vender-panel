@@ -911,7 +911,7 @@ export default function AddProductPage() {
                                 {formData?.keyFeatures?.map((item, index) => (
                                     <div
                                         key={index}
-                                        className="flex items-center gap-2 pt-3 px-1"
+                                        className="flex items-center gap-2 pt-1 px-1"
                                     >
                                         {/* FEATURE */}
                                         <Input
