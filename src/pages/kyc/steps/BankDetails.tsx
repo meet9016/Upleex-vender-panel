@@ -72,7 +72,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
             <Input
               placeholder="Enter Bank Account Holder Name"
               type="text"
-               
+              error={!!errors?.account_holder_name}
               value={KYCformData?.account_holder_name || ""}
               onChange={(e) => {
                 const value = e.target.value;
@@ -88,7 +88,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
               
             />
             {errors?.account_holder_name && (
-              <p className="mt-1 text-sm text-red-500">{errors.account_holder_name}</p>
+              <p className="mt-1 text-sm text-error border">{errors.account_holder_name}</p>
             )}
           </div>
         </div>
@@ -98,6 +98,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
             <Input
               placeholder="Enter Account Number"
               type="text"
+              error={!!errors?.account_number}
               value={KYCformData?.account_number || ""}
               onChange={(e) => {
                 const value = e.target.value;
@@ -112,7 +113,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
               }}
             />
             {errors?.account_number && (
-              <p className="mt-1 text-sm text-red-500">{errors.account_number}</p>
+              <p className="mt-1 text-sm text-error">{errors.account_number}</p>
             )}
 
           </div>
@@ -123,6 +124,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
             <Input
               placeholder="Re-enter Account Number"
               type="text"
+              error={!!errors?.confirm_account_number}
               value={KYCformData?.confirm_account_number || ""}
               onChange={(e) => {
                 const value = e.target.value;
@@ -138,7 +140,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
 
             />
             {errors?.confirm_account_number && (
-              <p className="mt-1 text-sm text-red-500">{errors.confirm_account_number}</p>
+              <p className="mt-1 text-sm text-error">{errors.confirm_account_number}</p>
             )}
           </div>
 
@@ -149,6 +151,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
             <Input
               placeholder="Enter your IFSC Code"
               type="text"
+              error={!!errors?.ifsc_code}
               value={KYCformData?.ifsc_code || ""}
               onChange={(e) => {
                 const value = e.target.value.toUpperCase(); 
@@ -163,7 +166,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
               }}
             />
             {errors?.ifsc_code && (
-              <p className="mt-1 text-sm text-red-500">{errors.ifsc_code}</p>
+              <p className="mt-1 text-sm text-error">{errors.ifsc_code}</p>
             )}
           </div>
         </div>
@@ -171,6 +174,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
           <Label>Account Type</Label>
           <div className="relative">
             <Select
+              error={!!errors?.account_type}
               options={options}
               placeholder="Account Type"
               value={KYCformData?.account_type || ""}
@@ -188,7 +192,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
               <ChevronDownIcon />
             </span>
             {errors?.account_type && (
-              <p className="mt-1 text-sm text-red-500">{errors.account_type}</p>
+              <p className="mt-1 text-sm text-error">{errors.account_type}</p>
             )}
           </div>
         </div>

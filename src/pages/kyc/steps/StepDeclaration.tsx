@@ -35,7 +35,7 @@ export default function StepDeclaration({
       </label>
 
       {errors?.terms_conditions && (
-        <p className="mt-1 text-sm text-red-500">
+        <p className="mt-1 text-sm text-error">
           {errors.terms_conditions}
         </p>
       )}

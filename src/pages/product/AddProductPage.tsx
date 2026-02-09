@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import ComponentCard from "@/components/common/ComponentCard";
 import Input from "@/components/common/Input";
@@ -10,13 +10,12 @@ import { ChevronDownIcon } from "@/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import { Editor } from "primereact/editor";
-import { getAvailableMonths } from "@/utils/helper";
-import { MdDelete, } from "react-icons/md";
+import { MdDelete } from "react-icons/md";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import Radio from "@/components/form/input/Radio";
 import { toast } from "react-toastify";
-import { IoClose } from "react-icons/io5";
+import SearchableDropdown from "@/components/common/SearchableDropdown";
 
 /* <!-- ========================================================== Types ========================================================== --> */
 
@@ -33,7 +32,6 @@ interface KeyFeature {
     value: string;
 }
 
-// ---------- Types ----------
 type ID = string | number;
 
 interface CategoryOption {
@@ -41,11 +39,6 @@ interface CategoryOption {
     name: string;
     image?: string;
 }
-
-const typeOptions: SelectOption[] = [
-    { value: 'rent', label: 'Rent' },
-    { value: 'sell', label: 'Sell' },
-];
 
 interface mainImg {
     product_image_id: string;
@@ -107,13 +100,24 @@ export default function AddProductPage() {
     const [mainImage, setMainImage] = useState<File | null>(null);
     const [subImages, setSubImages] = useState<File[]>([]);
 
-    const [selectedCategory, setSelectedCategory] =
-        useState<string | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
 
-    const [selectedSubCategory, setSelectedSubCategory] =
-        useState<string | null>(null);
-
-    const [submitAttempted, setSubmitAttempted] = useState(false);
+    // Separate validation states for each section
+    const [validationErrors, setValidationErrors] = useState<{
+        category?: string;
+        subCategory?: string;
+        listingType?: string;
+        name?: string;
+        dayPrice?: string;
+        dayCancelPrice?: string;
+        monthPrice?: string;
+        monthCancelPrice?: string;
+        months?: string;
+        description?: string;
+        mainImage?: string;
+        billingType?: string;
+    }>({});
 
     /* <!-- ========================================================== disable unavailable months ========================================================== --> */
 
@@ -127,19 +131,20 @@ export default function AddProductPage() {
         );
     };
 
-
     /* <!-- ========================================================== Input change ========================================================== --> */
 
     const handleChange = (field: string, value: any) => {
-        // Reset validation errors when listing type changes so new conditional fields don't show errors immediately
-        if (field === "listingType") {
-            setSubmitAttempted(false);
-        }
-
         setFormData((prev) => ({
             ...prev,
             [field]: value,
         }));
+        // Clear validation error when user starts typing
+        if (validationErrors[field as keyof typeof validationErrors]) {
+            setValidationErrors(prev => ({
+                ...prev,
+                [field]: undefined
+            }));
+        }
     };
 
     /* <!-- =================================================== handle add, change ,remove Feature =================================================== --> */
@@ -150,7 +155,6 @@ export default function AddProductPage() {
             keyFeatures: [...prev.keyFeatures, { key: "", value: "" }],
         }));
     };
-
 
     const removeFeature = (index: number) => {
         setFormData((prev) => ({
@@ -173,9 +177,7 @@ export default function AddProductPage() {
         }));
     };
 
-
     /* <!-- ============================================ handle add, update, remove Month ============================================ --> */
-
 
     const addMonth = () => {
         if (formData.months.length >= 12) return;
@@ -184,11 +186,10 @@ export default function AddProductPage() {
             ...prev,
             months: [
                 ...prev.months,
-                { month: "", price: "", productMonthsId: "", cancelPrice: "" }, // <-- add month field
+                { month: "", price: "", productMonthsId: "", cancelPrice: "" },
             ],
         }));
     };
-
 
     const removeMonth = (index: number) => {
         setFormData((prev) => ({
@@ -209,18 +210,30 @@ export default function AddProductPage() {
             ...prev,
             months: updated,
         }));
+        
+        // Clear months validation error when user starts filling month data
+        if (validationErrors.months) {
+            setValidationErrors(prev => ({
+                ...prev,
+                months: undefined
+            }));
+        }
     };
 
     /* <!-- ============================================ handle select rent time ============================================ --> */
 
     const handleRadioChange = (value: "day" | "month") => {
         setBillingType(value);
-        // Reset validation errors when billing type changes so new conditional fields don't show errors immediately
-        setSubmitAttempted(false);
+        // Clear billing type validation error when user selects
+        if (validationErrors.billingType) {
+            setValidationErrors(prev => ({
+                ...prev,
+                billingType: undefined
+            }));
+        }
     };
 
     /* <!-- ============================================ Fetch product detail on edit mode  ============================================ --> */
-
 
     useEffect(() => {
         if (!isEditMode) return;
@@ -233,7 +246,6 @@ export default function AddProductPage() {
                 if (res?.data?.status == 200) {
                     const data = res.data.data;
 
-
                     setBillingType(data.product_listing_type_id === "1" ? "day" : "month");
 
                     setFormData({
@@ -245,8 +257,6 @@ export default function AddProductPage() {
                         dayCancelPrice: data.product_listing_type_id === "1" ? data.cancel_price : "",
                         monthPrice: data.product_listing_type_id !== "1" ? data.price : "",
                         monthCancelPrice: data.product_listing_type_id !== "1" ? data.cancel_price : "",
-
-
                         months: data.month_arrr?.length
                             ? data.month_arrr.map((m: any) => ({
                                 month: String(m.months_id),
@@ -288,13 +298,10 @@ export default function AddProductPage() {
             try {
                 const res = await api.post(endPointApi.postCategoryList, {});
                 if (res?.data?.data) {
-                    setCategoryList(res.data.data);
-
                     const options = res.data.data.map((item: any) => ({
                         label: item.name,
                         value: item.id,
                     }));
-
                     setCategoryList(options);
                 }
             } catch (err) {
@@ -308,7 +315,6 @@ export default function AddProductPage() {
     /* <!-- ============================================ Fetch subcategories  ============================================ --> */
 
     useEffect(() => {
-
         const fetchSubCategories = async () => {
             if (!selectedCategory) {
                 setSubCategoryList([]);
@@ -325,7 +331,7 @@ export default function AddProductPage() {
                 if (res?.data?.data) {
                     const subcats = res.data.data.map((item: any) => ({
                         value: item.id,
-                        label: item.name, // ✅ TEXT ONLY
+                        label: item.name,
                     }));
 
                     setSubCategoryList(subcats);
@@ -382,51 +388,43 @@ export default function AddProductPage() {
         fetchProduct();
     }, []);
 
-    /* <!-- ============================================ Handle save ============================================ --> */
-
+    /* <!-- ============================================ Validate Form ============================================ --> */
 
     const validateForm = (): boolean => {
-        // Basic field validation
+        const errors: typeof validationErrors = {};
+
+        // Basic field validation (always required)
         if (!formData.category) {
-            toast.error("Please select a category");
-            return false;
+            errors.category = "Please select a category";
         }
         if (!formData.subCategory) {
-            toast.error("Please select a sub category");
-            return false;
+            errors.subCategory = "Please select a sub category";
         }
         if (!formData.listingType) {
-            toast.error("Please select listing type");
-            return false;
+            errors.listingType = "Please select listing type";
         }
         if (!formData.name?.trim()) {
-            toast.error("Please enter item/property name");
-            return false;
+            errors.name = "Please enter item/property name";
         }
         if (!formData.description?.trim()) {
-            toast.error("Please enter description");
-            return false;
+            errors.description = "Please enter description";
         }
         if (!mainImage && (!mainPreview || mainPreview.length === 0)) {
-            toast.error("Please upload main image");
-            return false;
+            errors.mainImage = "Please upload main image";
         }
 
-        // Rent Product Validation
+        // Rent Product Validation (only when listingType is "1")
         if (formData.listingType === "1") {
             if (!billingType) {
-                toast.error("Please select billing type (Day or Month)");
-                return false;
+                errors.billingType = "Please select billing type (Day or Month)";
             }
 
             if (billingType === "day") {
                 if (!formData.dayPrice?.trim()) {
-                    toast.error("Please enter day price");
-                    return false;
+                    errors.dayPrice = "Please enter day price";
                 }
                 if (!formData.dayCancelPrice?.trim()) {
-                    toast.error("Please enter day cancel price");
-                    return false;
+                    errors.dayCancelPrice = "Please enter day cancel price";
                 }
             }
 
@@ -435,39 +433,42 @@ export default function AddProductPage() {
                     (m) => m.month && m.price?.trim() && m.cancelPrice?.trim()
                 );
                 if (!hasCompleteRow) {
-                    toast.error("Please add at least one complete month pricing");
-                    return false;
+                    errors.months = "Please add at least one complete month pricing";
                 }
                 const invalidMonthRows = formData.months.some(
                     (m) => (m.price?.trim() || m.cancelPrice?.trim()) && !m.month
                 );
                 if (invalidMonthRows) {
-                    toast.error("All month pricing rows must have a month selected");
-                    return false;
+                    errors.months = "All month pricing rows must have a month selected";
                 }
             }
         }
 
-        // Sell Product Validation
+        // Sell Product Validation (only when listingType is not "1")
         if (formData.listingType && formData.listingType !== "1") {
             if (!formData.monthPrice?.trim()) {
-                toast.error("Please enter price");
-                return false;
+                errors.monthPrice = "Please enter price";
             }
             if (!formData.monthCancelPrice?.trim()) {
-                toast.error("Please enter cancel price");
-                return false;
+                errors.monthCancelPrice = "Please enter cancel price";
             }
         }
 
-        return true;
+        // Set validation errors
+        setValidationErrors(errors);
+
+        // Return true if no errors
+        return Object.keys(errors).length === 0;
     };
 
+    /* <!-- ============================================ Handle save ============================================ --> */
+
     const handleSubmit = async () => {
-        setSubmitAttempted(true);
+        // First validate form
         if (!validateForm()) {
-            return; // Error messages are shown in validateForm now
+            return; // Stop if validation fails
         }
+
         try {
             const formdata = new FormData();
 
@@ -479,11 +480,11 @@ export default function AddProductPage() {
             formdata.append("category_id", String(selectedCategory || formData.category));
             formdata.append("sub_category_id", String(selectedSubCategory || formData.subCategory));
             formdata.append("product_type_id", String(formData.listingType));
-            
+
             // Determine listing type based on billingType
             const listingTypeId = billingType === "month" ? "2" : billingType === "day" ? "1" : "";
             formdata.append("product_listing_type_id", listingTypeId);
-            
+
             formdata.append("product_name", formData.name.trim());
             formdata.append("description", formData.description.trim());
 
@@ -561,54 +562,44 @@ export default function AddProductPage() {
 
                     {/* ================= Row 1: Category & Sub Category ================= */}
                     <div>
-                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Category</Label>
-                        <div className="relative">
-                            <Select
-                                options={categoryList}
-                                placeholder="Select Category"
-                                value={formData.category ?? ""}
-                                onChange={(val: string) => {
-                                    handleChange("category", val);
-                                    setSelectedCategory(val);
-                                    handleChange("subCategory", null);
-                                    setSelectedSubCategory(null);
-                                }}
-                                className={`rounded-lg py-2 px-3 w-full dark:bg-dark-900 ${submitAttempted && !formData.category
-                                    ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-                                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
-                                    }`}
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300">
-                                <ChevronDownIcon />
-                            </span>
-                        </div>
-                        {submitAttempted && !formData.category && (
-                            <p className="text-red-500 text-xs mt-1">Category is required</p>
+                        <Label className="font-semibold mb-2">Category</Label>
+                        <SearchableDropdown
+                            searchable
+                            options={categoryList}
+                            value={formData.category}
+                            placeholder="Select category"
+                            error={!!validationErrors.category}
+                            onChange={(val) => {
+                                handleChange("category", val);
+                                setSelectedCategory(val);
+                                handleChange("subCategory", null);
+                                setSelectedSubCategory(null);
+                            }}
+                        />
+                        {validationErrors.category && (
+                            <p className="text-error text-xs mt-1">{validationErrors.category}</p>
                         )}
                     </div>
 
-                    <div >
-                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Sub Category</Label>
-                        <div className="relative">
-                            <Select
-                                options={subCategoryList}
-                                placeholder="Select Sub Category"
-                                value={formData.subCategory ?? ""}
-                                onChange={(val: string) => {
-                                    handleChange("subCategory", val);
-                                    setSelectedSubCategory(val);
-                                }}
-                                className={`rounded-lg py-2 px-3 w-full dark:bg-dark-900 ${submitAttempted && !formData.subCategory
-                                    ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-                                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
-                                    }`}
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300">
-                                <ChevronDownIcon />
-                            </span>
-                        </div>
-                        {submitAttempted && !formData.subCategory && (
-                            <p className="text-red-500 text-xs mt-1">Sub Category is required</p>
+                    <div>
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                            Sub Category
+                        </Label>
+                        <SearchableDropdown
+                            searchable
+                            options={subCategoryList}
+                            value={formData.subCategory}
+                            placeholder="Search sub category..."
+                            error={!!validationErrors.subCategory}
+                            onChange={(val) => {
+                                handleChange("subCategory", val);
+                                setSelectedSubCategory(val);
+                            }}
+                        />
+                        {validationErrors.subCategory && (
+                            <p className="text-error text-xs mt-1">
+                                {validationErrors.subCategory}
+                            </p>
                         )}
                     </div>
 
@@ -622,8 +613,8 @@ export default function AddProductPage() {
                                 value={formData.listingType}
                                 onChange={(val) => handleChange("listingType", val)}
                                 disabled={isEditMode}
-                                className={`rounded-lg py-2 px-3 w-full dark:bg-dark-900 ${submitAttempted && !formData.listingType
-                                    ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                                className={`rounded-lg py-2 px-3 w-full dark:bg-dark-900 ${validationErrors.listingType
+                                    ? "border-error-600 focus:border-error-600 focus:ring-error-600/20"
                                     : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
                                     }`}
                             />
@@ -631,27 +622,33 @@ export default function AddProductPage() {
                                 <ChevronDownIcon />
                             </span>
                         </div>
-                        {submitAttempted && !formData.listingType && (
-                            <p className="text-red-500 text-xs mt-1">Listing Type is required</p>
+                        {validationErrors.listingType && (
+                            <p className="text-error text-xs mt-1">{validationErrors.listingType}</p>
                         )}
                     </div>
 
                     <div >
                         <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Item / Property Name</Label>
-                        <Input
-                            placeholder="Enter Item / Property Name"
-                            type="text"
-                            value={formData.name}
-                            onChange={(e) => handleChange("name", e.target.value)}
-                            error={submitAttempted && !formData.name?.trim()}
-                            errorMessage={submitAttempted && !formData.name?.trim() ? "Item name is required" : undefined}
-                            className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
-                        />
+                        <div className="flex flex-col">
+                            <Input
+                                placeholder="Enter Item / Property Name"
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => handleChange("name", e.target.value)}
+                                error={!!validationErrors.name}
+                                className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                            />
+                            {validationErrors.name && (
+                                <span className="mt-1 text-xs text-error">
+                                    {validationErrors.name}
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     {/* ================= Row 3: Rent Type ================= */}
                     {formData?.listingType === "1" && (
-                        <div className="col-span-2 p-4 bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-dark-700 dark:to-dark-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div className="col-span-2 p-4 bg-linear-to-r from-indigo-50 to-indigo-100 dark:from-dark-700 dark:to-dark-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
                             <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Billing Type</Label>
                             <div className="flex items-center gap-6">
                                 <Radio
@@ -673,8 +670,8 @@ export default function AddProductPage() {
                                     disabled={isEditMode}
                                 />
                             </div>
-                            {submitAttempted && !billingType && (
-                                <p className="text-red-500 text-xs mt-1">Please select Day or Month</p>
+                            {validationErrors.billingType && (
+                                <p className="text-error text-xs mt-1">{validationErrors.billingType}</p>
                             )}
                         </div>
                     )}
@@ -682,16 +679,21 @@ export default function AddProductPage() {
                     {/* ================= Rent Flow: Day ================= */}
                     {formData?.listingType === "1" && billingType === "day" && (
                         <>
-                            <div className="rounded-2xl ">
+                            <div className="rounded-2xl">
                                 <Label>Day Price</Label>
                                 <Input
                                     placeholder="Enter Day Price"
                                     type="number"
                                     value={formData.dayPrice}
                                     onChange={(e) => handleChange("dayPrice", e.target.value)}
-                                    error={submitAttempted && !formData.dayPrice?.trim()}
-                                    errorMessage={submitAttempted && !formData.dayPrice?.trim() ? "Day Price is required" : undefined}
+                                    error={!!validationErrors.dayPrice}
+                                    className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
+                                {validationErrors.dayPrice && (
+                                    <p className="mt-1 text-xs text-error">
+                                        {validationErrors.dayPrice}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="rounded-2xl">
@@ -701,103 +703,98 @@ export default function AddProductPage() {
                                     type="number"
                                     value={formData.dayCancelPrice}
                                     onChange={(e) => handleChange("dayCancelPrice", e.target.value)}
-                                    error={submitAttempted && !formData.dayCancelPrice?.trim()}
-                                    errorMessage={submitAttempted && !formData.dayCancelPrice?.trim() ? "Day Cancel Price is required" : undefined}
+                                    error={!!validationErrors.dayCancelPrice}
+                                    className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
+                                {validationErrors.dayCancelPrice && (
+                                    <p className="mt-1 text-xs text-error">
+                                        {validationErrors.dayCancelPrice}
+                                    </p>
+                                )}
                             </div>
                         </>
                     )}
 
                     {/* ================= Rent Flow: Month ================= */}
-                    {formData?.listingType === "1" && billingType === "month" && (
-                        <div className={`col-span-2 p-4 rounded-2xl border backdrop-blur ${
-                            submitAttempted && 
-                            !formData.months.some((m) => m.month && m.price?.trim() && m.cancelPrice?.trim())
-                                ? "border-red-500 bg-red-50/30 dark:bg-red-950/20"
-                                : "border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-dark-800"
-                        }`}>
-                            {/* HEADER */}
-                            <div className="flex items-center justify-between ">
-                                <Label className="text-lg font-bold text-gray-800 dark:text-gray-100">
-                                    Monthly Pricing
-                                </Label>
+             {formData?.listingType === "1" && billingType === "month" && (
+  <div
+    className={`col-span-2 rounded-2xl border backdrop-blur ${
+      validationErrors.months
+        ? "border-error-600 bg-error-50/30 dark:bg-error-600/20"
+        : "border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-dark-800"
+    }`}
+  >
+    {/* HEADER */}
+    <div className="flex items-center justify-between p-2 md:p-3">
+      <Label className="text-lg font-bold text-gray-800 dark:text-gray-100">
+        Monthly Pricing
+      </Label>
 
-                                {formData?.months?.length < 12 && (
-                                    <button
-                                        type="button"
-                                        onClick={addMonth}
-                                        className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-white text-sm font-semibold shadow-md hover:scale-105 transition"
-                                        style={{
-                                            background:
-                                                "linear-gradient(135deg, rgb(53,66,237), rgb(90,102,255))",
-                                        }}
-                                    >
-                                        + Add Month
-                                    </button>
-                                )}
-                            </div>
+      {formData?.months?.length < 12 && (
+        <button
+          type="button"
+          onClick={addMonth}
+          className="btn-primary flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:scale-105 transition"
+        >
+          + Add Month
+        </button>
+      )}
+    </div>
 
-                            {/* MONTH ROWS */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {formData?.months?.map((m, index) => (
-                                    <div
-                                        key={index}
-                                        className="bg-white/80 dark:bg-dark-700 rounded-xl p-3 flex items-center gap-2"
-                                    >
-                                        {/* MONTH */}
-                                        <Select
-                                            options={getAvailableMonthsForIndex(index)}
-                                            placeholder="Select Month"
-                                            value={m.month}
-                                            onChange={(val) => updateMonth(index, "month", val)}
-                                            className="text-sm"
-                                        />
+    {/* MONTH ROWS - COMPACT */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-2">
+      {formData?.months?.map((m, index) => (
+        <div
+          key={index}
+          className="bg-white/80 dark:bg-dark-700 rounded-lg p-2 flex items-center gap-2"
+        >
+          {/* MONTH */}
+          <Select
+            options={getAvailableMonthsForIndex(index)}
+            placeholder="Select Month"
+            value={m.month}
+            onChange={(val) => updateMonth(index, "month", val)}
+            className="text-sm"
+          />
 
-                                        {/* PRICE */}
-                                        <Input
-                                            type="number"
-                                            placeholder="₹ Price"
-                                            value={m.price}
-                                            onChange={(e) =>
-                                                updateMonth(index, "price", e.target.value)
-                                            }
-                                            className="text-sm"
-                                        />
+          {/* PRICE */}
+          <Input
+            type="number"
+            placeholder="₹ Price"
+            value={m.price}
+            onChange={(e) => updateMonth(index, "price", e.target.value)}
+            className="text-sm px-2 py-1"
+          />
 
-                                        {/* CANCEL PRICE */}
-                                        <Input
-                                            type="number"
-                                            placeholder="₹ Cancel"
-                                            value={m.cancelPrice}
-                                            onChange={(e) =>
-                                                updateMonth(index, "cancelPrice", e.target.value)
-                                            }
-                                            className="text-sm"
-                                            errorMessage={submitAttempted && !m.cancelPrice?.trim() ? "Cancel Price is required" : undefined}
-                                        />
+          {/* CANCEL PRICE */}
+          <Input
+            type="number"
+            placeholder="₹ Cancel"
+            value={m.cancelPrice}
+            onChange={(e) => updateMonth(index, "cancelPrice", e.target.value)}
+            className="text-sm px-2 py-1"
+          />
 
-                                        {/* REMOVE */}
-                                        {formData.months.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => removeMonth(index)}
-                                                className="h-9 w-9 flex items-center justify-center rounded-md text-gray-500 hover:text-[rgb(53,66,237)]  transition"
-                                                title="Remove Month"
-                                            >
-                                                <MdDelete size={20} />
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
+          {/* REMOVE */}
+          {formData.months.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removeMonth(index)}
+              className="h-7 w-7 flex items-center justify-center rounded-md text-gray-500 hover:text-[rgb(53,66,237)] transition"
+              title="Remove Month"
+            >
+              <MdDelete size={18} />
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
 
-                            {submitAttempted && 
-                            !formData.months.some((m) => m.month && m.price?.trim() && m.cancelPrice?.trim()) && (
-                                <p className="text-red-500 text-xs mt-3">Please add at least one complete month pricing (Month, Price, Cancel Price)</p>
-                            )}
-                        </div>
-                    )}
-
+    {validationErrors.months && (
+      <p className="text-error text-xs mt-2 mb-2 px-2">{validationErrors.months}</p>
+    )}
+  </div>
+)}
 
 
                     {/* ================= Sell Flow ================= */}
@@ -810,26 +807,35 @@ export default function AddProductPage() {
                                     type="number"
                                     value={formData.monthPrice}
                                     onChange={(e) => handleChange("monthPrice", e.target.value)}
-                                      error={submitAttempted && !formData.monthPrice?.trim()}
-                                    errorMessage={submitAttempted && !formData.monthPrice?.trim() ? " Sell Price is required" : undefined}
+                                    error={!!validationErrors.monthPrice}
+                                    className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
+                                {validationErrors.monthPrice && (
+                                    <p className="mt-1 text-xs text-error">
+                                        {validationErrors.monthPrice}
+                                    </p>
+                                )}
                             </div>
-                            <div className="rounded-2x">
+
+                            <div className="rounded-2xl">
                                 <Label>Cancel Price</Label>
                                 <Input
                                     placeholder="Enter Sell Cancel Price"
                                     type="number"
                                     value={formData.monthCancelPrice}
                                     onChange={(e) => handleChange("monthCancelPrice", e.target.value)}
-                                      error={submitAttempted && !formData.monthCancelPrice?.trim()}
-                                    errorMessage={submitAttempted && !formData.monthCancelPrice?.trim() ? "Sell Cancel Price is required" : undefined}
+                                    error={!!validationErrors.monthCancelPrice}
+                                    className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
+                                {validationErrors.monthCancelPrice && (
+                                    <p className="mt-1 text-xs text-error">
+                                        {validationErrors.monthCancelPrice}
+                                    </p>
+                                )}
                             </div>
                         </>
                     )}
                 </div>
-
-
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -841,8 +847,8 @@ export default function AddProductPage() {
 
                         <div
                             className={`rounded-xl overflow-hidden transition-all duration-200
-                                      border ${submitAttempted && !formData.description?.trim()
-                                    ? "border-red-500 focus-within:ring-red-500 focus-within:ring-2"
+                                      border ${validationErrors.description
+                                    ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
                                     : "border-gray-300 focus-within:ring-[rgb(53,66,237)] focus-within:ring-2"
                                 }`}
                         >
@@ -856,7 +862,7 @@ export default function AddProductPage() {
                                             borderTopLeftRadius: "0.75rem",
                                             borderTopRightRadius: "0.75rem",
                                             border: "none",
-                                            borderBottom: "1px solid #e5e7eb", // toolbar bottom border
+                                            borderBottom: "1px solid #e5e7eb",
                                         },
                                         className:
                                             "[&_.ql-toolbar_button]:border-b [&_.ql-toolbar_button]:border-gray-300",
@@ -872,11 +878,10 @@ export default function AddProductPage() {
                             />
                         </div>
 
-                        {submitAttempted && !formData.description?.trim() && (
-                            <p className="text-red-500 text-xs mt-1">Description is required</p>
+                        {validationErrors.description && (
+                            <p className="text-error text-xs mt-1">{validationErrors.description}</p>
                         )}
                     </div>
-
 
                     {/* <!-- ======================================================== Features  ======================================================== -->*/}
 
@@ -946,11 +951,9 @@ export default function AddProductPage() {
                             </div>
                         </div>
                     </div>
-
                 </div>
 
                 {/* <!-- ======================================================== Images  ======================================================== -->*/}
-
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* ================= Main Image ================= */}
@@ -959,8 +962,8 @@ export default function AddProductPage() {
                         <div
                             className={`h-[300px] rounded-lg border transition-all duration-200 
       flex items-center justify-center overflow-hidden
-      ${submitAttempted && !mainImage && (!mainPreview || mainPreview.length === 0)
-                                    ? "border-red-500 focus-within:ring-red-500 focus-within:ring-2"
+      ${validationErrors.mainImage
+                                    ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
                                     : "border-gray-300 focus-within:ring-[rgb(53,66,237)] focus-within:ring-2"
                                 }`}
                         >
@@ -969,13 +972,22 @@ export default function AddProductPage() {
                                 setPreview={setMainPreview}
                                 multiple={false}
                                 smallPreview={true}
-                                onFileSelect={(files) => setMainImage(files[0])}
+                                onFileSelect={(files) => {
+                                    setMainImage(files[0]);
+                                    // Clear validation error when image is selected
+                                    if (validationErrors.mainImage) {
+                                        setValidationErrors(prev => ({
+                                            ...prev,
+                                            mainImage: undefined
+                                        }));
+                                    }
+                                }}
                                 isEditMode={isEditMode}
                             />
                         </div>
 
-                        {submitAttempted && !mainImage && (!mainPreview || mainPreview.length === 0) && (
-                            <p className="text-red-500 text-xs mt-1">Main image is required</p>
+                        {validationErrors.mainImage && (
+                            <p className="text-error text-xs mt-1">{validationErrors.mainImage}</p>
                         )}
                     </div>
 
@@ -996,8 +1008,8 @@ export default function AddProductPage() {
                         </div>
                     </div>
                 </div>
+            </ComponentCard>
 
-            </ComponentCard >
             <div className="flex items-center gap-5 mt-5 justify-end ">
                 <Button size="sm" variant="primary"
                     onClick={handleSubmit}

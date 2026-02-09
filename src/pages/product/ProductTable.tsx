@@ -47,7 +47,7 @@ const [productData, setProductData] = useState<Product[]>([]);
   <button
     onClick={() => router.push(`/product/addProduct?id=${id}`)}
     className="text-xl transition"
-    style={{ color: 'rgb(58, 140, 237)' }}
+    style={{ color: 'rgb(53, 66, 237)' }}
     title="Edit"
   >
     <MdModeEdit />

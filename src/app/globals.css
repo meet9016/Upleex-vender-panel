@@ -781,3 +781,34 @@ span.flatpickr-weekday,
   background-color: #f8fafc;
   border-top: 1px solid #e5e7eb;
 }
+
+/* ==================== Common Button Styles ==================== */
+.btn-primary {
+  @apply px-8 py-2 rounded-lg text-white font-medium transition;
+  background-color: var(--color-brand-600);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-brand-700);
+}
+
+.btn-secondary {
+  @apply px-6 py-2 rounded-lg font-medium transition border;
+  background-color: var(--color-white);
+  color: var(--color-gray-700);
+  border-color: var(--color-gray-300);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-gray-100);
+}
+
+/* ==================== Common Text Colors ==================== */
+.text-required {
+  color: var(--color-error-600);
+}
+
+.text-error {
+  color: var(--color-error-600);
+}
+
