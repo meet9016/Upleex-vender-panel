@@ -911,14 +911,14 @@ export default function AddProductPage() {
                                 {formData?.keyFeatures?.map((item, index) => (
                                     <div
                                         key={index}
-                                        className="flex items-center gap-2"
+                                        className="flex items-center gap-2 pt-3 px-1"
                                     >
                                         {/* FEATURE */}
                                         <Input
                                             type="text"
                                             placeholder="Feature"
                                             value={item.key}
-                                            className="h-9 text-sm flex-1 focus:ring-1 focus:ring-[rgb(53,66,237)]"
+                                            className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                             onChange={(e) =>
                                                 UpdateFeatureField(index, "key", e.target.value)
                                             }
