@@ -16,6 +16,9 @@ type KYCFormProp = {
 
 
 export default function Identity({ setKYCFormData, KYCformData, errors, clearError }: KYCFormProp) {
+
+  {/* <!-- =========================================================== UI =========================================================== --> */ }
+
   return (
 
     <div className="w-full">
@@ -32,7 +35,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               type="text"
               value={KYCformData?.pancard_number || ""}
               maxLength={10}
-              errorMessage={errors?.pancard_number}
+
               onChange={(e) => {
                 const value = e.target.value.toUpperCase();
 
@@ -61,8 +64,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               type="text"
 
               value={KYCformData?.aadharcard_number || ""}
-              maxLength={14}
-              errorMessage={errors?.aadharcard_number}
+              maxLength={14} // 12 digits + 2 spaces
               onChange={(e) => {
                 let value = e.target.value;
 
@@ -116,13 +118,11 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               type="text"
 
               value={KYCformData?.business_name || ""}
-              errorMessage={errors?.business_name}
               onChange={(e) => {
-                clearError("business_name");
+                clearError("business_name")
                 setKYCFormData((prevData) => ({
-                  ...prevData,
-                  business_name: e.target.value,
-                }));
+                  ...prevData, business_name: e.target.value,
+                }))
               }}
             />
             {errors?.business_name && (
@@ -143,7 +143,6 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
 
               value={KYCformData?.gst_number || ""}
               maxLength={15}
-                errorMessage={errors?.gst_number}
               onChange={(e) => {
                 const value = e.target.value.toUpperCase(); // Auto convert to uppercase
                 clearError("gst_number");

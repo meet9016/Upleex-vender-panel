@@ -12,7 +12,7 @@ import { toast } from "react-toastify";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { useRouter } from "next/navigation";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+
 const steps = [
   "Contact Details",
   "Identity",
@@ -438,80 +438,74 @@ export default function KYCPage() {
 
   return (
     <ComponentCard title="KYC Verification">
-      <div className="flex flex-col min-h-[calc(100vh-14rem)]">
-        <div className="overflow-x-auto shrink-0">
-          <div className="min-w-max md:min-w-0">
-            <Stepper steps={steps} currentStep={currentStep} />
-          </div>
-        </div>
 
-        {/* Form body – takes remaining space so footer stays at bottom */}
-        <div className="flex-1 flex flex-col min-h-0 pt-2">
-          <div className="flex-1 overflow-auto">
-            {currentStep === 0 && <ContactDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
-            {currentStep === 1 && <Identity setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
-            {currentStep === 2 && <BankDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
-            {currentStep === 3 && <Documents setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
-            {currentStep === 4 && <StepDeclaration setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
-          </div>
-
-          {/* Fixed bottom button bar – always at bottom of card */}
-          <div
-            className="
-              shrink-0 mt-6 pt-4 pb-1
-              border-t border-gray-200 dark:border-gray-700
-              bg-white dark:bg-transparent
-              flex flex-col sm:flex-row
-              gap-3 sm:gap-4
-              items-stretch sm:items-center justify-between
-            "
-          >
-            {currentStep > 0 ? (
-              <button
-                type="button"
-                onClick={() => setCurrentStep((s) => s - 1)}
-                className="
-                  order-2 sm:order-1
-                  px-6 py-2.5 w-full sm:w-auto
-                  rounded-xl border border-gray-300 dark:border-gray-600
-                  text-gray-700 dark:text-gray-200
-                  bg-white dark:bg-gray-800
-                  hover:bg-gray-50 dark:hover:bg-gray-700
-                  transition font-medium
-                "
-              >
-                Back
-              </button>
-            ) : (
-              <div className="hidden sm:block sm:flex-1" />
-            )}
-
-            <button
-              type="button"
-              onClick={async () => {
-                const isValid = await FormDataValidation();
-                if (isValid) {
-                  if (currentStep === 3) {
-                    setCurrentStep((s) => s + 1);
-                    return;
-                  } else {
-                    await submitKYCFormdata();
-                  }
-                }
-              }}
-              className="
-                order-1 sm:order-2
-                px-8 py-2.5 w-full sm:w-auto
-                rounded-xl bg-brand-600 text-white
-                hover:bg-brand-700 transition font-medium
-                shadow-sm
-              "
-            >
-              {currentStep === steps.length - 1 && KYCformData?.terms_conditions === 1 ? "Submit KYC" : "Next"}
-            </button>
-          </div>
+      {/*  <!-- =============================================  Stepper scroll on mobile ============================================= -->*/}
+      <div className="overflow-x-auto">
+        <div className="min-w-max md:min-w-0">
+          <Stepper steps={steps} currentStep={currentStep} />
         </div>
       </div>
+      {/* <!-- =============================================  Form Body ============================================= -->*/}
+
+      <div>
+        {currentStep === 0 && <ContactDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
+        {currentStep === 1 && <Identity setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
+        {currentStep === 2 && <BankDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
+        {currentStep === 3 && <Documents setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
+        {currentStep === 4 && <StepDeclaration setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
+      </div>
+
+      {/* <!-- =============================================  Sticky Footer ============================================= -->*/}
+
+      <div
+        className="
+            sticky bottom-0 left-0 right-0 
+            bg-white py-3 md:py-4 
+            flex flex-col md:flex-row 
+            gap-3 md:gap-0
+            items-center justify-between 
+            border-t z-50
+          "
+      >
+        {/* <!-- =============================================  Buttons ============================================= -->*/}
+        {currentStep > 0 ? (
+          <button
+            onClick={() => setCurrentStep((s) => s - 1)}
+            className="
+                px-6 py-2 w-full md:w-auto 
+                rounded-lg border border-gray-300
+                text-gray-700 hover:bg-gray-100 transition
+              "
+          >
+            Back
+          </button>
+        ) : (
+          <div className="hidden md:block" />
+        )}
+
+        {/* Next / Submit */}
+        <button
+          onClick={async () => {
+            const isValid = await FormDataValidation();
+            if (isValid) {
+              if (currentStep === 3) {
+                setCurrentStep((s) => s + 1);
+                return;
+              } else {
+                await submitKYCFormdata();
+              }
+            } else if (!isValid) {
+              return;
+            }
+          }}
+          className="px-8 py-2 w-full md:w-auto
+        rounded-lg bg-brand-600 text-white
+              hover:bg-brand-700 transition font-medium">
+
+          {currentStep === steps.length - 1 && KYCformData?.terms_conditions === 1 ? "Submit KYC" : "Next"}
+        </button>
+      </div>
+
     </ComponentCard >
   );
 }

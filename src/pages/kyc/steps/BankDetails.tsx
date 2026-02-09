@@ -74,7 +74,6 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
               type="text"
                
               value={KYCformData?.account_holder_name || ""}
-              error={!!errors?.account_holder_name}
               onChange={(e) => {
                 const value = e.target.value;
                 // Only allow letters and spaces
@@ -100,7 +99,6 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
               placeholder="Enter Account Number"
               type="text"
               value={KYCformData?.account_number || ""}
-              error={!!errors?.account_number}
               onChange={(e) => {
                 const value = e.target.value;
                 // Only allow digits and max 18 characters
@@ -126,7 +124,6 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
               placeholder="Re-enter Account Number"
               type="text"
               value={KYCformData?.confirm_account_number || ""}
-              error={!!errors?.confirm_account_number}
               onChange={(e) => {
                 const value = e.target.value;
                 // Only allow digits and max 18 characters
@@ -153,7 +150,6 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
               placeholder="Enter your IFSC Code"
               type="text"
               value={KYCformData?.ifsc_code || ""}
-              error={!!errors?.ifsc_code}
               onChange={(e) => {
                 const value = e.target.value.toUpperCase(); 
 
@@ -185,7 +181,8 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
                   account_type: value,
                 }));
               }}
-              className={`dark:bg-dark-900 ${errors?.account_type ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : ""}`}
+
+              className="dark:bg-dark-900"
             />
             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
               <ChevronDownIcon />

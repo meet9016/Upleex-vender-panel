@@ -5,9 +5,9 @@ import AddProductPage from '@/pages/product/AddProductPage'
 const page = () => {
   return (
     <div>
-          <Suspense fallback={null}>
-      <AddProductPage />
-    </Suspense>
+      <Suspense fallback={null}>
+        <AddProductPage />
+      </Suspense>
     </div>
   )
 }

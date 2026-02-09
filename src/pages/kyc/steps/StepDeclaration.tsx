@@ -18,12 +18,12 @@ export default function StepDeclaration({
 }: KYCFormProp) {
   return (
     <div>
-      <label className={`flex items-center gap-2 p-3 rounded-lg border transition-colors ${errors?.terms_conditions ? "border-red-500 ring-2 ring-red-500/20" : "border-transparent"}`}>
+      <label className="flex items-center gap-2">
         <input
           type="checkbox"
           checked={KYCformData?.terms_conditions === 1}
           onChange={(e) => {
-            clearError("terms_conditions");
+             clearError("terms_conditions")
             setKYCFormData((prev) => ({
               ...prev,
               terms_conditions: e.target.checked ? 1 : 0,

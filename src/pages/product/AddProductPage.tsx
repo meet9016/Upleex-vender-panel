@@ -131,6 +131,10 @@ export default function AddProductPage() {
     /* <!-- ========================================================== Input change ========================================================== --> */
 
     const handleChange = (field: string, value: any) => {
+        // Reset validation errors when listing type changes so new conditional fields don't show errors immediately
+        if (field === "listingType") {
+            setSubmitAttempted(false);
+        }
 
         setFormData((prev) => ({
             ...prev,
@@ -211,12 +215,8 @@ export default function AddProductPage() {
 
     const handleRadioChange = (value: "day" | "month") => {
         setBillingType(value);
-
-
-        setFormData((prev) => ({
-            ...prev,
-            billingType: value,
-        }));
+        // Reset validation errors when billing type changes so new conditional fields don't show errors immediately
+        setSubmitAttempted(false);
     };
 
     /* <!-- ============================================ Fetch product detail on edit mode  ============================================ --> */
@@ -310,6 +310,12 @@ export default function AddProductPage() {
     useEffect(() => {
 
         const fetchSubCategories = async () => {
+            if (!selectedCategory) {
+                setSubCategoryList([]);
+                setSelectedSubCategory(null);
+                handleChange("subCategory", null);
+                return;
+            }
 
             try {
                 const formdata = new FormData();
@@ -324,7 +330,6 @@ export default function AddProductPage() {
 
                     setSubCategoryList(subcats);
 
-
                     if (!isEditMode && subcats.length > 0) {
                         setSelectedSubCategory(subcats[0].value);
                         handleChange("subCategory", subcats[0].value);
@@ -334,6 +339,7 @@ export default function AddProductPage() {
                 }
             } catch (err) {
                 console.error("Error fetching subcategories", err);
+                toast.error("Error loading subcategories");
             }
         };
 
@@ -380,32 +386,78 @@ export default function AddProductPage() {
 
 
     const validateForm = (): boolean => {
-        if (!formData.category) return false;
-        if (!formData.subCategory) return false;
-        if (!formData.listingType) return false;
-        if (!formData.name?.trim()) return false;
-        if (!formData.description?.trim()) return false;
-        if (!mainImage && (!mainPreview || mainPreview.length === 0)) return false;
+        // Basic field validation
+        if (!formData.category) {
+            toast.error("Please select a category");
+            return false;
+        }
+        if (!formData.subCategory) {
+            toast.error("Please select a sub category");
+            return false;
+        }
+        if (!formData.listingType) {
+            toast.error("Please select listing type");
+            return false;
+        }
+        if (!formData.name?.trim()) {
+            toast.error("Please enter item/property name");
+            return false;
+        }
+        if (!formData.description?.trim()) {
+            toast.error("Please enter description");
+            return false;
+        }
+        if (!mainImage && (!mainPreview || mainPreview.length === 0)) {
+            toast.error("Please upload main image");
+            return false;
+        }
 
+        // Rent Product Validation
         if (formData.listingType === "1") {
-            if (billingType === "day") {
-                if (!formData.dayPrice?.trim() || !formData.dayCancelPrice?.trim()) return false;
+            if (!billingType) {
+                toast.error("Please select billing type (Day or Month)");
+                return false;
             }
+
+            if (billingType === "day") {
+                if (!formData.dayPrice?.trim()) {
+                    toast.error("Please enter day price");
+                    return false;
+                }
+                if (!formData.dayCancelPrice?.trim()) {
+                    toast.error("Please enter day cancel price");
+                    return false;
+                }
+            }
+
             if (billingType === "month") {
                 const hasCompleteRow = formData.months.some(
                     (m) => m.month && m.price?.trim() && m.cancelPrice?.trim()
                 );
-                if (!hasCompleteRow) return false;
+                if (!hasCompleteRow) {
+                    toast.error("Please add at least one complete month pricing");
+                    return false;
+                }
                 const invalidMonthRows = formData.months.some(
                     (m) => (m.price?.trim() || m.cancelPrice?.trim()) && !m.month
                 );
-                if (invalidMonthRows) return false;
+                if (invalidMonthRows) {
+                    toast.error("All month pricing rows must have a month selected");
+                    return false;
+                }
             }
-            if (!billingType) return false;
         }
 
+        // Sell Product Validation
         if (formData.listingType && formData.listingType !== "1") {
-            if (!formData.monthPrice?.trim() || !formData.monthCancelPrice?.trim()) return false;
+            if (!formData.monthPrice?.trim()) {
+                toast.error("Please enter price");
+                return false;
+            }
+            if (!formData.monthCancelPrice?.trim()) {
+                toast.error("Please enter cancel price");
+                return false;
+            }
         }
 
         return true;
@@ -414,8 +466,7 @@ export default function AddProductPage() {
     const handleSubmit = async () => {
         setSubmitAttempted(true);
         if (!validateForm()) {
-            toast.error("Please fill all required fields correctly.");
-            return;
+            return; // Error messages are shown in validateForm now
         }
         try {
             const formdata = new FormData();
@@ -425,34 +476,38 @@ export default function AddProductPage() {
             }
 
             // ---------- BASIC FIELDS ----------
-            formdata.append("category_id", String(selectedCategory));
-            formdata.append("sub_category_id", String(selectedSubCategory));
+            formdata.append("category_id", String(selectedCategory || formData.category));
+            formdata.append("sub_category_id", String(selectedSubCategory || formData.subCategory));
             formdata.append("product_type_id", String(formData.listingType));
-            formdata.append("product_listing_type_id", String(billingType === "month" ? "2" : billingType === "day" ? "1" : ""));
-            formdata.append("product_name", formData.name);
-            formdata.append("description", formData.description);
+            
+            // Determine listing type based on billingType
+            const listingTypeId = billingType === "month" ? "2" : billingType === "day" ? "1" : "";
+            formdata.append("product_listing_type_id", listingTypeId);
+            
+            formdata.append("product_name", formData.name.trim());
+            formdata.append("description", formData.description.trim());
 
             // ---------- SELL FLOW ----------
-            if (formData.listingType != "1") {
-                formdata.append("price", formData.monthPrice);
-                formdata.append("cancel_price", formData.monthCancelPrice);
+            if (formData.listingType !== "1") {
+                formdata.append("price", formData.monthPrice.trim());
+                formdata.append("cancel_price", formData.monthCancelPrice.trim());
             }
 
             // ---------- RENT FLOW ----------
-            if (formData.listingType == "1") {
+            if (formData.listingType === "1") {
                 // DAY
                 if (billingType === "day") {
-                    formdata.append("price", formData.dayPrice);
-                    formdata.append("cancel_price", formData.dayCancelPrice);
+                    formdata.append("price", formData.dayPrice.trim());
+                    formdata.append("cancel_price", formData.dayCancelPrice.trim());
                 }
 
                 // MONTH
                 if (billingType === "month") {
                     formData.months.forEach((m: any, index: number) => {
-                        if (m.month && m.price && m.cancelPrice) {
+                        if (m.month && m.price?.trim() && m.cancelPrice?.trim()) {
                             formdata.append(`months_id[${index}]`, m.month);
-                            formdata.append(`month_price[${index}]`, m.price);
-                            formdata.append(`month_cancel_price[${index}]`, m.cancelPrice);
+                            formdata.append(`month_price[${index}]`, m.price.trim());
+                            formdata.append(`month_cancel_price[${index}]`, m.cancelPrice.trim());
                             if (isEditMode === true && m.productMonthsId) {
                                 formdata.append(`product_months_id[${index}]`, m.productMonthsId);
                             }
@@ -463,9 +518,9 @@ export default function AddProductPage() {
 
             // ---------- SPECIFICATION ----------
             formData.keyFeatures.forEach((item: any, index: number) => {
-                if (item.key && item.value) {
-                    formdata.append(`specification[${index}]`, item.key);
-                    formdata.append(`detail[${index}]`, item.value);
+                if (item.key?.trim() && item.value?.trim()) {
+                    formdata.append(`specification[${index}]`, item.key.trim());
+                    formdata.append(`detail[${index}]`, item.value.trim());
 
                     // EDIT TIME SPECIFICATION ID
                     if (item.specification_id) {
@@ -473,7 +528,6 @@ export default function AddProductPage() {
                     }
                 }
             });
-
 
             // ---------- IMAGES ----------
             if (mainImage) {
@@ -487,12 +541,16 @@ export default function AddProductPage() {
             // ---------- API CALL ----------
             const res = await api.post(endPointApi.postVendorAddProduct, formdata);
 
-            if (res?.data?.status == 200) {
+            if (res?.data?.status === 200) {
+                toast.success(isEditMode ? "Product updated successfully!" : "Product added successfully!");
                 router.push("/product");
+            } else {
+                toast.error(res?.data?.message || "Failed to save product");
             }
 
         } catch (error) {
             console.error("Save product error", error);
+            toast.error("Error saving product. Please try again.");
         }
     };
 
@@ -516,14 +574,17 @@ export default function AddProductPage() {
                                     setSelectedSubCategory(null);
                                 }}
                                 className={`rounded-lg py-2 px-3 w-full dark:bg-dark-900 ${submitAttempted && !formData.category
-                                        ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-                                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+                                    ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
                                     }`}
                             />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300">
                                 <ChevronDownIcon />
                             </span>
                         </div>
+                        {submitAttempted && !formData.category && (
+                            <p className="text-red-500 text-xs mt-1">Category is required</p>
+                        )}
                     </div>
 
                     <div >
@@ -538,14 +599,17 @@ export default function AddProductPage() {
                                     setSelectedSubCategory(val);
                                 }}
                                 className={`rounded-lg py-2 px-3 w-full dark:bg-dark-900 ${submitAttempted && !formData.subCategory
-                                        ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-                                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+                                    ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
                                     }`}
                             />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300">
                                 <ChevronDownIcon />
                             </span>
                         </div>
+                        {submitAttempted && !formData.subCategory && (
+                            <p className="text-red-500 text-xs mt-1">Sub Category is required</p>
+                        )}
                     </div>
 
                     {/* ================= Row 2: Listing Type & Name ================= */}
@@ -559,14 +623,17 @@ export default function AddProductPage() {
                                 onChange={(val) => handleChange("listingType", val)}
                                 disabled={isEditMode}
                                 className={`rounded-lg py-2 px-3 w-full dark:bg-dark-900 ${submitAttempted && !formData.listingType
-                                        ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-                                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+                                    ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
                                     }`}
                             />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300">
                                 <ChevronDownIcon />
                             </span>
                         </div>
+                        {submitAttempted && !formData.listingType && (
+                            <p className="text-red-500 text-xs mt-1">Listing Type is required</p>
+                        )}
                     </div>
 
                     <div >
@@ -615,7 +682,7 @@ export default function AddProductPage() {
                     {/* ================= Rent Flow: Day ================= */}
                     {formData?.listingType === "1" && billingType === "day" && (
                         <>
-                            <div className="p-4 bg-white/70 dark:bg-dark-800 backdrop-blur rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <div className="rounded-2xl ">
                                 <Label>Day Price</Label>
                                 <Input
                                     placeholder="Enter Day Price"
@@ -623,10 +690,11 @@ export default function AddProductPage() {
                                     value={formData.dayPrice}
                                     onChange={(e) => handleChange("dayPrice", e.target.value)}
                                     error={submitAttempted && !formData.dayPrice?.trim()}
+                                    errorMessage={submitAttempted && !formData.dayPrice?.trim() ? "Day Price is required" : undefined}
                                 />
                             </div>
 
-                            <div className="p-4 bg-white/70 dark:bg-dark-800 backdrop-blur rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <div className="rounded-2xl">
                                 <Label>Day Cancel Price</Label>
                                 <Input
                                     placeholder="Enter Day Cancel Price"
@@ -634,108 +702,127 @@ export default function AddProductPage() {
                                     value={formData.dayCancelPrice}
                                     onChange={(e) => handleChange("dayCancelPrice", e.target.value)}
                                     error={submitAttempted && !formData.dayCancelPrice?.trim()}
+                                    errorMessage={submitAttempted && !formData.dayCancelPrice?.trim() ? "Day Cancel Price is required" : undefined}
                                 />
                             </div>
                         </>
                     )}
 
                     {/* ================= Rent Flow: Month ================= */}
-                   {formData?.listingType === "1" && billingType === "month" && (
-  <div className="col-span-2 p-4 bg-white/70 dark:bg-dark-800 backdrop-blur rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-    <div className="flex items-center justify-between mb-3">
-      <div>
-        <Label className="text-lg font-bold text-gray-800 dark:text-gray-100">
-          Monthly Pricing
-        </Label>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Configure price for each month (1–12)
-        </p>
-      </div>
-      {formData?.months?.length < 12 && (
-        <button
-          type="button"
-          onClick={addMonth}
-          className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-white font-semibold shadow-md hover:scale-105 transition"
-          style={{ background: "linear-gradient(135deg, rgb(53,66,237), rgb(90,102,255))" }}
-        >
-          + Add Month
-        </button>
-      )}
-    </div>
+                    {formData?.listingType === "1" && billingType === "month" && (
+                        <div className={`col-span-2 p-4 rounded-2xl border backdrop-blur ${
+                            submitAttempted && 
+                            !formData.months.some((m) => m.month && m.price?.trim() && m.cancelPrice?.trim())
+                                ? "border-red-500 bg-red-50/30 dark:bg-red-950/20"
+                                : "border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-dark-800"
+                        }`}>
+                            {/* HEADER */}
+                            <div className="flex items-center justify-between ">
+                                <Label className="text-lg font-bold text-gray-800 dark:text-gray-100">
+                                    Monthly Pricing
+                                </Label>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {formData?.months?.map((m, index) => (
-        <div
-          key={index}
-          className="rounded-xl p-3 bg-white/80 dark:bg-dark-700 backdrop-blur border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col gap-2"
-        >
-          {/* HEADER ROW INSIDE CARD */}
-          <div className="flex justify-between items-center">
-            <span className="font-medium text-gray-700 dark:text-gray-200 text-sm">
-              Month {index + 1}
-            </span>
-            {formData.months.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeMonth(index)}
-                className="text-gray-600 hover:text-red-500 font-bold text-lg"
-                title="Remove Month"
-              >
-                <IoClose />
-              </button>
-            )}
-          </div>
+                                {formData?.months?.length < 12 && (
+                                    <button
+                                        type="button"
+                                        onClick={addMonth}
+                                        className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-white text-sm font-semibold shadow-md hover:scale-105 transition"
+                                        style={{
+                                            background:
+                                                "linear-gradient(135deg, rgb(53,66,237), rgb(90,102,255))",
+                                        }}
+                                    >
+                                        + Add Month
+                                    </button>
+                                )}
+                            </div>
 
-          {/* INPUTS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            <Select
-              options={getAvailableMonthsForIndex(index)}
-              placeholder="Select Month"
-              value={m.month}
-              onChange={(val) => updateMonth(index, "month", val)}
-              className="text-sm"
-            />
-            <Input
-              type="number"
-              placeholder="₹ Price"
-              value={m.price}
-              onChange={(e) => updateMonth(index, "price", e.target.value)}
-              className="text-sm"
-            />
-            <Input
-              type="number"
-              placeholder="₹ Cancel"
-              value={m.cancelPrice}
-              onChange={(e) => updateMonth(index, "cancelPrice", e.target.value)}
-              className="text-sm"
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
+                            {/* MONTH ROWS */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {formData?.months?.map((m, index) => (
+                                    <div
+                                        key={index}
+                                        className="bg-white/80 dark:bg-dark-700 rounded-xl p-3 flex items-center gap-2"
+                                    >
+                                        {/* MONTH */}
+                                        <Select
+                                            options={getAvailableMonthsForIndex(index)}
+                                            placeholder="Select Month"
+                                            value={m.month}
+                                            onChange={(val) => updateMonth(index, "month", val)}
+                                            className="text-sm"
+                                        />
+
+                                        {/* PRICE */}
+                                        <Input
+                                            type="number"
+                                            placeholder="₹ Price"
+                                            value={m.price}
+                                            onChange={(e) =>
+                                                updateMonth(index, "price", e.target.value)
+                                            }
+                                            className="text-sm"
+                                        />
+
+                                        {/* CANCEL PRICE */}
+                                        <Input
+                                            type="number"
+                                            placeholder="₹ Cancel"
+                                            value={m.cancelPrice}
+                                            onChange={(e) =>
+                                                updateMonth(index, "cancelPrice", e.target.value)
+                                            }
+                                            className="text-sm"
+                                            errorMessage={submitAttempted && !m.cancelPrice?.trim() ? "Cancel Price is required" : undefined}
+                                        />
+
+                                        {/* REMOVE */}
+                                        {formData.months.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeMonth(index)}
+                                                className="h-9 w-9 flex items-center justify-center rounded-md text-gray-500 hover:text-[rgb(53,66,237)]  transition"
+                                                title="Remove Month"
+                                            >
+                                                <MdDelete size={20} />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {submitAttempted && 
+                            !formData.months.some((m) => m.month && m.price?.trim() && m.cancelPrice?.trim()) && (
+                                <p className="text-red-500 text-xs mt-3">Please add at least one complete month pricing (Month, Price, Cancel Price)</p>
+                            )}
+                        </div>
+                    )}
+
 
 
                     {/* ================= Sell Flow ================= */}
                     {formData?.listingType !== "1" && formData?.listingType != null && (
                         <>
-                            <div className="p-4 bg-white/70 dark:bg-dark-800 backdrop-blur rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <div className="rounded-2xl">
                                 <Label>Price</Label>
                                 <Input
                                     placeholder="Enter Sell Price"
                                     type="number"
                                     value={formData.monthPrice}
                                     onChange={(e) => handleChange("monthPrice", e.target.value)}
+                                      error={submitAttempted && !formData.monthPrice?.trim()}
+                                    errorMessage={submitAttempted && !formData.monthPrice?.trim() ? " Sell Price is required" : undefined}
                                 />
                             </div>
-                            <div className="p-4 bg-white/70 dark:bg-dark-800 backdrop-blur rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <div className="rounded-2x">
                                 <Label>Cancel Price</Label>
                                 <Input
                                     placeholder="Enter Sell Cancel Price"
                                     type="number"
                                     value={formData.monthCancelPrice}
                                     onChange={(e) => handleChange("monthCancelPrice", e.target.value)}
+                                      error={submitAttempted && !formData.monthCancelPrice?.trim()}
+                                    errorMessage={submitAttempted && !formData.monthCancelPrice?.trim() ? "Sell Cancel Price is required" : undefined}
                                 />
                             </div>
                         </>
@@ -750,11 +837,11 @@ export default function AddProductPage() {
 
                     {/* LEFT → DESCRIPTION */}
                     <div className="">
-                        <Label>Description</Label>
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-4">Description</Label>
 
                         <div
                             className={`rounded-xl overflow-hidden transition-all duration-200
-      border ${submitAttempted && !formData.description?.trim()
+                                      border ${submitAttempted && !formData.description?.trim()
                                     ? "border-red-500 focus-within:ring-red-500 focus-within:ring-2"
                                     : "border-gray-300 focus-within:ring-[rgb(53,66,237)] focus-within:ring-2"
                                 }`}
@@ -768,14 +855,17 @@ export default function AddProductPage() {
                                         style: {
                                             borderTopLeftRadius: "0.75rem",
                                             borderTopRightRadius: "0.75rem",
-                                            border: "none", // outer div handles border
+                                            border: "none",
+                                            borderBottom: "1px solid #e5e7eb", // toolbar bottom border
                                         },
+                                        className:
+                                            "[&_.ql-toolbar_button]:border-b [&_.ql-toolbar_button]:border-gray-300",
                                     },
                                     content: {
                                         style: {
                                             borderBottomLeftRadius: "0.5rem",
                                             borderBottomRightRadius: "0.5rem",
-                                            border: "none", // outer div handles border
+                                            border: "none",
                                         },
                                     },
                                 }}
@@ -790,93 +880,86 @@ export default function AddProductPage() {
 
                     {/* <!-- ======================================================== Features  ======================================================== -->*/}
 
-                    <div className="h-[380px] flex flex-col">
+                    <div className="h-[300px] flex flex-col">
                         {/* HEADER */}
-                        <div className="flex items-center justify-between mb-4">
-                            <Label className="text-lg font-bold text-gray-800">
+                        <div className="flex items-center justify-between mb-2">
+                            <Label className="font-semibold text-gray-700 dark:text-gray-200">
                                 Key Features
                             </Label>
                             <button
                                 type="button"
                                 onClick={addFeatureField}
-                                className="flex items-center gap-2 px-5 py-2 rounded-xl text-white font-semibold shadow-md transition-transform hover:scale-105"
+                                className="flex items-center gap-1 px-4 py-1.5 rounded-lg text-sm text-white font-semibold shadow-sm transition hover:scale-105"
                                 style={{
-                                    background: "linear-gradient(135deg, rgb(53,66,237), rgb(90,102,255))",
+                                    background:
+                                        "linear-gradient(135deg, rgb(53,66,237), rgb(90,102,255))",
                                 }}
                             >
                                 + Add Feature
                             </button>
                         </div>
 
-                        {/* SCROLLABLE AREA */}
-                        <div className="flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-4 space-y-4">
-                            {formData?.keyFeatures?.map((item, index) => (
-                                <div
-                                    key={index}
-                                    className="relative rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-lg transition p-4 flex flex-col md:flex-row gap-4 items-center"
-                                >
-                                    {/* REMOVE CROSS BUTTON */}
-                                    {formData.keyFeatures.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => removeFeature(index)}
-                                            className="absolute top-2 right-2 text-gray-600 hover:text-[rgb(58,140,237)] text-2xl font-extrabold transition"
-                                            title="Remove Feature"
-                                        >
-                                            <IoClose />
-                                        </button>
-                                    )}
-
-
-                                    {/* KEY */}
-                                    <div className="flex-1">
-                                        <Label className="text-xs text-gray-500 uppercase">
-                                            Feature
-                                        </Label>
+                        {/* BORDERED CONTAINER */}
+                        <div className="flex-1 rounded-xl border border-gray-300 bg-white/70 backdrop-blur p-2">
+                            {/* SCROLLABLE AREA */}
+                            <div className="h-[300px] overflow-y-auto space-y-2">
+                                {formData?.keyFeatures?.map((item, index) => (
+                                    <div
+                                        key={index}
+                                        className="flex items-center gap-2"
+                                    >
+                                        {/* FEATURE */}
                                         <Input
                                             type="text"
-                                            placeholder="e.g. Free Delivery"
+                                            placeholder="Feature"
                                             value={item.key}
-                                            className="focus:ring-2 focus:ring-[rgb(53,66,237)]"
+                                            className="h-9 text-sm flex-1 focus:ring-1 focus:ring-[rgb(53,66,237)]"
                                             onChange={(e) =>
                                                 UpdateFeatureField(index, "key", e.target.value)
                                             }
                                         />
-                                    </div>
 
-                                    {/* VALUE */}
-                                    <div className="flex-1">
-                                        <Label className="text-xs text-gray-500 uppercase">
-                                            Description
-                                        </Label>
+                                        {/* DESCRIPTION */}
                                         <Input
                                             type="text"
-                                            placeholder="e.g. Up to 10km radius"
+                                            placeholder="Description"
                                             value={item.value}
-                                            className="focus:ring-2 focus:ring-[rgb(53,66,237)]"
+                                            className="h-9 text-sm flex-1 focus:ring-1 focus:ring-[rgb(53,66,237)]"
                                             onChange={(e) =>
                                                 UpdateFeatureField(index, "value", e.target.value)
                                             }
                                         />
+
+                                        {/* DELETE */}
+                                        {formData.keyFeatures.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeFeature(index)}
+                                                className="h-9 w-10 flex items-center justify-center rounded-md text-gray-500 hover:text-[rgb(53,66,237)] transition"
+                                                title="Remove feature"
+                                            >
+                                                <MdDelete size={20} />
+                                            </button>
+                                        )}
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     </div>
+
                 </div>
 
                 {/* <!-- ======================================================== Images  ======================================================== -->*/}
 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                    {/* <!-- ======================================================== Main Images  ======================================================== -->*/}
-
+                    {/* ================= Main Image ================= */}
                     <div>
                         <Label>Main Image</Label>
                         <div
-                            className={`rounded-lg transition-all duration-200
-      border ${submitAttempted && !mainImage && (!mainPreview || mainPreview.length === 0)
+                            className={`h-[300px] rounded-lg border transition-all duration-200 
+      flex items-center justify-center overflow-hidden
+      ${submitAttempted && !mainImage && (!mainPreview || mainPreview.length === 0)
                                     ? "border-red-500 focus-within:ring-red-500 focus-within:ring-2"
                                     : "border-gray-300 focus-within:ring-[rgb(53,66,237)] focus-within:ring-2"
                                 }`}
@@ -885,7 +968,7 @@ export default function AddProductPage() {
                                 preview={mainPreview}
                                 setPreview={setMainPreview}
                                 multiple={false}
-                                smallPreview={false}
+                                smallPreview={true}
                                 onFileSelect={(files) => setMainImage(files[0])}
                                 isEditMode={isEditMode}
                             />
@@ -896,21 +979,22 @@ export default function AddProductPage() {
                         )}
                     </div>
 
-                    {/* <!-- ======================================================== Sub Images  ======================================================== -->*/}
-
+                    {/* ================= Sub Images ================= */}
                     <div>
                         <Label>Sub Images (Max 4)</Label>
-                        <DropzoneComponent
-                            preview={subPreview}
-                            setPreview={setSubPreview}
-                            multiple={true}
-                            smallPreview={true}
-                            maxFiles={4}
-                            onFileSelect={(files) => setSubImages((prev) => [...prev, ...files])}
-                            isEditMode={isEditMode}
-                        />
-                    </div>
 
+                        <div className="h-[300px] rounded-lg border border-gray-300 flex items-center justify-center overflow-hidden">
+                            <DropzoneComponent
+                                preview={subPreview}
+                                setPreview={setSubPreview}
+                                multiple={true}
+                                smallPreview={true}
+                                maxFiles={4}
+                                onFileSelect={(files) => setSubImages((prev) => [...prev, ...files])}
+                                isEditMode={isEditMode}
+                            />
+                        </div>
+                    </div>
                 </div>
 
             </ComponentCard >
