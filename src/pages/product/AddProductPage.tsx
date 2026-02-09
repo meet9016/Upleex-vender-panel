@@ -849,7 +849,7 @@ export default function AddProductPage() {
                             className={`rounded-xl overflow-hidden transition-all duration-200
                                       border ${validationErrors.description
                                     ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
-                                    : "border-gray-300 focus-within:ring-[rgb(53,66,237)] focus-within:ring-2"
+                                    : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
                                 }`}
                         >
                             <Editor
@@ -964,7 +964,7 @@ export default function AddProductPage() {
       flex items-center justify-center overflow-hidden
       ${validationErrors.mainImage
                                     ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
-                                    : "border-gray-300 focus-within:ring-[rgb(53,66,237)] focus-within:ring-2"
+                                    : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
                                 }`}
                         >
                             <DropzoneComponent
@@ -995,7 +995,7 @@ export default function AddProductPage() {
                     <div>
                         <Label>Sub Images (Max 4)</Label>
 
-                        <div className="h-[300px] rounded-lg border border-gray-300 flex items-center justify-center overflow-hidden">
+                        <div className="h-[300px] rounded-lg border focus-within:ring-blue-500 focus-within:ring-2 border-gray-300 flex items-center justify-center overflow-hidden">
                             <DropzoneComponent
                                 preview={subPreview}
                                 setPreview={setSubPreview}
