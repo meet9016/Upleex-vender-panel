@@ -900,11 +900,8 @@ export default function AddProductPage() {
                             <button
                                 type="button"
                                 onClick={addFeatureField}
-                                className="flex items-center gap-1 px-4 py-1.5 rounded-lg text-sm text-white font-semibold shadow-sm transition hover:scale-105"
-                                style={{
-                                    background:
-                                        "linear-gradient(135deg, rgb(53,66,237), rgb(90,102,255))",
-                                }}
+                                className="flex items-center gap-1 px-4 py-1.5 rounded-lg text-sm text-white btn-primary font-semibold shadow-sm transition hover:scale-105"
+                               
                             >
                                 + Add Feature
                             </button>
