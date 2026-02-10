@@ -235,7 +235,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
                             aria-invalid={error || variant === "error"}
                             className={inputClasses}
                             {...(restProps as TextareaHTMLAttributes<HTMLTextAreaElement>)}
-                            style={{ height: "42px" }}
+                            style={{ height: "40px" }}
                             
                         />
                     ) : (
@@ -250,7 +250,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
                             aria-invalid={error || variant === "error"}
                             className={inputClasses}
                             {...(restProps as InputHTMLAttributes<HTMLInputElement>)}
-                            style={{ height: "42px" }}
+                            style={{ height: "40px" }}
                         />
                     )}
 

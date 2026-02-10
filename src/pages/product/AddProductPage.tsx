@@ -738,12 +738,12 @@ export default function AddProductPage() {
                     {/* ================= Rent Flow: Month ================= */}
                     {/* ================= Rent Flow: Month ================= */}
                     {formData?.listingType === "1" && billingType === "month" && (
-                       <div
-  className={`col-span-2 pb-2 rounded-2xl border backdrop-blur
+                        <div
+                            className={`col-span-2 pb-2 rounded-2xl border backdrop-blur
     border-gray-200 dark:border-gray-700
     bg-white/70 dark:bg-dark-800
   `}
->
+                        >
 
                             {/* HEADER */}
                             <div className="flex items-center justify-between p-3 md:p-3">
@@ -771,40 +771,46 @@ export default function AddProductPage() {
                                     >
                                         {/* MONTH */}
                                         <div className="w-full md:w-1/3">
-                                            <SearchableDropdown
-                                                searchable
-                                                options={getAvailableMonthsForIndex(index)}
-                                                value={m.month}
-                                                placeholder="Select Month"
-                                                onChange={(val) => updateMonth(index, "month", val)}
-                                                error={!!validationErrors.monthsFields?.[index]?.month}
-                                                errorMessage={validationErrors.monthsFields?.[index]?.month}
-                                                usePortal
-                                            />
+                                            <div className="min-h-[68px] mt-1"> {/* Using min-height instead of fixed height */}
+                                                <SearchableDropdown
+                                                    searchable
+                                                    options={getAvailableMonthsForIndex(index)}
+                                                    value={m.month}
+                                                    placeholder="Select Month"
+                                                    onChange={(val) => updateMonth(index, "month", val)}
+                                                    error={!!validationErrors.monthsFields?.[index]?.month}
+                                                    errorMessage={validationErrors.monthsFields?.[index]?.month}
+                                                    usePortal
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* PRICE */}
                                         <div className="w-full md:w-1/3">
-                                            <Input
-                                                type="number"
-                                                placeholder="₹ Price"
-                                                value={m.price}
-                                                onChange={(e) => updateMonth(index, "price", e.target.value)}
-                                                error={!!validationErrors.monthsFields?.[index]?.price}
-                                                errorMessage={validationErrors.monthsFields?.[index]?.price}
-                                            />
+                                            <div className="min-h-[68px]"> {/* Using min-height instead of fixed height */}
+                                                <Input
+                                                    type="number"
+                                                    placeholder="₹ Price"
+                                                    value={m.price}
+                                                    onChange={(e) => updateMonth(index, "price", e.target.value)}
+                                                    error={!!validationErrors.monthsFields?.[index]?.price}
+                                                    errorMessage={validationErrors.monthsFields?.[index]?.price}
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* CANCEL PRICE */}
                                         <div className="w-full md:w-1/3">
-                                            <Input
-                                                type="number"
-                                                placeholder="₹ Cancel"
-                                                value={m.cancelPrice}
-                                                onChange={(e) => updateMonth(index, "cancelPrice", e.target.value)}
-                                                error={!!validationErrors.monthsFields?.[index]?.cancelPrice}
-                                                errorMessage={validationErrors.monthsFields?.[index]?.cancelPrice}
-                                            />
+                                            <div className="min-h-[68px]"> {/* Using min-height instead of fixed height */}
+                                                <Input
+                                                    type="number"
+                                                    placeholder="₹ Cancel"
+                                                    value={m.cancelPrice}
+                                                    onChange={(e) => updateMonth(index, "cancelPrice", e.target.value)}
+                                                    error={!!validationErrors.monthsFields?.[index]?.cancelPrice}
+                                                    errorMessage={validationErrors.monthsFields?.[index]?.cancelPrice}
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* REMOVE */}

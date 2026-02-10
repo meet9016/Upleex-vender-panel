@@ -812,3 +812,16 @@ span.flatpickr-weekday,
   color: var(--color-error-600);
 }
 
+/* Add to your global CSS */
+.fixed-field-container {
+    min-height: 68px;
+    position: relative;
+}
+
+.fixed-field-container .error-message {
+    position: absolute;
+    bottom: -18px;
+    left: 0;
+    font-size: 0.75rem;
+    color: #ef4444;
+}
