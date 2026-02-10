@@ -8,6 +8,7 @@ import { api } from "@/utils/axiosInstance";
 import { useEffect, useState } from "react";
 import type { ErrorType, KycFormDataType } from '@/pages/kyc/KycPage'
 import endPointApi from "@/utils/endPointApi";
+import SearchableDropdown from "@/components/common/SearchableDropdown";
 
 export type Option = {
   value: string;
@@ -85,7 +86,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
                   }));
                 }
               }}
-              
+
             />
             {errors?.account_holder_name && (
               <p className="mt-1 text-sm text-error border">{errors.account_holder_name}</p>
@@ -154,7 +155,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
               error={!!errors?.ifsc_code}
               value={KYCformData?.ifsc_code || ""}
               onChange={(e) => {
-                const value = e.target.value.toUpperCase(); 
+                const value = e.target.value.toUpperCase();
 
                 if (value.length <= 11) {
                   clearError("ifsc_code");
@@ -172,30 +173,31 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
         </div>
         <div>
           <Label>Account Type</Label>
+
           <div className="relative">
-            <Select
-              error={!!errors?.account_type}
+            <SearchableDropdown
               options={options}
+              value={KYCformData?.account_type || null}
               placeholder="Account Type"
-              value={KYCformData?.account_type || ""}
+              usePortal
+              error={!!errors?.account_type}
               onChange={(value) => {
-                clearError("account_type"); // ✅ correct place
+                clearError("account_type");
                 setKYCFormData(prev => ({
                   ...prev,
                   account_type: value,
                 }));
               }}
-
-              className="dark:bg-dark-900"
             />
-            <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
-              <ChevronDownIcon />
-            </span>
+
             {errors?.account_type && (
-              <p className="mt-1 text-sm text-error">{errors.account_type}</p>
+              <p className="mt-1 text-sm text-error">
+                {errors.account_type}
+              </p>
             )}
           </div>
         </div>
+
         {/* Full width placeholder area (future use: MICR, Branch etc.) */}
         <div className="hidden md:block"></div>
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDownIcon } from "@/icons";
 import Input from "./Input";
 
@@ -15,10 +16,12 @@ type Props = {
   placeholder?: string;
   onChange: (value: string) => void;
   error?: boolean;
+  errorMessage?: string;
   searchable?: boolean;
   onScrollNearBottom?: () => void;
   footer?: React.ReactNode;
   onSearch?: (value: string) => void;
+  usePortal?: boolean;
 };
 
 export default function 
@@ -28,20 +31,29 @@ export default function
   placeholder = "Select option",
   onChange,
   error = false,
+  errorMessage,
   searchable = false,
   onScrollNearBottom,
   footer,
+  usePortal = false,
+  onSearch
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [portalStyle, setPortalStyle] = useState<React.CSSProperties | undefined>(undefined);
 
   const selectedOption = options.find(o => o.value === value);
 
   // close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const insideTrigger = ref.current?.contains(target);
+      const insideDropdown = dropdownRef.current?.contains(target);
+      if (!insideTrigger && !insideDropdown) {
         setOpen(false);
         setSearch("");
       }
@@ -55,6 +67,38 @@ export default function
         o.label.toLowerCase().includes(search.toLowerCase())
       )
     : options;
+
+  useEffect(() => {
+    if (!open || !searchable) return;
+    try {
+      (searchInputRef.current as any)?.focus?.({ preventScroll: true });
+    } catch {}
+  }, [open, searchable]);
+
+  const updatePortalPosition = () => {
+    if (!ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    setPortalStyle({
+      position: "fixed",
+      top: r.bottom + 4,
+      left: r.left,
+      width: r.width,
+      zIndex: 1000,
+    });
+  };
+
+  useEffect(() => {
+    if (!usePortal || !open) return;
+    updatePortalPosition();
+    const handleScroll = () => updatePortalPosition();
+    const handleResize = () => updatePortalPosition();
+    window.addEventListener("scroll", handleScroll, true);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [usePortal, open]);
 
   return (
     <div ref={ref} className="relative w-full">
@@ -71,68 +115,135 @@ export default function
         </span>
         <ChevronDownIcon className="text-gray-400" />
       </button>
+      {error && errorMessage && (
+        <p className="mt-1 text-xs text-red-600">{errorMessage}</p>
+      )}
 
       {/* DROPDOWN */}
-      {open && (
-        <div className="absolute z-50 mt-2 w-full rounded-xl border bg-white dark:bg-dark-800 shadow-lg">
+      {open &&
+        (usePortal
+          ? createPortal(
+              <div
+                ref={dropdownRef}
+                style={portalStyle}
+                className="rounded-xl border bg-white dark:bg-dark-800 shadow-lg"
+              >
+                {searchable && (
+                  <div className="p-2 border-b">
+                    <Input
+                      ref={searchInputRef as any}
+                      isSearch
+                      size="sm"
+                      placeholder="Search..."
+                      value={search}
+                    onChange={(e) => {
+                        setSearch(e.target.value);
+                        onSearch?.(e.target.value);
+                      }}
 
-          {/* 🔍 SEARCH INPUT INSIDE DROPDOWN */}
-          {searchable && (
-            <div className="p-2 border-b">
-              <Input
-                isSearch
-                size="sm"
-                placeholder="Search..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  if (onSearch) onSearch(e.target.value);
-                }}
-                autoFocus
-              />
-            </div>
-          )}
 
-          {/* OPTIONS (with scroll handler for pagination) */}
-          <div
-            className="max-h-48 overflow-y-auto"
-            onScroll={(e) => {
-              const target = e.target as HTMLDivElement;
-              const scrollPercentage = (target.scrollTop + target.clientHeight) / target.scrollHeight;
-              console.log(`Scroll: ${scrollPercentage * 100}% | scrollTop: ${target.scrollTop}, clientHeight: ${target.clientHeight}, scrollHeight: ${target.scrollHeight}`);
-              
-              // Trigger when user scrolls to 80% or more
-              if (onScrollNearBottom && scrollPercentage >= 0.8) {
-                console.log("Pagination trigger - near bottom!");
-                onScrollNearBottom();
-              }
-            }}
-          >
-            {filteredOptions.length ? (
-              filteredOptions.map(opt => (
+                    />
+                  </div>
+                )}
                 <div
-                  key={opt.value}
-                  onClick={() => {
-                    onChange(opt.value);
-                    setOpen(false);
-                    setSearch("");
+                  className="max-h-48 overflow-y-auto"
+                  onScroll={(e) => {
+                    const target = e.target as HTMLDivElement;
+                    const scrollPercentage =
+                      (target.scrollTop + target.clientHeight) /
+                      target.scrollHeight;
+                    console.log(
+                      `Scroll: ${scrollPercentage * 100}% | scrollTop: ${target.scrollTop}, clientHeight: ${target.clientHeight}, scrollHeight: ${target.scrollHeight}`
+                    );
+                    if (onScrollNearBottom && scrollPercentage >= 0.8) {
+                      console.log("Pagination trigger - near bottom!");
+                      onScrollNearBottom();
+                    }
                   }}
-                  className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-700"
                 >
-                  {opt.label}
+                  {filteredOptions.length ? (
+                    filteredOptions.map((opt) => (
+                      <div
+                        key={opt.value}
+                        onClick={() => {
+                          onChange(opt.value);
+                          setOpen(false);
+                          setSearch("");
+                        }}
+                        className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-700"
+                      >
+                        {opt.label}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="px-4 py-2 text-sm text-gray-400">
+                      No results found
+                    </p>
+                  )}
+                  {footer && <div className="px-4 py-2">{footer}</div>}
                 </div>
-              ))
-            ) : (
-              <p className="px-4 py-2 text-sm text-gray-400">
-                No results found
-              </p>
-            )}
-
-            {/* footer (loader / load more) */}
-            {footer && <div className="px-4 py-2">{footer}</div>}
-          </div>
-        </div>
-      )}
+              </div>,
+              document.body
+            )
+          : (
+              <div
+                ref={dropdownRef}
+                className="absolute z-50 mt-2 w-full rounded-xl border bg-white dark:bg-dark-800 shadow-lg"
+              >
+                {searchable && (
+                  <div className="p-2 border-b">
+                    <Input
+                      ref={searchInputRef as any}
+                      isSearch
+                      size="sm"
+                      placeholder="Search..."
+                      value={search}
+                      onChange={(e) => {
+                        setSearch(e.target.value);
+                        if (onSearch) onSearch(e.target.value);
+                      }}
+                    />
+                  </div>
+                )}
+                <div
+                  className="max-h-48 overflow-y-auto"
+                  onScroll={(e) => {
+                    const target = e.target as HTMLDivElement;
+                    const scrollPercentage =
+                      (target.scrollTop + target.clientHeight) /
+                      target.scrollHeight;
+                    console.log(
+                      `Scroll: ${scrollPercentage * 100}% | scrollTop: ${target.scrollTop}, clientHeight: ${target.clientHeight}, scrollHeight: ${target.scrollHeight}`
+                    );
+                    if (onScrollNearBottom && scrollPercentage >= 0.8) {
+                      console.log("Pagination trigger - near bottom!");
+                      onScrollNearBottom();
+                    }
+                  }}
+                >
+                  {filteredOptions.length ? (
+                    filteredOptions.map((opt) => (
+                      <div
+                        key={opt.value}
+                        onClick={() => {
+                          onChange(opt.value);
+                          setOpen(false);
+                          setSearch("");
+                        }}
+                        className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-700"
+                      >
+                        {opt.label}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="px-4 py-2 text-sm text-gray-400">
+                      No results found
+                    </p>
+                  )}
+                  {footer && <div className="px-4 py-2">{footer}</div>}
+                </div>
+              </div>
+            ))}
     </div>
   );
 }

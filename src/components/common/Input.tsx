@@ -339,7 +339,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
 
                 {/* Error Message */}
                 {(error || variant === "error") && errorMessage && (
-                    <p className="mt-1 text-sm text-red-600">{errorMessage}</p>
+                    <p className="mt-1 text-xs text-red-600">{errorMessage}</p>
                 )}
 
                 {/* Helper Text */}

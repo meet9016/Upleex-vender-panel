@@ -113,7 +113,7 @@ export default function AddProductPage() {
         dayCancelPrice?: string;
         monthPrice?: string;
         monthCancelPrice?: string;
-        months?: string;
+        monthsFields?: { month?: string; price?: string; cancelPrice?: string }[];
         description?: string;
         mainImage?: string;
         billingType?: string;
@@ -210,14 +210,16 @@ export default function AddProductPage() {
             ...prev,
             months: updated,
         }));
-        
-        // Clear months validation error when user starts filling month data
-        if (validationErrors.months) {
-            setValidationErrors(prev => ({
-                ...prev,
-                months: undefined
-            }));
-        }
+
+        // Clear row-level field error
+        setValidationErrors(prev => {
+            if (!prev.monthsFields) return prev;
+            const mf = [...prev.monthsFields];
+            mf[index] = { ...(mf[index] || {}) };
+            // @ts-expect-error narrow
+            mf[index][field] = undefined;
+            return { ...prev, monthsFields: mf };
+        });
     };
 
     /* <!-- ============================================ handle select rent time ============================================ --> */
@@ -429,17 +431,17 @@ export default function AddProductPage() {
             }
 
             if (billingType === "month") {
-                const hasCompleteRow = formData.months.some(
-                    (m) => m.month && m.price?.trim() && m.cancelPrice?.trim()
-                );
-                if (!hasCompleteRow) {
-                    errors.months = "Please add at least one complete month pricing";
-                }
-                const invalidMonthRows = formData.months.some(
-                    (m) => (m.price?.trim() || m.cancelPrice?.trim()) && !m.month
-                );
-                if (invalidMonthRows) {
-                    errors.months = "All month pricing rows must have a month selected";
+                const rows = formData.months;
+                const rowErrors: { month?: string; price?: string; cancelPrice?: string }[] = rows.map(() => ({}));
+
+                rows.forEach((m, idx) => {
+                    if (!m.month) rowErrors[idx].month = "Please select month";
+                    if (!m.price?.trim()) rowErrors[idx].price = "Please enter price";
+                    if (!m.cancelPrice?.trim()) rowErrors[idx].cancelPrice = "Please enter cancel price";
+                });
+
+                if (rowErrors.some(e => e.month || e.price || e.cancelPrice)) {
+                    errors.monthsFields = rowErrors;
                 }
             }
         }
@@ -603,27 +605,25 @@ export default function AddProductPage() {
                         )}
                     </div>
 
-                    {/* ================= Row 2: Listing Type & Name ================= */}
-                    <div >
-                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Listing Type</Label>
-                        <div className="relative">
-                            <Select
-                                options={productTypeOptions}
-                                placeholder="Select Listing Type"
-                                value={formData.listingType}
-                                onChange={(val) => handleChange("listingType", val)}
-                                disabled={isEditMode}
-                                className={`rounded-lg py-2 px-3 w-full dark:bg-dark-900 ${validationErrors.listingType
-                                    ? "border-error-600 focus:border-error-600 focus:ring-error-600/20"
-                                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-200"
-                                    }`}
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300">
-                                <ChevronDownIcon />
-                            </span>
-                        </div>
+                    <div>
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                            Listing Type
+                        </Label>
+
+                        <SearchableDropdown
+                            options={productTypeOptions}
+                            value={formData.listingType}
+                            placeholder="Select Listing Type"
+                            searchable={false}          // ❌ no search
+                            error={!!validationErrors.listingType}
+                            onChange={(val) => handleChange("listingType", val)}
+                        // disabled={isEditMode}
+                        />
+
                         {validationErrors.listingType && (
-                            <p className="text-error text-xs mt-1">{validationErrors.listingType}</p>
+                            <p className="text-error text-xs mt-1">
+                                {validationErrors.listingType}
+                            </p>
                         )}
                     </div>
 
@@ -716,85 +716,91 @@ export default function AddProductPage() {
                     )}
 
                     {/* ================= Rent Flow: Month ================= */}
-             {formData?.listingType === "1" && billingType === "month" && (
-  <div
-    className={`col-span-2 rounded-2xl border backdrop-blur ${
-      validationErrors.months
-        ? "border-error-600 bg-error-50/30 dark:bg-error-600/20"
-        : "border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-dark-800"
-    }`}
-  >
-    {/* HEADER */}
-    <div className="flex items-center justify-between p-2 md:p-3">
-      <Label className="text-lg font-bold text-gray-800 dark:text-gray-100">
-        Monthly Pricing
-      </Label>
+                    {formData?.listingType === "1" && billingType === "month" && (
+                        <div
+                            className={`col-span-2 pb-2 rounded-2xl border backdrop-blur ${
+                                validationErrors.monthsFields?.some(e => e.month || e.price || e.cancelPrice)
+                                    ? "border-error-600 bg-error-50/30 dark:bg-error-600/20"
+                                    : "border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-dark-800"
+                            }`}
+                        >
+                            {/* HEADER */}
+                            <div className="flex items-center justify-between p-3 md:p-3">
+                                <Label className="text-lg font-bold text-gray-800 dark:text-gray-100">
+                                    Monthly Pricing
+                                </Label>
 
-      {formData?.months?.length < 12 && (
-        <button
-          type="button"
-          onClick={addMonth}
-          className="btn-primary flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:scale-105 transition"
-        >
-          + Add Month
-        </button>
-      )}
-    </div>
+                                {formData?.months?.length < 12 && (
+                                    <button
+                                        type="button"
+                                        onClick={addMonth}
+                                        className="btn-primary flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:scale-105 transition"
+                                    >
+                                        + Add Month
+                                    </button>
+                                )}
+                            </div>
 
-    {/* MONTH ROWS - COMPACT */}
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-2">
-      {formData?.months?.map((m, index) => (
-        <div
-          key={index}
-          className="bg-white/80 dark:bg-dark-700 rounded-lg p-2 flex items-center gap-2"
-        >
-          {/* MONTH */}
-          <Select
-            options={getAvailableMonthsForIndex(index)}
-            placeholder="Select Month"
-            value={m.month}
-            onChange={(val) => updateMonth(index, "month", val)}
-            className="text-sm"
-          />
+                            {/* MONTH ROWS - COMPACT */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-2">
+                                {formData?.months?.map((m, index) => (
+                                    <div
+                                        key={index}
+                                        className="bg-white/80 dark:bg-dark-700 rounded-lg p-2 flex items-center gap-2"
+                                    >
+                                        {/* MONTH */}
+                                        <SearchableDropdown
+                                            searchable
+                                            options={getAvailableMonthsForIndex(index)}
+                                            value={m.month}
+                                            placeholder="Select Month"
+                                            onChange={(val) => updateMonth(index, "month", val)}
+                                                error={!!validationErrors.monthsFields?.[index]?.month}
+                                                errorMessage={validationErrors.monthsFields?.[index]?.month}
+                                            usePortal
+                                        />
 
-          {/* PRICE */}
-          <Input
-            type="number"
-            placeholder="₹ Price"
-            value={m.price}
-            onChange={(e) => updateMonth(index, "price", e.target.value)}
-            className="text-sm px-2 py-1"
-          />
+                                        {/* PRICE */}
+                                        <Input
+                                            type="number"
+                                            placeholder="₹ Price"
+                                            value={m.price}
+                                            onChange={(e) => updateMonth(index, "price", e.target.value)}
+                                            className="text-sm px-2 py-1"
+                                            error={!!validationErrors.monthsFields?.[index]?.price}
+                                            errorMessage={validationErrors.monthsFields?.[index]?.price}
+                                        />
+                                        
 
-          {/* CANCEL PRICE */}
-          <Input
-            type="number"
-            placeholder="₹ Cancel"
-            value={m.cancelPrice}
-            onChange={(e) => updateMonth(index, "cancelPrice", e.target.value)}
-            className="text-sm px-2 py-1"
-          />
+                                        {/* CANCEL PRICE */}
+                                        <Input
+                                            type="number"
+                                            placeholder="₹ Cancel"
+                                            value={m.cancelPrice}
+                                            onChange={(e) => updateMonth(index, "cancelPrice", e.target.value)}
+                                                className="text-sm px-2 py-1"
+                                                error={!!validationErrors.monthsFields?.[index]?.cancelPrice}
+                                                errorMessage={validationErrors.monthsFields?.[index]?.cancelPrice}
+                                        />
 
-          {/* REMOVE */}
-          {formData.months.length > 1 && (
-            <button
-              type="button"
-              onClick={() => removeMonth(index)}
-              className="h-7 w-7 flex items-center justify-center rounded-md text-gray-500 hover:text-[rgb(53,66,237)] transition"
-              title="Remove Month"
-            >
-              <MdDelete size={18} />
-            </button>
-          )}
-        </div>
-      ))}
-    </div>
+                                        {/* REMOVE */}
+                                        {formData.months.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeMonth(index)}
+                                                className="h-7 w-7 flex items-center justify-center rounded-md text-gray-500 hover:text-[rgb(53,66,237)] transition"
+                                                title="Remove Month"
+                                            >
+                                                <MdDelete size={18} />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
 
-    {validationErrors.months && (
-      <p className="text-error text-xs mt-2 mb-2 px-2">{validationErrors.months}</p>
-    )}
-  </div>
-)}
+ 
+                        </div>
+                    )}
 
 
                     {/* ================= Sell Flow ================= */}

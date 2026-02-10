@@ -489,7 +489,7 @@ export default function KYCPage() {
           await submitKYCFormdata();
         }
       } else {
-        toast.error("Please fill all required fields correctly.");
+        // toast.error("Please fill all required fields correctly.");
         return;
       }
     }}
