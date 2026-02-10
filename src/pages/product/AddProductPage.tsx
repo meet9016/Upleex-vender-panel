@@ -814,14 +814,15 @@ export default function AddProductPage() {
                                         </div>
 
                                         {/* REMOVE */}
+                                        {/* REMOVE */}
                                         {formData.months.length > 1 && (
                                             <button
                                                 type="button"
                                                 onClick={() => removeMonth(index)}
-                                                className="h-7 w-7 flex items-center justify-center rounded-md text-gray-500 hover:text-[rgb(53,66,237)] transition self-end md:self-center"
+                                                className="h-8 w-8 flex items-center justify-center rounded-md text-gray-500 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition mb-7"
                                                 title="Remove Month"
                                             >
-                                                <MdDelete size={18} />
+                                                <MdDelete size={20} />
                                             </button>
                                         )}
                                     </div>
