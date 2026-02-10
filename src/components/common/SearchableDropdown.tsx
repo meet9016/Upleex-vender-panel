@@ -106,7 +106,7 @@ export default function
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`w-full flex items-center justify-between px-4 py-2 rounded-lg border bg-white dark:bg-dark-900
+        className={`w-full flex items-center justify-between px-4 py-2 rounded-lg border bg-white dark:bg-dark-900 text-sm
           ${error ? "border-red-500" : "border-gray-300"}
         `}
       >
@@ -133,7 +133,7 @@ export default function
                     <Input
                       ref={searchInputRef as any}
                       isSearch
-                      size="sm"
+                      size="xs"
                       placeholder="Search..."
                       value={search}
                     onChange={(e) => {
