@@ -738,12 +738,13 @@ export default function AddProductPage() {
                     {/* ================= Rent Flow: Month ================= */}
                     {/* ================= Rent Flow: Month ================= */}
                     {formData?.listingType === "1" && billingType === "month" && (
-                        <div
-                            className={`col-span-2 pb-2 rounded-2xl border backdrop-blur ${validationErrors.monthsFields?.some(e => e.month || e.price || e.cancelPrice)
-                                    ? "border-error-600 bg-error-50/30 dark:bg-error-600/20"
-                                    : "border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-dark-800"
-                                }`}
-                        >
+                       <div
+  className={`col-span-2 pb-2 rounded-2xl border backdrop-blur
+    border-gray-200 dark:border-gray-700
+    bg-white/70 dark:bg-dark-800
+  `}
+>
+
                             {/* HEADER */}
                             <div className="flex items-center justify-between p-3 md:p-3">
                                 <Label className="text-lg font-bold text-gray-800 dark:text-gray-100">
