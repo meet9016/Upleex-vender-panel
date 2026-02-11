@@ -71,6 +71,7 @@ export default function SignInForm() {
       const formdata = new FormData();
 
       formdata.append("number", formData.mobile || "");
+      formdata.append("otp", "123456");
       const res = await api.post(`${endPointApi.login}`, formdata);
 
       if (res.data.status == 200) {
@@ -205,7 +206,7 @@ export default function SignInForm() {
                       renderInput={(props) => (
                         <input
                           {...props}
-                          className="h-12 w-12 rounded-lg border border-slate-200 bg-slate-50 text-center text-base font-medium text-slate-900 outline-none transition-all focus:border-[#4F46E5] focus:bg-white focus:ring-2 focus:ring-[#4F46E5]/20"
+                          className="h-10 !w-10 rounded-lg border border-slate-200 bg-slate-50 text-center text-base font-medium text-slate-900 outline-none transition-all focus:border-[#4F46E5] focus:bg-white focus:ring-2 focus:ring-[#4F46E5]/20"
                         />
                       )}
                     />
