@@ -135,7 +135,7 @@ export default function SignInForm() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#EEF2FF] via-white to-[#E0F2FE] px-4">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#EEF2FF] via-white to-[#E0F2FE] dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 px-4">
       <div className="relative w-full max-w-md">
         {/* Soft glow background */}
         <div className="pointer-events-none absolute inset-0 -z-10">
@@ -143,7 +143,7 @@ export default function SignInForm() {
           <div className="absolute -bottom-24 -left-24 h-40 w-40 rounded-full bg-gradient-to-tr from-[#22D3EE]/30 to-[#4F46E5]/35 blur-3xl" />
         </div>
 
-        <div className="relative overflow-hidden rounded-3xl bg-white/95 shadow-xl border border-blue-50 px-7 py-7 sm:px-10 sm:py-9">
+        <div className="relative overflow-hidden rounded-3xl bg-white/95 dark:bg-gray-900/95 shadow-xl border border-blue-50 dark:border-gray-800 px-7 py-7 sm:px-10 sm:py-9">
           {/* Top accent bar */}
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#4F46E5] via-[#6366F1] to-[#22D3EE]" />
           {/* Logo + heading */}
@@ -156,10 +156,10 @@ export default function SignInForm() {
               priority
               className="mb-2"
             />
-            <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">
+            <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-white">
               Sign In
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500 dark:text-gray-400">
               Enter your email and password to sign in!
             </p>
           </div>
@@ -206,7 +206,7 @@ export default function SignInForm() {
                       renderInput={(props) => (
                         <input
                           {...props}
-                          className="h-10 !w-10 rounded-lg border border-slate-200 bg-slate-50 text-center text-base font-medium text-slate-900 outline-none transition-all focus:border-[#4F46E5] focus:bg-white focus:ring-2 focus:ring-[#4F46E5]/20"
+                          className="h-10 !w-10 rounded-lg border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800 text-center text-base font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-[#4F46E5] focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-[#4F46E5]/20"
                         />
                       )}
                     />
@@ -223,13 +223,13 @@ export default function SignInForm() {
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox checked={isChecked} onChange={setIsChecked} />
-                  <span className="text-xs sm:text-sm text-slate-600">
+                  <span className="text-xs sm:text-sm text-slate-600 dark:text-gray-400">
                     Keep me logged in
                   </span>
                 </label>
                 <Link
                   href="/reset-password"
-                  className="text-xs sm:text-sm font-medium text-[#4F46E5] hover:text-[#4338CA]"
+                  className="text-xs sm:text-sm font-medium text-[#4F46E5] hover:text-[#4338CA] dark:text-brand-400 dark:hover:text-brand-300"
                 >
                   Forgot password?
                 </Link>
@@ -252,12 +252,12 @@ export default function SignInForm() {
           </form>
 
           {/* Sign up link */}
-          <div className="mt-6 border-t border-slate-100 pt-4">
-            <p className="text-xs sm:text-sm text-center text-slate-500">
+          <div className="mt-6 border-t border-slate-100 dark:border-gray-800 pt-4">
+            <p className="text-xs sm:text-sm text-center text-slate-500 dark:text-gray-400">
               Don&apos;t have an account?{" "}
               <Link
                 href="/signup"
-                className="font-medium text-[#4F46E5] hover:text-[#4338CA]"
+                className="font-medium text-[#4F46E5] hover:text-[#4338CA] dark:text-brand-400 dark:hover:text-brand-300"
               >
                 Sign Up
               </Link>
