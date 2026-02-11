@@ -5,6 +5,7 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
+import Image from "next/image";
 import React, { useState } from "react";
 
 export default function SignUpForm() {
@@ -34,113 +35,126 @@ export default function SignUpForm() {
   };
 
   return (
-    <div className="flex flex-col flex-1 lg:w-1/2 w-full overflow-y-auto no-scrollbar">
-      <div className="w-full max-w-md sm:pt-10 mx-auto mb-5">
-        <Link
-          href="/"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
-        >
-          <ChevronLeftIcon />
-          Back to dashboard
-        </Link>
-      </div>
-
-      <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 font-semibold text-gray-800 text-title-sm">
-            Sign Up
-          </h1>
-          <p className="text-sm text-gray-500">
-            Enter your email and password to sign up!
-          </p>
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#EEF2FF] via-white to-[#E0F2FE] px-4 overflow-y-auto no-scrollbar">
+      <div className="relative w-full max-w-md">
+        {/* Soft glow background */}
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute -top-24 -right-24 h-40 w-40 rounded-full bg-gradient-to-br from-[#4F46E5]/30 to-[#22D3EE]/40 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 h-40 w-40 rounded-full bg-gradient-to-tr from-[#22D3EE]/30 to-[#4F46E5]/35 blur-3xl" />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* First & Last Name */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <div>
-              <Label>First Name *</Label>
-              <Input
-                type="text"
-                name="fname"
-                value={formData.fname}
-                onChange={handleChange}
-                placeholder="Enter your first name"
-              />
-            </div>
-
-            <div>
-              <Label>Last Name *</Label>
-              <Input
-                type="text"
-                name="lname"
-                value={formData.lname}
-                onChange={handleChange}
-                placeholder="Enter your last name"
-              />
-            </div>
-          </div>
-
-          {/* Email */}
-          <div>
-            <Label>Email *</Label>
-            <Input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
+        <div className="relative overflow-hidden rounded-3xl bg-white/95 shadow-xl border border-blue-50 px-7 py-7 sm:px-10 sm:py-9">
+          {/* Top accent bar */}
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#4F46E5] via-[#6366F1] to-[#22D3EE]" />
+          {/* Logo + heading */}
+          <div className="mb-6 flex flex-col items-center text-center">
+            <Image
+              src="/images/logo/upleex-logo-dark.png"
+              alt="Upleex"
+              width={180}
+              height={48}
+              priority
+              className="mb-2"
             />
-          </div>
-
-          {/* Password */}
-          <div>
-            <Label>Password *</Label>
-            <div className="relative">
-              <Input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Enter your password"
-              />
-              <span
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer"
-              >
-                {showPassword ? <EyeIcon /> : <EyeCloseIcon />}
-              </span>
-            </div>
-          </div>
-
-          {/* Checkbox */}
-          <div className="flex items-center gap-3">
-            <Checkbox
-              checked={isChecked}
-              onChange={setIsChecked}
-            />
+            <h1 className="mb-2 mt-3 font-semibold text-gray-800 text-title-sm">
+              Sign Up
+            </h1>
             <p className="text-sm text-gray-500">
-              I agree to the{" "}
-              <span className="text-gray-800">Terms</span> and{" "}
-              <span className="text-gray-800">Privacy Policy</span>
+              Enter your email and password to sign up!
             </p>
           </div>
 
-          {/* Button */}
-          <button
-            type="submit"
-            className="w-full px-4 py-3 text-sm font-medium text-white rounded-lg bg-brand-500 hover:bg-brand-600"
-          >
-            Sign Up
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* First & Last Name */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <Label>First Name *</Label>
+                <Input
+                  type="text"
+                  name="fname"
+                  value={formData.fname}
+                  onChange={handleChange}
+                  placeholder="Enter your first name"
+                  className="mt-1"
+                />
+              </div>
 
-        <p className="mt-5 text-sm text-center text-gray-600">
-          Already have an account?{" "}
-          <Link href="/signin" className="text-brand-500">
-            Sign In
-          </Link>
-        </p>
+              <div>
+                <Label>Last Name *</Label>
+                <Input
+                  type="text"
+                  name="lname"
+                  value={formData.lname}
+                  onChange={handleChange}
+                  placeholder="Enter your last name"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <Label>Email *</Label>
+              <Input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter your email"
+                className="mt-1"
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <Label>Password *</Label>
+              <div className="relative mt-1">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Enter your password"
+                />
+                <span
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-slate-500 hover:text-slate-700"
+                >
+                  {showPassword ? <EyeIcon /> : <EyeCloseIcon />}
+                </span>
+              </div>
+
+            </div>
+
+            {/* Checkbox */}
+            <div className="flex items-start gap-3 rounded-2xl bg-slate-50 px-3 py-3">
+              <Checkbox checked={isChecked} onChange={setIsChecked} />
+              <p className="text-xs sm:text-sm text-slate-600">
+                I agree to the{" "}
+                <span className="font-semibold text-slate-900">Terms</span> and{" "}
+                <span className="font-semibold text-slate-900">Privacy Policy</span>
+              </p>
+            </div>
+
+            {/* Button */}
+            <button
+              type="submit"
+              className="w-full px-4 py-3 text-sm font-medium text-white rounded-xl bg-gradient-to-r from-[#4F46E5] via-[#6366F1] to-[#22D3EE] hover:shadow-[0_10px_40px_rgba(79,70,229,0.35)] hover:translate-y-[0.5px] transition-all border-0"
+            >
+              Sign Up
+            </button>
+          </form>
+
+          <p className="mt-6 text-xs sm:text-sm text-center text-slate-500">
+            Already have an account?{" "}
+            <Link
+              href="/signin"
+              className="font-medium text-[#4F46E5] hover:text-[#4338CA]"
+            >
+              Sign in
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
