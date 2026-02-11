@@ -22,6 +22,7 @@ type Props = {
   footer?: React.ReactNode;
   onSearch?: (value: string) => void;
   usePortal?: boolean;
+  disabled?: boolean;
 };
 
 export default function 
@@ -36,7 +37,8 @@ export default function
   onScrollNearBottom,
   footer,
   usePortal = false,
-  onSearch
+  onSearch,
+  disabled = false,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -46,6 +48,11 @@ export default function
   const [portalStyle, setPortalStyle] = useState<React.CSSProperties | undefined>(undefined);
 
   const selectedOption = options.find(o => o.value === value);
+useEffect(() => {
+  if (disabled) {
+    setOpen(false);
+  }
+}, [disabled]);
 
   // close on outside click
   useEffect(() => {
@@ -105,9 +112,15 @@ export default function
       {/* TRIGGER (NORMAL DROPDOWN) */}
       <button
         type="button"
-        onClick={() => setOpen(!open)}
+          disabled={disabled}
+          onClick={() => {
+            if (!disabled) setOpen(!open);
+          }}
         className={`w-full flex items-center justify-between px-4 py-2 rounded-lg border bg-white dark:bg-dark-900 text-sm
           ${error ? "border-red-500" : "border-gray-300"}
+            ${disabled 
+      ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
+      : "bg-white dark:bg-dark-900"}
         `}
       >
         <span className={selectedOption ? "text-gray-800" : "text-gray-400"}>

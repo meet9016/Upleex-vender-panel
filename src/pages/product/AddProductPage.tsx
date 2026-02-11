@@ -637,7 +637,7 @@ export default function AddProductPage() {
                             searchable={false}          // ❌ no search
                             error={!!validationErrors.listingType}
                             onChange={(val) => handleChange("listingType", val)}
-                        // disabled={isEditMode}
+                         disabled={isEditMode}
                         />
 
                         {validationErrors.listingType && (
@@ -736,13 +736,12 @@ export default function AddProductPage() {
                     )}
 
                     {/* ================= Rent Flow: Month ================= */}
-                    {/* ================= Rent Flow: Month ================= */}
                     {formData?.listingType === "1" && billingType === "month" && (
                         <div
                             className={`col-span-2 pb-2 rounded-2xl border backdrop-blur
-    border-gray-200 dark:border-gray-700
-    bg-white/70 dark:bg-dark-800
-  `}
+                                border-gray-200 dark:border-gray-700
+                                bg-white/70 dark:bg-dark-800
+                            `}
                         >
 
                             {/* HEADER */}
@@ -767,7 +766,7 @@ export default function AddProductPage() {
                                 {formData?.months?.map((m, index) => (
                                     <div
                                         key={index}
-                                        className="bg-white/80 dark:bg-dark-700 rounded-lg p-2 flex flex-col md:flex-row items-start md:items-center gap-2"
+                                        className="bg-white/80 dark:bg-dark-700 rounded-lg  flex flex-col md:flex-row items-start md:items-center gap-2"
                                     >
                                         {/* MONTH */}
                                         <div className="w-full md:w-1/3">
@@ -813,7 +812,6 @@ export default function AddProductPage() {
                                             </div>
                                         </div>
 
-                                        {/* REMOVE */}
                                         {/* REMOVE */}
                                         {formData.months.length > 1 && (
                                             <button
@@ -871,8 +869,6 @@ export default function AddProductPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                    {/* <!-- ======================================================== Description  ======================================================== -->*/}
 
                     {/* LEFT → DESCRIPTION */}
                     <div className="">
@@ -936,7 +932,6 @@ export default function AddProductPage() {
 
                         {/* BORDERED CONTAINER */}
                         <div className="flex-1 rounded-xl border border-gray-300 bg-white/70 backdrop-blur p-2">
-                            {/* SCROLLABLE AREA */}
                             <div className="h-[300px] overflow-y-auto space-y-2">
                                 {formData?.keyFeatures?.map((item, index) => (
                                     <div
@@ -986,13 +981,12 @@ export default function AddProductPage() {
                 {/* <!-- ======================================================== Images  ======================================================== -->*/}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* ================= Main Image ================= */}
                     <div>
                         <Label>Main Image</Label>
                         <div
                             className={`h-[300px] rounded-lg border transition-all duration-200 
-      flex items-center justify-center overflow-hidden
-      ${validationErrors.mainImage
+                                flex items-center justify-center overflow-hidden
+                                ${validationErrors.mainImage
                                     ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
                                     : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
                                 }`}
@@ -1004,7 +998,6 @@ export default function AddProductPage() {
                                 smallPreview={true}
                                 onFileSelect={(files) => {
                                     setMainImage(files[0]);
-                                    // Clear validation error when image is selected
                                     if (validationErrors.mainImage) {
                                         setValidationErrors(prev => ({
                                             ...prev,
