@@ -5,6 +5,8 @@ import Button from "@/components/ui/button/Button";
 import { toast } from "react-toastify";
 import endPointApi from "@/utils/endPointApi";
 import { api } from "@/utils/axiosInstance";
+import { FiUploadCloud } from "react-icons/fi";
+import { FiFolder } from "react-icons/fi";
 
 interface DropzoneProps {
   preview: any;
@@ -137,27 +139,27 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                   />
                   { /* <!-- ======================================================  Overlay on Hover  ====================================================== -->*/}
 
-<div className="absolute bottom-2 right-2 bg-opacity-0 group-hover/image:bg-opacity-20 
+                  <div className="absolute bottom-2 right-2 bg-opacity-0 group-hover/image:bg-opacity-20 
                 transition-all duration-300 rounded-xl flex items-center justify-center">
-  <button
-    type="button"
-    onClick={(e) => {
-      e.stopPropagation();
-      removeImage(preview[0].product_image_id);
-    }}
-    className="opacity-0 group-hover/image:opacity-100
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeImage(preview[0].product_image_id);
+                      }}
+                      className="opacity-0 group-hover/image:opacity-100
                bg-[rgb(58,140,237)] hover:bg-[rgb(37,115,210)] text-white
                px-3 py-2 rounded-lg font-bold
                transform scale-90 group-hover/image:scale-100
                transition-all duration-300 shadow-xl
                flex items-center gap-2"
-  >
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-    </svg>
-    {/* Remove */}
-  </button>
-</div>
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      {/* Remove */}
+                    </button>
+                  </div>
 
                 </div>
               </div>
@@ -188,27 +190,27 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                     {/* Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 
                 opacity-0 group-hover/image:opacity-100 transition-all duration-300">
-  <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
-    <span className="text-white text-xs font-medium bg-black/40 px-2 py-1 rounded">
-      #{index + 1}
-    </span>
-    <button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-        removeImage(img.product_image_id);
-      }}
-      className="bg-[rgb(58,140,237)] hover:bg-[rgb(37,115,210)] text-white 
+                      <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
+                        <span className="text-white text-xs font-medium bg-black/40 px-2 py-1 rounded">
+                          #{index + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeImage(img.product_image_id);
+                          }}
+                          className="bg-[rgb(58,140,237)] hover:bg-[rgb(37,115,210)] text-white 
                  p-1.5 rounded-lg transition-all duration-200
                  transform hover:scale-110 shadow-lg font-bold"
-      aria-label="Remove image"
-    >
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
-  </div>
-</div>
+                          aria-label="Remove image"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
 
                   </div>
                 ))}
@@ -243,22 +245,14 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
 
           (<div className="text-center space-y-4">
             {/* Upload Icon */}
-            <div className="bg-brand-300 mx-auto w-20 h-20 rounded-full 
-                          flex items-center justify-center ">
-              <svg
-                className="w-10 h-10 text-brand-600 group-hover:text-brand-700 transition-colors"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
-            </div>
+            <div className="mx-auto w-20 h-20 rounded-full 
+                flex items-center justify-center 
+                bg-indigo-50">
+  <FiUploadCloud size={42} className="text-gray-600" />
+</div>
+
+
+
             {/* Text Content */}
             <div>
               <h4 className="text-sm text-gray-600 mb-3">
@@ -269,13 +263,12 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
               </h4>
             </div>
             {/* Browse Button */}
-            <Button size="sm" variant="primary"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-brand-500  text-white font-semibold rounded-xl"
+            <Button
+              size="sm"
+              variant="primary"
+              className="inline-flex items-center gap-2 btn-primary"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-              </svg>
+              <FiFolder size={18} />
               Browse Files
             </Button>
           </div>

@@ -5,7 +5,6 @@ import { ApexOptions } from "apexcharts";
 import flatpickr from "flatpickr";
 import ChartTab from "../common/ChartTab";
 import { CalenderIcon } from "../../icons";
-
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 export default function StatisticsChart() {
@@ -25,11 +24,10 @@ export default function StatisticsChart() {
       dateFormat: "M d",
       defaultDate: [sevenDaysAgo, today],
       clickOpens: true,
-      prevArrow:
-        '<svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-      nextArrow:
-        '<svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 15L12.5 10L7.5 5" stroke="" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    });
+      prevArrow: `<i class="fa-solid fa-chevron-left"></i>`,
+      nextArrow: `<i class="fa-solid fa-chevron-right"></i>`,
+
+       });
 
     return () => {
       if (!Array.isArray(fp)) {

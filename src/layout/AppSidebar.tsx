@@ -10,7 +10,7 @@ import {
   HorizontaLDots,
   UserCircleIcon,
 } from "../icons/index";
-
+import { BsChatSquareQuote } from "react-icons/bs";
 type NavItem = {
   name: string;
   icon: React.ReactNode;
@@ -21,6 +21,7 @@ const navItems: NavItem[] = [
   { icon: <GridIcon />, name: "Dashboard", path: "/" },
   { icon: <CalenderIcon />, name: "KYC", path: "/kyc" },
   { icon: <CalenderIcon />, name: "Product", path: "/product" },
+  { icon: <BsChatSquareQuote className="w-5 h-5" />, name: "Quote", path: "/quote"},
   { icon: <CalenderIcon />, name: "Plan", path: "/plan" },
   { icon: <CalenderIcon />, name: "Order List", path: "/order" },
   { icon: <CalenderIcon />, name: "Membership Plan", path: "/membership" },

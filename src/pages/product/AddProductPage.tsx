@@ -870,21 +870,37 @@ export default function AddProductPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                    {/* LEFT → DESCRIPTION */}
+                    {/* ================= LEFT – DESCRIPTION EDITOR (FIXED) ================= */}
                     <div className="">
-                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-4">Description</Label>
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-4">
+                            Description
+                        </Label>
 
                         <div
-                            className={`rounded-xl overflow-hidden transition-all duration-200
-                                      border ${validationErrors.description
+                            className={`rounded-xl overflow-hidden transition-all duration-200 border ${
+                                validationErrors.description
                                     ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
                                     : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
-                                }`}
+                            }`}
                         >
                             <Editor
+                                // ✅ KEY forces re-render when description changes (critical for edit mode)
+                                key={formData.description}
+                                // ✅ VALUE must be HTML string
                                 value={formData.description}
-                                style={{ height: "280px" }}
                                 onTextChange={(e) => handleChange("description", e.htmlValue)}
+                                style={{ height: "280px" }}
+                                // ✅ FULL TOOLBAR – all formatting buttons work
+                                modules={{
+                                    toolbar: [
+                                        [{ header: [1, 2, 3, false] }],
+                                        ["bold", "italic", "underline", "strike"],
+                                        [{ list: "ordered" }, { list: "bullet" }],
+                                        [{ align: [] }],
+                                        ["link", "image"],
+                                        ["clean"],
+                                    ],
+                                }}
                                 pt={{
                                     toolbar: {
                                         style: {
@@ -893,8 +909,6 @@ export default function AddProductPage() {
                                             border: "none",
                                             borderBottom: "1px solid #e5e7eb",
                                         },
-                                        className:
-                                            "[&_.ql-toolbar_button]:border-b [&_.ql-toolbar_button]:border-gray-300",
                                     },
                                     content: {
                                         style: {
@@ -1035,11 +1049,12 @@ export default function AddProductPage() {
 
             <div className="flex items-center gap-5 mt-5 justify-end ">
                 <Button size="sm" variant="primary"
+                className="btn-primary"
                     onClick={handleSubmit}
                 >
                     {isEditMode ? "Update" : "Save"}
                 </Button>
-                <Button size="sm" variant="outline"
+                <Button size="sm" variant="outline" className="py-2 px-5"
                     onClick={() => router.push("/product")}
                 >
                     Cancel

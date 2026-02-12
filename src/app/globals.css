@@ -825,3 +825,34 @@ span.flatpickr-weekday,
     font-size: 0.75rem;
     color: #ef4444;
 }
+@layer components {
+  .btn-primary {
+    @apply px-6 py-2.5
+           text-white
+           font-semibold
+           rounded-xl
+           shadow-md
+           transition-all
+           duration-300
+           active:scale-95;
+    background: linear-gradient(to right, #6366f1, #0ea5e9);
+  }
+
+  .btn-primary:hover {
+    @apply shadow-lg brightness-110;
+  }
+}
+@layer components {
+
+  /* Completed connector line */
+  .step-line-active {
+    background: linear-gradient(to right, #6366f1, #0ea5e9);
+  }
+
+  /* Active step circle */
+  .step-circle-active {
+    @apply text-white;
+    background: linear-gradient(to right, #6366f1, #0ea5e9);
+  }
+
+}

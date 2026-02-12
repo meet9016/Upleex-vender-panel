@@ -22,7 +22,7 @@ export default function Stepper({
               {index !== steps.length - 1 && (
                 <div
                   className={`absolute top-4 md:top-5 h-0.5 w-full left-[calc(50%+12px)] md:left-[calc(50%+20px)] md:w-[calc(100%-40px)]
-                    ${isCompleted ? "bg-brand-600" : "bg-gray-300"}`}
+                   ${isCompleted ? "step-line-active" : "bg-gray-300"}`}
                   style={{
                     width: 'calc(100% - 24px)'
                   }}
@@ -34,9 +34,10 @@ export default function Stepper({
                 className={`relative z-10 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center
                   rounded-full text-xs md:text-sm font-semibold
                   ${
-                    isActive
-                      ? "bg-brand-600 text-white"
-                      : "bg-gray-300 text-gray-600"
+                   isActive
+  ? "step-circle-active"
+  : "bg-gray-300 text-gray-600"
+
                   }`}
               >
                 {index + 1}

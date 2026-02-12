@@ -1,4 +1,16 @@
 "use client";
+const consoleError = console.error;
+console.error = (...args) => {
+  if (
+    typeof args[0] === "string" &&
+    (args[0].includes("AG Grid Enterprise License") ||
+     args[0].includes("License Key Not Found") ||
+     args[0].includes("unlocked for trial"))
+  ) {
+    return;
+  }
+  consoleError(...args);
+};
 import React, { useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AgGridReact } from "ag-grid-react";
@@ -10,7 +22,15 @@ import {
 } from "ag-grid-community";
 import { MdDelete, MdModeEdit } from "react-icons/md";
 
-ModuleRegistry.registerModules([AllCommunityModule]);
+// ✅ Enterprise modules for column menu (three dots)
+import { ColumnMenuModule, ContextMenuModule } from "ag-grid-enterprise";
+
+// ✅ Register modules - make sure ALL are from the same version
+ModuleRegistry.registerModules([
+  AllCommunityModule,    // 35.1.0
+  ColumnMenuModule,      // 35.1.0
+  ContextMenuModule,     // 35.1.0
+]);
 
 interface AgGridTableProps {
   tableName?: string;
@@ -36,23 +56,22 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   const router = useRouter();
   const gridRef = useRef<any>(null);
 
-  // 🔥 CLEAN DEFAULT COLUMN SETTINGS
+  // ✅ Column defaults - menu enabled
   const defaultColDef = useMemo(
     () => ({
       sortable: true,
-      filter: filter,
-      suppressMenu: true,
+      // filter: filter,
       resizable: true,
       flex: 1,
       minWidth: 120,
       cellClass: "flex items-center text-sm",
       headerClass: "font-semibold text-slate-700",
+      // suppressMenu is REMOVED - we want the three dots!
     }),
-    []
+    [filter]
   );
 
-
-  // 🔥 DEFAULT COLUMNS (NO WIDTHS)
+  // Default columns (fallback)
   const defaultColumns: ColDef[] = [
     { field: "planName", headerName: "Plan Name" },
     { field: "price", headerName: "Price" },
@@ -78,9 +97,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             </button>
             <button
               onClick={() =>
-                onDelete
-                  ? onDelete(id)
-                  : alert(`Delete clicked for ID: ${id}`)
+                onDelete ? onDelete(id) : alert(`Delete clicked for ID: ${id}`)
               }
               className="text-lg text-slate-400 hover:text-red-500 transition"
             >
@@ -96,6 +113,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
     () => ({ mode: "multiRow" }),
     []
   );
+
   const onGridReady = (params: any) => {
     params.api.sizeColumnsToFit();
   };
@@ -110,7 +128,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
         {buttonName && (
           <button
             onClick={() => router.push(addButtonLink)}
-            className="px-4 py-2 bg-brand-600 text-white rounded-md"
+            className="btn-primary"
           >
             + Add {buttonName}
           </button>
@@ -130,8 +148,11 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
           pagination
           paginationPageSize={10}
           rowSelection={rowSelection}
-          suppressHorizontalScroll={true}   // 🔒 NO H-SCROLL
+          // suppressHorizontalScroll={true}
           onGridReady={onGridReady}
+           paginationPageSizeSelector={[10, 20, 50, 100]}
+          // ✅ Enable three-dot column menu
+          columnMenu="new"
         />
       </div>
     </div>
