@@ -4,7 +4,7 @@
 import { InputHTMLAttributes, TextareaHTMLAttributes, forwardRef, useState } from "react";
 
 type InputVariant = "default" | "error" | "success" | "warning";
-type InputSize = "sm" | "md" | "lg";
+type InputSize ="xs" | "sm" | "md" | "lg";
 
 interface BaseInputProps {
     // Label & Helper Text
@@ -131,6 +131,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
 
         // Size styles
         const sizeStyles = {
+            xs: "px-2 py-1 text-xs",
             sm: "px-3 py-1.5 text-sm",
             md: "px-4 py-2 text-sm",
             lg: "px-4 py-3 text-base",
@@ -234,7 +235,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
                             aria-invalid={error || variant === "error"}
                             className={inputClasses}
                             {...(restProps as TextareaHTMLAttributes<HTMLTextAreaElement>)}
-                            style={{ height: "42px" }}
+                            style={{ height: "40px" }}
                             
                         />
                     ) : (
@@ -249,7 +250,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
                             aria-invalid={error || variant === "error"}
                             className={inputClasses}
                             {...(restProps as InputHTMLAttributes<HTMLInputElement>)}
-                            style={{ height: "42px" }}
+                            style={{ height: "40px" }}
                         />
                     )}
 
@@ -339,7 +340,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
 
                 {/* Error Message */}
                 {(error || variant === "error") && errorMessage && (
-                    <p className="mt-1 text-sm text-red-600">{errorMessage}</p>
+                    <p className="mt-1 text-xs text-red-600">{errorMessage}</p>
                 )}
 
                 {/* Helper Text */}

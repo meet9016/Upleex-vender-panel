@@ -5,6 +5,7 @@ import { ChevronDownIcon } from "../../../icons";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import Input from "@/components/common/Input";
+import SearchableDropdown from "@/components/common/SearchableDropdown";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import type { ErrorType, KycFormDataType } from '@/pages/kyc/KycPage'
@@ -34,14 +35,13 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
   const [states, setStates] = useState<Option[]>([]);
   const [cities, setCities] = useState<Option[]>([]);
 
-  const [loading, setLoading] = useState(false);
+  const [loadingCountries, setLoadingCountries] = useState(false);
+  const [loadingStates, setLoadingStates] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
+
   const [hasMoreCountries, setHasMoreCountries] = useState(true);
   const [hasMoreStates, setHasMoreStates] = useState(true);
   const [hasMoreCities, setHasMoreCities] = useState(true);
-
-  const [openCountry, setOpenCountry] = useState(false);
-  const [openState, setOpenState] = useState(false);
-  const [openCity, setOpenCity] = useState(false);
 
   const [selectedCountry, setSelectedCountry] = useState<Option | null>(null);
   const [selectedState, setSelectedState] = useState<Option | null>(null);
@@ -57,15 +57,25 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
   const pageRefState = useRef(1);
   const pageRefCity = useRef(1);
 
-  const loaderRefCountry = useRef(null);
-  const loaderRefState = useRef(null);
-  const loaderRefCity = useRef(null);
-
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   /* <!-- ================================== fetch country, state, city from API ================================== --> */
   const fetchOptions = useCallback(async (type: string, search: string, page: number) => {
-    if (loading) return;
+    let isLoading: boolean;
+    let setLoading: (value: boolean) => void;
+
+    if (type === "country") {
+      isLoading = loadingCountries;
+      setLoading = setLoadingCountries;
+    } else if (type === "state") {
+      isLoading = loadingStates;
+      setLoading = setLoadingStates;
+    } else {
+      isLoading = loadingCities;
+      setLoading = setLoadingCities;
+    }
+
+    if (isLoading) return;
     setLoading(true);
     try {
       const formData = new FormData();
@@ -127,7 +137,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
     } finally {
       setLoading(false);
     }
-  }, [loading, selectedCountry, selectedState]);
+  }, [loadingCountries, loadingStates, loadingCities, selectedCountry, selectedState]);
 
 
   /* <!-- ================================================ Debounce for serach ================================================ --> */
@@ -158,71 +168,100 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
 
   useEffect(() => {
     if (searchCountry === "") return;
-    fetchOptions("country", searchCountry, pageRefCountry.current);
-  }, [searchCountry]);
+    fetchOptions("country", searchCountry, 1);
+  }, [searchCountry, fetchOptions]);
 
   useEffect(() => {
     if (searchState === "") return;
-    fetchOptions("state", searchState, pageRefState.current);
-  }, [searchState]);
+    fetchOptions("state", searchState, 1);
+  }, [searchState, fetchOptions]);
 
   useEffect(() => {
     if (searchCity === "") return;
-    fetchOptions("city", searchCity, pageRefCity.current);
-  }, [searchCity]);
+    fetchOptions("city", searchCity, 1);
+  }, [searchCity, fetchOptions]);
+
+  // Auto-fetch states when country is selected and states are empty
+  useEffect(() => {
+    if (selectedCountry && states.length === 0 && searchState === "") {
+      fetchOptions("state", "", pageRefState.current);
+    }
+  }, [selectedCountry, states.length, searchState, fetchOptions]);
+
+  // Auto-fetch cities when state is selected and cities are empty
+  useEffect(() => {
+    if (selectedState && cities.length === 0 && searchCity === "") {
+      fetchOptions("city", "", pageRefCity.current);
+    }
+  }, [selectedState, cities.length, searchCity, fetchOptions]);
+
+  // Load initial country list on mount
+  useEffect(() => {
+    if (!countries.length) {
+      fetchOptions("country", "", 1);
+    }
+  }, []);
+
+  // When country changes, clear states and cities
+  useEffect(() => {
+    if (selectedCountry) {
+      setStates([]);
+      setCities([]);
+      setSelectedState(null);
+      setSelectedCity(null);
+      pageRefState.current = 1;
+      pageRefCity.current = 1;
+      setHasMoreStates(true);
+      setHasMoreCities(true);
+    }
+  }, [selectedCountry]);
+
+  // When state changes, clear cities
+  useEffect(() => {
+    if (selectedState) {
+      setCities([]);
+      setSelectedCity(null);
+      pageRefCity.current = 1;
+      setHasMoreCities(true);
+    }
+  }, [selectedState]);
+
+  // Initialize selected values from KYCformData on mount or when it changes
+  useEffect(() => {
+    if (KYCformData?.country_id?.value) {
+      const countryOption: Option = {
+        value: KYCformData.country_id.value,
+        label: KYCformData.country_id.label || '',
+      };
+      setSelectedCountry(countryOption);
+    }
+  }, [KYCformData?.country_id?.value]);
 
   useEffect(() => {
-    if (openCountry) {
-      fetchOptions("country", searchCountry, pageRefCountry.current)
-      setOpenState(false)
-      setOpenCity(false)
-    };
-    if (openState) {
-      fetchOptions("state", searchState, pageRefState.current)
-      setOpenCountry(false)
-      setOpenCity(false)
-    };
-    if (openCity) {
-      fetchOptions("city", searchCity, pageRefCity.current)
-      setOpenCountry(false)
-      setOpenState(false)
-    };
-  }, [openCountry, openState, openCity, searchCountry, searchState, searchCity]);
+    if (KYCformData?.state_id?.value) {
+      const stateOption: Option = {
+        value: KYCformData.state_id.value,
+        label: KYCformData.state_id.label || '',
+      };
+      setSelectedState(stateOption);
+    }
+  }, [KYCformData?.state_id?.value]);
+
+  useEffect(() => {
+    if (KYCformData?.city_id?.value) {
+      const cityOption: Option = {
+        value: KYCformData.city_id.value,
+        label: KYCformData.city_id.label || '',
+      };
+      setSelectedCity(cityOption);
+    }
+  }, [KYCformData?.city_id?.value]);
 
   /* <!-- ================================================ Scroll handle ================================================ --> */
 
   const filteredCountries = useMemo(() => countries, [countries]);
   const filteredStates = useMemo(() => states, [states]);
   const filteredCities = useMemo(() => cities, [cities]);
-
-  const handleScrollObserver = useCallback((ref: any, type: string) => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry.isIntersecting && !loading) {
-          if (type === "country" && hasMoreCountries) {
-            fetchOptions("country", searchCountry, pageRefCountry.current);
-          }
-          if (type === "state" && hasMoreStates) {
-            fetchOptions("state", searchState, pageRefState.current);
-          }
-          if (type === "city" && hasMoreCities) {
-            fetchOptions("city", searchCity, pageRefCity.current);
-          }
-        }
-      },
-      { rootMargin: "100px" }
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [searchCountry, searchState, searchCity, fetchOptions, loading, hasMoreCountries, hasMoreStates, hasMoreCities]);
-
-  useEffect(() => {
-    if (loaderRefCountry.current) handleScrollObserver(loaderRefCountry, "country");
-    if (loaderRefState.current) handleScrollObserver(loaderRefState, "state");
-    if (loaderRefCity.current) handleScrollObserver(loaderRefCity, "city");
-  }, [handleScrollObserver]);
 
   /* <!-- ====================================================================== UI ====================================================================== --> */
 
@@ -235,11 +274,11 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== Full name =========================================================== --> */}
 
         <div>
-          <Label>Full Name <span className="text-red-500">*</span></Label>
+          <Label>Full Name <span className="text-required">*</span></Label>
           <Input
             placeholder="Enter your full name"
             className="py-3"
-
+  error={!!errors?.full_name}
             type="text"
             value={KYCformData?.full_name}
             onChange={(e) => {
@@ -255,14 +294,14 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             }}
           />
           {errors?.full_name && (
-            <p className="mt-1 text-sm text-red-500">{errors.full_name}</p>
+            <p className="mt-1 text-sm text-error">{errors.full_name}</p>
           )}
         </div>
 
         {/* <!-- =========================================================== Mobile name =========================================================== --> */}
 
         <div>
-          <Label>Mobile Number <span className="text-red-500">*</span></Label>
+          <Label>Mobile Number <span className="text-required">*</span></Label>
           <Input placeholder="Enter your mobile number" type="text"
             value={KYCformData?.mobile}
             onChange={(e) => {
@@ -277,19 +316,20 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             }}
             maxLength={10}
             className="py-3"
+              error={!!errors?.mobile}
           />
           {errors?.mobile && (
-            <p className="mt-1 text-sm text-red-500">{errors.mobile}</p>
+            <p className="mt-1 text-sm text-error">{errors.mobile}</p>
           )}
         </div>
 
         {/* <!-- =========================================================== Email =========================================================== --> */}
 
         <div>
-          <Label>Email <span className="text-red-500">*</span></Label>
+          <Label>Email <span className="text-required">*</span></Label>
           <Input
             className="py-3"
-
+  error={!!errors?.email}
             placeholder="Enter your email address"
             type="email"
             value={KYCformData?.email}
@@ -324,14 +364,14 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           />
 
           {errors?.email && (
-            <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+            <p className="mt-1 text-sm text-error">{errors.email}</p>
           )}
         </div>
 
         {/* <!-- =========================================================== Address =========================================================== --> */}
 
         <div>
-          <Label>Address <span className="text-red-500">*</span></Label>
+          <Label>Address <span className="text-required">*</span></Label>
           <Input placeholder="Enter your Address" type="text"
             className="py-3"
             value={KYCformData?.address}
@@ -342,185 +382,117 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                 address: e.target.value,
               }));
             }}
+              error={!!errors?.address}
           />
           {errors?.address && (
-            <p className="mt-1 text-sm text-red-500">{errors.address}</p>
+            <p className="mt-1 text-sm text-error">{errors.address}</p>
           )}
         </div>
 
         {/* <!-- =========================================================== Country =========================================================== --> */}
 
         <div>
-          <Label>Select Country <span className="text-red-500">*</span></Label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => {
-
-                setOpenCountry(v => !v);
-              }}
-              className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
-            >
-              <span className={KYCformData?.country_id.label ? "" : "text-gray-400"}>
-                {KYCformData?.country_id.label || "Select Country"}
-              </span>
-              <ChevronDownIcon />
-            </button>
-            {openCountry && (
-              <div className="absolute z-100 mt-1 w-full rounded-lg border bg-white shadow">
-                <div className="max-h-60 overflow-auto p-1">
-                  <Input
-                    type="text"
-                    placeholder="Search Country"
-                    onChange={(e) => debounceSearch("country", e.target.value)}
-                  />
-                  {filteredCountries?.map((country, index) => (
-                    <div
-                      key={index}
-                      onClick={() => {
-                        clearError("country_id");
-                        setSelectedCountry(country);
-                        setKYCFormData(prevData => ({
-                          ...prevData,
-                          country_id: { value: country.value, label: country.label },
-                        }));
-                        setOpenCountry(false);
-                      }}
-                      className="cursor-pointer px-4 py-2 text-sm hover:bg-gray-100"
-                    >
-                      {country.label}
-                    </div>
-                  ))}
-
-                  {hasMoreCountries && (
-                    <div ref={loaderRefCountry} className="px-4 py-3 text-center text-sm text-gray-400">
-                      {loading ? "Loading…" : "Load more"}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          <Label>Select Country <span className="text-required">*</span></Label>
+          <SearchableDropdown
+            options={filteredCountries}
+            value={KYCformData?.country_id?.value || null}
+            placeholder="Select Country"
+            onChange={(value: string) => {
+              const selected = filteredCountries.find((c) => c.value === value);
+              if (selected) {
+                clearError("country_id");
+                setSelectedCountry(selected);
+                setKYCFormData((prevData) => ({
+                  ...prevData,
+                  country_id: { value: selected.value, label: selected.label },
+                }));
+              }
+            }}
+            error={!!errors?.country_id}
+            searchable={true}
+            onSearch={(value: string) => debounceSearch("country", value)}
+            onScrollNearBottom={() => {
+              if (hasMoreCountries && !loadingCountries) {
+                fetchOptions("country", searchCountry, pageRefCountry.current);
+              }
+            }}
+            footer={hasMoreCountries && loadingCountries ? <div className="px-4 py-3 text-center text-sm text-gray-400">Loading…</div> : null}
+          />
           {errors?.country_id && (
-            <p className="mt-1 text-sm text-red-500">{errors.country_id}</p>
+            <p className="mt-1 text-sm text-error">{errors.country_id}</p>
           )}
         </div>
 
         {/* <!-- =========================================================== State =========================================================== --> */}
 
         <div>
-          <Label>Select State <span className="text-red-500">*</span></Label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => {
-                setOpenState((v) => !v)
-              }}
-              className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
-            >
-              <span className={KYCformData?.state_id.label ? "" : "text-gray-400"}>
-                {KYCformData?.state_id.label || "Select State"}
-              </span>
-              <ChevronDownIcon />
-            </button>
-            {openState && (
-              <div className="absolute z-100 mt-1 w-full rounded-lg border bg-white shadow">
-                <div className="max-h-60 overflow-auto">
-                  <Input
-                    type="text"
-                    placeholder="Search State"
-                    onChange={(e) => debounceSearch("state", e.target.value)}
-                  />
-                  {filteredStates?.map((state, index) => (
-                    <div
-                      key={index}
-                      onClick={() => {
-                        clearError("state_id");
-                        setSelectedState(state);
-                        setKYCFormData(prevData => ({
-                          ...prevData,
-                          state_id: { value: state.value, label: state.label },
-                        }));
-                        setOpenState(false);
-                      }}
-                      className="cursor-pointer px-4 py-2 text-sm hover:bg-gray-100"
-                    >
-                      {state.label}
-                    </div>
-                  ))}
-                  {hasMoreStates && (
-                    <div ref={loaderRefState} className="px-4 py-3 text-center text-sm text-gray-400">
-                      {loading ? "Loading…" : "Load more"}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          <Label>Select State <span className="text-required">*</span></Label>
+          <SearchableDropdown
+            options={filteredStates}
+            value={KYCformData?.state_id?.value || null}
+            placeholder="Select State"
+            onChange={(value: string) => {
+              const selected = filteredStates.find((s) => s.value === value);
+              if (selected) {
+                clearError("state_id");
+                setSelectedState(selected);
+                setKYCFormData((prevData) => ({
+                  ...prevData,
+                  state_id: { value: selected.value, label: selected.label },
+                }));
+              }
+            }}
+            error={!!errors?.state_id}
+            searchable={true}
+            onSearch={(value: string) => debounceSearch("state", value)}
+            onScrollNearBottom={() => {
+              if (hasMoreStates && !loadingStates) {
+                fetchOptions("state", searchState, pageRefState.current);
+              }
+            }}
+            footer={hasMoreStates && loadingStates ? <div className="px-4 py-3 text-center text-sm text-gray-400">Loading…</div> : null}
+          />
           {errors?.state_id && (
-            <p className="mt-1 text-sm text-red-500">{errors.state_id}</p>
+            <p className="mt-1 text-sm text-error">{errors.state_id}</p>
           )}
         </div>
 
         {/* <!-- =========================================================== City =========================================================== --> */}
 
         <div>
-          <Label>Select City <span className="text-red-500">*</span></Label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => {
-
-                setOpenCity((v) => !v)
-              }}
-              className="flex h-11 w-full items-center justify-between rounded-lg border px-4 text-sm"
-            >
-              <span className={KYCformData?.city_id.label ? "" : "text-gray-400"}>
-                {KYCformData?.city_id.label || "Select City"}
-              </span>
-              <ChevronDownIcon />
-            </button>
-            {openCity && (
-              <div className="absolute z-100 mt-1 w-full rounded-lg border bg-white shadow">
-                <div className="max-h-60 overflow-auto">
-                  <Input
-                    type="text"
-                    placeholder="Search City"
-                    onChange={(e) => debounceSearch("city", e.target.value)}
-                  />
-                  {filteredCities.map((city, index) => (
-                    <div
-                      key={index}
-                      onClick={() => {
-                        clearError("city_id");
-                        setSelectedCity(city);
-                        setOpenCity(false);
-                        setKYCFormData(prevData => ({
-                          ...prevData,
-                          city_id: { value: city.value, label: city.label },
-                        }));
-                      }}
-                      className="cursor-pointer px-4 py-2 text-sm hover:bg-gray-100"
-                    >
-                      {city.label}
-                    </div>
-                  ))}
-                  {hasMoreCities && (
-                    <div ref={loaderRefCity} className="px-4 py-3 text-center text-sm text-gray-400">
-                      {loading ? "Loading…" : "Load more"}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          <Label>Select City <span className="text-required">*</span></Label>
+          <SearchableDropdown
+            options={filteredCities}
+            value={KYCformData?.city_id?.value || null}
+            placeholder="Select City"
+            onChange={(value: string) => {
+              const selected = filteredCities.find((c) => c.value === value);
+              if (selected) {
+                clearError("city_id");
+                setSelectedCity(selected);
+                setKYCFormData((prevData) => ({
+                  ...prevData,
+                  city_id: { value: selected.value, label: selected.label },
+                }));
+              }
+            }}
+            error={!!errors?.city_id}
+            searchable={true}
+            onSearch={(value: string) => debounceSearch("city", value)}
+            onScrollNearBottom={() => {
+              if (hasMoreCities && !loadingCities) {
+                fetchOptions("city", searchCity, pageRefCity.current);
+              }
+            }}
+            footer={hasMoreCities && loadingCities ? <div className="px-4 py-3 text-center text-sm text-gray-400">Loading…</div> : null}
+          />
           {errors?.city_id && (
-            <p className="mt-1 text-sm text-red-500">{errors.city_id}</p>
+            <p className="mt-1 text-sm text-error">{errors.city_id}</p>
           )}
         </div>
 
         <div>
-          <Label>Pincode <span className="text-red-500">*</span></Label>
+          <Label>Pincode <span className="text-required">*</span></Label>
           <Input
             placeholder="Enter your Pincode"
             type="text"
@@ -537,9 +509,10 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }
             }}
             className="py-3"
+              error={!!errors?.pincode}
           />
           {errors?.pincode && (
-            <p className="mt-1 text-sm text-red-500">{errors.pincode}</p>
+            <p className="mt-1 text-sm text-error">{errors.pincode}</p>
           )}
         </div>
       </div>

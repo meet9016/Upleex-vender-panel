@@ -756,3 +756,103 @@ span.flatpickr-weekday,
   justify-content: center;
   align-items: center;
 }
+.cute-ag-grid {
+  --ag-header-background-color: #eef9ff;
+  --ag-header-foreground-color: #1f2937;
+  --ag-border-color: #dbeafe;
+  --ag-row-border-color: #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.cute-ag-grid .ag-header-cell {
+  border-right: 1px solid #dbeafe;
+}
+
+.cute-ag-grid .ag-cell {
+  border-right: 1px dashed #e5e7eb;
+}
+
+.cute-ag-grid .ag-row:hover {
+  background-color: #f8fafc;
+}
+
+.cute-ag-grid .ag-paging-panel {
+  background-color: #f8fafc;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ==================== Common Button Styles ==================== */
+.btn-primary {
+  @apply px-8 py-2 rounded-lg text-white font-medium transition;
+  background-color: var(--color-brand-600);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-brand-700);
+}
+
+.btn-secondary {
+  @apply px-6 py-2 rounded-lg font-medium transition border;
+  background-color: var(--color-white);
+  color: var(--color-gray-700);
+  border-color: var(--color-gray-300);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-gray-100);
+}
+
+/* ==================== Common Text Colors ==================== */
+.text-required {
+  color: var(--color-error-600);
+}
+
+.text-error {
+  color: var(--color-error-600);
+}
+
+/* Add to your global CSS */
+.fixed-field-container {
+    min-height: 68px;
+    position: relative;
+}
+
+.fixed-field-container .error-message {
+    position: absolute;
+    bottom: -18px;
+    left: 0;
+    font-size: 0.75rem;
+    color: #ef4444;
+}
+@layer components {
+  .btn-primary {
+    @apply px-6 py-2.5
+           text-white
+           font-semibold
+           rounded-xl
+           shadow-md
+           transition-all
+           duration-300
+           active:scale-95;
+    background: linear-gradient(to right, #6366f1, #0ea5e9);
+  }
+
+  .btn-primary:hover {
+    @apply shadow-lg brightness-110;
+  }
+}
+@layer components {
+
+  /* Completed connector line */
+  .step-line-active {
+    background: linear-gradient(to right, #6366f1, #0ea5e9);
+  }
+
+  /* Active step circle */
+  .step-circle-active {
+    @apply text-white;
+    background: linear-gradient(to right, #6366f1, #0ea5e9);
+  }
+
+}

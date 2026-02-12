@@ -19,6 +19,8 @@ export interface EndPointApi {
     postVendorProductDetails: string;
     postAllVendorProductList: string;
     postDeleteVendorProductList: string;
+
+    postGetQuote:string;
 }
 
 // Define and export the API endpoint object
@@ -46,6 +48,9 @@ const endPointApi: EndPointApi = {
     postVendorProductDetails: 'vendor-product-details',
     postAllVendorProductList: 'vendor-product-list',
     postDeleteVendorProductList: 'vendor-delete-product',
+
+    // Quote
+    postGetQuote: 'vendor-product-quotes-list',
 };
 
 export default endPointApi;

@@ -33,6 +33,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
             <Input
               placeholder="Enter your PAN Number"
               type="text"
+              error={!!errors?.pancard_number}
               value={KYCformData?.pancard_number || ""}
               maxLength={10}
 
@@ -49,7 +50,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               }}
             />
             {errors?.pancard_number && (
-              <p className="mt-1 text-sm text-red-500">{errors.pancard_number}</p>
+              <p className="mt-1 text-sm text-error">{errors.pancard_number}</p>
             )}
           </div>
         </div>
@@ -62,7 +63,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
             <Input
               placeholder="Enter your Aadhaar Number"
               type="text"
-
+              error={!!errors?.aadharcard_number}
               value={KYCformData?.aadharcard_number || ""}
               maxLength={14} // 12 digits + 2 spaces
               onChange={(e) => {
@@ -103,7 +104,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               }}
             />
             {errors?.aadharcard_number && (
-              <p className="mt-1 text-sm text-red-500">{errors.aadharcard_number}</p>
+              <p className="mt-1 text-sm text-error">{errors.aadharcard_number}</p>
             )}
           </div>
         </div>
@@ -116,7 +117,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
             <Input
               placeholder="Enter your Business Name"
               type="text"
-
+              error={!!errors?.business_name}
               value={KYCformData?.business_name || ""}
               onChange={(e) => {
                 clearError("business_name")
@@ -126,7 +127,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               }}
             />
             {errors?.business_name && (
-              <p className="mt-1 text-sm text-red-500">{errors.business_name}</p>
+              <p className="mt-1 text-sm text-error">{errors.business_name}</p>
             )}
           </div>
         </div>
@@ -139,8 +140,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
             <Input
               placeholder="Enter your GST Number"
               type="text"
-
-
+              error={!!errors?.gst_number}
               value={KYCformData?.gst_number || ""}
               maxLength={15}
               onChange={(e) => {
@@ -153,7 +153,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               }}
             />
             {errors?.gst_number && (
-              <p className="mt-1 text-sm text-red-500">{errors.gst_number}</p>
+              <p className="mt-1 text-sm text-error">{errors.gst_number}</p>
             )}
           </div>
         </div>

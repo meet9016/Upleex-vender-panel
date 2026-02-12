@@ -445,9 +445,10 @@ export default function KYCPage() {
           <Stepper steps={steps} currentStep={currentStep} />
         </div>
       </div>
-      {/* <!-- =============================================  Form Body ============================================= -->*/}
+      
+      {/* <!-- =============================================  Form Body with Fixed Height ============================================= -->*/}
 
-      <div>
+      <div className="min-h-96 md:min-h-[500px] overflow-y-auto">
         {currentStep === 0 && <ContactDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
         {currentStep === 1 && <Identity setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
         {currentStep === 2 && <BankDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
@@ -458,53 +459,46 @@ export default function KYCPage() {
       {/* <!-- =============================================  Sticky Footer ============================================= -->*/}
 
       <div
-        className="
-            sticky bottom-0 left-0 right-0 
-            bg-white py-3 md:py-4 
-            flex flex-col md:flex-row 
-            gap-3 md:gap-0
-            items-center justify-between 
-            border-t z-50
-          "
-      >
-        {/* <!-- =============================================  Buttons ============================================= -->*/}
-        {currentStep > 0 ? (
-          <button
-            onClick={() => setCurrentStep((s) => s - 1)}
-            className="
-                px-6 py-2 w-full md:w-auto 
-                rounded-lg border border-gray-300
-                text-gray-700 hover:bg-gray-100 transition
-              "
-          >
-            Back
-          </button>
-        ) : (
-          <div className="hidden md:block" />
-        )}
+  className="
+    sticky bottom-0 left-0 right-0
+    bg-white py-3 md:py-4 px-4 md:px-6
+    flex gap-3
+    items-center justify-between
+    border-t z-50
+  "
+>
+  {/* Back Button */}
+  {currentStep > 0 ? (
+    <button
+      onClick={() => setCurrentStep((s) => s - 1)}
+      className="btn-secondary"
+    >
+      Back
+    </button>
+  ) : <div /> /* placeholder to keep Next button on right */ }
 
-        {/* Next / Submit */}
-        <button
-          onClick={async () => {
-            const isValid = await FormDataValidation();
-            if (isValid) {
-              if (currentStep === 3) {
-                setCurrentStep((s) => s + 1);
-                return;
-              } else {
-                await submitKYCFormdata();
-              }
-            } else if (!isValid) {
-              return;
-            }
-          }}
-          className="px-8 py-2 w-full md:w-auto
-        rounded-lg bg-brand-600 text-white
-              hover:bg-brand-700 transition font-medium">
+  {/* Next / Submit Button */}
+  <button
+    onClick={async () => {
+      const isValid = await FormDataValidation();
+      if (isValid) {
+        if (currentStep === 3) {
+          setCurrentStep((s) => s + 1);
+          return;
+        } else {
+          await submitKYCFormdata();
+        }
+      } else {
+        // toast.error("Please fill all required fields correctly.");
+        return;
+      }
+    }}
+    className="btn-primary"
+  >
+    {currentStep === steps.length - 1 && KYCformData?.terms_conditions === 1 ? "Submit KYC" : "Next"}
+  </button>
+</div>
 
-          {currentStep === steps.length - 1 && KYCformData?.terms_conditions === 1 ? "Submit KYC" : "Next"}
-        </button>
-      </div>
 
     </ComponentCard >
   );
