@@ -199,7 +199,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
         const inputClasses = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${getIconPadding()} ${widthClass} ${className}`;
 
         return (
-            <div className={fullWidth ? "w-full" : ""}>
+            <div className={fullWidth ? "w-full" : ""} >
                 {label && (
                     <label
                         htmlFor={inputId}
@@ -210,7 +210,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
                     </label>
                 )}
 
-                <div className="relative">
+                <div className="relative ">
                     {/* Left Icon */}
                     {hasLeftIcon && (
                         <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">

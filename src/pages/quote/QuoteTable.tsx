@@ -69,17 +69,17 @@ const QuoteTable = () => {
     );
   },
 },
-    { field: "product_type_name", headerName: "Product Type", minWidth: 100 },
-    { field: "product_listing_type_name", headerName: "Product Listing Type", minWidth: 130 },
-    { field: "delivery_date", headerName: "Delivery Date", minWidth: 140 },
-    { field: "start_date", headerName: "Start Date", minWidth: 140 },
-    { field: "end_date", headerName: "End Date", minWidth: 140 },
-    { field: "month_name", headerName: "Month", minWidth: 100 },
+    { field: "product_type_name", headerName: "Product Type", minWidth: 100, cellStyle: { textAlign: "center" } },
+    { field: "product_listing_type_name", headerName: "Product Listing Type", minWidth: 130, cellStyle: { textAlign: "center" } },
+    { field: "delivery_date", headerName: "Delivery Date", minWidth: 140, cellStyle: { textAlign: "center" } },
+    { field: "start_date", headerName: "Start Date", minWidth: 140, cellStyle: { textAlign: "center" } },
+    { field: "end_date", headerName: "End Date", minWidth: 140, cellStyle: { textAlign: "center" } },
+    { field: "month_name", headerName: "Month", minWidth: 100, cellStyle: { textAlign: "center" } },
     {
       field: "qty",
       headerName: "Qty",
       minWidth: 50,
-      cellStyle: { textAlign: "right" },
+      cellStyle: { textAlign: "center" },
     },
     {
       field: "price",
@@ -87,7 +87,7 @@ const QuoteTable = () => {
       minWidth: 100,
       valueFormatter: (params) =>
         params.value ? `₹${Number(params.value).toFixed(2)}` : "₹0.00",
-      cellStyle: { textAlign: "right" },
+      cellStyle: { textAlign: "center" },
     },
     {
       field: "total_price",
@@ -95,12 +95,13 @@ const QuoteTable = () => {
       minWidth: 100,
       valueFormatter: (params) =>
         params.value ? `₹${Number(params.value).toFixed(2)}` : "₹0.00",
-      cellStyle: { textAlign: "right", fontWeight: "600" },
+      cellStyle: { textAlign: "center", fontWeight: "600" },
     },
     {
       field: "status_text",
       headerName: "Status",
       minWidth: 130,
+      cellStyle: { textAlign: "center" },
       cellRenderer: (params: any) => {
         const status = params.value;
         let color =

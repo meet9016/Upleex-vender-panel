@@ -11,26 +11,15 @@ console.error = (...args) => {
   }
   consoleError(...args);
 };
-import React, { useMemo, useRef } from "react";
+
+import React, { useMemo, useRef, memo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AgGridReact } from "ag-grid-react";
-import {
-  AllCommunityModule,
-  ColDef,
-  ModuleRegistry,
-  RowSelectionOptions,
-} from "ag-grid-community";
+import { AllCommunityModule, ColDef, ModuleRegistry, RowSelectionOptions } from "ag-grid-community";
 import { MdDelete, MdModeEdit } from "react-icons/md";
-
-// ✅ Enterprise modules for column menu (three dots)
 import { ColumnMenuModule, ContextMenuModule } from "ag-grid-enterprise";
 
-// ✅ Register modules - make sure ALL are from the same version
-ModuleRegistry.registerModules([
-  AllCommunityModule,
-  ColumnMenuModule, 
-  ContextMenuModule, 
-]);
+ModuleRegistry.registerModules([AllCommunityModule, ColumnMenuModule, ContextMenuModule]);
 
 interface AgGridTableProps {
   tableName?: string;
@@ -51,26 +40,23 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   onDelete,
   onEdit,
   columns,
-  filter,
 }) => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
-  const defaultColDef = useMemo(
-    () => ({
-      sortable: true,
-      // filter: filter,
-      resizable: true,
-      flex: 1,
-      // minWidth: 120,
-      cellClass: "flex items-center text-sm",
-      headerClass: "font-semibold text-slate-700",
-      // suppressMenu is REMOVED - we want the three dots!
-    }),
-    [filter]
-  );
+const defaultColDef = useMemo(
+  () => ({
+    sortable: true,
+    resizable: true,
+    flex: 1,
+    cellClass: "flex items-center justify-center text-sm text-center",
+    headerClass: "text-center font-semibold text-slate-700",
+  }),
+  []
+);
 
-  // Default columns (fallback)
-  const defaultColumns: ColDef[] = [
+
+  const defaultColumns: ColDef[] = useMemo(
+    () => [
     { field: "planName", headerName: "Plan Name" },
     { field: "price", headerName: "Price" },
     { field: "duration", headerName: "Duration" },
@@ -86,18 +72,16 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
         return (
           <div className="flex items-center justify-center gap-3 w-full">
             <button
-              onClick={() =>
-                onEdit ? onEdit(id) : router.push(`/plan/edit/${id}`)
-              }
+              onClick={() => onEdit ? onEdit(id) : router.push(`/plan/edit/${id}`)}
               className="text-lg text-slate-500 hover:text-brand-600 transition"
+              aria-label="Edit"
             >
               <MdModeEdit />
             </button>
             <button
-              onClick={() =>
-                onDelete ? onDelete(id) : alert(`Delete clicked for ID: ${id}`)
-              }
+              onClick={() => onDelete ? onDelete(id) : alert(`Delete clicked for ID: ${id}`)}
               className="text-lg text-slate-400 hover:text-red-500 transition"
+              aria-label="Delete"
             >
               <MdDelete />
             </button>
@@ -105,41 +89,38 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
         );
       },
     },
-  ];
+    ],
+    [onEdit, onDelete, router]
+  );
 
   const rowSelection = useMemo<RowSelectionOptions>(
     () => ({ mode: "multiRow" }),
     []
   );
 
-  const onGridReady = (params: any) => {
+  const onGridReady = useCallback((params: any) => {
     params.api.sizeColumnsToFit();
-  };
+  }, []);
+
+  const handleAddClick = useCallback(() => {
+    router.push(addButtonLink);
+  }, [router, addButtonLink]);
 
 
   return (
     <div>
-      {/* HEADER */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">{tableName}</h2>
-
         {buttonName && (
-          <button
-            onClick={() => router.push(addButtonLink)}
-            className="btn-primary"
-          >
+          <button onClick={handleAddClick} className="btn-primary" aria-label={`Add ${buttonName}`}>
             + Add {buttonName}
           </button>
         )}
       </div>
 
-      {/* AG GRID */}
-      <div
-        className="ag-theme-alpine cute-ag-grid"
-        style={{ width: "100%", height: "80vh" }}
-      >
+      <div className="ag-theme-alpine cute-ag-grid" style={{ width: "100%", height: "80vh" }}>
         <AgGridReact
-         rowHeight={tableName === "Quotes" ? 60 : 35}
+          rowHeight={tableName === "Quotes" ? 60 : 35}
           ref={gridRef}
           rowData={rowData}
           columnDefs={columns || defaultColumns}
@@ -147,15 +128,15 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
           pagination
           paginationPageSize={10}
           rowSelection={rowSelection}
-          // suppressHorizontalScroll={true}
           onGridReady={onGridReady}
-           paginationPageSizeSelector={[10, 20, 50, 100]}
-          // ✅ Enable three-dot column menu
+          paginationPageSizeSelector={[10, 20, 50, 100]}
           columnMenu="new"
+          suppressRowClickSelection
+          animateRows
         />
       </div>
     </div>
   );
 };
 
-export default AgGridTable;
+export default memo(AgGridTable);
