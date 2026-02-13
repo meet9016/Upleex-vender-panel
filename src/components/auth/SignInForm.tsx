@@ -71,7 +71,6 @@ export default function SignInForm() {
       const formdata = new FormData();
 
       formdata.append("number", formData.mobile || "");
-      formdata.append("otp", "123456");
       const res = await api.post(`${endPointApi.login}`, formdata);
 
       if (res.data.status == 200) {
@@ -107,18 +106,19 @@ export default function SignInForm() {
 
       if (res.data.status == 200) {
         saveToken(res.data.data.token);
+        localStorage.setItem("user_info", JSON.stringify(res?.data?.data?.vendor));
         // localStorage.setItem(
-        //   "userData",
-        //   JSON.stringify({
-        //     full_name: res.data.data.user.full_name,
-        //     email: res.data.data.user.number,
-        //   })
-        // );
-
-        toast.success(res.data.message);
-        // navigate("/");
-        const searchParams = new URLSearchParams(window.location.search);
-        const redirectTo = searchParams.get('redirect') || '/';
+          //   "userData",
+          //   JSON.stringify({
+            //     full_name: res.data.data.user.full_name,
+            //     email: res.data.data.user.number,
+            //   })
+            // );
+            
+            toast.success(res.data.message);
+            // navigate("/");
+            const searchParams = new URLSearchParams(window.location.search);
+            const redirectTo = searchParams.get('redirect') || '/';
 
         // Use window.location.href for hard redirect instead of router.push
         window.location.href = redirectTo;

@@ -28,17 +28,17 @@ const ProductTable = () => {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const columns: ColDef[] = [
-    { field: "product_name", headerName: "Product Name", width: 300 },
-    { field: "category_name", headerName: "Category Name", width: 200 },
-    { field: "sub_category_name", headerName: "Sub Category", width: 200 },
-    { field: "product_type_name", headerName: "Product Type", width: 300 },
-    { field: "price", headerName: "Price", width: 200 },
-    { field: "cancel_price", headerName: "Cancel Price", width: 200 },
-    { field: "product_listing_type_name", headerName: "Listing Type", width: 200 },
+    { field: "product_name", headerName: "Product Name", minWidth: 200 },
+    { field: "category_name", headerName: "Category Name", minWidth: 200 },
+    { field: "sub_category_name", headerName: "Sub Category", minWidth: 200 },
+    { field: "product_type_name", headerName: "Product Type", minWidth: 100 },
+    { field: "price", headerName: "Price", minWidth: 100 },
+    { field: "cancel_price", headerName: "Cancel Price", minWidth: 100 },
+    { field: "product_listing_type_name", headerName: "Listing Type", minWidth: 150 },
     {
       headerName: "Action",
       pinned: "right",
-      width: 80,
+      minWidth: 80,
       cellRenderer: (params: any) => {
         const id = params.data.product_id;
 
@@ -46,8 +46,7 @@ const ProductTable = () => {
           <div className="flex items-center gap-3 w-full h-full">
             <button
               onClick={() => router.push(`/product/addProduct?id=${id}`)}
-              className="text-xl transition"
-              style={{ color: 'rgb(53, 66, 237)' }}
+              className="text-xl transition text-[#4A90E2] hover:text-[#2F6FD6]"
               title="Edit"
             >
               <MdModeEdit />
@@ -55,7 +54,7 @@ const ProductTable = () => {
 
             <button
               onClick={() => openDeletePopup(id)}
-              className="text-xl transition opacity-80 hover:opacity-100 text-red-700"
+              className="text-xl transition opacity-80 text-[#E55353] hover:text-[#C82333]"
               title="Delete"
             >
               <MdDelete />

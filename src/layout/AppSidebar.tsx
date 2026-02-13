@@ -22,10 +22,10 @@ const navItems: NavItem[] = [
   { icon: <CalenderIcon />, name: "KYC", path: "/kyc" },
   { icon: <CalenderIcon />, name: "Product", path: "/product" },
   { icon: <BsChatSquareQuote className="w-5 h-5" />, name: "Quote", path: "/quote"},
-  { icon: <CalenderIcon />, name: "Plan", path: "/plan" },
-  { icon: <CalenderIcon />, name: "Order List", path: "/order" },
-  { icon: <CalenderIcon />, name: "Membership Plan", path: "/membership" },
-  { icon: <UserCircleIcon />, name: "User Profile", path: "/profile" },
+  // { icon: <CalenderIcon />, name: "Plan", path: "/plan" },
+  // { icon: <CalenderIcon />, name: "Order List", path: "/order" },
+  // { icon: <CalenderIcon />, name: "Membership Plan", path: "/membership" },
+  // { icon: <UserCircleIcon />, name: "User Profile", path: "/profile" },
 ];
 
 const AppSidebar: React.FC = () => {

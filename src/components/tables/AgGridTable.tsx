@@ -27,9 +27,9 @@ import { ColumnMenuModule, ContextMenuModule } from "ag-grid-enterprise";
 
 // ✅ Register modules - make sure ALL are from the same version
 ModuleRegistry.registerModules([
-  AllCommunityModule,    // 35.1.0
-  ColumnMenuModule,      // 35.1.0
-  ContextMenuModule,     // 35.1.0
+  AllCommunityModule,
+  ColumnMenuModule, 
+  ContextMenuModule, 
 ]);
 
 interface AgGridTableProps {
@@ -55,15 +55,13 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
 }) => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
-
-  // ✅ Column defaults - menu enabled
   const defaultColDef = useMemo(
     () => ({
       sortable: true,
       // filter: filter,
       resizable: true,
       flex: 1,
-      minWidth: 120,
+      // minWidth: 120,
       cellClass: "flex items-center text-sm",
       headerClass: "font-semibold text-slate-700",
       // suppressMenu is REMOVED - we want the three dots!
@@ -141,6 +139,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
         style={{ width: "100%", height: "80vh" }}
       >
         <AgGridReact
+         rowHeight={tableName === "Quotes" ? 60 : 35}
           ref={gridRef}
           rowData={rowData}
           columnDefs={columns || defaultColumns}

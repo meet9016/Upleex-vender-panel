@@ -26,3 +26,9 @@ export const clearToken = () => {
   // Remove from cookies
   document.cookie = 'auth_token=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;';
 };  
+
+export const getUser = () => {
+  const user = localStorage.getItem("user_info");
+  console.log("🚀 ~ getUser ~ user:", user)
+  return user ? JSON.parse(user) : null;
+};
