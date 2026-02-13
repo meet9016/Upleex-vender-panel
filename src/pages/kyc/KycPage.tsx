@@ -464,7 +464,7 @@ export default function KYCPage() {
     bg-white py-3 md:py-4 px-4 md:px-6
     flex gap-3
     items-center justify-between
-    border-t z-50
+    border-t z-50 dark:border-gray-800 dark:bg-white/[0.03] 
   "
 >
   {/* Back Button */}
@@ -493,7 +493,7 @@ export default function KYCPage() {
         return;
       }
     }}
-    className="btn-primary"
+    className="btn-primary "
   >
     {currentStep === steps.length - 1 && KYCformData?.terms_conditions === 1 ? "Submit KYC" : "Next"}
   </button>

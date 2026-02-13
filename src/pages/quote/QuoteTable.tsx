@@ -26,18 +26,14 @@ type Quote = {
 const QuoteTable = () => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
-
   const [quoteData, setQuoteData] = useState<Quote[]>([]);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
   const columns: ColDef[] = [
 {
   headerName: "Product",
   field: "product_name", // main field
-  width: 400,
+  minWidth: 240,
   sortable: true,
-  filter: true,
   cellRenderer: (params: any) => {
     const imageUrl = params.data?.product_main_image;
     const productName = params.data?.product_name;
@@ -72,44 +68,40 @@ const QuoteTable = () => {
       </div>
     );
   },
-}
-,
-    { field: "product_type_name", headerName: "Product Type", width: 140 },
-    { field: "product_listing_type_name", headerName: "Product Listing Type", width: 140 },
-    { field: "delivery_date", headerName: "Delivery Date", width: 140 },
-    { field: "start_date", headerName: "Start Date", width: 140 },
-    { field: "end_date", headerName: "End Date", width: 140 },
-
-    { field: "month_name", headerName: "Month", width: 130 },
-
+},
+    { field: "product_type_name", headerName: "Product Type", minWidth: 100, cellStyle: { textAlign: "center" } },
+    { field: "product_listing_type_name", headerName: "Product Listing Type", minWidth: 130, cellStyle: { textAlign: "center" } },
+    { field: "delivery_date", headerName: "Delivery Date", minWidth: 140, cellStyle: { textAlign: "center" } },
+    { field: "start_date", headerName: "Start Date", minWidth: 140, cellStyle: { textAlign: "center" } },
+    { field: "end_date", headerName: "End Date", minWidth: 140, cellStyle: { textAlign: "center" } },
+    { field: "month_name", headerName: "Month", minWidth: 100, cellStyle: { textAlign: "center" } },
     {
       field: "qty",
       headerName: "Qty",
-      width: 100,
-      cellStyle: { textAlign: "right" },
+      minWidth: 50,
+      cellStyle: { textAlign: "center" },
     },
-
     {
       field: "price",
       headerName: "Price",
-      width: 140,
+      minWidth: 100,
       valueFormatter: (params) =>
         params.value ? `₹${Number(params.value).toFixed(2)}` : "₹0.00",
-      cellStyle: { textAlign: "right" },
+      cellStyle: { textAlign: "center" },
     },
-
     {
       field: "total_price",
       headerName: "Total",
-      width: 150,
+      minWidth: 100,
       valueFormatter: (params) =>
         params.value ? `₹${Number(params.value).toFixed(2)}` : "₹0.00",
-      cellStyle: { textAlign: "right", fontWeight: "600" },
+      cellStyle: { textAlign: "center", fontWeight: "600" },
     },
     {
       field: "status_text",
       headerName: "Status",
-      width: 130,
+      minWidth: 130,
+      cellStyle: { textAlign: "center" },
       cellRenderer: (params: any) => {
         const status = params.value;
         let color =
@@ -124,10 +116,6 @@ const QuoteTable = () => {
         return <span className={`font-medium ${color}`}>{status}</span>;
       },
     },
-
-    { field: "created_at", headerName: "Created At", width: 170 },
-
-   
   ];
 
   const getQuoteData = async () => {
@@ -155,7 +143,6 @@ const QuoteTable = () => {
         rowData={quoteData}
         filter={true}
         tableName="Quotes"
-        addButtonLink="/quote/add"
       />
 
     </div>
