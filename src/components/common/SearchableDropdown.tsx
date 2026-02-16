@@ -116,14 +116,14 @@ useEffect(() => {
           onClick={() => {
             if (!disabled) setOpen(!open);
           }}
-        className={`w-full flex items-center justify-between px-4 py-2 rounded-lg border bg-white dark:bg-dark-900 text-sm
-          ${error ? "border-red-500" : "border-gray-300"}
+        className={`w-full flex items-center justify-between px-4 py-2 rounded-lg border text-sm
+          ${error ? "border-red-500" : "border-gray-300 dark:border-gray-700"}
             ${disabled 
-      ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
-      : "bg-white dark:bg-dark-900"}
+      ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800" 
+      : "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200"}
         `}
       >
-        <span className={selectedOption ? "text-gray-800" : "text-gray-400"}>
+        <span className={selectedOption ? "text-gray-800  dark:text-gray-200" : "text-gray-400 dark:text-gray-500"}>
           {selectedOption?.label || placeholder}
         </span>
         <ChevronDownIcon className="text-gray-400" />
@@ -139,7 +139,7 @@ useEffect(() => {
               <div
                 ref={dropdownRef}
                 style={portalStyle}
-                className="rounded-xl border bg-white dark:bg-dark-800 shadow-lg"
+                className="rounded-xl border border-gray-200 shadow-lg "
               >
                 {searchable && (
                   <div className="p-2 border-b">
@@ -159,7 +159,7 @@ useEffect(() => {
                   </div>
                 )}
                 <div
-                  className="max-h-48 overflow-y-auto"
+                  className="max-h-48 overflow-y-auto "
                   onScroll={(e) => {
                     const target = e.target as HTMLDivElement;
                     const scrollPercentage =
@@ -201,7 +201,7 @@ useEffect(() => {
           : (
               <div
                 ref={dropdownRef}
-                className="absolute z-50 mt-2 w-full rounded-xl border bg-white dark:bg-dark-800 shadow-lg"
+                className="absolute z-50 mt-2 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg"
               >
                 {searchable && (
                   <div className="p-2 border-b">
@@ -219,7 +219,7 @@ useEffect(() => {
                   </div>
                 )}
                 <div
-                  className="max-h-48 overflow-y-auto"
+                  className="max-h-48 overflow-y-auto dark:text-white"
                   onScroll={(e) => {
                     const target = e.target as HTMLDivElement;
                     const scrollPercentage =
@@ -243,7 +243,7 @@ useEffect(() => {
                           setOpen(false);
                           setSearch("");
                         }}
-                        className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-700"
+                        className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-700 dark:hover:text-gray-900"
                       >
                         {opt.label}
                       </div>
