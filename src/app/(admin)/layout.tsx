@@ -5,11 +5,12 @@ import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
   const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const mainContentMargin = useMemo(() => {
     if (isMobileOpen) return "ml-0";
@@ -18,8 +19,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
-    if (!token) router.push("/signin");
+    if (!token) {
+      router.push("/signin");
+    } else {
+      setIsAuthenticated(true);
+    }
   }, [router]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen xl:flex">
