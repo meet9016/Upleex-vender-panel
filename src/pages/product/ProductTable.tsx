@@ -47,18 +47,18 @@ const ProductTable = () => {
           <div className="flex items-center justify-center gap-3 w-full h-full">
             <button
               onClick={() => router.push(`/product/addProduct?id=${id}`)}
-              className="text-xl transition text-[#4A90E2] hover:text-[#2F6FD6]"
+              className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-[#4A90E2] text-[#4A90E2] hover:bg-[#4A90E2] hover:text-white transition"
               title="Edit"
             >
-              <MdModeEdit />
+              <MdModeEdit className="text-base" />
             </button>
 
             <button
               onClick={() => openDeletePopup(id)}
-              className="text-xl transition opacity-80 text-[#E55353] hover:text-[#C82333]"
+              className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-[#E55353] text-[#E55353] hover:bg-[#E55353] hover:text-white transition"
               title="Delete"
             >
-              <MdDelete />
+              <MdDelete className="text-base" />
             </button>
           </div>
 

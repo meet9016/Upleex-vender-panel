@@ -64,9 +64,8 @@ const defaultColDef = useMemo(
   () => ({
     sortable: true,
     resizable: true,
-    flex: 1,
-    cellClass: "flex items-center justify-center text-sm text-center",
-    headerClass: "text-center font-semibold text-slate-700",
+    cellStyle: { display: 'flex', alignItems: 'center', paddingLeft: '16px' },
+    headerClass: "ag-left-aligned-header",
   }),
   []
 );
@@ -74,20 +73,29 @@ const defaultColDef = useMemo(
 
   const defaultColumns: ColDef[] = useMemo(
     () => [
-    { field: "planName", headerName: "Plan Name" },
-    { field: "price", headerName: "Price" },
-    { field: "duration", headerName: "Duration" },
-    { field: "day", headerName: "Day" },
-    { field: "month", headerName: "Month" },
-    { field: "rocket", headerName: "Rocket", flex: 2 },
+    { 
+      field: "planName", 
+      headerName: "Plan Name",
+      checkboxSelection: true,
+      headerCheckboxSelection: true,
+      flex: 1,
+      minWidth: 200,
+    },
+    { field: "price", headerName: "Price", flex: 0.6, minWidth: 100 },
+    { field: "duration", headerName: "Duration", flex: 0.8, minWidth: 120 },
+    { field: "day", headerName: "Day", flex: 0.5, minWidth: 80 },
+    { field: "month", headerName: "Month", flex: 0.6, minWidth: 100 },
+    { field: "rocket", headerName: "Rocket", flex: 1.5, minWidth: 200 },
     {
       headerName: "Action",
       pinned: "right",
-      minWidth: 120,
+      width: 140,
+      suppressSizeToFit: true,
+      cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' },
       cellRenderer: (params: any) => {
         const id = params.data.id;
         return (
-          <div className="flex items-center justify-center gap-3 w-full">
+          <div className="flex items-center justify-center gap-3">
             <button
               onClick={() => onEdit ? onEdit(id) : router.push(`/plan/edit/${id}`)}
               className="text-lg text-slate-500 hover:text-brand-600 transition"
@@ -143,13 +151,14 @@ const defaultColDef = useMemo(
           columnDefs={columns || defaultColumns}
           defaultColDef={defaultColDef}
           pagination
-          paginationPageSize={10}
+          paginationPageSize={20}
           rowSelection={rowSelection}
           onGridReady={onGridReady}
           paginationPageSizeSelector={[10, 20, 50, 100]}
           columnMenu="new"
           suppressRowClickSelection
           animateRows
+          suppressHorizontalScroll={true}
         />
       </div>
     </div>

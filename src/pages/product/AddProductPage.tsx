@@ -668,7 +668,7 @@ export default function AddProductPage() {
 
                     {/* ================= Row 3: Rent Type ================= */}
                     {formData?.listingType === "1" && (
-                        <div className="col-span-2 p-4 bg-linear-to-r from-indigo-50 to-indigo-100 dark:from-dark-700 dark:to-dark-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div className="col-span-2 p-4 bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
                             <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Billing Type</Label>
                             <div className="flex items-center gap-6">
                                 <Radio
@@ -740,7 +740,7 @@ export default function AddProductPage() {
                         <div
                             className={`col-span-2 pb-2 rounded-2xl border backdrop-blur
                                 border-gray-200 dark:border-gray-700
-                                bg-white/70 dark:bg-dark-800
+                                bg-white/70 dark:bg-gray-900/70
                             `}
                         >
 
@@ -766,7 +766,7 @@ export default function AddProductPage() {
                                 {formData?.months?.map((m, index) => (
                                     <div
                                         key={index}
-                                        className="bg-white/80 dark:bg-dark-700 rounded-lg  flex flex-col md:flex-row items-start md:items-center gap-2"
+                                        className="bg-white/80 dark:bg-gray-800/80 rounded-lg  flex flex-col md:flex-row items-start md:items-center gap-2"
                                     >
                                         {/* MONTH */}
                                         <div className="w-full md:w-1/3">
