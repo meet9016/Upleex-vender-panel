@@ -884,23 +884,10 @@ export default function AddProductPage() {
                             }`}
                         >
                             <Editor
-                                // ✅ KEY forces re-render when description changes (critical for edit mode)
                                 key={formData.description}
-                                // ✅ VALUE must be HTML string
                                 value={formData.description}
                                 onTextChange={(e) => handleChange("description", e.htmlValue)}
                                 style={{ height: "280px" }}
-                                // ✅ FULL TOOLBAR – all formatting buttons work
-                                modules={{
-                                    toolbar: [
-                                        [{ header: [1, 2, 3, false] }],
-                                        ["bold", "italic", "underline", "strike"],
-                                        [{ list: "ordered" }, { list: "bullet" }],
-                                        [{ align: [] }],
-                                        ["link", "image"],
-                                        ["clean"],
-                                    ],
-                                }}
                                 pt={{
                                     toolbar: {
                                         style: {
