@@ -44,7 +44,7 @@ export default function Stepper({
               </div>
               
               {/* Label */}
-              <span className="mt-2 md:mt-3 text-[10px] md:text-xs text-gray-700 text-center leading-tight px-1 max-w-[60px] md:max-w-[120px]">
+              <span className="mt-2 md:mt-3 text-[10px] md:text-xs text-gray-700 text-center leading-tight px-1 max-w-[60px] md:max-w-[120px] dark:text-white">
                 {label}
               </span>
             </div>

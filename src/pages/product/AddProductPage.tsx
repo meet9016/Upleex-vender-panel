@@ -872,7 +872,7 @@ export default function AddProductPage() {
 
                     {/* ================= LEFT – DESCRIPTION EDITOR (FIXED) ================= */}
                     <div className="">
-                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-4">
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-4 ">
                             Description
                         </Label>
 
@@ -884,7 +884,7 @@ export default function AddProductPage() {
                             }`}
                         >
                             <Editor
-                                key={formData.description}
+                            className="dark:text-white"
                                 value={formData.description}
                                 onTextChange={(e) => handleChange("description", e.htmlValue)}
                                 style={{ height: "280px" }}
@@ -932,7 +932,7 @@ export default function AddProductPage() {
                         </div>
 
                         {/* BORDERED CONTAINER */}
-                        <div className="flex-1 rounded-xl border border-gray-300 bg-white/70 backdrop-blur p-2">
+                        <div className="flex-1 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/70 dark:bg-gray-900/70 backdrop-blur p-2 dark:border-white">
                             <div className="h-[300px] overflow-y-auto space-y-2">
                                 {formData?.keyFeatures?.map((item, index) => (
                                     <div

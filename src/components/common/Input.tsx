@@ -117,7 +117,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
 
         // Base styles
         const baseStyles =
-            "border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed bg-white";
+            "border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700";
 
         // Variant styles
         const variantStyles = {
@@ -203,7 +203,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
                 {label && (
                     <label
                         htmlFor={inputId}
-                        className="block text-sm font-medium text-gray-700 mb-1"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                     >
                         {label}
                         {restProps.required && <span className="text-red-500 ml-1">*</span>}

@@ -12,7 +12,7 @@ console.error = (...args) => {
   consoleError(...args);
 };
 
-import React, { useMemo, useRef, memo, useCallback } from "react";
+import React, { useMemo, useRef, memo, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ColDef, ModuleRegistry, RowSelectionOptions } from "ag-grid-community";
@@ -43,6 +43,23 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
 }) => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    };
+    
+    checkDarkMode();
+    
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    
+    return () => observer.disconnect();
+  }, []);
 const defaultColDef = useMemo(
   () => ({
     sortable: true,
@@ -109,7 +126,7 @@ const defaultColDef = useMemo(
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4 dark:text-gray-200">
         <h2 className="text-xl font-bold">{tableName}</h2>
         {buttonName && (
           <button onClick={handleAddClick} className="btn-primary" aria-label={`Add ${buttonName}`}>
@@ -118,7 +135,7 @@ const defaultColDef = useMemo(
         )}
       </div>
 
-      <div className="ag-theme-alpine cute-ag-grid" style={{ width: "100%", height: "80vh" }}>
+      <div className={`${isDark ? 'ag-theme-alpine-dark' : 'ag-theme-alpine'} cute-ag-grid`} style={{ width: "100%", height: "80vh" }}>
         <AgGridReact
           rowHeight={tableName === "Quotes" ? 60 : 35}
           ref={gridRef}

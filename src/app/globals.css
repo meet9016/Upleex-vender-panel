@@ -765,21 +765,62 @@ span.flatpickr-weekday,
   overflow: hidden;
 }
 
+.dark .cute-ag-grid {
+  --ag-header-background-color: #1a2231;
+  --ag-header-foreground-color: #e5e7eb;
+  --ag-border-color: #344054;
+  --ag-row-border-color: #344054;
+  --ag-background-color: #0c111d;
+  --ag-odd-row-background-color: #0c111d;
+  --ag-row-hover-color: #1a2231;
+    --ag-foreground-color: #ffffff;
+  --ag-secondary-foreground-color: #ffffff;
+  --ag-data-color: #ffffff;
+}
+
 .cute-ag-grid .ag-header-cell {
   border-right: 1px solid #dbeafe;
+}
+
+.dark .cute-ag-grid .ag-header-cell {
+  border-right: 1px solid #344054;
+  color: #e5e7eb !important;
+}
+
+.dark .cute-ag-grid .ag-header-cell-text {
+  color: #e5e7eb !important;
 }
 
 .cute-ag-grid .ag-cell {
   border-right: 1px dashed #e5e7eb;
 }
 
+.dark .cute-ag-grid .ag-cell {
+  border-right: 1px dashed #344054;
+  color: #e5e7eb !important;
+}
+
+.dark .cute-ag-grid .ag-cell * {
+  color: #e5e7eb !important;
+}
+
 .cute-ag-grid .ag-row:hover {
   background-color: #f8fafc;
+}
+
+.dark .cute-ag-grid .ag-row:hover {
+  background-color: #1a2231;
 }
 
 .cute-ag-grid .ag-paging-panel {
   background-color: #f8fafc;
   border-top: 1px solid #e5e7eb;
+}
+
+.dark .cute-ag-grid .ag-paging-panel {
+  background-color: #0c111d;
+  border-top: 1px solid #344054;
+  color: #e5e7eb;
 }
 
 /* ==================== Common Button Styles ==================== */
