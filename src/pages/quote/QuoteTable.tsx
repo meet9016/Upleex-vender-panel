@@ -9,6 +9,7 @@ import endPointApi from "@/utils/endPointApi";
 import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 
 type Quote = {
+  _id: string;
   no: string;
   quote_id: string;
   product_name: string;
@@ -31,8 +32,8 @@ const QuoteTable = () => {
   const columns: ColDef[] = [
 {
   headerName: "Product",
-  field: "product_name", // main field
-  minWidth: 240,
+  field: "product_name",
+  width: 240,
   sortable: true,
   cellRenderer: (params: any) => {
     const imageUrl = params.data?.product_main_image;
@@ -69,22 +70,22 @@ const QuoteTable = () => {
     );
   },
 },
-    { field: "product_type_name", headerName: "Product Type", minWidth: 100, cellStyle: { textAlign: "center" } },
-    { field: "product_listing_type_name", headerName: "Product Listing Type", minWidth: 130, cellStyle: { textAlign: "center" } },
-    { field: "delivery_date", headerName: "Delivery Date", minWidth: 140, cellStyle: { textAlign: "center" } },
-    { field: "start_date", headerName: "Start Date", minWidth: 140, cellStyle: { textAlign: "center" } },
-    { field: "end_date", headerName: "End Date", minWidth: 140, cellStyle: { textAlign: "center" } },
-    { field: "month_name", headerName: "Month", minWidth: 100, cellStyle: { textAlign: "center" } },
+    { field: "product_type_name", headerName: "Product Type", width: 180, cellStyle: { textAlign: "center" } },
+    { field: "product_listing_type_name", headerName: "Product Listing Type", width: 220, cellStyle: { textAlign: "center" } },
+    { field: "delivery_date", headerName: "Delivery Date", width: 150, cellStyle: { textAlign: "center" } },
+    { field: "start_date", headerName: "Start Date", width: 150, cellStyle: { textAlign: "center" } },
+    { field: "end_date", headerName: "End Date", width: 150, cellStyle: { textAlign: "center" } },
+    { field: "month_name", headerName: "Month", width: 120, cellStyle: { textAlign: "center" } },
     {
       field: "qty",
       headerName: "Qty",
-      minWidth: 50,
+      width: 100,
       cellStyle: { textAlign: "center" },
     },
     {
       field: "price",
       headerName: "Price",
-      minWidth: 100,
+      width: 120,
       valueFormatter: (params) =>
         params.value ? `₹${Number(params.value).toFixed(2)}` : "₹0.00",
       cellStyle: { textAlign: "center" },
@@ -92,7 +93,7 @@ const QuoteTable = () => {
     {
       field: "total_price",
       headerName: "Total",
-      minWidth: 100,
+      width: 120,
       valueFormatter: (params) =>
         params.value ? `₹${Number(params.value).toFixed(2)}` : "₹0.00",
       cellStyle: { textAlign: "center", fontWeight: "600" },
@@ -100,7 +101,7 @@ const QuoteTable = () => {
     {
       field: "status_text",
       headerName: "Status",
-      minWidth: 130,
+      width: 130,
       cellStyle: { textAlign: "center" },
       cellRenderer: (params: any) => {
         const status = params.value;
@@ -116,6 +117,34 @@ const QuoteTable = () => {
         return <span className={`font-medium ${color}`}>{status}</span>;
       },
     },
+    {
+      headerName: "Actions",
+      width: 300,
+      cellRenderer: (params: any) => {
+        return (
+          <div className="flex items-center justify-center gap-2 h-full">
+            <button
+              onClick={() => handleApproval(params.data._id)}
+              className="px-3 py-1.5 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+            >
+              Approval
+            </button>
+            <button
+              onClick={() => handleRejected(params.data._id)}
+              className="px-3 py-1.5 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+            >
+              Rejected
+            </button>
+            <button
+              onClick={() => router.push(`/quote/edit/${params.data.quote_id}`)}
+              className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+            >
+              Edit
+            </button>
+          </div>
+        );
+      },
+    },
   ];
 
   const getQuoteData = async () => {
@@ -128,6 +157,16 @@ const QuoteTable = () => {
     } catch (error) {
       console.log("fetch quotes error:", error);
     }
+  };
+
+  const handleApproval = (id: string) => {
+    alert(`Approval clicked for ID: ${id}`);
+    // Yahan aap API call kar sakte ho
+  };
+
+  const handleRejected = (id: string) => {
+    alert(`Rejected clicked for ID: ${id}`);
+    // Yahan aap API call kar sakte ho
   };
 
   useEffect(() => {

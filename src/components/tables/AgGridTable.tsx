@@ -4,8 +4,8 @@ console.error = (...args) => {
   if (
     typeof args[0] === "string" &&
     (args[0].includes("AG Grid Enterprise License") ||
-     args[0].includes("License Key Not Found") ||
-     args[0].includes("unlocked for trial"))
+      args[0].includes("License Key Not Found") ||
+      args[0].includes("unlocked for trial"))
   ) {
     return;
   }
@@ -49,71 +49,72 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
     const checkDarkMode = () => {
       setIsDark(document.documentElement.classList.contains('dark'));
     };
-    
+
     checkDarkMode();
-    
+
     const observer = new MutationObserver(checkDarkMode);
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class'],
     });
-    
+
     return () => observer.disconnect();
   }, []);
-const defaultColDef = useMemo(
-  () => ({
-    sortable: true,
-    resizable: true,
-    cellStyle: { display: 'flex', alignItems: 'center', paddingLeft: '16px' },
-    headerClass: "ag-left-aligned-header",
-  }),
-  []
-);
 
+  // IMPORTANT: No flex property for Quotes table
+  const defaultColDef = useMemo(
+    () => ({
+      sortable: true,
+      resizable: true,
+      cellStyle: { display: 'flex', alignItems: 'center', paddingLeft: '16px' },
+      headerClass: "ag-left-aligned-header",
+      cellClass: "ag-cell-with-border",
+      // REMOVED flex: 1 - This was causing the issue
+    }),
+    []
+  );
 
   const defaultColumns: ColDef[] = useMemo(
     () => [
-    { 
-      field: "planName", 
-      headerName: "Plan Name",
-      checkboxSelection: true,
-      headerCheckboxSelection: true,
-      flex: 1,
-      minWidth: 200,
-    },
-    { field: "price", headerName: "Price", flex: 0.6, minWidth: 100 },
-    { field: "duration", headerName: "Duration", flex: 0.8, minWidth: 120 },
-    { field: "day", headerName: "Day", flex: 0.5, minWidth: 80 },
-    { field: "month", headerName: "Month", flex: 0.6, minWidth: 100 },
-    { field: "rocket", headerName: "Rocket", flex: 1.5, minWidth: 200 },
-    {
-      headerName: "Action",
-      pinned: "right",
-      width: 140,
-      suppressSizeToFit: true,
-      cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' },
-      cellRenderer: (params: any) => {
-        const id = params.data.id;
-        return (
-          <div className="flex items-center justify-center gap-3">
-            <button
-              onClick={() => onEdit ? onEdit(id) : router.push(`/plan/edit/${id}`)}
-              className="text-lg text-slate-500 hover:text-brand-600 transition"
-              aria-label="Edit"
-            >
-              <MdModeEdit />
-            </button>
-            <button
-              onClick={() => onDelete ? onDelete(id) : alert(`Delete clicked for ID: ${id}`)}
-              className="text-lg text-slate-400 hover:text-red-500 transition"
-              aria-label="Delete"
-            >
-              <MdDelete />
-            </button>
-          </div>
-        );
+      {
+        field: "planName",
+        headerName: "Plan Name",
+        checkboxSelection: true,
+        headerCheckboxSelection: true,
+        width: 200,
       },
-    },
+      { field: "price", headerName: "Price", width: 100 },
+      { field: "duration", headerName: "Duration", width: 120 },
+      { field: "day", headerName: "Day", width: 80 },
+      { field: "month", headerName: "Month", width: 100 },
+      { field: "rocket", headerName: "Rocket", width: 200 },
+      {
+        headerName: "Action",
+        width: 140,
+        suppressSizeToFit: true,
+        cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' },
+        cellRenderer: (params: any) => {
+          const id = params.data.id;
+          return (
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => onEdit ? onEdit(id) : router.push(`/plan/edit/${id}`)}
+                className="text-lg text-slate-500 hover:text-brand-600 transition"
+                aria-label="Edit"
+              >
+                <MdModeEdit />
+              </button>
+              <button
+                onClick={() => onDelete ? onDelete(id) : alert(`Delete clicked for ID: ${id}`)}
+                className="text-lg text-slate-400 hover:text-red-500 transition"
+                aria-label="Delete"
+              >
+                <MdDelete />
+              </button>
+            </div>
+          );
+        },
+      },
     ],
     [onEdit, onDelete, router]
   );
@@ -123,14 +124,15 @@ const defaultColDef = useMemo(
     []
   );
 
-  const onGridReady = useCallback((params: any) => {
-    params.api.sizeColumnsToFit();
-  }, []);
+  // const onGridReady = useCallback((params: any) => {
+  //   // DON'T call sizeColumnsToFit for any table - let columns keep their defined widths
+  //   // This ensures horizontal scroll works when total width > container width
+  //   console.log("Grid ready - horizontal scroll enabled");
+  // }, []);
 
   const handleAddClick = useCallback(() => {
     router.push(addButtonLink);
   }, [router, addButtonLink]);
-
 
   return (
     <div>
@@ -143,7 +145,8 @@ const defaultColDef = useMemo(
         )}
       </div>
 
-      <div className={`${isDark ? 'ag-theme-alpine-dark' : 'ag-theme-alpine'} cute-ag-grid`} style={{ width: "100%", height: "80vh" }}>
+      <div className={`${isDark ? 'ag-theme-alpine-dark' : 'ag-theme-alpine'}`}
+        style={{ width: "100%", height: "80vh" }}>
         <AgGridReact
           rowHeight={tableName === "Quotes" ? 60 : 35}
           ref={gridRef}
@@ -153,12 +156,14 @@ const defaultColDef = useMemo(
           pagination
           paginationPageSize={20}
           rowSelection={rowSelection}
-          onGridReady={onGridReady}
+          // onGridReady={onGridReady}
           paginationPageSizeSelector={[10, 20, 50, 100]}
           columnMenu="new"
           suppressRowClickSelection
           animateRows
-          suppressHorizontalScroll={true}
+          // suppressHorizontalScroll={false} - REMOVED completely (default is false)
+          alwaysShowHorizontalScroll={true} // ADD THIS to always show horizontal scroll
+        // columnBorders={true} 
         />
       </div>
     </div>
