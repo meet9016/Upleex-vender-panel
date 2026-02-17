@@ -759,8 +759,9 @@ span.flatpickr-weekday,
 .cute-ag-grid {
   --ag-header-background-color: #eef9ff;
   --ag-header-foreground-color: #1f2937;
-  --ag-border-color: #dbeafe;
-  --ag-row-border-color: #e5e7eb;
+  --ag-border-color: #cbd5e1;
+  --ag-row-border-color: #cbd5e1;
+  --ag-cell-horizontal-border: solid #cbd5e1;
   --ag-header-height: 48px;
   --ag-row-height: 52px;
   border-radius: 12px;
@@ -784,8 +785,9 @@ span.flatpickr-weekday,
 .dark .cute-ag-grid {
   --ag-header-background-color: #1a2231;
   --ag-header-foreground-color: #e5e7eb;
-  --ag-border-color: #344054;
-  --ag-row-border-color: #344054;
+  --ag-border-color: #475467;
+  --ag-row-border-color: #475467;
+  --ag-cell-horizontal-border: solid #475467;
   --ag-background-color: #0c111d;
   --ag-odd-row-background-color: #0c111d;
   --ag-row-hover-color: #1a2231;
@@ -795,22 +797,22 @@ span.flatpickr-weekday,
 }
 
 .cute-ag-grid .ag-header {
-  border-bottom: 2px solid #dbeafe;
+  border-bottom: 2px solid #cbd5e1;
 }
 
 .dark .cute-ag-grid .ag-header {
-  border-bottom: 2px solid #344054;
+  border-bottom: 2px solid #475467;
 }
 
 .cute-ag-grid .ag-header-cell {
   padding-left: 16px !important;
   font-weight: 600;
   font-size: 14px;
-  border-right: 1px solid #dbeafe;
+  border-right: 1px solid #cbd5e1 !important;
 }
 
 .dark .cute-ag-grid .ag-header-cell {
-  border-right: 1px solid #344054;
+  border-right: 1px solid #475467 !important;
   color: #e5e7eb !important;
 }
 
@@ -820,13 +822,13 @@ span.flatpickr-weekday,
 
 .cute-ag-grid .ag-cell {
   padding-left: 16px !important;
-  border-right: 1px dashed #e5e7eb;
+  border-right: 1px solid #cbd5e1 !important;
   display: flex !important;
   align-items: center !important;
 }
 
 .dark .cute-ag-grid .ag-cell {
-  border-right: 1px dashed #344054;
+  border-right: 1px solid #475467 !important;
   color: #e5e7eb !important;
 }
 
@@ -965,4 +967,30 @@ span.flatpickr-weekday,
     background: linear-gradient(to right, #6366f1, #0ea5e9);
   }
 
+}
+
+/* Add borders between all columns */
+.ag-theme-alpine .ag-cell,
+.ag-theme-alpine-dark .ag-cell {
+  border-right: 1px dashed #d9dcde !important;
+}
+
+/* Remove border from last cell to avoid double border */
+.ag-theme-alpine .ag-cell:last-child,
+.ag-theme-alpine-dark .ag-cell:last-child {
+  border-right: none !important;
+}
+
+/* Add borders to header cells as well */
+.ag-theme-alpine .ag-header-cell,
+.ag-theme-alpine-dark .ag-header-cell {
+  border-right: 1px dashed #d9dcde !important;
+}
+
+.ag-theme-alpine .ag-header-cell:last-child,
+.ag-theme-alpine-dark .ag-header-cell:last-child {
+  border-right: none !important;
+}
+.ag-theme-alpine .ag-header {
+  background-color: #e6f0fa !important;
 }

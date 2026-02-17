@@ -37,7 +37,7 @@ const ProductTable = () => {
     { field: "product_listing_type_name", headerName: "Listing Type", minWidth: 150, cellStyle: { textAlign: "center" } },
     {
       headerName: "Action",
-      pinned: "right",
+      // pinned: "right",
       minWidth: 80,
       cellStyle: { textAlign: "center" },
       cellRenderer: (params: any) => {
