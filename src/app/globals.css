@@ -281,8 +281,7 @@
 
 
 
-@layer utilities {
-  /* For Remove Date Icon */
+/* @layer utilities {
   input[type="date"]::-webkit-inner-spin-button,
   input[type="time"]::-webkit-inner-spin-button,
   input[type="date"]::-webkit-calendar-picker-indicator,
@@ -290,7 +289,7 @@
     display: none;
     -webkit-appearance: none;
   }
-}
+} */
 
 /* third-party libraries CSS */
 .apexcharts-legend-text {
@@ -390,7 +389,7 @@
 }
 .flatpickr-month .flatpickr-current-month .flatpickr-monthDropdown-months {
   background: none !important;
-  appearance: none;
+  /* appearance: none; */
   background-image: none !important;
   font-weight: 500;
 }
@@ -636,7 +635,7 @@ span.flatpickr-weekday,
 .input-date-icon::-webkit-inner-spin-button,
 .input-date-icon::-webkit-calendar-picker-indicator {
   opacity: 0;
-  -webkit-appearance: none;
+  /* -webkit-appearance: none; */
 }
 
 .stocks-slider-outer .swiper-button-next:after,
@@ -769,18 +768,18 @@ span.flatpickr-weekday,
   box-shadow: 0 1px 3px 0 rgba(16, 24, 40, 0.1);
 }
 
-.cute-ag-grid .ag-body-horizontal-scroll {
+/* .cute-ag-grid .ag-body-horizontal-scroll {
   display: none !important;
-}
+} */
 
 .cute-ag-grid .ag-horizontal-left-spacer,
 .cute-ag-grid .ag-horizontal-right-spacer {
   display: none !important;
 }
 
-.cute-ag-grid .ag-body-viewport {
+ .cute-ag-grid .ag-body-viewport {
   overflow-x: hidden !important;
-}
+} 
 
 .dark .cute-ag-grid {
   --ag-header-background-color: #1a2231;

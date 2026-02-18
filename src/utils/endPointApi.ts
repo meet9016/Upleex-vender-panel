@@ -21,6 +21,9 @@ export interface EndPointApi {
     postDeleteVendorProductList: string;
 
     postGetQuote:string;
+    getStatus:string;
+    changeStatus:string;
+
 }
 
 // Define and export the API endpoint object
@@ -51,6 +54,9 @@ const endPointApi: EndPointApi = {
 
     // Quote
     postGetQuote: 'vendor-product-quotes-list',
+    changeStatus:'vendor-change-quote-status',
+    getStatus:'vendor-quote-status-dropdown-list'
+
 };
 
 export default endPointApi;

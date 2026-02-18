@@ -14,6 +14,8 @@ const QuoteEditPage = () => {
   const params = useParams();
   const router = useRouter();
   const [quoteData, setQuoteData] = useState<any>(null);
+    const [statuses, setStatuses] = useState<any[]>([]);
+    console.log("🚀 ~ QuoteEditPage ~ statuses:", statuses)
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     start_date: "",
@@ -29,6 +31,16 @@ const QuoteEditPage = () => {
   const [returnImagePreview, setReturnImagePreview] = useState<string | null>(null);
   const [returnVideoPreview, setReturnVideoPreview] = useState<string | null>(null);
 
+   const getStatuses = async () => {
+    try {
+      const res = await api.post(endPointApi.getStatus);
+      if (res?.data?.status === 200) {
+        setStatuses(res.data.data || []);
+      }
+    } catch (error) {
+      console.log("fetch statuses error:", error);
+    }
+  };
   const getQuoteById = async () => {
     if (!params?.id) return;
     
@@ -42,7 +54,7 @@ const QuoteEditPage = () => {
         setFormData({
           start_date: quote?.start_date || "",
           end_date: quote?.end_date || "",
-          status: quote?.status_text || "",
+           status: quote?.status || "", 
           image: null,
           video: null,
           return_image: null,
@@ -125,6 +137,7 @@ const QuoteEditPage = () => {
   useEffect(() => {
     if (params?.id) {
       getQuoteById();
+      getStatuses();
     }
   }, [params?.id]);
 
@@ -244,9 +257,12 @@ const QuoteEditPage = () => {
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white text-sm font-semibold"
               >
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
+                <option value="">Select Status</option>
+                {statuses.map((status) => (
+                  <option key={status._id || status.id} value={status._id || status.id}>
+                    {status.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

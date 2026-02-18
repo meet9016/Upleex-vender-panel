@@ -137,7 +137,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   return (
     <div>
       <div className="flex justify-between items-center mb-4 dark:text-gray-200">
-        <h2 className="text-xl font-bold">{tableName}</h2>
+        {/* <h2 className="text-xl font-bold">{tableName}</h2> */}
         {buttonName && (
           <button onClick={handleAddClick} className="btn-primary" aria-label={`Add ${buttonName}`}>
             + Add {buttonName}
@@ -145,7 +145,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
         )}
       </div>
 
-      <div className={`${isDark ? 'ag-theme-alpine-dark' : 'ag-theme-alpine'}`}
+          <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'}`}
         style={{ width: "100%", height: "80vh" }}>
         <AgGridReact
           rowHeight={tableName === "Quotes" ? 60 : 35}
