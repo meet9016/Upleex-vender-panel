@@ -16,6 +16,7 @@ import endPointApi from "@/utils/endPointApi";
 import Radio from "@/components/form/input/Radio";
 import { toast } from "react-toastify";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
+import { FiArrowLeft } from "react-icons/fi";
 
 /* <!-- ========================================================== Types ========================================================== --> */
 
@@ -67,6 +68,8 @@ export default function AddProductPage() {
         name: string;
         dayPrice: string;
         dayCancelPrice: string;
+        hourlyPrice: string;
+        hourlyCancelPrice: string;
         monthPrice: string;
         monthCancelPrice: string;
         months: { month: string; price: string; productMonthsId: string; cancelPrice: string }[];
@@ -79,6 +82,8 @@ export default function AddProductPage() {
         name: "",
         dayPrice: "",
         dayCancelPrice: "",
+        hourlyPrice: "",
+        hourlyCancelPrice: "",
         monthPrice: "",
         monthCancelPrice: "",
         months: [
@@ -95,7 +100,7 @@ export default function AddProductPage() {
     const [productTypeOptions, setProductTypeOptions] = useState<Option[]>([]);
     const [listingTypeOptions, setListingTypeOptions] = useState<Option[]>([]);
     const [monthOptions, setMonthOptions] = useState<Option[]>([]);
-    const [billingType, setBillingType] = useState<"day" | "month" | "">("");
+    const [billingType, setBillingType] = useState<"day" | "month" | "hourly" | "">("");
 
     const [mainImage, setMainImage] = useState<File | null>(null);
     const [subImages, setSubImages] = useState<File[]>([]);
@@ -111,6 +116,8 @@ export default function AddProductPage() {
         name?: string;
         dayPrice?: string;
         dayCancelPrice?: string;
+        hourlyPrice?: string;
+        hourlyCancelPrice?: string;
         monthPrice?: string;
         monthCancelPrice?: string;
         // monthsGeneral?: string;
@@ -225,7 +232,7 @@ export default function AddProductPage() {
 
     /* <!-- ============================================ handle select rent time ============================================ --> */
 
-    const handleRadioChange = (value: "day" | "month") => {
+    const handleRadioChange = (value: "day" | "month" | "hourly") => {
         setBillingType(value);
         // Clear billing type validation error when user selects
         if (validationErrors.billingType) {
@@ -249,7 +256,7 @@ export default function AddProductPage() {
                 if (res?.data?.status == 200) {
                     const data = res.data.data;
 
-                    setBillingType(data.product_listing_type_id === "1" ? "day" : "month");
+                    setBillingType(data.product_listing_type_id === "1" ? "day" : data.product_listing_type_id === "3" ? "hourly" : "month");
 
                     setFormData({
                         category: String(data.category_id),
@@ -258,8 +265,10 @@ export default function AddProductPage() {
                         name: data.product_name,
                         dayPrice: data.product_listing_type_id === "1" ? data.price : "",
                         dayCancelPrice: data.product_listing_type_id === "1" ? data.cancel_price : "",
-                        monthPrice: data.product_listing_type_id !== "1" ? data.price : "",
-                        monthCancelPrice: data.product_listing_type_id !== "1" ? data.cancel_price : "",
+                        hourlyPrice: data.product_listing_type_id === "3" ? data.price : "",
+                        hourlyCancelPrice: data.product_listing_type_id === "3" ? data.cancel_price : "",
+                        monthPrice: data.product_listing_type_id === "2" ? data.price : "",
+                        monthCancelPrice: data.product_listing_type_id === "2" ? data.cancel_price : "",
                         months: data.month_arrr?.length
                             ? data.month_arrr.map((m: any) => ({
                                 month: String(m.months_id),
@@ -429,6 +438,15 @@ export default function AddProductPage() {
                 }
             }
 
+            if (billingType === "hourly") {
+                if (!formData.hourlyPrice?.trim()) {
+                    errors.hourlyPrice = "Please enter hourly price";
+                }
+                if (!formData.hourlyCancelPrice?.trim()) {
+                    errors.hourlyCancelPrice = "Please enter hourly cancel price";
+                }
+            }
+
             if (billingType === "month") {
                 const rows = formData.months;
                 const rowErrors: { month?: string; price?: string; cancelPrice?: string }[] = rows.map(() => ({}));
@@ -504,7 +522,7 @@ export default function AddProductPage() {
             formdata.append("product_type_id", String(formData.listingType));
 
             // Determine listing type based on billingType
-            const listingTypeId = billingType === "month" ? "2" : billingType === "day" ? "1" : "";
+            const listingTypeId = billingType === "month" ? "2" : billingType === "day" ? "1" : billingType === "hourly" ? "3" : "";
             formdata.append("product_listing_type_id", listingTypeId);
 
             formdata.append("product_name", formData.name.trim());
@@ -522,6 +540,12 @@ export default function AddProductPage() {
                 if (billingType === "day") {
                     formdata.append("price", formData.dayPrice.trim());
                     formdata.append("cancel_price", formData.dayCancelPrice.trim());
+                }
+
+                // HOURLY
+                if (billingType === "hourly") {
+                    formdata.append("price", formData.hourlyPrice.trim());
+                    formdata.append("cancel_price", formData.hourlyCancelPrice.trim());
                 }
 
                 // MONTH
@@ -579,7 +603,19 @@ export default function AddProductPage() {
 
     return (
         <>
+
             <ComponentCard title={isEditMode ? "Edit Product" : "Add Product"}>
+                <div className="flex items-center gap-3">
+                    <div className="h-12 w-1 bg-blue-600 rounded-full"></div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+                            {isEditMode ? "Edit Product" : "Add Product"}
+                        </h1>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {isEditMode ? "Update product details" : "Fill details to create a new product"}
+                        </p>
+                    </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     {/* ================= Row 1: Category & Sub Category ================= */}
@@ -637,7 +673,7 @@ export default function AddProductPage() {
                             searchable={false}          // ❌ no search
                             error={!!validationErrors.listingType}
                             onChange={(val) => handleChange("listingType", val)}
-                         disabled={isEditMode}
+                            disabled={isEditMode}
                         />
 
                         {validationErrors.listingType && (
@@ -689,6 +725,15 @@ export default function AddProductPage() {
                                     label="Month"
                                     disabled={isEditMode}
                                 />
+                                <Radio
+                                    id="radio-hourly"
+                                    name="billingType"
+                                    value="hourly"
+                                    checked={billingType === "hourly"}
+                                    onChange={() => handleRadioChange("hourly")}
+                                    label="Hourly"
+                                    disabled={isEditMode}
+                                />
                             </div>
                             {validationErrors.billingType && (
                                 <p className="text-error text-xs mt-1">{validationErrors.billingType}</p>
@@ -729,6 +774,45 @@ export default function AddProductPage() {
                                 {validationErrors.dayCancelPrice && (
                                     <p className="mt-1 text-xs text-error">
                                         {validationErrors.dayCancelPrice}
+                                    </p>
+                                )}
+                            </div>
+                        </>
+                    )}
+
+                    {/* ================= Rent Flow: Hourly ================= */}
+                    {formData?.listingType === "1" && billingType === "hourly" && (
+                        <>
+                            <div className="rounded-2xl">
+                                <Label>Hourly Price</Label>
+                                <Input
+                                    placeholder="Enter Hourly Price"
+                                    type="number"
+                                    value={formData.hourlyPrice}
+                                    onChange={(e) => handleChange("hourlyPrice", e.target.value)}
+                                    error={!!validationErrors.hourlyPrice}
+                                    className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                                />
+                                {validationErrors.hourlyPrice && (
+                                    <p className="mt-1 text-xs text-error">
+                                        {validationErrors.hourlyPrice}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="rounded-2xl">
+                                <Label>Hourly Cancel Price</Label>
+                                <Input
+                                    placeholder="Enter Hourly Cancel Price"
+                                    type="number"
+                                    value={formData.hourlyCancelPrice}
+                                    onChange={(e) => handleChange("hourlyCancelPrice", e.target.value)}
+                                    error={!!validationErrors.hourlyCancelPrice}
+                                    className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                                />
+                                {validationErrors.hourlyCancelPrice && (
+                                    <p className="mt-1 text-xs text-error">
+                                        {validationErrors.hourlyCancelPrice}
                                     </p>
                                 )}
                             </div>
@@ -877,14 +961,13 @@ export default function AddProductPage() {
                         </Label>
 
                         <div
-                            className={`rounded-xl overflow-hidden transition-all duration-200 border ${
-                                validationErrors.description
+                            className={`rounded-xl overflow-hidden transition-all duration-200 border ${validationErrors.description
                                     ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
                                     : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
-                            }`}
+                                }`}
                         >
                             <Editor
-                            className="dark:text-white"
+                                className="dark:text-white"
                                 value={formData.description}
                                 onTextChange={(e) => handleChange("description", e.htmlValue)}
                                 style={{ height: "280px" }}
@@ -1036,7 +1119,7 @@ export default function AddProductPage() {
 
             <div className="flex items-center gap-5 mt-5 justify-end ">
                 <Button size="sm" variant="primary"
-                className="btn-primary"
+                    className="btn-primary"
                     onClick={handleSubmit}
                 >
                     {isEditMode ? "Update" : "Save"}
