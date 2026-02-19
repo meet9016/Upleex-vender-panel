@@ -46,12 +46,12 @@ export type KycFormDataType = {
   confirm_account_number: string;
   ifsc_code: string;
   account_type: string;
-  pancard_front_image: File | null;
-  aadharcard_front_image: File | null;
-  aadharcard_back_image: File | null;
-  gst_certificate_image: File | null;
-  vendor_image: File | null;
-  business_logo_image: File | null;
+  pancard_front_image: File | string | null;
+  aadharcard_front_image: File | string | null;
+  aadharcard_back_image: File | string | null;
+  gst_certificate_image: File | string | null;
+  vendor_image: File | string | null;
+  business_logo_image: File | string | null;
   terms_conditions: number;
 };
 
@@ -142,7 +142,7 @@ export default function KYCPage() {
     const newErrors: ErrorType = {};
 
     // helpers
-    const isEmpty = (val: string) => !val.trim();
+    const isEmpty = (val: string | undefined | null) => !val || !val.trim();
     const hasNumber = (val: string) => /\d/.test(val);
     const isEmailValid = (val: string) =>
       /^(?!\.)(?!.*\.\.)[A-Z0-9._%+-]+@[A-Z0-9.-]+\.(in|com)$/i.test(val);
@@ -287,8 +287,8 @@ export default function KYCPage() {
 
     // ---------------- STEP 3 ----------------
     if (currentStep === 3) {
-      const isFileValid = (file: File | null) =>
-        file instanceof File && file.type.startsWith("image/");
+      const isFileValid = (file: File | string | null) =>
+        file instanceof File || (typeof file === 'string' && file.length > 0);
 
       // PAN Card
       if (!isFileValid(KYCformData?.pancard_front_image)) {
@@ -343,37 +343,43 @@ export default function KYCPage() {
     const formData = new FormData();
 
     formData.append("page",currentStep === 3 ? String(currentStep) : currentStep === 4 ? String(currentStep) : String(currentStep+1));
-    formData.append("full_name", KYCformData.full_name || "");
-    formData.append("email", KYCformData.email || "");
-    formData.append("mobile", KYCformData.mobile || "");
-    formData.append("address", KYCformData.address || "");
-    formData.append("pincode", KYCformData.pincode || "");
-    formData.append("country_id", KYCformData.country_id?.value || "");
-    formData.append("state_id", KYCformData.state_id.value || "");
-    formData.append("city_id", KYCformData.city_id?.value || "");
-    formData.append("pancard_number", KYCformData.pancard_number || "");
-    formData.append("aadharcard_number", KYCformData.aadharcard_number || "");
-    formData.append("business_name", KYCformData.business_name || "");
-    formData.append("gst_number", KYCformData.gst_number || "");
-    formData.append("account_holder_name", KYCformData.account_holder_name || "");
-    formData.append("account_number", KYCformData.account_number || "");
-    formData.append("confirm_account_number", KYCformData.confirm_account_number || "");
-    formData.append("ifsc_code", KYCformData.ifsc_code || "");
-    formData.append("account_type", KYCformData.account_type || "");
-    if (KYCformData?.pancard_front_image) {
-      formData.append("pancard_front_image", KYCformData?.pancard_front_image)
+    
+    if (KYCformData.full_name) formData.append("full_name", KYCformData.full_name);
+    if (KYCformData.email) formData.append("email", KYCformData.email);
+    if (KYCformData.mobile) formData.append("mobile", KYCformData.mobile);
+    if (KYCformData.address) formData.append("address", KYCformData.address);
+    if (KYCformData.pincode) formData.append("pincode", KYCformData.pincode);
+    if (KYCformData.country_id?.value) formData.append("country_id", KYCformData.country_id.value);
+    if (KYCformData.state_id?.value) formData.append("state_id", KYCformData.state_id.value);
+    if (KYCformData.city_id?.value) formData.append("city_id", KYCformData.city_id.value);
+    if (KYCformData.pancard_number) formData.append("pancard_number", KYCformData.pancard_number);
+    if (KYCformData.aadharcard_number) formData.append("aadharcard_number", KYCformData.aadharcard_number);
+    if (KYCformData.business_name) formData.append("business_name", KYCformData.business_name);
+    if (KYCformData.gst_number) formData.append("gst_number", KYCformData.gst_number);
+    if (KYCformData.account_holder_name) formData.append("account_holder_name", KYCformData.account_holder_name);
+    if (KYCformData.account_number) formData.append("account_number", KYCformData.account_number);
+    if (KYCformData.confirm_account_number) formData.append("confirm_account_number", KYCformData.confirm_account_number);
+    if (KYCformData.ifsc_code) formData.append("ifsc_code", KYCformData.ifsc_code);
+    if (KYCformData.account_type) formData.append("account_type", KYCformData.account_type);
+    
+    // Only append new file uploads (File objects), not existing URLs (strings)
+    if (KYCformData?.pancard_front_image instanceof File) {
+      formData.append("pancard_front_image", KYCformData.pancard_front_image);
     }
-    if (KYCformData.aadharcard_front_image) {
-      formData.append("aadharcard_front_image", KYCformData.aadharcard_front_image)
+    if (KYCformData.aadharcard_front_image instanceof File) {
+      formData.append("aadharcard_front_image", KYCformData.aadharcard_front_image);
     }
-    if (KYCformData.aadharcard_back_image) {
-      formData.append("aadharcard_back_image", KYCformData.aadharcard_back_image)
-    } if (KYCformData.gst_certificate_image) {
-      formData.append("gst_certificate_image", KYCformData.gst_certificate_image || "")
-    } if (KYCformData.vendor_image) {
-      formData.append("vendor_image", KYCformData.vendor_image || "")
-    } if (KYCformData.business_logo_image) {
-      formData.append("business_logo_image", KYCformData.business_logo_image || "")
+    if (KYCformData.aadharcard_back_image instanceof File) {
+      formData.append("aadharcard_back_image", KYCformData.aadharcard_back_image);
+    }
+    if (KYCformData.gst_certificate_image instanceof File) {
+      formData.append("gst_certificate_image", KYCformData.gst_certificate_image);
+    }
+    if (KYCformData.vendor_image instanceof File) {
+      formData.append("vendor_image", KYCformData.vendor_image);
+    }
+    if (KYCformData.business_logo_image instanceof File) {
+      formData.append("business_logo_image", KYCformData.business_logo_image);
     }
 
     if (KYCformData?.terms_conditions) {

@@ -58,8 +58,22 @@ const AppHeader = () => {
           </button>
 
           <Link href="/" className="lg:hidden" aria-label="Home">
-            <Image width={154} height={32} className="dark:hidden" src="./images/logo/logo.svg" alt="Upleex Logo" priority />
-            <Image width={154} height={32} className="hidden dark:block" src="./images/logo/logo-dark.svg" alt="Upleex Logo" priority />
+            <Image
+                          src="/images/logo/upleex-logo-dark.png"
+                          alt="Upleex"
+                          width={154}
+                          height={32}
+                          priority
+                          className="mb-2 dark:hidden"
+                        />
+            <Image
+                          src="/images/logo/upleex-logo.png"
+                          alt="Upleex"
+                          width={154}
+                          height={32}
+                          priority
+                          className="mb-2 hidden dark:block"
+                        />
           </Link>
 
           <button
