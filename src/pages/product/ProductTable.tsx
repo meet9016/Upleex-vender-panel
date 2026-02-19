@@ -101,41 +101,6 @@ const ProductTable = () => {
       const res = await api.post(endPointApi.postAllVendorProductList, formData);
       const products = res?.data?.data || [];
       setProductData(products);
-
-      const uniqueTypes = [
-        ...new Map(
-          products.map((item: any) => [
-            item.product_type_name,
-            {
-              id: item.product_type_id || item.product_type_name,
-              product_type_name: item.product_type_name,
-            },
-          ])
-        ).values(),
-      ];
-
-      setProductTypes(uniqueTypes);
-      // ✅ UNIQUE LISTING TYPES
-      const uniqueListingTypes = [
-        ...new Map(
-          products
-            .filter((item: any) =>
-              item.product_listing_type_name &&
-              item.product_listing_type_name.trim() !== ""
-            )
-            .map((item: any) => [
-              item.product_listing_type_name.trim(),
-              {
-                id:
-                  item.product_listing_type_id ||
-                  item.product_listing_type_name.trim(),
-                product_listing_type_name:
-                  item.product_listing_type_name.trim(),
-              },
-            ])
-        ).values(),
-      ];
-      setListingTypes(uniqueListingTypes);
     } catch (error) {
       console.log("fetch error", error);
     }
@@ -143,9 +108,16 @@ const ProductTable = () => {
 
   const fetchDropdownData = async () => {
     try {
-      const res = await api.post(endPointApi.postCategoryList);
-      const data = res?.data?.data;
-      setCategories(data);
+      const [categoryRes, productDropdownRes] = await Promise.all([
+        api.post(endPointApi.postCategoryList),
+        api.post(endPointApi.postProductDropDownList)
+      ]);
+      
+      setCategories(categoryRes?.data?.data || []);
+      
+      const dropdownData = productDropdownRes?.data?.data;
+      setProductTypes(dropdownData?.products_type || []);
+      setListingTypes(dropdownData?.products_listing_type || []);
     } catch (error) {
       console.log("fetch dropdown error", error);
     }
@@ -182,9 +154,9 @@ const ProductTable = () => {
       case 'sub_category_id':
         return subCategories.find(s => s.id === value)?.name;
       case 'product_type_id':
-        return productTypes.find(t => t.id === value)?.product_type_name;
+        return productTypes.find(t => t.id === value)?.product_type;
       case 'product_listing_type_id':
-        return listingTypes.find(l => l.id === value)?.product_listing_type_name;
+        return listingTypes.find(l => l.id === value)?.name;
       default:
         return null;
     }
@@ -194,17 +166,10 @@ const ProductTable = () => {
     setSearchText(e.target.value);
   };
   useEffect(() => {
-    const params: any = { ...filters };
+    const params: any = {};
     if (debouncedSearch) params.search = debouncedSearch;
     getProductData(params);
-  }, [debouncedSearch]); // Only re-run when debouncedSearch changes
-
-  // Effect for filter changes (excluding search)
-  useEffect(() => {
-    const params: any = { ...filters };
-    if (searchText) params.search = searchText;
-    getProductData(params);
-  }, [filters.category_id, filters.sub_category_id, filters.product_type_id, filters.product_listing_type_id]);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -219,7 +184,12 @@ const ProductTable = () => {
   }, []);
 
   const applyFilters = () => {
-    const params: any = { ...filters };
+    const params: any = {
+      category_id: filters.category_id,
+      sub_category_id: filters.sub_category_id,
+      product_type: filters.product_type_id,
+      listing_type: filters.product_listing_type_id
+    };
     if (searchText) params.search = searchText;
     getProductData(params);
     setShowFilterModal(false);
@@ -392,7 +362,7 @@ const ProductTable = () => {
                             </div>
                             {productTypes.map((type: any) => (
                               <div key={type.id} onClick={() => handleFilterChange('product_type_id', type.id)} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-t border-gray-100 dark:border-gray-700 text-sm">
-                                <span>{type.product_type_name}</span>
+                                <span>{type.product_type}</span>
                                 {filters.product_type_id === type.id && <MdCheck className="text-blue-600" size={16} />}
                               </div>
                             ))}
@@ -422,7 +392,7 @@ const ProductTable = () => {
                             </div>
                             {listingTypes.map((type: any) => (
                               <div key={type.id} onClick={() => handleFilterChange('product_listing_type_id', type.id)} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-t border-gray-100 dark:border-gray-700 text-sm">
-                                <span>{type.product_listing_type_name}</span>
+                                <span>{type.name}</span>
                                 {filters.product_listing_type_id === type.id && <MdCheck className="text-blue-600" size={16} />}
                               </div>
                             ))}

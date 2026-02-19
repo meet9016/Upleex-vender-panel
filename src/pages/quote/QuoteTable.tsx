@@ -146,34 +146,63 @@ const debouncedSearch = useDebounce(searchText, 600);
         return <span className={`font-medium ${color}`}>{status}</span>;
       },
     },
-    {
-      headerName: "Actions",
-      width: 300,
-      cellRenderer: (params: any) => {
-        return (
-          <div className="flex items-center justify-center gap-2 h-full">
-            <button
-              onClick={() => handleApproval(params.data.quote_id)}
-              className="px-3 py-1.5 bg-green-500 text-white text-sm rounded hover:bg-green-600"
-            >
-              Approval
-            </button>
-            <button
-              onClick={() => handleRejected(params.data.quote_id)}
-              className="px-3 py-1.5 bg-red-500 text-white text-sm rounded hover:bg-red-600"
-            >
-              Rejected
-            </button>
-            <button
-              onClick={() => router.push(`/quote/edit/${params.data.quote_id}`)}
-              className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
-            >
-              Edit
-            </button>
-          </div>
-        );
-      },
-    },
+{
+  headerName: "Actions",
+  width: 330,
+  cellRenderer: (params: any) => {
+    const status = params.data?.status_text;
+    const isApproved = status === "Approved";
+    const isRejected = status === "Rejected";
+
+    return (
+      <div className="flex items-center justify-center gap-2 h-full">
+
+        {/* Approve */}
+        <button
+          onClick={() => handleApproval(params.data.quote_id)}
+          disabled={isApproved}
+          className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
+          ${
+            isApproved
+              ? "bg-gray-100 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 cursor-not-allowed"
+              : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 shadow-sm hover:shadow"
+          }`}
+        >
+          Approve
+        </button>
+
+        {/* Reject */}
+        <button
+          onClick={() => handleRejected(params.data.quote_id)}
+          disabled={isRejected}
+          className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
+          ${
+            isRejected
+              ? "bg-gray-100 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 cursor-not-allowed"
+              : "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 shadow-sm hover:shadow"
+          }`}
+        >
+          Reject
+        </button>
+
+        {/* Edit */}
+        <button
+          onClick={() => router.push(`/quote/edit/${params.data.quote_id}`)}
+          className="px-3 py-1.5 text-xs font-medium rounded-lg border
+          bg-white dark:bg-gray-800 text-blue-700 dark:text-gray-300
+          border-blue-200 dark:border-gray-600
+          hover:bg-blue-50 dark:hover:bg-gray-700
+            transition-all duration-200"
+        >
+          Edit
+        </button>
+
+      </div>
+    );
+  },
+}
+
+
   ];
 
   const getQuoteData = async (filterParams = {}) => {
@@ -313,17 +342,10 @@ const debouncedSearch = useDebounce(searchText, 600);
     setShowFilterModal(false);
   };
     useEffect(() => {
-    const params: any = { ...filters };
+    const params: any = {};
     if (debouncedSearch) params.search = debouncedSearch;
     getQuoteData(params);
-  }, [debouncedSearch]); // Only re-run when debouncedSearch changes
-
-  // Effect for filter changes (excluding search)
-  useEffect(() => {
-    const params: any = { ...filters };
-    if (searchText) params.search = searchText;
-    getQuoteData(params);
-  }, [filters.product_type, filters.listing_type, filters.delivery_start_date, filters.delivery_end_date, filters.month, filters.status]);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -353,12 +375,7 @@ const debouncedSearch = useDebounce(searchText, 600);
               type="text"
               placeholder="Search quotes..."
               value={searchText}
-              onChange={(e) => {
-                setSearchText(e.target.value);
-                const params: any = { ...filters };
-                if (e.target.value) params.search = e.target.value;
-                getQuoteData(params);
-              }}
+              onChange={(e) => setSearchText(e.target.value)}
               className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-64"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
