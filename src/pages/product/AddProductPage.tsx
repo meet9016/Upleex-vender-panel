@@ -604,18 +604,40 @@ export default function AddProductPage() {
     return (
         <>
 
-            <ComponentCard title={isEditMode ? "Edit Product" : "Add Product"}>
-                <div className="flex items-center gap-3">
-                    <div className="h-12 w-1 bg-blue-600 rounded-full"></div>
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-                            {isEditMode ? "Edit Product" : "Add Product"}
-                        </h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {isEditMode ? "Update product details" : "Fill details to create a new product"}
-                        </p>
+            <ComponentCard title="">
+                <div className="flex items-center justify-between mb-6">
+
+                    {/* Left Section */}
+                    <div className="flex items-center gap-4">
+
+                        {/* Back Arrow */}
+                        <button
+                            onClick={() => router.back()}
+                            className="p-2 rounded-lg border border-gray-200 dark:border-gray-600
+        text-gray-600 dark:text-gray-300
+        hover:bg-gray-100 dark:hover:bg-gray-800
+        transition"
+                        >
+                            <FiArrowLeft className="text-lg" />
+                        </button>
+
+                        {/* Blue Line + Title */}
+                        <div className="flex items-center gap-3">
+                            <div className="h-12 w-1 bg-blue-600 rounded-full"></div>
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+                                    {isEditMode ? "Edit Product" : "Add Product"}
+                                </h1>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    {isEditMode ? "Update product details" : "Fill details to create a new product"}
+                                </p>
+                            </div>
+                        </div>
+
                     </div>
+
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     {/* ================= Row 1: Category & Sub Category ================= */}
@@ -962,8 +984,8 @@ export default function AddProductPage() {
 
                         <div
                             className={`rounded-xl overflow-hidden transition-all duration-200 border ${validationErrors.description
-                                    ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
-                                    : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
+                                ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
+                                : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
                                 }`}
                         >
                             <Editor
