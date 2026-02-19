@@ -160,10 +160,10 @@ const debouncedSearch = useDebounce(searchText, 600);
         {/* Approve */}
         <button
           onClick={() => handleApproval(params.data.quote_id)}
-          disabled={isApproved}
+          disabled={isRejected}
           className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
           ${
-            isApproved
+            isRejected
               ? "bg-gray-100 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 cursor-not-allowed"
               : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 shadow-sm hover:shadow"
           }`}
@@ -174,10 +174,10 @@ const debouncedSearch = useDebounce(searchText, 600);
         {/* Reject */}
         <button
           onClick={() => handleRejected(params.data.quote_id)}
-          disabled={isRejected}
+          disabled={isApproved}
           className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
           ${
-            isRejected
+            isApproved
               ? "bg-gray-100 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 cursor-not-allowed"
               : "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 shadow-sm hover:shadow"
           }`}
@@ -260,7 +260,7 @@ const debouncedSearch = useDebounce(searchText, 600);
 
       if (res?.data?.status === 200) {
         toast.success("Quote approved successfully");
-        getQuoteData();
+        await getQuoteData(filters);
       }
     } catch (error) {
       console.log('Approval error:', error);
@@ -281,7 +281,7 @@ const debouncedSearch = useDebounce(searchText, 600);
 
       if (res?.data?.status === 200) {
          toast.success("Quote rejected successfully");
-        getQuoteData();
+        await getQuoteData(filters);
       }
     } catch (error) {
       console.log('Rejection error:', error);
