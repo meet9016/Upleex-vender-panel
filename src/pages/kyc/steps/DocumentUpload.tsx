@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 
 type Props = {
   label: string;
-  file: File | null;
+  file: File | string | null;
   onChange: (file: File | null) => void;
   error?: string;
 
@@ -28,7 +28,14 @@ export default function DocumentUpload({
       return;
     }
 
-    if (file.type.startsWith("image/")) {
+    // If file is a string (URL), use it directly as preview
+    if (typeof file === 'string') {
+      setPreview(file);
+      return;
+    }
+
+    // If file is a File object and is an image, create object URL
+    if (file instanceof File && file.type?.startsWith("image/")) {
       const url = URL.createObjectURL(file);
       setPreview(url);
 
@@ -84,7 +91,7 @@ export default function DocumentUpload({
 
               </>
             ) : (
-              <div className="text-sm">{file.name}</div>
+              <div className="text-sm">{file instanceof File ? file.name : 'Uploaded file'}</div>
             )}
           </div>
 

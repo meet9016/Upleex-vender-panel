@@ -204,7 +204,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
 
   // When country changes, clear states and cities
   useEffect(() => {
-    if (selectedCountry) {
+    if (selectedCountry && selectedCountry.value !== KYCformData?.country_id?.value) {
       setStates([]);
       setCities([]);
       setSelectedState(null);
@@ -214,48 +214,63 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
       setHasMoreStates(true);
       setHasMoreCities(true);
     }
-  }, [selectedCountry]);
+  }, [selectedCountry?.value]);
 
   // When state changes, clear cities
   useEffect(() => {
-    if (selectedState) {
+    if (selectedState && selectedState.value !== KYCformData?.state_id?.value) {
       setCities([]);
       setSelectedCity(null);
       pageRefCity.current = 1;
       setHasMoreCities(true);
     }
-  }, [selectedState]);
+  }, [selectedState?.value]);
 
   // Initialize selected values from KYCformData on mount or when it changes
   useEffect(() => {
-    if (KYCformData?.country_id?.value) {
+    if (KYCformData?.country_id?.value && KYCformData?.country_id?.label) {
       const countryOption: Option = {
         value: KYCformData.country_id.value,
-        label: KYCformData.country_id.label || '',
+        label: KYCformData.country_id.label,
       };
       setSelectedCountry(countryOption);
+      // Add to countries list if not already present
+      setCountries(prev => {
+        const exists = prev.some(c => c.value === countryOption.value);
+        return exists ? prev : [countryOption, ...prev];
+      });
     }
-  }, [KYCformData?.country_id?.value]);
+  }, [KYCformData?.country_id?.value, KYCformData?.country_id?.label]);
 
   useEffect(() => {
-    if (KYCformData?.state_id?.value) {
+    if (KYCformData?.state_id?.value && KYCformData?.state_id?.label) {
       const stateOption: Option = {
         value: KYCformData.state_id.value,
-        label: KYCformData.state_id.label || '',
+        label: KYCformData.state_id.label,
       };
       setSelectedState(stateOption);
+      // Add to states list if not already present
+      setStates(prev => {
+        const exists = prev.some(s => s.value === stateOption.value);
+        return exists ? prev : [stateOption, ...prev];
+      });
     }
-  }, [KYCformData?.state_id?.value]);
+  }, [KYCformData?.state_id?.value, KYCformData?.state_id?.label]);
 
   useEffect(() => {
-    if (KYCformData?.city_id?.value) {
+    if (KYCformData?.city_id?.value && KYCformData?.city_id?.label) {
       const cityOption: Option = {
         value: KYCformData.city_id.value,
-        label: KYCformData.city_id.label || '',
+        label: KYCformData.city_id.label,
       };
       setSelectedCity(cityOption);
+      // Add to cities list if not already present
+      setCities(prev => {
+        const exists = prev.some(c => c.value === cityOption.value);
+        return exists ? prev : [cityOption, ...prev];
+      });
     }
-  }, [KYCformData?.city_id?.value]);
+  }, [KYCformData?.city_id?.value, KYCformData?.city_id?.label]);
 
   /* <!-- ================================================ Scroll handle ================================================ --> */
 
