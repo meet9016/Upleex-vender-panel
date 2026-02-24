@@ -8,6 +8,7 @@ import { api } from '@/utils/axiosInstance';
 import endPointApi from '@/utils/endPointApi';
 import ConfirmDeleteModal from '@/components/common/ConfirmDeleteModal';
 import { CiFilter } from "react-icons/ci";
+import { toast } from 'react-toastify';
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -93,14 +94,32 @@ const ProductTable = () => {
 
   const getProductData = async (filterParams = {}) => {
     try {
-      const formData = new FormData();
+      const params = new URLSearchParams();
       Object.entries(filterParams).forEach(([key, value]) => {
-        if (value) formData.append(key, String(value));
+        if (value) params.append(key, String(value));
       });
 
-      const res = await api.post(endPointApi.postAllVendorProductList, formData);
+      const queryString = params.toString();
+      const url = queryString ? `${endPointApi.postAllVendorProductList}?${queryString}` : endPointApi.postAllVendorProductList;
+      
+      const res = await api.get(url);
       const products = res?.data?.data || [];
-      setProductData(products);
+      const normalized = products.map((p: any) => {
+        let price = p.price;
+        let cancel_price = p.cancel_price;
+        if (
+          p.product_type_name === 'Rent' &&
+          String(p.product_listing_type_name || '').toLowerCase() === 'monthly' &&
+          Array.isArray(p.month_arr) &&
+          p.month_arr.length
+        ) {
+          const first = p.month_arr[0];
+          price = first?.price ?? price;
+          cancel_price = first?.cancel_price ?? cancel_price;
+        }
+        return { ...p, price, cancel_price };
+      });
+      setProductData(normalized);
     } catch (error) {
       console.log("fetch error", error);
     }
@@ -115,7 +134,7 @@ const ProductTable = () => {
       
       setCategories(categoryRes?.data?.data || []);
       
-      const dropdownData = productDropdownRes?.data?.data;
+      const dropdownData = productDropdownRes?.data?.data || productDropdownRes?.data;
       setProductTypes(dropdownData?.products_type || []);
       setListingTypes(dropdownData?.products_listing_type || []);
     } catch (error) {
@@ -184,11 +203,24 @@ const ProductTable = () => {
   }, []);
 
   const applyFilters = () => {
+    const rentSell =
+      filters.product_type_id
+        ? (
+            productTypes.find(t => t.id === filters.product_type_id)?.product_type || ''
+          ).toLowerCase() === 'rent'
+          ? '1'
+          : (
+              productTypes.find(t => t.id === filters.product_type_id)?.product_type || ''
+            ).toLowerCase() === 'sell'
+          ? '2'
+          : ''
+        : '';
+
     const params: any = {
       category_id: filters.category_id,
       sub_category_id: filters.sub_category_id,
-      product_type: filters.product_type_id,
-      listing_type: filters.product_listing_type_id
+      filter_rent_sell: rentSell,
+      filter_tenure: filters.product_listing_type_id,
     };
     if (searchText) params.search = searchText;
     getProductData(params);
@@ -216,21 +248,16 @@ const ProductTable = () => {
 
   const deleteById = async (id: number | string) => {
     try {
-      const formdata = new FormData();
-      formdata.append("product_id", String(id));
-
-      const res = await api.post(endPointApi.postDeleteVendorProductList, formdata);
-      // toast.success("Deleted successfully");
-      getProductData(); // refresh table
+      const res = await api.delete(`${endPointApi.postDeleteVendorProductList}/${id}`);
+      toast.success("Deleted successfully");
+      getProductData();
     } catch (error) {
-      // toast.error("Delete failed");
+      toast.error("Delete failed");
     }
   };
 
   const confirmDelete = async () => {
-
     if (!deleteId) return;
-
     await deleteById(deleteId);
     setOpenDeleteModal(false);
     setDeleteId(null);

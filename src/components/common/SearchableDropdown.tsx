@@ -8,6 +8,7 @@ import Input from "./Input";
 type Option = {
   label: string;
   value: string;
+  image?: string;
 };
 
 type Props = {
@@ -70,7 +71,7 @@ export default function SearchableDropdown({
 
   const filteredOptions = searchable
     ? options.filter(o =>
-        o.label.toLowerCase().includes(search.toLowerCase())
+        o?.label?.toLowerCase().includes(search.toLowerCase())
       )
     : options;
 
@@ -121,7 +122,10 @@ export default function SearchableDropdown({
             : "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200"}
         `}
       >
-        <span className={selectedOption ? "text-gray-800 dark:text-gray-200" : "text-gray-400 dark:text-gray-500"}>
+        <span className={`flex items-center gap-2 ${selectedOption ? "text-gray-800 dark:text-gray-200" : "text-gray-400 dark:text-gray-500"}`}>
+          {selectedOption?.image && (
+            <img src={selectedOption.image} alt="" className="w-5 h-5 rounded object-cover" />
+          )}
           {selectedOption?.label || placeholder}
         </span>
         <ChevronDownIcon className="text-gray-400" />
@@ -174,8 +178,11 @@ export default function SearchableDropdown({
                           setOpen(false);
                           setSearch("");
                         }}
-                        className="px-4 py-2 text-sm cursor-pointer text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        className="px-4 py-2 text-sm cursor-pointer text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
                       >
+                        {opt.image && (
+                          <img src={opt.image} alt="" className="w-5 h-5 rounded object-cover" />
+                        )}
                         {opt.label}
                       </div>
                     ))
@@ -230,8 +237,11 @@ export default function SearchableDropdown({
                           setOpen(false);
                           setSearch("");
                         }}
-                        className="px-4 py-2 text-sm cursor-pointer text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        className="px-4 py-2 text-sm cursor-pointer text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
                       >
+                        {opt.image && (
+                          <img src={opt.image} alt="" className="w-5 h-5 rounded object-cover" />
+                        )}
                         {opt.label}
                       </div>
                     ))

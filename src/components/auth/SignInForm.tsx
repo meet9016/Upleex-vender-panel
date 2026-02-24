@@ -66,12 +66,11 @@ export default function SignInForm() {
     }
 
     setError({});
+    setIsLoading(true);
     try {
-      // Use auth service to login
-      const formdata = new FormData();
-
-      formdata.append("number", formData.mobile || "");
-      const res = await api.post(`${endPointApi.login}`, formdata);
+      const res = await api.post(`${endPointApi.login}`, {
+        number: formData.mobile
+      });
 
       if (res.data.status == 200) {
         toast.success(res.data.message);
@@ -98,11 +97,10 @@ export default function SignInForm() {
     }
     setIsLoading(true);
     try {
-      const formdata = new FormData();
-      formdata.append("number", formData.mobile);
-      formdata.append("otp", formData.otp);
-
-      const res = await api.post(`${endPointApi.login}`, formdata);
+      const res = await api.post(`${endPointApi.login}`, {
+        number: formData.mobile,
+        otp: formData.otp
+      });
 
       if (res.data.status == 200) {
         saveToken(res.data.data.token);

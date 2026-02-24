@@ -94,20 +94,21 @@ export default function AddProductPage() {
     });
 
     const [mainPreview, setMainPreview] = useState<mainImg[]>([]);
-    const [subPreview, setSubPreview] = useState<string[]>([]);
+    const [subPreview, setSubPreview] = useState<any[]>([]);
     const [categoryList, setCategoryList] = useState<Option[]>([]);
     const [subCategoryList, setSubCategoryList] = useState<Option[]>([]);
     const [productTypeOptions, setProductTypeOptions] = useState<Option[]>([]);
     const [listingTypeOptions, setListingTypeOptions] = useState<Option[]>([]);
+    const [listingTypeIdMap, setListingTypeIdMap] = useState<Record<string, string>>({});
     const [monthOptions, setMonthOptions] = useState<Option[]>([]);
     const [billingType, setBillingType] = useState<"day" | "month" | "hourly" | "">("");
 
     const [mainImage, setMainImage] = useState<File | null>(null);
     const [subImages, setSubImages] = useState<File[]>([]);
 
+    const [selectedListingType, setSelectedListingType] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
-
     // Separate validation states for each section
     const [validationErrors, setValidationErrors] = useState<{
         category?: string;
@@ -126,6 +127,17 @@ export default function AddProductPage() {
         mainImage?: string;
         billingType?: string;
     }>({});
+
+    const resolveImageUrl = (src?: string) => {
+        if (!src) return "";
+        const s = String(src);
+        if (s.startsWith("http://") || s.startsWith("https://")) return s;
+        const base = process.env.NEXT_PUBLIC_APP_URL || "";
+        if (!base) return s;
+        const trimmedBase = base.endsWith("/") ? base.slice(0, -1) : base;
+        const trimmedSrc = s.startsWith("/") ? s.slice(1) : s;
+        return `${trimmedBase}/${trimmedSrc}`;
+    };
 
     /* <!-- ========================================================== disable unavailable months ========================================================== --> */
 
@@ -234,85 +246,163 @@ export default function AddProductPage() {
 
     const handleRadioChange = (value: "day" | "month" | "hourly") => {
         setBillingType(value);
-        // Clear billing type validation error when user selects
-        if (validationErrors.billingType) {
-            setValidationErrors(prev => ({
+        // Clear unrelated fields when switching billing type
+        setFormData(prev => {
+            if (value === "day") {
+                return {
+                    ...prev,
+                    // keep day fields
+                    hourlyPrice: "",
+                    hourlyCancelPrice: "",
+                    months: [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
+                };
+            }
+            if (value === "hourly") {
+                return {
+                    ...prev,
+                    dayPrice: "",
+                    dayCancelPrice: "",
+                    months: [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
+                };
+            }
+            // value === "month"
+            return {
                 ...prev,
-                billingType: undefined
-            }));
-        }
+                dayPrice: "",
+                dayCancelPrice: "",
+                hourlyPrice: "",
+                hourlyCancelPrice: "",
+                months: prev.months?.length ? prev.months : [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
+            };
+        });
+        // Clear validation errors not relevant to selected billing type
+        setValidationErrors(prev => {
+            const next = { ...prev };
+            if (value === "day") {
+                next.hourlyPrice = undefined;
+                next.hourlyCancelPrice = undefined;
+                next.monthsFields = undefined;
+            } else if (value === "hourly") {
+                next.dayPrice = undefined;
+                next.dayCancelPrice = undefined;
+                next.monthsFields = undefined;
+            } else if (value === "month") {
+                next.dayPrice = undefined;
+                next.dayCancelPrice = undefined;
+                next.hourlyPrice = undefined;
+                next.hourlyCancelPrice = undefined;
+            }
+            next.billingType = undefined;
+            return next;
+        });
     };
 
     /* <!-- ============================================ Fetch product detail on edit mode  ============================================ --> */
 
     useEffect(() => {
-        if (!isEditMode) return;
-
         const fetchProductDetails = async () => {
-            const formData = new FormData()
-            formData.append("product_id", productId || "")
+            if (!productId) return;
+            
             try {
-                const res = await api.post(endPointApi.postVendorProductDetails, formData);
-                if (res?.data?.status == 200) {
-                    const data = res.data.data;
+                const res = await api.get(`${endPointApi.postVendorProductDetails}/${productId}`);
 
-                    setBillingType(data.product_listing_type_id === "1" ? "day" : data.product_listing_type_id === "3" ? "hourly" : "month");
+                if (res?.data?.status === 200 && res?.data?.data) {
+                    const data = res.data.data;
+                    const listingTypeName = data.product_listing_type_name?.toLowerCase();
+                    const productTypeName = data.product_type_name?.toLowerCase();
+
+                    if (productTypeName === "rent") {
+                        if (listingTypeName === "daily") {
+                            setBillingType("day");
+                        } else if (listingTypeName === "hourly") {
+                            setBillingType("hourly");
+                        } else if (listingTypeName === "monthly") {
+                            setBillingType("month");
+                        }
+                    } else {
+                        setBillingType("");
+                    }
+
+                    const monthsInit =
+                        data.month_arr?.length
+                            ? data.month_arr.map((m: any) => ({
+                                month: String(m.months_id || ""),
+                                price: String(m.price || ""),
+                                productMonthsId: String(m.product_months_id || ""),
+                                cancelPrice: String(m.cancel_price || ""),
+                            }))
+                            : [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }];
 
                     setFormData({
-                        category: String(data.category_id),
-                        subCategory: String(data.sub_category_id),
-                        listingType: String(data.product_type_id),
-                        name: data.product_name,
-                        dayPrice: data.product_listing_type_id === "1" ? data.price : "",
-                        dayCancelPrice: data.product_listing_type_id === "1" ? data.cancel_price : "",
-                        hourlyPrice: data.product_listing_type_id === "3" ? data.price : "",
-                        hourlyCancelPrice: data.product_listing_type_id === "3" ? data.cancel_price : "",
-                        monthPrice: data.product_listing_type_id === "2" ? data.price : "",
-                        monthCancelPrice: data.product_listing_type_id === "2" ? data.cancel_price : "",
-                        months: data.month_arrr?.length
-                            ? data.month_arrr.map((m: any) => ({
-                                month: String(m.months_id),
-                                price: m.price,
-                                productMonthsId: m.product_months_id,
-                                cancelPrice: m.cancel_price,
-                            }))
-                            : [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
-                        description: data.description,
+                        category: String(data.category_id || ""),
+                        subCategory: String(data.sub_category_id || ""),
+                        listingType: String(data.product_type_id || ""),
+                        name: data.product_name || "",
+                        dayPrice: productTypeName === "rent" && listingTypeName === "daily" ? String(data.price || "") : "",
+                        dayCancelPrice: productTypeName === "rent" && listingTypeName === "daily" ? String(data.cancel_price || "") : "",
+                        hourlyPrice: productTypeName === "rent" && listingTypeName === "hourly" ? String(data.price || "") : "",
+                        hourlyCancelPrice: productTypeName === "rent" && listingTypeName === "hourly" ? String(data.cancel_price || "") : "",
+                        monthPrice: productTypeName === "sell" ? String(data.price || "") : productTypeName === "rent" && listingTypeName === "monthly" ? String(data.price || "") : "",
+                        monthCancelPrice: productTypeName === "sell" ? String(data.cancel_price || "") : productTypeName === "rent" && listingTypeName === "monthly" ? String(data.cancel_price || "") : "",
+                        months: productTypeName === "rent" && listingTypeName === "monthly" ? monthsInit : [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
+                        description: data.description || "",
                         keyFeatures: data.product_details?.length
                             ? data.product_details.map((item: any) => ({
-                                specification_id: item.specification_id,
-                                key: item.specification,
-                                value: item.detail,
+                                specification_id: String(item.specification_id || ""),
+                                key: item.specification || "",
+                                value: item.detail || "",
                             }))
                             : [{ key: "", value: "" }],
                     });
 
-                    setSelectedCategory(String(data.category_id));
+                    setSelectedCategory(String(data.category_id || ""));
+                    setSelectedSubCategory(String(data.sub_category_id || ""));
+                    setSelectedListingType(data.product_type_name || null);
 
-                    const mainImg = { product_image_id: 'temp_1', image: data.product_main_image }
-                    setMainPreview([mainImg]);
+                    if (data.product_main_image) {
+                        setMainPreview([{
+                            product_image_id: 'main_img',
+                            image: resolveImageUrl(data.product_main_image)
+                        }]);
+                    }
 
-                    setSubPreview(data.images);
+                    if (data.images?.length) {
+                        const subs = data.images.map((img: any) => {
+                            if (typeof img === "string") {
+                                return { product_image_id: 'existing', image: resolveImageUrl(img) };
+                            }
+                            return {
+                                product_image_id: img.product_image_id || 'existing',
+                                image: resolveImageUrl(img.image || '')
+                            };
+                        });
+                        setSubPreview(subs);
+                        if (!data.product_main_image && subs.length) {
+                            setMainPreview([subs[0]]);
+                        }
+                    }
 
                 } else {
-                    toast.error(res?.data?.message)
+                    toast.error(res?.data?.message || "Failed to fetch product details");
                 }
             } catch (err) {
-                console.error("Error fetching Product detail to edit", err);
-            }
+                console.error("Error fetching product details:", err);
+                toast.error("Error loading product details");
+            } 
         };
 
         fetchProductDetails();
-    }, [productId, isEditMode]);
+    }, [productId]);
 
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const res = await api.post(endPointApi.postCategoryList, {});
+                const res = await api.get(endPointApi.postCategoryList, {});
                 if (res?.data?.data) {
                     const options = res.data.data.map((item: any) => ({
-                        label: item.name,
+                        label: item.categories_name,
                         value: item.id,
+                        image: item.image,
                     }));
                     setCategoryList(options);
                 }
@@ -336,14 +426,13 @@ export default function AddProductPage() {
             }
 
             try {
-                const formdata = new FormData();
-                formdata.append("category_id", String(selectedCategory));
-                const res = await api.post(endPointApi.postSubCategoryList, formdata);
+                const res = await api.get(`${endPointApi.postSubCategoryList}?categoryId=${selectedCategory}`, {});
 
                 if (res?.data?.data) {
                     const subcats = res.data.data.map((item: any) => ({
                         value: item.id,
                         label: item.name,
+                        image: item.image,
                     }));
 
                     setSubCategoryList(subcats);
@@ -369,29 +458,41 @@ export default function AddProductPage() {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const res = await api.post(endPointApi.postProductDropDownList, {});
+                const res = await api.get(endPointApi.postProductDropDownList, {});
 
-                const resData = res.data.data;
-                setProductTypeOptions(
-                    resData.products_type.map((item: any) => ({
-                        value: item.id,
-                        label: item.product_type,
-                    }))
-                );
+                const resData = res?.data;
+                if (resData) {
+                    setProductTypeOptions(
+                        resData?.products_type?.map((item: any) => ({
+                            value: item.id,
+                            label: item.product_type,
+                        })) || []
+                    );
 
-                setListingTypeOptions(
-                    resData.products_listing_type.map((item: any) => ({
-                        value: item.id,
-                        label: item.name,
-                    }))
-                );
+                    setListingTypeOptions(
+                        resData.products_listing_type?.map((item: any) => ({
+                            value: item.id,
+                            label: item.name,
+                        })) || []
+                    );
 
-                setMonthOptions(
-                    resData.products_months.map((item: any) => ({
-                        value: item.id,
-                        label: item.month_name,
-                    }))
-                );
+                    // Create mapping for listing type IDs
+                    const idMap: Record<string, string> = {};
+                    resData.products_listing_type?.forEach((item: any) => {
+                        const name = item.name?.toLowerCase();
+                        if (name === "daily") idMap["day"] = item.id;
+                        else if (name === "hourly") idMap["hourly"] = item.id;
+                        else if (name === "monthly") idMap["month"] = item.id;
+                    });
+                    setListingTypeIdMap(idMap);
+
+                    setMonthOptions(
+                        resData.products_months?.map((item: any) => ({
+                            value: item.id,
+                            label: item.month_name,
+                        })) || []
+                    );
+                }
             } catch (err) {
                 console.error("Error fetching categories", err);
             }
@@ -423,8 +524,8 @@ export default function AddProductPage() {
             errors.mainImage = "Please upload main image";
         }
 
-        // Rent Product Validation (only when listingType is "1")
-        if (formData.listingType === "1") {
+        // Rent Product Validation (only when listingType is "Rent")
+        if (selectedListingType === "Rent") {
             if (!billingType) {
                 errors.billingType = "Please select billing type (Day or Month)";
             }
@@ -485,8 +586,8 @@ export default function AddProductPage() {
             }
         }
 
-        // Sell Product Validation (only when listingType is not "1")
-        if (formData.listingType && formData.listingType !== "1") {
+        // Sell Product Validation (only when listingType is "Sell")
+        if (selectedListingType === "Sell") {
             if (!formData.monthPrice?.trim()) {
                 errors.monthPrice = "Please enter price";
             }
@@ -512,9 +613,7 @@ export default function AddProductPage() {
         try {
             const formdata = new FormData();
 
-            if (isEditMode === true) {
-                formdata.append("product_id", String(productId));
-            }
+            // Edit mode uses URL param; no need to append product_id
 
             // ---------- BASIC FIELDS ----------
             formdata.append("category_id", String(selectedCategory || formData.category));
@@ -522,20 +621,29 @@ export default function AddProductPage() {
             formdata.append("product_type_id", String(formData.listingType));
 
             // Determine listing type based on billingType
-            const listingTypeId = billingType === "month" ? "2" : billingType === "day" ? "1" : billingType === "hourly" ? "3" : "";
+            const listingTypeId =
+                billingType === "month"
+                    ? listingTypeIdMap["month"] || ""
+                    : billingType === "day"
+                        ? listingTypeIdMap["day"] || ""
+                        : billingType === "hourly"
+                            ? listingTypeIdMap["hourly"] || ""
+                            : "";
             formdata.append("product_listing_type_id", listingTypeId);
 
             formdata.append("product_name", formData.name.trim());
             formdata.append("description", formData.description.trim());
 
             // ---------- SELL FLOW ----------
-            if (formData.listingType !== "1") {
+            const isSell = selectedListingType === "Sell";
+            const isRent = selectedListingType === "Rent";
+            if (isSell) {
                 formdata.append("price", formData.monthPrice.trim());
                 formdata.append("cancel_price", formData.monthCancelPrice.trim());
             }
 
             // ---------- RENT FLOW ----------
-            if (formData.listingType === "1") {
+            if (isRent) {
                 // DAY
                 if (billingType === "day") {
                     formdata.append("price", formData.dayPrice.trim());
@@ -581,12 +689,17 @@ export default function AddProductPage() {
                 formdata.append("product_main_image", mainImage);
             }
 
-            subImages.forEach((file, index: number) => {
-                formdata.append(`image[${index}]`, file);
+            subImages.forEach((file) => {
+                formdata.append("image[]", file);
             });
 
             // ---------- API CALL ----------
-            const res = await api.post(endPointApi.postVendorAddProduct, formdata);
+            const url = isEditMode
+                ? `${endPointApi.updateVendorProductDetails}/${productId}`
+                : endPointApi.postVendorAddProduct;
+            const res = isEditMode
+                ? await api.put(url, formdata)
+                : await api.post(url, formdata);
 
             if (res?.data?.status === 200) {
                 toast.success(isEditMode ? "Product updated successfully!" : "Product added successfully!");
@@ -692,9 +805,35 @@ export default function AddProductPage() {
                             options={productTypeOptions}
                             value={formData.listingType}
                             placeholder="Select Listing Type"
-                            searchable={false}          // ❌ no search
+                            searchable={false}
                             error={!!validationErrors.listingType}
-                            onChange={(val) => handleChange("listingType", val)}
+                            onChange={(val) => {
+                                handleChange("listingType", val);
+                                const selected = productTypeOptions.find(opt => opt.value === val);
+                                const label = selected?.label || null;
+                                setSelectedListingType(label);
+                                // When switching to Sell, clear rent-specific fields
+                                if (label === "Sell") {
+                                    setBillingType("");
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        dayPrice: "",
+                                        dayCancelPrice: "",
+                                        hourlyPrice: "",
+                                        hourlyCancelPrice: "",
+                                        months: [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
+                                    }));
+                                    setValidationErrors(prev => ({
+                                        ...prev,
+                                        billingType: undefined,
+                                        dayPrice: undefined,
+                                        dayCancelPrice: undefined,
+                                        hourlyPrice: undefined,
+                                        hourlyCancelPrice: undefined,
+                                        monthsFields: undefined,
+                                    }));
+                                }
+                            }}
                             disabled={isEditMode}
                         />
 
@@ -725,7 +864,7 @@ export default function AddProductPage() {
                     </div>
 
                     {/* ================= Row 3: Rent Type ================= */}
-                    {formData?.listingType === "1" && (
+                    {selectedListingType === "Rent" && (
                         <div className="col-span-2 p-4 bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
                             <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Billing Type</Label>
                             <div className="flex items-center gap-6">
@@ -764,7 +903,7 @@ export default function AddProductPage() {
                     )}
 
                     {/* ================= Rent Flow: Day ================= */}
-                    {formData?.listingType === "1" && billingType === "day" && (
+                    {selectedListingType === "Rent" && billingType === "day" && (
                         <>
                             <div className="rounded-2xl">
                                 <Label>Day Price</Label>
@@ -803,7 +942,7 @@ export default function AddProductPage() {
                     )}
 
                     {/* ================= Rent Flow: Hourly ================= */}
-                    {formData?.listingType === "1" && billingType === "hourly" && (
+                    {selectedListingType === "Rent" && billingType === "hourly" && (
                         <>
                             <div className="rounded-2xl">
                                 <Label>Hourly Price</Label>
@@ -842,7 +981,7 @@ export default function AddProductPage() {
                     )}
 
                     {/* ================= Rent Flow: Month ================= */}
-                    {formData?.listingType === "1" && billingType === "month" && (
+                    {selectedListingType === "Rent" && billingType === "month" && (
                         <div
                             className={`col-span-2 pb-2 rounded-2xl border backdrop-blur
                                 border-gray-200 dark:border-gray-700
@@ -935,7 +1074,7 @@ export default function AddProductPage() {
                         </div>
                     )}
                     {/* ================= Sell Flow ================= */}
-                    {formData?.listingType !== "1" && formData?.listingType != null && (
+                    {selectedListingType === "Sell" && (
                         <>
                             <div className="rounded-2xl">
                                 <Label>Price</Label>

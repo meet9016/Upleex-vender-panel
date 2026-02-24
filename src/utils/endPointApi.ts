@@ -1,4 +1,5 @@
 export interface EndPointApi {
+    sendOtp: string;
     login: string;
     register: string;
     logout: string;
@@ -17,18 +18,19 @@ export interface EndPointApi {
     postProductDropDownList: string;
     postVendorAddProduct: string;
     postVendorProductDetails: string;
+    updateVendorProductDetails: string;
     postAllVendorProductList: string;
     postDeleteVendorProductList: string;
 
-    postGetQuote:string;
-    getStatus:string;
-    changeStatus:string;
-
+    postGetQuote: string;
+    getStatus: string;
+    changeStatus: string;
 }
 
 // Define and export the API endpoint object
 const endPointApi: EndPointApi = {
-    login: 'vendor-login',
+    sendOtp: 'vendor/auth/send-otp',
+    login: 'vendor/auth/vendor-login',
     register: 'auth/register',
     logout: 'auth/logout',
 
@@ -44,19 +46,19 @@ const endPointApi: EndPointApi = {
 
 
     //Category 
-    postCategoryList: 'vendor-category-list',
-    postSubCategoryList: 'vendor-sub-category-list',
-    postProductDropDownList: 'vendor-product-drop-down-list',
-    postVendorAddProduct: 'vendor-add-product',
-    postVendorProductDetails: 'vendor-product-details',
-    postAllVendorProductList: 'vendor-product-list',
-    postDeleteVendorProductList: 'vendor-delete-product',
+    postCategoryList: 'categories/getall',
+    postSubCategoryList: 'subcategories/getall',
+    postProductDropDownList: 'dropdowns',
+    postVendorAddProduct: 'products/create-product',
+    postVendorProductDetails: 'products/getById',
+    updateVendorProductDetails: 'products/update',
+    postAllVendorProductList: 'products/getall',
+    postDeleteVendorProductList: 'products/delete',
 
     // Quote
-    postGetQuote: 'vendor-product-quotes-list',
-    changeStatus:'vendor-change-quote-status',
-    getStatus:'vendor-quote-status-dropdown-list'
-
+    postGetQuote: 'quotes/getall',
+    changeStatus: 'quotes/change-status',
+    getStatus: 'quotes/status-dropdown'
 };
 
 export default endPointApi;
