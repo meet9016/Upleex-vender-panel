@@ -8,6 +8,7 @@ import { api } from '@/utils/axiosInstance';
 import endPointApi from '@/utils/endPointApi';
 import ConfirmDeleteModal from '@/components/common/ConfirmDeleteModal';
 import { CiFilter } from "react-icons/ci";
+import { toast } from 'react-toastify';
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -93,12 +94,16 @@ const ProductTable = () => {
 
   const getProductData = async (filterParams = {}) => {
     try {
-      const formData = new FormData();
+      const params = new URLSearchParams();
       Object.entries(filterParams).forEach(([key, value]) => {
-        if (value) formData.append(key, String(value));
+        if (value) params.append(key, String(value));
       });
 
-      const res = await api.post(endPointApi.postAllVendorProductList, formData);
+      const queryString = params.toString();
+      const url = queryString ? `${endPointApi.postAllVendorProductList}?${queryString}` : endPointApi.postAllVendorProductList;
+      
+      const res = await api.get(url);
+      console.log("🚀 ~ getProductData ~ res:", res)
       const products = res?.data?.data || [];
       setProductData(products);
     } catch (error) {
@@ -216,21 +221,16 @@ const ProductTable = () => {
 
   const deleteById = async (id: number | string) => {
     try {
-      const formdata = new FormData();
-      formdata.append("product_id", String(id));
-
-      const res = await api.post(endPointApi.postDeleteVendorProductList, formdata);
-      // toast.success("Deleted successfully");
-      getProductData(); // refresh table
+      const res = await api.delete(`${endPointApi.postDeleteVendorProductList}/${id}`);
+      toast.success("Deleted successfully");
+      getProductData();
     } catch (error) {
-      // toast.error("Delete failed");
+      toast.error("Delete failed");
     }
   };
 
   const confirmDelete = async () => {
-
     if (!deleteId) return;
-
     await deleteById(deleteId);
     setOpenDeleteModal(false);
     setDeleteId(null);

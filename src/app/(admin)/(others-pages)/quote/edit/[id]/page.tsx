@@ -165,31 +165,37 @@ const QuoteEditPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
       <div className="max-w-8xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 mb-3 transition-colors"
-          >
-            <FiArrowLeft className="text-lg" />
-            <span className="font-medium">Back to Quotes</span>
-          </button>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-1 bg-blue-600 rounded-full"></div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Edit Quote</h1>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Quote Details Card */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 mb-5 border border-gray-200 dark:border-gray-700">
-          <h2 className="text-base font-semibold text-gray-800 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
-            Quote Information
-          </h2>
-          
+          <div className="flex items-center gap-4 mb-6">
+
+            {/* Back Arrow */}
+            <button
+              onClick={() => router.back()}
+              className="p-2 rounded-lg border border-gray-200 dark:border-gray-600
+        text-gray-600 dark:text-gray-300
+        hover:bg-gray-100 dark:hover:bg-gray-800
+        transition"
+            >
+              <FiArrowLeft className="text-lg" />
+            </button>
+
+
+            {/* Blue Line + Title */}
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-1 bg-blue-600 rounded-full"></div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+                  Edit Quote
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Quote Information
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Product Info with Image */}
             <div className="md:col-span-2 lg:col-span-4 flex gap-4 p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
