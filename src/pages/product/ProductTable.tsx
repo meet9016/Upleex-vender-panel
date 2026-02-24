@@ -103,9 +103,23 @@ const ProductTable = () => {
       const url = queryString ? `${endPointApi.postAllVendorProductList}?${queryString}` : endPointApi.postAllVendorProductList;
       
       const res = await api.get(url);
-      console.log("🚀 ~ getProductData ~ res:", res)
       const products = res?.data?.data || [];
-      setProductData(products);
+      const normalized = products.map((p: any) => {
+        let price = p.price;
+        let cancel_price = p.cancel_price;
+        if (
+          p.product_type_name === 'Rent' &&
+          String(p.product_listing_type_name || '').toLowerCase() === 'monthly' &&
+          Array.isArray(p.month_arr) &&
+          p.month_arr.length
+        ) {
+          const first = p.month_arr[0];
+          price = first?.price ?? price;
+          cancel_price = first?.cancel_price ?? cancel_price;
+        }
+        return { ...p, price, cancel_price };
+      });
+      setProductData(normalized);
     } catch (error) {
       console.log("fetch error", error);
     }
@@ -120,7 +134,7 @@ const ProductTable = () => {
       
       setCategories(categoryRes?.data?.data || []);
       
-      const dropdownData = productDropdownRes?.data?.data;
+      const dropdownData = productDropdownRes?.data?.data || productDropdownRes?.data;
       setProductTypes(dropdownData?.products_type || []);
       setListingTypes(dropdownData?.products_listing_type || []);
     } catch (error) {
@@ -189,11 +203,24 @@ const ProductTable = () => {
   }, []);
 
   const applyFilters = () => {
+    const rentSell =
+      filters.product_type_id
+        ? (
+            productTypes.find(t => t.id === filters.product_type_id)?.product_type || ''
+          ).toLowerCase() === 'rent'
+          ? '1'
+          : (
+              productTypes.find(t => t.id === filters.product_type_id)?.product_type || ''
+            ).toLowerCase() === 'sell'
+          ? '2'
+          : ''
+        : '';
+
     const params: any = {
       category_id: filters.category_id,
       sub_category_id: filters.sub_category_id,
-      product_type: filters.product_type_id,
-      listing_type: filters.product_listing_type_id
+      filter_rent_sell: rentSell,
+      filter_tenure: filters.product_listing_type_id,
     };
     if (searchText) params.search = searchText;
     getProductData(params);
