@@ -1009,9 +1009,9 @@ span.flatpickr-weekday,
   margin: 0 auto !important;
 }
 
-/* Alternative approach - target specific checkbox cell */
 .ag-cell.ag-cell-first-right-pinned {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+
 }
