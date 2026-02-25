@@ -63,16 +63,20 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
 
   // IMPORTANT: No flex property for Quotes table
   const defaultColDef = useMemo(
-    () => ({
-      sortable: true,
-      resizable: true,
-      cellStyle: { display: 'flex', alignItems: 'center', paddingLeft: '16px' },
-      headerClass: "ag-left-aligned-header",
-      cellClass: "ag-cell-with-border",
-      // REMOVED flex: 1 - This was causing the issue
-    }),
-    []
-  );
+  () => ({
+    sortable: true,
+    resizable: true,
+    cellStyle: { 
+      display: 'flex', 
+      alignItems: 'center', 
+      // justifyContent: 'center', // ADD THIS
+      paddingLeft: '16px' 
+    },
+    headerClass: "ag-left-aligned-header",
+    cellClass: "ag-cell-with-border",
+  }),
+  []
+);
 
   const defaultColumns: ColDef[] = useMemo(
     () => [
@@ -148,7 +152,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
           <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'}`}
         style={{ width: "100%", height: "80vh" }}>
         <AgGridReact
-          rowHeight={tableName === "Quotes" ? 60 : 35}
+          rowHeight={60}
           ref={gridRef}
           rowData={rowData}
           columnDefs={columns || defaultColumns}

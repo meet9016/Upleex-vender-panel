@@ -110,7 +110,7 @@ const QuoteTable = () => {
     {
       headerName: "Product",
       field: "product_name",
-      width: 240,
+      width: 300,
       sortable: true,
       cellRenderer: (params: any) => {
         const imageUrl = params.data?.product_main_image;
