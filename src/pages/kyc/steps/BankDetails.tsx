@@ -180,16 +180,6 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
                 />
               </div>
               
-              {/* Add Button */}
-              <button
-                type="button"
-                onClick={() => setIsPopupOpen(true)}
-                className="px-3 py-2 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 transition-colors flex items-center justify-center border border-primary-200"
-                title="Add New Account Type"
-                disabled={loading}
-              >
-                <PlusIcon className="w-5 h-5" />
-              </button>
             </div>
 
             {errors?.account_type && (
