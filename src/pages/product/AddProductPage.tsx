@@ -681,7 +681,7 @@ export default function AddProductPage() {
             }
 
             subImages.forEach((file) => {
-                formdata.append("image[]", file);
+                formdata.append("image", file);
             });
 
             // ---------- API CALL ----------
