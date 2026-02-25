@@ -4,18 +4,12 @@ import { useParams, useRouter } from "next/navigation";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { FiCalendar, FiImage, FiVideo, FiArrowLeft, FiX } from "react-icons/fi";
-interface QuoteEditPageProps {
-  params: {
-    id: string;
-  };
-}
 
 const QuoteEditPage = () => {
   const params = useParams();
   const router = useRouter();
   const [quoteData, setQuoteData] = useState<any>(null);
-    const [statuses, setStatuses] = useState<any[]>([]);
-    console.log("🚀 ~ QuoteEditPage ~ statuses:", statuses)
+  const [statuses, setStatuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     start_date: "",
@@ -31,7 +25,7 @@ const QuoteEditPage = () => {
   const [returnImagePreview, setReturnImagePreview] = useState<string | null>(null);
   const [returnVideoPreview, setReturnVideoPreview] = useState<string | null>(null);
 
-   const getStatuses = async () => {
+  const getStatuses = async () => {
     try {
       const res = await api.post(endPointApi.getStatus);
       if (res?.data?.status === 200) {
@@ -41,20 +35,46 @@ const QuoteEditPage = () => {
       console.log("fetch statuses error:", error);
     }
   };
+
   const getQuoteById = async () => {
     if (!params?.id) return;
-    
     try {
       setLoading(true);
-      const res = await api.post(endPointApi.postGetQuote);
-
-      if (res?.data?.status === 200) {
-        const quote = res.data.data.find((item: any) => item.quote_id === params.id);
-        setQuoteData(quote);
+      const res = await api.get(`${endPointApi.getQuoteById}/${params.id}`);
+      console.log("🚀 ~ API Response:", res.data);
+      
+      if (res?.data?.success && res?.data?.data) {
+        const quote = res.data.data;
+        
+        // Extract product details from nested product_id object
+        const productDetails = quote.product_id || {};
+        
+        // Transform the data to include flattened product fields
+        const transformedQuote = {
+          ...quote,
+          product_name: productDetails.product_name || 'N/A',
+          product_type_name: productDetails.product_type_name || 'N/A',
+          product_listing_type_name: productDetails.product_listing_type_name || 'N/A',
+          price: productDetails.price || '0',
+          product_main_image: productDetails.product_main_image || '',
+          category_name: productDetails.category_name || '',
+          sub_category_name: productDetails.sub_category_name || '',
+          description: productDetails.description || '',
+          total_price: quote.qty && productDetails.price 
+            ? (parseInt(quote.qty) * parseFloat(productDetails.price)).toString() 
+            : '0',
+          delivery_date: quote.delivery_date 
+            ? new Date(quote.delivery_date).toLocaleDateString() 
+            : 'N/A',
+        };
+        
+        console.log("🚀 ~ Transformed Quote:", transformedQuote);
+        setQuoteData(transformedQuote);
+        
         setFormData({
           start_date: quote?.start_date || "",
           end_date: quote?.end_date || "",
-           status: quote?.status || "", 
+          status: quote?.status || "",
           image: null,
           video: null,
           return_image: null,
@@ -68,10 +88,27 @@ const QuoteEditPage = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const toEnum = (name: string) => {
+    const n = (name || '').toLowerCase();
+    if (n.includes('approve')) return 'approval';
+    if (n.includes('reject')) return 'reject';
+    if (n.includes('complete')) return 'complete';
+    return 'pending';
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form Data:", formData);
-    alert("Form submitted successfully!");
+    try {
+      const body: any = {};
+      if (formData.status) body.status = formData.status;
+      
+      const res = await api.put(`${endPointApi.updateQuote}/${params.id}`, body);
+      if (res?.data?.success) {
+        router.back();
+      }
+    } catch (err) {
+      console.error('Update quote error', err);
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,7 +218,6 @@ const QuoteEditPage = () => {
               <FiArrowLeft className="text-lg" />
             </button>
 
-
             {/* Blue Line + Title */}
             <div className="flex items-center gap-3">
               <div className="h-12 w-1 bg-blue-600 rounded-full"></div>
@@ -252,7 +288,9 @@ const QuoteEditPage = () => {
             {/* Month */}
             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Month</p>
-              <p className="text-base font-semibold text-gray-800 dark:text-white">{quoteData.month_name}</p>
+              <p className="text-base font-semibold text-gray-800 dark:text-white">
+                {quoteData.month_name || quoteData.months_id || 'N/A'}
+              </p>
             </div>
 
             {/* Status */}
@@ -265,7 +303,7 @@ const QuoteEditPage = () => {
               >
                 <option value="">Select Status</option>
                 {statuses.map((status) => (
-                  <option key={status._id || status.id} value={status._id || status.id}>
+                  <option key={status._id || status.id} value={toEnum(status.name)}>
                     {status.name}
                   </option>
                 ))}
@@ -438,8 +476,8 @@ const QuoteEditPage = () => {
             </button>
           </form>
         </div>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 };
 

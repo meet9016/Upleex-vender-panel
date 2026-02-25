@@ -3,12 +3,14 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation';
 import AgGridTable from '@/components/tables/AgGridTable';
 import { ColDef } from 'ag-grid-community';
-import { MdDelete, MdModeEdit, MdClose, MdSearch, MdKeyboardArrowDown, MdCheck } from "react-icons/md";
+import { MdDelete, MdModeEdit, MdClose, MdSearch } from "react-icons/md";
 import { api } from '@/utils/axiosInstance';
 import endPointApi from '@/utils/endPointApi';
 import ConfirmDeleteModal from '@/components/common/ConfirmDeleteModal';
 import { CiFilter } from "react-icons/ci";
 import { toast } from 'react-toastify';
+import SearchableDropdown from '@/components/common/SearchableDropdown';
+import Label from '@/components/form/Label';
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -18,6 +20,7 @@ function useDebounce<T>(value: T, delay: number = 500): T {
   }, [value, delay]);
   return debouncedValue;
 }
+
 type Product = {
   id: string;
   product_name: string;
@@ -29,45 +32,120 @@ type Product = {
   price: number;
 };
 
+type Category = {
+  _id?: string;
+  id?: string;
+  categories_id?: string;
+  categories_name?: string;
+  name?: string;
+  subcategories?: Array<{
+    subcategory_id: string;
+    subcategory_name: string;
+  }>;
+};
+
+type Option = {
+  label: string;
+  value: string;
+};
+
 const ProductTable = () => {
   const router = useRouter();
   const [productData, setProductData] = useState<Product[]>([]);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const filterModalRef = useRef<HTMLDivElement>(null);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const [searchText, setSearchText] = useState('');
-  const [categories, setCategories] = useState<any[]>([]);
-  const [subCategories, setSubCategories] = useState<any[]>([]);
+  
+  // Filter dropdown data
+  const [categoriesData, setCategoriesData] = useState<Category[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
+  const [subCategoryOptions, setSubCategoryOptions] = useState<Option[]>([]);
   const [productTypes, setProductTypes] = useState<any[]>([]);
   const [listingTypes, setListingTypes] = useState<any[]>([]);
-  const [filters, setFilters] = useState({
+  
+  // Filter state - matching backend parameters (these are the applied filters)
+  const [appliedFilters, setAppliedFilters] = useState({
     category_id: '',
     sub_category_id: '',
-    product_type_id: '',
-    product_listing_type_id: '',
+    filter_rent_sell: '', // 1 for Rent, 2 for Sell
+    filter_tenure: '', // listing type id for Daily/Monthly/Hourly
   });
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const debouncedSearch = useDebounce(searchText, 600);
 
-  const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
+  // Temporary filter state for modal (changes before apply)
+  const [tempFilters, setTempFilters] = useState({
+    category_id: '',
+    sub_category_id: '',
+    filter_rent_sell: '',
+    filter_tenure: '',
+  });
+
+  // Selected values for dropdowns in modal
+  const [tempSelectedCategory, setTempSelectedCategory] = useState<string>('');
+  const [tempSelectedSubCategory, setTempSelectedSubCategory] = useState<string>('');
+
+  const debouncedSearch = useDebounce(searchText, 600);
+  
+  // Count active filters (excluding empty strings)
+  const activeFilterCount = Object.values(appliedFilters).filter(v => v !== '').length;
+
   const columns: ColDef[] = [
-    { field: "product_name", headerName: "Product Name", minWidth: 200, cellStyle: { textAlign: "center" } },
-    { field: "category_name", headerName: "Category Name", minWidth: 200, cellStyle: { textAlign: "center" } },
-    { field: "sub_category_name", headerName: "Sub Category", minWidth: 200, cellStyle: { textAlign: "center" } },
-    { field: "product_type_name", headerName: "Product Type", minWidth: 100, cellStyle: { textAlign: "center" } },
-    { field: "price", headerName: "Price", minWidth: 100, cellStyle: { textAlign: "center" } },
-    { field: "cancel_price", headerName: "Cancel Price", minWidth: 100, cellStyle: { textAlign: "center" } },
-    { field: "product_listing_type_name", headerName: "Listing Type", minWidth: 150, cellStyle: { textAlign: "center" } },
+    { 
+      field: "product_name", 
+      headerName: "Product Name", 
+      minWidth: 200, 
+      cellStyle: { textAlign: "center" } 
+    },
+    { 
+      field: "category_name", 
+      headerName: "Category", 
+      minWidth: 180, 
+      cellStyle: { textAlign: "center" } 
+    },
+    { 
+      field: "sub_category_name", 
+      headerName: "Sub Category", 
+      minWidth: 180, 
+      cellStyle: { textAlign: "center" } 
+    },
+    { 
+      field: "product_type_name", 
+      headerName: "Type", 
+      minWidth: 120, 
+      cellStyle: { textAlign: "center" } 
+    },
+    { 
+      field: "price", 
+      headerName: "Price", 
+      minWidth: 120,
+      valueFormatter: (params) => {
+        return params.value ? `₹${Number(params.value).toFixed(2)}` : '₹0.00';
+      },
+      cellStyle: { textAlign: "center" } 
+    },
+    { 
+      field: "cancel_price", 
+      headerName: "Cancel Price", 
+      minWidth: 120,
+      valueFormatter: (params) => {
+        return params.value ? `₹${Number(params.value).toFixed(2)}` : '₹0.00';
+      },
+      cellStyle: { textAlign: "center" } 
+    },
+    { 
+      field: "product_listing_type_name", 
+      headerName: "Listing Type", 
+      minWidth: 150, 
+      cellStyle: { textAlign: "center" } 
+    },
     {
       headerName: "Action",
-      // pinned: "right",
-      minWidth: 80,
+      minWidth: 120,
       cellStyle: { textAlign: "center" },
       cellRenderer: (params: any) => {
-        const id = params.data.product_id;
-
+        const id = params.data._id || params.data.id;
         return (
           <div className="flex items-center justify-center gap-3 w-full h-full">
             <button
@@ -77,7 +155,6 @@ const ProductTable = () => {
             >
               <MdModeEdit className="text-base" />
             </button>
-
             <button
               onClick={() => openDeletePopup(id)}
               className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-[#E55353] text-[#E55353] hover:bg-[#E55353] hover:text-white transition"
@@ -86,30 +163,42 @@ const ProductTable = () => {
               <MdDelete className="text-base" />
             </button>
           </div>
-
         );
       },
     },
   ];
 
+  // Fetch products with filters
   const getProductData = async (filterParams = {}) => {
     try {
       const params = new URLSearchParams();
+      
+      // Add all non-empty filter parameters
       Object.entries(filterParams).forEach(([key, value]) => {
-        if (value) params.append(key, String(value));
+        if (value && value !== '') {
+          params.append(key, String(value));
+        }
       });
 
       const queryString = params.toString();
-      const url = queryString ? `${endPointApi.postAllVendorProductList}?${queryString}` : endPointApi.postAllVendorProductList;
+      const url = queryString 
+        ? `${endPointApi.postAllVendorProductList}?${queryString}` 
+        : endPointApi.postAllVendorProductList;
+      
+      console.log("Fetching products with URL:", url);
       
       const res = await api.get(url);
       const products = res?.data?.data || [];
+      
+      // Normalize product data
       const normalized = products.map((p: any) => {
         let price = p.price;
         let cancel_price = p.cancel_price;
+        
+        // Handle rent products with monthly pricing
         if (
-          p.product_type_name === 'Rent' &&
-          String(p.product_listing_type_name || '').toLowerCase() === 'monthly' &&
+          p.product_type_name?.toLowerCase() === 'rent' &&
+          p.product_listing_type_name?.toLowerCase() === 'monthly' &&
           Array.isArray(p.month_arr) &&
           p.month_arr.length
         ) {
@@ -117,84 +206,156 @@ const ProductTable = () => {
           price = first?.price ?? price;
           cancel_price = first?.cancel_price ?? cancel_price;
         }
-        return { ...p, price, cancel_price };
+        
+        return { 
+          ...p, 
+          price, 
+          cancel_price, 
+          id: p._id || p.id 
+        };
       });
+      
       setProductData(normalized);
     } catch (error) {
       console.log("fetch error", error);
+      toast.error("Failed to fetch products");
     }
   };
 
+  // Fetch categories
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get(endPointApi.postCategoryList);
+      if (res?.data?.data) {
+        const list = res.data.data || [];
+        setCategoriesData(list);
+        
+        // Create options for SearchableDropdown without images
+        const options = list.map((item: any) => ({
+          label: item.categories_name || item.name,
+          value: String(item.categories_id || item.id || item._id),
+        }));
+        setCategoryOptions(options);
+      }
+    } catch (error) {
+      console.log("Error fetching categories", error);
+    }
+  };
+
+  // Fetch product dropdown data
   const fetchDropdownData = async () => {
     try {
-      const [categoryRes, productDropdownRes] = await Promise.all([
-        api.post(endPointApi.postCategoryList),
-        api.post(endPointApi.postProductDropDownList)
-      ]);
-      
-      setCategories(categoryRes?.data?.data || []);
-      
+      const productDropdownRes = await api.post(endPointApi.postProductDropDownList);
       const dropdownData = productDropdownRes?.data?.data || productDropdownRes?.data;
-      setProductTypes(dropdownData?.products_type || []);
-      setListingTypes(dropdownData?.products_listing_type || []);
+      
+      // Set product types
+      if (dropdownData?.products_type) {
+        setProductTypes(dropdownData.products_type);
+      } else if (dropdownData?.product_type) {
+        setProductTypes(dropdownData.product_type);
+      }
+      
+      // Set listing types
+      if (dropdownData?.products_listing_type) {
+        setListingTypes(dropdownData.products_listing_type);
+      } else if (dropdownData?.listing_type) {
+        setListingTypes(dropdownData.listing_type);
+      }
     } catch (error) {
       console.log("fetch dropdown error", error);
+      toast.error("Failed to load filter options");
     }
   };
 
-  const fetchSubCategories = async (categoryId: string) => {
-    try {
-      const formData = new FormData();
-      formData.append('category_id', categoryId);
-      const res = await api.post(endPointApi.postSubCategoryList, formData);
-      setSubCategories(res?.data?.data || []);
-    } catch (error) {
-      console.log("fetch subcategory error", error);
+  // Update subcategories when temp category changes
+  useEffect(() => {
+    if (!tempSelectedCategory) {
+      setSubCategoryOptions([]);
+      setTempSelectedSubCategory('');
+      setTempFilters(prev => ({ ...prev, sub_category_id: '' }));
+      return;
     }
+
+    const cat = categoriesData.find((c: any) => 
+      String(c.categories_id || c.id || c._id) === String(tempSelectedCategory)
+    );
+    
+    const subcats = (cat?.subcategories || []).map((item: any) => ({
+      value: String(item.subcategory_id || item.id),
+      label: item.subcategory_name || item.name,
+    }));
+
+    setSubCategoryOptions(subcats);
+    
+    // Reset subcategory filter when category changes
+    setTempSelectedSubCategory('');
+    setTempFilters(prev => ({ ...prev, sub_category_id: '' }));
+  }, [tempSelectedCategory, categoriesData]);
+
+  // Handle category change in modal
+  const handleTempCategoryChange = (value: string) => {
+    setTempSelectedCategory(value);
+    setTempFilters(prev => ({ ...prev, category_id: value }));
   };
 
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-    if (key === 'category_id') {
-      setFilters(prev => ({ ...prev, sub_category_id: '' }));
-      if (value) fetchSubCategories(value);
-      else setSubCategories([]);
-    }
-    setOpenDropdown(null);
+  // Handle subcategory change in modal
+  const handleTempSubCategoryChange = (value: string) => {
+    setTempSelectedSubCategory(value);
+    setTempFilters(prev => ({ ...prev, sub_category_id: value }));
   };
 
-  const getSelectedLabel = (key: string) => {
-    const value = filters[key as keyof typeof filters];
-    if (!value) return null;
-
-    switch (key) {
-      case 'category_id':
-        return categories.find(c => c.id === value)?.name;
-      case 'sub_category_id':
-        return subCategories.find(s => s.id === value)?.name;
-      case 'product_type_id':
-        return productTypes.find(t => t.id === value)?.product_type;
-      case 'product_listing_type_id':
-        return listingTypes.find(l => l.id === value)?.name;
-      default:
-        return null;
-    }
+  // Handle product type change in modal
+  const handleTempProductTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { value } = e.target;
+    setTempFilters(prev => ({ ...prev, filter_rent_sell: value }));
   };
 
+  // Handle listing type change in modal
+  const handleTempListingTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { value } = e.target;
+    setTempFilters(prev => ({ ...prev, filter_tenure: value }));
+  };
+
+  // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchText(e.target.value);
   };
+
+  // Apply filters when search debounce changes (only search applies on typing)
   useEffect(() => {
     const params: any = {};
-    if (debouncedSearch) params.search = debouncedSearch;
+    
+    // Add search parameter if exists
+    if (debouncedSearch && debouncedSearch.trim() !== '') {
+      params.search = debouncedSearch.trim();
+    }
+    
+    // Add applied filters (these are from the Apply button)
+    if (appliedFilters.category_id) {
+      params.category_id = appliedFilters.category_id;
+    }
+    
+    if (appliedFilters.sub_category_id) {
+      params.sub_category_id = appliedFilters.sub_category_id;
+    }
+    
+    if (appliedFilters.filter_rent_sell) {
+      params.filter_rent_sell = appliedFilters.filter_rent_sell;
+    }
+    
+    if (appliedFilters.filter_tenure) {
+      params.filter_tenure = appliedFilters.filter_tenure;
+    }
+    
+    console.log("Applying filters:", params);
     getProductData(params);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, appliedFilters]);
 
+  // Handle click outside to close modal
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
-        filterButtonRef.current && !filterButtonRef.current.contains(event.target as Node)) {
-        setOpenDropdown(null);
+      if (filterModalRef.current && !filterModalRef.current.contains(event.target as Node) &&
+          filterButtonRef.current && !filterButtonRef.current.contains(event.target as Node)) {
         setShowFilterModal(false);
       }
     };
@@ -202,60 +363,46 @@ const ProductTable = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const applyFilters = () => {
-    const rentSell =
-      filters.product_type_id
-        ? (
-            productTypes.find(t => t.id === filters.product_type_id)?.product_type || ''
-          ).toLowerCase() === 'rent'
-          ? '1'
-          : (
-              productTypes.find(t => t.id === filters.product_type_id)?.product_type || ''
-            ).toLowerCase() === 'sell'
-          ? '2'
-          : ''
-        : '';
-
-    const params: any = {
-      category_id: filters.category_id,
-      sub_category_id: filters.sub_category_id,
-      filter_rent_sell: rentSell,
-      filter_tenure: filters.product_listing_type_id,
-    };
-    if (searchText) params.search = searchText;
-    getProductData(params);
-    setShowFilterModal(false);
-  };
-
-  const clearFilters = () => {
-    setFilters({ category_id: '', sub_category_id: '', product_type_id: '', product_listing_type_id: '' });
-    setSearchText('');
-    setSubCategories([]);
-    getProductData();
-    setShowFilterModal(false);
-  };
-
+  // Initial data fetch
   useEffect(() => {
     getProductData();
+    fetchCategories();
     fetchDropdownData();
   }, []);
 
-  const openDeletePopup = (id: number) => {
+  // Open filter modal and set temp values to current applied filters
+  const openFilterModal = () => {
+    setTempFilters({ ...appliedFilters });
+    setTempSelectedCategory(appliedFilters.category_id);
+    setTempSelectedSubCategory(appliedFilters.sub_category_id);
+    setShowFilterModal(true);
+  };
 
+  // Apply filters from modal
+  const applyFilters = () => {
+    setAppliedFilters({ ...tempFilters });
+    setShowFilterModal(false);
+  };
+
+  // Open delete confirmation modal
+  const openDeletePopup = (id: string) => {
     setDeleteId(id);
     setOpenDeleteModal(true);
   };
 
-  const deleteById = async (id: number | string) => {
+  // Delete product by ID
+  const deleteById = async (id: string | number) => {
     try {
       const res = await api.delete(`${endPointApi.postDeleteVendorProductList}/${id}`);
       toast.success("Deleted successfully");
       getProductData();
     } catch (error) {
+      console.log("Delete error:", error);
       toast.error("Delete failed");
     }
   };
 
+  // Confirm delete
   const confirmDelete = async () => {
     if (!deleteId) return;
     await deleteById(deleteId);
@@ -263,11 +410,37 @@ const ProductTable = () => {
     setDeleteId(null);
   };
 
+  // Clear all filters
+  const clearFilters = () => {
+    setTempSelectedCategory('');
+    setTempSelectedSubCategory('');
+    setTempFilters({ 
+      category_id: '', 
+      sub_category_id: '', 
+      filter_rent_sell: '', 
+      filter_tenure: '' 
+    });
+    setSubCategoryOptions([]);
+  };
+
+  // Reset all filters (from clear all button)
+  const resetAllFilters = () => {
+    setAppliedFilters({ 
+      category_id: '', 
+      sub_category_id: '', 
+      filter_rent_sell: '', 
+      filter_tenure: '' 
+    });
+    setSearchText('');
+    setShowFilterModal(false);
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Product</h2>
+        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Products</h2>
         <div className="flex items-center gap-3">
+          {/* Search Input */}
           <div className="relative">
             <input
               type="text"
@@ -283,191 +456,138 @@ const ProductTable = () => {
           <div className="relative">
             <button
               ref={filterButtonRef}
-              onClick={() => setShowFilterModal(!showFilterModal)}
+              onClick={openFilterModal}
               className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2 relative"
             >
-              <CiFilter  size={20} />
+              <CiFilter size={20} />
               Filter
               {activeFilterCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                   {activeFilterCount}
                 </span>
               )}
             </button>
 
-            {/* Filter Dropdown */}
+            {/* Filter Modal */}
             {showFilterModal && (
-              <div ref={dropdownRef} className="absolute right-[-180px] top-full mt-2 bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-[300px] z-50 border border-gray-200 dark:border-gray-700">
-                <div className="p-4">
+              <div 
+                ref={filterModalRef} 
+                className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl w-96 z-50 border border-gray-200 dark:border-gray-700"
+              >
+                <div className="p-5">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Filter Products</h3>
-                    <button onClick={() => setShowFilterModal(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
-                      <MdClose size={20} className="text-gray-500" />
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Filter Products</h3>
+                    <button 
+                      onClick={() => setShowFilterModal(false)} 
+                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                    >
+                      <MdClose size={18} className="text-gray-500" />
                     </button>
                   </div>
 
-                  <div className="flex flex-col gap-3">
-                    {/* Category */}
+                  <div className="space-y-4">
+                    {/* Category Filter */}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Category</label>
-                      <div className="relative">
-                        <button
-                          onClick={() => setOpenDropdown(openDropdown === 'category' ? null : 'category')}
-                          className="w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left flex justify-between items-center hover:border-blue-500 transition-all text-sm"
-                        >
-                          <span className={filters.category_id ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
-                            {getSelectedLabel('category_id') || 'Select'}
-                          </span>
-                          <MdKeyboardArrowDown className={`transition-transform ${openDropdown === 'category' ? 'rotate-180' : ''}`} size={18} />
-                        </button>
-                        {openDropdown === 'category' && (
-                          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            <div onClick={() => handleFilterChange('category_id', '')} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center text-sm">
-                              <span>Select Category</span>
-                              {!filters.category_id && <MdCheck className="text-blue-600" size={16} />}
-                            </div>
-                            {categories.map((cat: any) => (
-                              <div key={cat.id} onClick={() => handleFilterChange('category_id', cat.id)} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-t border-gray-100 dark:border-gray-700 text-sm">
-                                <span>{cat.name}</span>
-                                {filters.category_id === cat.id && <MdCheck className="text-blue-600" size={16} />}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <Label className="font-semibold mb-2">Category</Label>
+                      <SearchableDropdown
+                        searchable
+                        options={categoryOptions}
+                        value={tempSelectedCategory}
+                        placeholder="Select category"
+                        onChange={handleTempCategoryChange}
+                      />
                     </div>
 
-                    {/* Sub Category */}
+                    {/* Sub Category Filter */}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Sub Category</label>
-                      <div className="relative">
-                        <button
-                          onClick={() => filters.category_id && setOpenDropdown(openDropdown === 'subcategory' ? null : 'subcategory')}
-                          disabled={!filters.category_id}
-                          className="w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left flex justify-between items-center hover:border-blue-500 transition-all disabled:opacity-50 text-sm"
-                        >
-                          <span className={filters.sub_category_id ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
-                            {getSelectedLabel('sub_category_id') || 'Select'}
-                          </span>
-                          <MdKeyboardArrowDown className={`transition-transform ${openDropdown === 'subcategory' ? 'rotate-180' : ''}`} size={18} />
-                        </button>
-                        {openDropdown === 'subcategory' && filters.category_id && (
-                          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            <div onClick={() => handleFilterChange('sub_category_id', '')} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center text-sm">
-                              <span>Select Sub Category</span>
-                              {!filters.sub_category_id && <MdCheck className="text-blue-600" size={16} />}
-                            </div>
-                            {subCategories.map((sub: any) => (
-                              <div key={sub.id} onClick={() => handleFilterChange('sub_category_id', sub.id)} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-t border-gray-100 dark:border-gray-700 text-sm">
-                                <span>{sub.name}</span>
-                                {filters.sub_category_id === sub.id && <MdCheck className="text-blue-600" size={16} />}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                        Sub Category
+                      </Label>
+                      <SearchableDropdown
+                        searchable
+                        options={subCategoryOptions}
+                        value={tempSelectedSubCategory}
+                        placeholder={tempSelectedCategory ? "Search sub category..." : "Select category first"}
+                        error={!tempSelectedCategory}
+                        onChange={handleTempSubCategoryChange}
+                        disabled={!tempSelectedCategory}
+                      />
+                      {!tempSelectedCategory && (
+                        <p className="text-gray-500 text-xs mt-1">Please select a category first</p>
+                      )}
                     </div>
 
-                    {/* Product Type */}
+                    {/* Product Type Filter (Rent/Sell) */}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Product Type</label>
-                      <div className="relative">
-                        <button
-                          onClick={() => setOpenDropdown(openDropdown === 'producttype' ? null : 'producttype')}
-                          className="w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left flex justify-between items-center hover:border-blue-500 transition-all text-sm"
-                        >
-                          <span className={filters.product_type_id ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
-                            {getSelectedLabel('product_type_id') || 'Select'}
-                          </span>
-                          <MdKeyboardArrowDown className={`transition-transform ${openDropdown === 'producttype' ? 'rotate-180' : ''}`} size={18} />
-                        </button>
-                        {openDropdown === 'producttype' && (
-                          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            <div onClick={() => handleFilterChange('product_type_id', '')} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center text-sm">
-                              <span>Select Product Type</span>
-                              {!filters.product_type_id && <MdCheck className="text-blue-600" size={16} />}
-                            </div>
-                            {productTypes.map((type: any) => (
-                              <div key={type.id} onClick={() => handleFilterChange('product_type_id', type.id)} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-t border-gray-100 dark:border-gray-700 text-sm">
-                                <span>{type.product_type}</span>
-                                {filters.product_type_id === type.id && <MdCheck className="text-blue-600" size={16} />}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <Label className="font-semibold mb-2">Product Type</Label>
+                      <select
+                        value={tempFilters.filter_rent_sell}
+                        onChange={handleTempProductTypeChange}
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">All Types</option>
+                        <option value="1">Rent</option>
+                        <option value="2">Sell</option>
+                      </select>
                     </div>
 
-                    {/* Listing Type */}
+                    {/* Listing Type Filter (Tenure) */}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Listing Type</label>
-                      <div className="relative">
-                        <button
-                          onClick={() => setOpenDropdown(openDropdown === 'listingtype' ? null : 'listingtype')}
-                          className="w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left flex justify-between items-center hover:border-blue-500 transition-all text-sm"
-                        >
-                          <span className={filters.product_listing_type_id ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
-                            {getSelectedLabel('product_listing_type_id') || 'Select'}
-                          </span>
-                          <MdKeyboardArrowDown className={`transition-transform ${openDropdown === 'listingtype' ? 'rotate-180' : ''}`} size={18} />
-                        </button>
-                        {openDropdown === 'listingtype' && (
-                          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            <div onClick={() => handleFilterChange('product_listing_type_id', '')} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center text-sm">
-                              <span>Select Listing Type</span>
-                              {!filters.product_listing_type_id && <MdCheck className="text-blue-600" size={16} />}
-                            </div>
-                            {listingTypes.map((type: any) => (
-                              <div key={type.id} onClick={() => handleFilterChange('product_listing_type_id', type.id)} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-t border-gray-100 dark:border-gray-700 text-sm">
-                                <span>{type.name}</span>
-                                {filters.product_listing_type_id === type.id && <MdCheck className="text-blue-600" size={16} />}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <Label className="font-semibold mb-2">Listing Type</Label>
+                      <select
+                        value={tempFilters.filter_tenure}
+                        onChange={handleTempListingTypeChange}
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">All Listing Types</option>
+                        {listingTypes.map((type: any) => (
+                          <option key={type.id || type._id} value={type.id || type._id}>
+                            {type.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
                       onClick={clearFilters}
-                      className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium"
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
-                      Clear
+                      Clear All
                     </button>
-
                     <button
                       onClick={applyFilters}
-                      className="w-full px-3 py-1.5 btn-primary text-white rounded-lg text-sm font-medium"
+                      className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
                     >
                       Apply
                     </button>
-
                   </div>
                 </div>
               </div>
             )}
           </div>
 
+          {/* Add Product Button */}
           <button
             onClick={() => router.push('/product/addProduct')}
-            className="px-4 py-2 btn-primary  text-white rounded-lg transition-colors font-medium"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
           >
             + Add Product
           </button>
         </div>
       </div>
 
-
+      {/* Products Table */}
       <AgGridTable
         columns={columns}
         rowData={productData}
         filter={false}
-        tableName={""}
+        tableName="Products"
       />
+      
+      {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
         open={openDeleteModal}
         onCancel={() => setOpenDeleteModal(false)}
