@@ -224,21 +224,28 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
     }
   }, [selectedState?.value]);
 
-  // Initialize selected values from KYCformData on mount or when it changes
+  // Initialize/ensure selected country exists in options
   useEffect(() => {
-    if (KYCformData?.country_id?.value && KYCformData?.country_id?.label) {
-      const countryOption: Option = {
-        value: KYCformData.country_id.value,
-        label: KYCformData.country_id.label,
-      };
-      setSelectedCountry(countryOption);
-      // Add to countries list if not already present
+    const val = KYCformData?.country_id?.value;
+    const label = KYCformData?.country_id?.label;
+    if (val && label) {
+      const option: Option = { value: String(val), label: String(label) };
+      setSelectedCountry(option);
       setCountries(prev => {
-        const exists = prev.some(c => c.value === countryOption.value);
-        return exists ? prev : [countryOption, ...prev];
+        const exists = prev.some(c => c.value === option.value);
+        return exists ? prev : [option, ...prev];
       });
     }
   }, [KYCformData?.country_id?.value, KYCformData?.country_id?.label]);
+
+  // When countries list updates later, re-insert selected if missing
+  useEffect(() => {
+    if (!selectedCountry?.value) return;
+    setCountries(prev => {
+      const exists = prev.some(c => c.value === selectedCountry.value);
+      return exists ? prev : [selectedCountry, ...prev];
+    });
+  }, [selectedCountry?.value, countries.length]);
 
   useEffect(() => {
     if (KYCformData?.state_id?.value && KYCformData?.state_id?.label) {

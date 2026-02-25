@@ -993,3 +993,25 @@ span.flatpickr-weekday,
 .ag-theme-alpine .ag-header {
   background-color: #e6f0fa !important;
 }
+/* Add to your global CSS file (e.g., globals.css) */
+.ag-cell-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.ag-selection-checkbox {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto !important;
+}
+
+.ag-cell.ag-cell-first-right-pinned {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+}

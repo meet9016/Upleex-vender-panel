@@ -19,20 +19,36 @@ function useDebounce<T>(value: T, delay: number = 500): T {
   }, [value, delay]);
   return debouncedValue;
 }
+
 type Quote = {
   _id: string;
-  no: string;
-  quote_id: string;
-  product_name: string;
-  product_type_name: string;
-  product_listing_type_name: string;
+  product_id: {
+    _id: string;
+    product_name: string;
+    product_type_name: string;
+    product_listing_type_name: string;
+    price: string;
+    product_main_image: string;
+    category_name: string;
+    sub_category_name: string;
+    description: string;
+  };
   delivery_date: string;
-  month_name: string;
-  qty: string;
-  price: string;
-  total_price: string;
+  number_of_days: number;
+  months_id: string;
+  qty: number;
+  note: string;
   status: string;
-  created_at: string;
+  createdAt: string;
+  updatedAt: string;
+  // Computed fields for display
+  product_name?: string;
+  product_type_name?: string;
+  product_listing_type_name?: string;
+  price?: string;
+  total_price?: string;
+  month_name?: string;
+  product_main_image?: string;
 };
 
 const QuoteTable = () => {
@@ -43,16 +59,18 @@ const QuoteTable = () => {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [productTypes, setProductTypes] = useState<any[]>([]);
+  console.log("🚀 ~ QuoteTable ~ productTypes:", productTypes)
   const [listingTypes, setListingTypes] = useState<any[]>([]);
   const [months, setMonths] = useState<any[]>([]);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-const debouncedSearch = useDebounce(searchText, 600);
-  // Filter state with exact keys you want in payload
+  const debouncedSearch = useDebounce(searchText, 600);
+
+  // Filter state
   const [filters, setFilters] = useState({
     product_type: '',
-    listing_type: '', // Changed from product_listing_type_name to listing_type
+    listing_type: '',
     delivery_start_date: '',
     delivery_end_date: '',
     month: '',
@@ -61,11 +79,38 @@ const debouncedSearch = useDebounce(searchText, 600);
 
   const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
 
+  // Transform API data to match table columns
+  const transformQuoteData = (quotes: any[]): Quote[] => {
+    return quotes.map(quote => {
+      const product = quote.product_id || {};
+      const month = months.find(m => m.id === quote.months_id);
+
+      return {
+        ...quote,
+        // Flatten product fields for easy access in table
+        product_name: product.product_name || 'N/A',
+        product_type_name: product.product_type_name || 'N/A',
+        product_listing_type_name: product.product_listing_type_name || 'N/A',
+        price: product.price || '0',
+        product_main_image: product.product_main_image || '',
+        total_price: quote.qty && product.price
+          ? (parseInt(quote.qty) * parseFloat(product.price)).toString()
+          : '0',
+        month_name: month?.month_name || 'N/A',
+        delivery_date: quote.delivery_date
+          ? new Date(quote.delivery_date).toLocaleDateString()
+          : 'N/A',
+        start_date: 'N/A', // If you have this field in backend
+        end_date: 'N/A',   // If you have this field in backend
+      };
+    });
+  };
+
   const columns: ColDef[] = [
     {
       headerName: "Product",
       field: "product_name",
-      width: 240,
+      width: 300,
       sortable: true,
       cellRenderer: (params: any) => {
         const imageUrl = params.data?.product_main_image;
@@ -94,17 +139,50 @@ const debouncedSearch = useDebounce(searchText, 600);
               <span className="font-medium text-gray-800 dark:text-white">
                 {productName || "N/A"}
               </span>
+              <span className="text-xs text-gray-500">
+                {params.data?.category_name || ''}
+              </span>
             </div>
           </div>
         );
       },
     },
-    { field: "product_type_name", headerName: "Product Type", width: 180, cellStyle: { textAlign: "center" } },
-    { field: "product_listing_type_name", headerName: "Product Listing Type", width: 220, cellStyle: { textAlign: "center" } },
-    { field: "delivery_date", headerName: "Delivery Date", width: 150, cellStyle: { textAlign: "center" } },
-    { field: "start_date", headerName: "Start Date", width: 150, cellStyle: { textAlign: "center" } },
-    { field: "end_date", headerName: "End Date", width: 150, cellStyle: { textAlign: "center" } },
-    { field: "month_name", headerName: "Month", width: 120, cellStyle: { textAlign: "center" } },
+    {
+      field: "product_type_name",
+      headerName: "Product Type",
+      width: 180,
+      cellStyle: { textAlign: "center" }
+    },
+    {
+      field: "product_listing_type_name",
+      headerName: "Product Listing Type",
+      width: 220,
+      cellStyle: { textAlign: "center" }
+    },
+    {
+      field: "delivery_date",
+      headerName: "Delivery Date",
+      width: 150,
+      cellStyle: { textAlign: "center" }
+    },
+    {
+      field: "start_date",
+      headerName: "Start Date",
+      width: 150,
+      cellStyle: { textAlign: "center" }
+    },
+    {
+      field: "end_date",
+      headerName: "End Date",
+      width: 150,
+      cellStyle: { textAlign: "center" }
+    },
+    {
+      field: "month_name",
+      headerName: "Month",
+      width: 120,
+      cellStyle: { textAlign: "center" }
+    },
     {
       field: "qty",
       headerName: "Qty",
@@ -134,101 +212,145 @@ const debouncedSearch = useDebounce(searchText, 600);
       cellStyle: { textAlign: "center" },
       cellRenderer: (params: any) => {
         const status = params.value;
-        let color =
-          status === "Pending"
-            ? "text-yellow-600"
-            : status === "Approved"
-              ? "text-green-600"
-              : status === "Rejected"
-                ? "text-red-600"
-                : "text-gray-600";
+        let color = "text-gray-600";
+        let bgColor = "bg-gray-100";
 
-        return <span className={`font-medium ${color}`}>{status}</span>;
+        switch (status?.toLowerCase()) {
+          case 'pending':
+            color = "text-yellow-700";
+            bgColor = "bg-yellow-50";
+            break;
+          case 'approval':
+          case 'approved':
+            color = "text-green-700";
+            bgColor = "bg-green-50";
+            break;
+          case 'reject':
+          case 'rejected':
+            color = "text-red-700";
+            bgColor = "bg-red-50";
+            break;
+          case 'complete':
+          case 'completed':
+            color = "text-blue-700";
+            bgColor = "bg-blue-50";
+            break;
+        }
+
+        return (
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${bgColor} ${color}`}>
+            {status || 'N/A'}
+          </span>
+        );
       },
     },
-{
-  headerName: "Actions",
-  width: 330,
-  cellRenderer: (params: any) => {
-    const status = params.data?.status;
-    const isApproved = status === "Approved";
-    const isRejected = status === "Rejected";
+    {
+      headerName: "Actions",
+      width: 330,
+      cellRenderer: (params: any) => {
+        const status = params.data?.status?.toLowerCase();
+        const isApproved = status === 'approval' || status === 'approved';
+        const isRejected = status === 'reject' || status === 'rejected';
+        const isCompleted = status === 'complete' || status === 'completed';
 
-    return (
-      <div className="flex items-center justify-center gap-2 h-full">
+        return (
+          <div className="flex items-center justify-center gap-2 h-full">
+            {/* Approve */}
+            <button
+              onClick={() => handleApproval(params.data._id)}
+              disabled={isRejected || isApproved || isCompleted}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
+              ${isRejected || isApproved || isCompleted
+                  ? "bg-gray-100 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 cursor-not-allowed"
+                  : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 shadow-sm hover:shadow"
+                }`}
+            >
+              Approve
+            </button>
 
-        {/* Approve */}
-        <button
-          onClick={() => handleApproval(params.data.quote_id)}
-          disabled={isRejected}
-          className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
-          ${
-            isRejected
-              ? "bg-gray-100 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 cursor-not-allowed"
-              : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 shadow-sm hover:shadow"
-          }`}
-        >
-          Approve
-        </button>
+            {/* Reject */}
+            <button
+              onClick={() => handleRejected(params.data._id)}
+              disabled={isRejected || isApproved || isCompleted}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
+              ${isRejected || isApproved || isCompleted
+                  ? "bg-gray-100 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 cursor-not-allowed"
+                  : "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 shadow-sm hover:shadow"
+                }`}
+            >
+              Reject
+            </button>
 
-        {/* Reject */}
-        <button
-          onClick={() => handleRejected(params.data.quote_id)}
-          disabled={isApproved}
-          className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
-          ${
-            isApproved
-              ? "bg-gray-100 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 cursor-not-allowed"
-              : "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 shadow-sm hover:shadow"
-          }`}
-        >
-          Reject
-        </button>
-
-        {/* Edit */}
-        <button
-          onClick={() => router.push(`/quote/edit/${params.data._id}`)}
-          className="px-3 py-1.5 text-xs font-medium rounded-lg border
-          bg-white dark:bg-gray-800 text-blue-700 dark:text-gray-300
-          border-blue-200 dark:border-gray-600
-          hover:bg-blue-50 dark:hover:bg-gray-700
-            transition-all duration-200"
-        >
-          Edit
-        </button>
-
-      </div>
-    );
-  },
-}
-
-
+            {/* Edit */}
+            <button
+              onClick={() => router.push(`/quote/edit/${params.data._id}`)}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg border
+              bg-white dark:bg-gray-800 text-blue-700 dark:text-gray-300
+              border-blue-200 dark:border-gray-600
+              hover:bg-blue-50 dark:hover:bg-gray-700
+              transition-all duration-200"
+            >
+              Edit
+            </button>
+          </div>
+        );
+      },
+    }
   ];
 
-  const getQuoteData = async (filterParams: any = {}) => {
-    try {
-      const params: any = {};
-      if (filterParams.status) params.status = filterParams.status;
-      if (filterParams.search) params.search = filterParams.search;
+const getQuoteData = async (filterParams: any = {}) => {
+  try {
+    // Build query params
+    const params: any = {};
+    
+    if (filterParams.status) params.status = filterParams.status;
+    if (filterParams.search) params.search = filterParams.search;
+    if (filterParams.product_type) params.product_type = filterParams.product_type;
+    if (filterParams.listing_type) params.listing_type = filterParams.listing_type;
+    if (filterParams.month) params.month = filterParams.month;
+    if (filterParams.delivery_start_date) params.delivery_start_date = filterParams.delivery_start_date;
+    if (filterParams.delivery_end_date) params.delivery_end_date = filterParams.delivery_end_date;
+    if (filterParams.page) params.page = filterParams.page;
+    if (filterParams.limit) params.limit = filterParams.limit;
 
-      const res = await api.get(endPointApi.postGetQuote, { params });
+    console.log("🚀 ~ API Request Params:", params);
+    
+    const res = await api.get(endPointApi.postGetQuote, { params });
+    console.log("🚀 ~ API Response:", res);
 
-      if (res?.data?.data) {
-        setQuoteData(res.data.data || []);
-      }
-    } catch (error) {
-      console.log("fetch quotes error:", error);
+    if (res?.data?.success && res?.data?.data) {
+      const transformedData = transformQuoteData(res.data.data);
+      console.log("🚀 ~ Transformed Data:", transformedData);
+      setQuoteData(transformedData);
+      
+      // You might want to store pagination info in state
+      // setTotalPages(res.data.totalPages);
+      // setCurrentPage(res.data.page);
     }
-  };
+  } catch (error) {
+    console.log("fetch quotes error:", error);
+    toast.error("Failed to fetch quotes");
+  }
+};
 
   const getDropdownData = async () => {
     try {
       const res = await api.post(endPointApi.postProductDropDownList);
-      if (res?.data?.status === 200) {
-        const data = res.data.data;
+      console.log("🚀 ~ getDropdownData ~ res:", res);
+
+      // Check for success flag instead of status
+      if (res?.data?.success === true) {
+        const data = res.data; // Data is at root level
+        console.log("🚀 ~ getDropdownData ~ data:", data)
         setProductTypes(data.products_type || []);
         setListingTypes(data.products_listing_type || []);
         setMonths(data.products_months || []);
+      }
+      // Fallback check if data is directly available
+      else if (res?.data?.products_type) {
+        setProductTypes(res.data.products_type || []);
+        setListingTypes(res.data.products_listing_type || []);
+        setMonths(res.data.products_months || []);
       }
     } catch (error) {
       console.log("fetch dropdown error:", error);
@@ -248,8 +370,13 @@ const debouncedSearch = useDebounce(searchText, 600);
 
   const handleApproval = async (quoteId: string) => {
     try {
-      const approvedStatus = statusList.find(s => s.name === 'Approved');
-      if (!approvedStatus) return;
+      const approvedStatus = statusList.find(s =>
+        s.name?.toLowerCase() === 'approved' || s.name?.toLowerCase() === 'approval'
+      );
+      if (!approvedStatus) {
+        toast.error("Approved status not found");
+        return;
+      }
 
       const formData = new FormData();
       formData.append('quote_id', quoteId);
@@ -263,14 +390,19 @@ const debouncedSearch = useDebounce(searchText, 600);
       }
     } catch (error) {
       console.log('Approval error:', error);
-       toast.error("Failed to approve quote");
+      toast.error("Failed to approve quote");
     }
   };
 
   const handleRejected = async (quoteId: string) => {
     try {
-      const rejectedStatus = statusList.find(s => s.name === 'Rejected');
-      if (!rejectedStatus) return;
+      const rejectedStatus = statusList.find(s =>
+        s.name?.toLowerCase() === 'rejected' || s.name?.toLowerCase() === 'reject'
+      );
+      if (!rejectedStatus) {
+        toast.error("Rejected status not found");
+        return;
+      }
 
       const formData = new FormData();
       formData.append('quote_id', quoteId);
@@ -279,12 +411,12 @@ const debouncedSearch = useDebounce(searchText, 600);
       const res = await api.post(endPointApi.changeStatus, formData);
 
       if (res?.data?.status === 200) {
-         toast.success("Quote rejected successfully");
+        toast.success("Quote rejected successfully");
         await getQuoteData(filters);
       }
     } catch (error) {
       console.log('Rejection error:', error);
-       toast.error("Failed to reject quote");
+      toast.error("Failed to reject quote");
     }
   };
 
@@ -310,21 +442,31 @@ const debouncedSearch = useDebounce(searchText, 600);
         return value;
     }
   };
-
-  // Apply filters with exact payload structure you want
-  const applyFilters = () => {
-    const params: any = {
-      status: filters.status,
-    };
-    if (searchText) params.search = searchText;
-    getQuoteData(params);
-    setShowFilterModal(false);
-  };
+const applyFilters = () => {
+  const params: any = {};
+  
+  // Add all filter parameters
+  if (filters.status) params.status = filters.status;
+  if (filters.product_type) params.product_type = filters.product_type;
+  if (filters.listing_type) params.listing_type = filters.listing_type;
+  if (filters.month) params.month = filters.month;
+  if (filters.delivery_start_date) params.delivery_start_date = filters.delivery_start_date;
+  if (filters.delivery_end_date) params.delivery_end_date = filters.delivery_end_date;
+  if (searchText) params.search = searchText;
+  
+  // Add pagination params (optional)
+  params.page = 1; // Reset to first page when applying filters
+  params.limit = 10;
+  
+  console.log("🚀 ~ Applying filters:", params);
+  getQuoteData(params);
+  setShowFilterModal(false);
+};
 
   const clearFilters = () => {
     setFilters({
       product_type: '',
-      listing_type: '', // Changed to listing_type
+      listing_type: '',
       delivery_start_date: '',
       delivery_end_date: '',
       month: '',
@@ -334,7 +476,8 @@ const debouncedSearch = useDebounce(searchText, 600);
     getQuoteData();
     setShowFilterModal(false);
   };
-    useEffect(() => {
+
+  useEffect(() => {
     const params: any = {};
     if (debouncedSearch) params.search = debouncedSearch;
     getQuoteData(params);
@@ -352,6 +495,7 @@ const debouncedSearch = useDebounce(searchText, 600);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+
   useEffect(() => {
     getQuoteData();
     getStatusList();
@@ -359,7 +503,7 @@ const debouncedSearch = useDebounce(searchText, 600);
   }, []);
 
   return (
-    <div>
+    <div className="p-4">
       <div className="flex justify-between items-center mb-5">
         <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Quotes</h2>
         <div className="flex items-center gap-3">
@@ -380,7 +524,7 @@ const debouncedSearch = useDebounce(searchText, 600);
               onClick={() => setShowFilterModal(!showFilterModal)}
               className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2 relative"
             >
-              <CiFilter  size={20} />
+              <CiFilter size={20} />
               Filter
               {activeFilterCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
@@ -409,18 +553,22 @@ const debouncedSearch = useDebounce(searchText, 600);
                           className="w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left flex justify-between items-center hover:border-blue-500 transition-all text-sm"
                         >
                           <span className={filters.product_type ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
-                            {getSelectedLabel('product_type') || 'Select'}
+                            {getSelectedLabel('product_type') || 'Select Product Type'}
                           </span>
                           <MdKeyboardArrowDown className={`transition-transform ${openDropdown === 'product_type' ? 'rotate-180' : ''}`} size={18} />
                         </button>
                         {openDropdown === 'product_type' && (
                           <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                             <div onClick={() => handleFilterChange('product_type', '')} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center text-sm">
-                              <span>Select Product Type</span>
+                              <span>All Product Types</span>
                               {!filters.product_type && <MdCheck className="text-blue-600" size={16} />}
                             </div>
                             {productTypes.map((type: any) => (
-                              <div key={type.id} onClick={() => handleFilterChange('product_type', type.id)} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-t border-gray-100 dark:border-gray-700 text-sm">
+                              <div
+                                key={type.id}
+                                onClick={() => handleFilterChange('product_type', type.id)}
+                                className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-t border-gray-100 dark:border-gray-700 text-sm"
+                              >
                                 <span>{type.product_type}</span>
                                 {filters.product_type === type.id && <MdCheck className="text-blue-600" size={16} />}
                               </div>
@@ -430,7 +578,7 @@ const debouncedSearch = useDebounce(searchText, 600);
                       </div>
                     </div>
 
-                    {/* Listing Type - Now using 'listing_type' key */}
+                    {/* Listing Type */}
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Listing Type</label>
                       <div className="relative">
@@ -439,18 +587,22 @@ const debouncedSearch = useDebounce(searchText, 600);
                           className="w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left flex justify-between items-center hover:border-blue-500 transition-all text-sm"
                         >
                           <span className={filters.listing_type ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
-                            {getSelectedLabel('listing_type') || 'Select'}
+                            {getSelectedLabel('listing_type') || 'Select Listing Type'}
                           </span>
                           <MdKeyboardArrowDown className={`transition-transform ${openDropdown === 'listing_type' ? 'rotate-180' : ''}`} size={18} />
                         </button>
                         {openDropdown === 'listing_type' && (
                           <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                             <div onClick={() => handleFilterChange('listing_type', '')} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center text-sm">
-                              <span>Select Listing Type</span>
+                              <span>All Listing Types</span>
                               {!filters.listing_type && <MdCheck className="text-blue-600" size={16} />}
                             </div>
                             {listingTypes.map((type: any) => (
-                              <div key={type.id} onClick={() => handleFilterChange('listing_type', type.id)} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-t border-gray-100 dark:border-gray-700 text-sm">
+                              <div
+                                key={type.id}
+                                onClick={() => handleFilterChange('listing_type', type.id)}
+                                className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-t border-gray-100 dark:border-gray-700 text-sm"
+                              >
                                 <span>{type.name}</span>
                                 {filters.listing_type === type.id && <MdCheck className="text-blue-600" size={16} />}
                               </div>
@@ -462,29 +614,22 @@ const debouncedSearch = useDebounce(searchText, 600);
 
                     {/* Start Date */}
                     <div>
-                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
                       <DatePicker
-                        // label="Start Date"
                         value={filters.delivery_start_date}
-                        onChange={(date) =>
-                          handleFilterChange("delivery_start_date", date)
-                        }
+                        onChange={(date) => handleFilterChange("delivery_start_date", date)}
                       />
                     </div>
 
                     {/* End Date */}
                     <div>
-                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">End Date</label>
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">End Date</label>
                       <DatePicker
-                        label="End Date"
                         value={filters.delivery_end_date}
-                        min={filters.delivery_start_date} // 👈 optional (end date start se pehle na ho)
-                        onChange={(date) =>
-                          handleFilterChange("delivery_end_date", date)
-                        }
+                        min={filters.delivery_start_date}
+                        onChange={(date) => handleFilterChange("delivery_end_date", date)}
                       />
                     </div>
-
 
                     {/* Month */}
                     <div>
@@ -495,14 +640,14 @@ const debouncedSearch = useDebounce(searchText, 600);
                           className="w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left flex justify-between items-center hover:border-blue-500 transition-all text-sm"
                         >
                           <span className={filters.month ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
-                            {getSelectedLabel('month') || 'Select'}
+                            {getSelectedLabel('month') || 'Select Month'}
                           </span>
                           <MdKeyboardArrowDown className={`transition-transform ${openDropdown === 'month' ? 'rotate-180' : ''}`} size={18} />
                         </button>
                         {openDropdown === 'month' && (
                           <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                             <div onClick={() => handleFilterChange('month', '')} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center text-sm">
-                              <span>Select Month</span>
+                              <span>All Months</span>
                               {!filters.month && <MdCheck className="text-blue-600" size={16} />}
                             </div>
                             {months.map((month: any) => (
@@ -525,14 +670,14 @@ const debouncedSearch = useDebounce(searchText, 600);
                           className="w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left flex justify-between items-center hover:border-blue-500 transition-all text-sm"
                         >
                           <span className={filters.status ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
-                            {getSelectedLabel('status') || 'Select'}
+                            {getSelectedLabel('status') || 'Select Status'}
                           </span>
                           <MdKeyboardArrowDown className={`transition-transform ${openDropdown === 'status' ? 'rotate-180' : ''}`} size={18} />
                         </button>
                         {openDropdown === 'status' && (
                           <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                             <div onClick={() => handleFilterChange('status', '')} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center text-sm">
-                              <span>Select Status</span>
+                              <span>All Statuses</span>
                               {!filters.status && <MdCheck className="text-blue-600" size={16} />}
                             </div>
                             {statusList.map((status: any) => (
@@ -552,7 +697,7 @@ const debouncedSearch = useDebounce(searchText, 600);
                     <button onClick={clearFilters} className="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium">
                       Clear
                     </button>
-                    <button onClick={applyFilters} className="flex-1 px-3 py-1.5 btn-primary text-white rounded-lg text-sm font-medium">
+                    <button onClick={applyFilters} className="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
                       Apply
                     </button>
                   </div>
