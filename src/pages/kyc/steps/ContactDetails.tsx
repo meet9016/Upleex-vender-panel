@@ -78,31 +78,29 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
     if (isLoading) return;
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("page", String(page));
-      formData.append("search", search);
+      const payload: any = { page, search };
       let res;
       if (type === "country") {
         if (!endPointApi.postVendorCountryList) {
           throw new Error("Country endpoint not configured");
         }
-        res = await api.post(endPointApi.postVendorCountryList as string, formData);
+        res = await api.post(endPointApi.postVendorCountryList as string, payload);
       } else if (type === "state") {
         if (!endPointApi.postVendorStateList) {
           throw new Error("State endpoint not configured");
         }
         if (selectedCountry?.value) {
-          formData.append("country_id", selectedCountry.value);
+          payload.country_id = selectedCountry.value;
         }
-        res = await api.post(endPointApi.postVendorStateList as string, formData);
+        res = await api.post(endPointApi.postVendorStateList as string, payload);
       } else if (type === "city") {
         if (!endPointApi.postVendorCityList) {
           throw new Error("City endpoint not configured");
         }
         if (selectedState?.value) {
-          formData.append("state_id", selectedState.value);
+          payload.state_id = selectedState.value;
         }
-        res = await api.post(endPointApi.postVendorCityList as string, formData);
+        res = await api.post(endPointApi.postVendorCityList as string, payload);
       }
       const list = res?.data?.data || [];
       if (list.length === 0) {
@@ -137,7 +135,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
     } finally {
       setLoading(false);
     }
-  }, [loadingCountries, loadingStates, loadingCities, selectedCountry, selectedState]);
+  }, [selectedCountry?.value, selectedState?.value]);
 
 
   /* <!-- ================================================ Debounce for serach ================================================ --> */
@@ -169,31 +167,31 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
   useEffect(() => {
     if (searchCountry === "") return;
     fetchOptions("country", searchCountry, 1);
-  }, [searchCountry, fetchOptions]);
+  }, [searchCountry]);
 
   useEffect(() => {
     if (searchState === "") return;
     fetchOptions("state", searchState, 1);
-  }, [searchState, fetchOptions]);
+  }, [searchState]);
 
   useEffect(() => {
     if (searchCity === "") return;
     fetchOptions("city", searchCity, 1);
-  }, [searchCity, fetchOptions]);
+  }, [searchCity]);
 
   // Auto-fetch states when country is selected and states are empty
   useEffect(() => {
     if (selectedCountry && states.length === 0 && searchState === "") {
       fetchOptions("state", "", pageRefState.current);
     }
-  }, [selectedCountry, states.length, searchState, fetchOptions]);
+  }, [selectedCountry?.value, states.length, searchState]);
 
   // Auto-fetch cities when state is selected and cities are empty
   useEffect(() => {
     if (selectedState && cities.length === 0 && searchCity === "") {
       fetchOptions("city", "", pageRefCity.current);
     }
-  }, [selectedState, cities.length, searchCity, fetchOptions]);
+  }, [selectedState?.value, cities.length, searchCity]);
 
   // Load initial country list on mount
   useEffect(() => {

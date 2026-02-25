@@ -94,8 +94,9 @@ export default function AddProductPage() {
     });
 
     const [mainPreview, setMainPreview] = useState<mainImg[]>([]);
-    const [subPreview, setSubPreview] = useState<string[]>([]);
+    const [subPreview, setSubPreview] = useState<any[]>([]);
     const [categoryList, setCategoryList] = useState<Option[]>([]);
+    const [categoriesData, setCategoriesData] = useState<any[]>([]);
     const [subCategoryList, setSubCategoryList] = useState<Option[]>([]);
     const [productTypeOptions, setProductTypeOptions] = useState<Option[]>([]);
     const [listingTypeOptions, setListingTypeOptions] = useState<Option[]>([]);
@@ -127,6 +128,17 @@ export default function AddProductPage() {
         mainImage?: string;
         billingType?: string;
     }>({});
+
+    const resolveImageUrl = (src?: string) => {
+        if (!src) return "";
+        const s = String(src);
+        if (s.startsWith("http://") || s.startsWith("https://")) return s;
+        const base = "http://service.digitalks.co.in/s3docs";
+        if (!base) return s;
+        const trimmedBase = base.endsWith("/") ? base.slice(0, -1) : base;
+        const trimmedSrc = s.startsWith("/") ? s.slice(1) : s;
+        return `${trimmedBase}/${trimmedSrc}`;
+    };
 
     /* <!-- ========================================================== disable unavailable months ========================================================== --> */
 
@@ -235,13 +247,55 @@ export default function AddProductPage() {
 
     const handleRadioChange = (value: "day" | "month" | "hourly") => {
         setBillingType(value);
-        // Clear billing type validation error when user selects
-        if (validationErrors.billingType) {
-            setValidationErrors(prev => ({
+        // Clear unrelated fields when switching billing type
+        setFormData(prev => {
+            if (value === "day") {
+                return {
+                    ...prev,
+                    // keep day fields
+                    hourlyPrice: "",
+                    hourlyCancelPrice: "",
+                    months: [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
+                };
+            }
+            if (value === "hourly") {
+                return {
+                    ...prev,
+                    dayPrice: "",
+                    dayCancelPrice: "",
+                    months: [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
+                };
+            }
+            // value === "month"
+            return {
                 ...prev,
-                billingType: undefined
-            }));
-        }
+                dayPrice: "",
+                dayCancelPrice: "",
+                hourlyPrice: "",
+                hourlyCancelPrice: "",
+                months: prev.months?.length ? prev.months : [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
+            };
+        });
+        // Clear validation errors not relevant to selected billing type
+        setValidationErrors(prev => {
+            const next = { ...prev };
+            if (value === "day") {
+                next.hourlyPrice = undefined;
+                next.hourlyCancelPrice = undefined;
+                next.monthsFields = undefined;
+            } else if (value === "hourly") {
+                next.dayPrice = undefined;
+                next.dayCancelPrice = undefined;
+                next.monthsFields = undefined;
+            } else if (value === "month") {
+                next.dayPrice = undefined;
+                next.dayCancelPrice = undefined;
+                next.hourlyPrice = undefined;
+                next.hourlyCancelPrice = undefined;
+            }
+            next.billingType = undefined;
+            return next;
+        });
     };
 
     /* <!-- ============================================ Fetch product detail on edit mode  ============================================ --> */
@@ -255,43 +309,50 @@ export default function AddProductPage() {
 
                 if (res?.data?.status === 200 && res?.data?.data) {
                     const data = res.data.data;
-
                     const listingTypeName = data.product_listing_type_name?.toLowerCase();
-                    
-                    if (listingTypeName === "daily") {
-                        setBillingType("day");
-                    } else if (listingTypeName === "hourly") {
-                        setBillingType("hourly");
-                    } else if (listingTypeName === "monthly") {
-                        setBillingType("month");
+                    const productTypeName = data.product_type_name?.toLowerCase();
+
+                    if (productTypeName === "rent") {
+                        if (listingTypeName === "daily") {
+                            setBillingType("day");
+                        } else if (listingTypeName === "hourly") {
+                            setBillingType("hourly");
+                        } else if (listingTypeName === "monthly") {
+                            setBillingType("month");
+                        }
+                    } else {
+                        setBillingType("");
                     }
+
+                    const monthsInit =
+                        data.month_arr?.length
+                            ? data.month_arr.map((m: any) => ({
+                                month: String(m.months_id || ""),
+                                price: String(m.price || ""),
+                                productMonthsId: String(m.product_months_id || ""),
+                                cancelPrice: String(m.cancel_price || ""),
+                            }))
+                            : [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }];
 
                     setFormData({
                         category: String(data.category_id || ""),
                         subCategory: String(data.sub_category_id || ""),
                         listingType: String(data.product_type_id || ""),
                         name: data.product_name || "",
-                        dayPrice: listingTypeName === "daily" ? String(data.price || "") : "",
-                        dayCancelPrice: listingTypeName === "daily" ? String(data.cancel_price || "") : "",
-                        hourlyPrice: listingTypeName === "hourly" ? String(data.price || "") : "",
-                        hourlyCancelPrice: listingTypeName === "hourly" ? String(data.cancel_price || "") : "",
-                        monthPrice: listingTypeName === "monthly" ? String(data.price || "") : "",
-                        monthCancelPrice: listingTypeName === "monthly" ? String(data.cancel_price || "") : "",
-                        months: data.month_arr?.length
-                            ? data.month_arr.map((m: any) => ({
-                                  month: String(m.months_id || ""),
-                                  price: String(m.price || ""),
-                                  productMonthsId: String(m.product_months_id || ""),
-                                  cancelPrice: String(m.cancel_price || ""),
-                              }))
-                            : [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
+                        dayPrice: productTypeName === "rent" && listingTypeName === "daily" ? String(data.price || "") : "",
+                        dayCancelPrice: productTypeName === "rent" && listingTypeName === "daily" ? String(data.cancel_price || "") : "",
+                        hourlyPrice: productTypeName === "rent" && listingTypeName === "hourly" ? String(data.price || "") : "",
+                        hourlyCancelPrice: productTypeName === "rent" && listingTypeName === "hourly" ? String(data.cancel_price || "") : "",
+                        monthPrice: productTypeName === "sell" ? String(data.price || "") : productTypeName === "rent" && listingTypeName === "monthly" ? String(data.price || "") : "",
+                        monthCancelPrice: productTypeName === "sell" ? String(data.cancel_price || "") : productTypeName === "rent" && listingTypeName === "monthly" ? String(data.cancel_price || "") : "",
+                        months: productTypeName === "rent" && listingTypeName === "monthly" ? monthsInit : [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
                         description: data.description || "",
                         keyFeatures: data.product_details?.length
                             ? data.product_details.map((item: any) => ({
-                                  specification_id: String(item.specification_id || ""),
-                                  key: item.specification || "",
-                                  value: item.detail || "",
-                              }))
+                                specification_id: String(item.specification_id || ""),
+                                key: item.specification || "",
+                                value: item.detail || "",
+                            }))
                             : [{ key: "", value: "" }],
                     });
 
@@ -302,12 +363,24 @@ export default function AddProductPage() {
                     if (data.product_main_image) {
                         setMainPreview([{
                             product_image_id: 'main_img',
-                            image: data.product_main_image
+                            image: resolveImageUrl(data.product_main_image)
                         }]);
                     }
 
                     if (data.images?.length) {
-                        setSubPreview(data.images);
+                        const subs = data.images.map((img: any) => {
+                            if (typeof img === "string") {
+                                return { product_image_id: 'existing', image: resolveImageUrl(img) };
+                            }
+                            return {
+                                product_image_id: img.product_image_id || 'existing',
+                                image: resolveImageUrl(img.image || '')
+                            };
+                        });
+                        setSubPreview(subs);
+                        if (!data.product_main_image && subs.length) {
+                            setMainPreview([subs[0]]);
+                        }
                     }
 
                 } else {
@@ -327,9 +400,11 @@ export default function AddProductPage() {
             try {
                 const res = await api.get(endPointApi.postCategoryList, {});
                 if (res?.data?.data) {
-                    const options = res.data.data.map((item: any) => ({
-                        label: item.categories_name,
-                        value: item.id,
+                    const list = res.data.data || [];
+                    setCategoriesData(list);
+                    const options = list.map((item: any) => ({
+                        label: item.categories_name || item.name,
+                        value: String(item.categories_id || item.id),
                         image: item.image,
                     }));
                     setCategoryList(options);
@@ -342,44 +417,32 @@ export default function AddProductPage() {
         fetchCategories();
     }, []);
 
-    /* <!-- ============================================ Fetch subcategories  ============================================ --> */
+    /* <!-- ============================================ Build subcategories from selected category ============================================ --> */
 
     useEffect(() => {
-        const fetchSubCategories = async () => {
-            if (!selectedCategory) {
-                setSubCategoryList([]);
-                setSelectedSubCategory(null);
-                handleChange("subCategory", null);
-                return;
-            }
+        if (!selectedCategory) {
+            setSubCategoryList([]);
+            setSelectedSubCategory(null);
+            handleChange("subCategory", null);
+            return;
+        }
 
-            try {
-                const res = await api.get(`${endPointApi.postSubCategoryList}?categoryId=${selectedCategory}`, {});
+        const cat = categoriesData.find((c: any) => String(c.categories_id || c.id) === String(selectedCategory));
+        const subcats = (cat?.subcategories || []).map((item: any) => ({
+            value: String(item.subcategory_id || item.id),
+            label: item.subcategory_name || item.name,
+            image: item.image,
+        }));
 
-                if (res?.data?.data) {
-                    const subcats = res.data.data.map((item: any) => ({
-                        value: item.id,
-                        label: item.name,
-                        image: item.image,
-                    }));
+        setSubCategoryList(subcats);
 
-                    setSubCategoryList(subcats);
-
-                    if (!isEditMode && subcats.length > 0) {
-                        setSelectedSubCategory(subcats[0].value);
-                        handleChange("subCategory", subcats[0].value);
-                    } else if (isEditMode && formData.subCategory) {
-                        setSelectedSubCategory(formData.subCategory);
-                    }
-                }
-            } catch (err) {
-                console.error("Error fetching subcategories", err);
-                toast.error("Error loading subcategories");
-            }
-        };
-
-        fetchSubCategories();
-    }, [formData.category, selectedCategory]);
+        if (!isEditMode && subcats.length > 0) {
+            setSelectedSubCategory(subcats[0].value);
+            handleChange("subCategory", subcats[0].value);
+        } else if (isEditMode && formData.subCategory) {
+            setSelectedSubCategory(formData.subCategory);
+        }
+    }, [selectedCategory, categoriesData, isEditMode, formData.subCategory]);
 
     /* <!-- ============================================ Fetch dropdown options  ============================================ --> */
 
@@ -541,9 +604,7 @@ export default function AddProductPage() {
         try {
             const formdata = new FormData();
 
-            if (isEditMode === true) {
-                formdata.append("product_id", String(productId));
-            }
+            // Edit mode uses URL param; no need to append product_id
 
             // ---------- BASIC FIELDS ----------
             formdata.append("category_id", String(selectedCategory || formData.category));
@@ -551,20 +612,29 @@ export default function AddProductPage() {
             formdata.append("product_type_id", String(formData.listingType));
 
             // Determine listing type based on billingType
-            const listingTypeId = billingType === "month" ? "2" : billingType === "day" ? "1" : billingType === "hourly" ? "3" : "";
+            const listingTypeId =
+                billingType === "month"
+                    ? listingTypeIdMap["month"] || ""
+                    : billingType === "day"
+                        ? listingTypeIdMap["day"] || ""
+                        : billingType === "hourly"
+                            ? listingTypeIdMap["hourly"] || ""
+                            : "";
             formdata.append("product_listing_type_id", listingTypeId);
 
             formdata.append("product_name", formData.name.trim());
             formdata.append("description", formData.description.trim());
 
             // ---------- SELL FLOW ----------
-            if (formData.listingType !== "1") {
+            const isSell = selectedListingType === "Sell";
+            const isRent = selectedListingType === "Rent";
+            if (isSell) {
                 formdata.append("price", formData.monthPrice.trim());
                 formdata.append("cancel_price", formData.monthCancelPrice.trim());
             }
 
             // ---------- RENT FLOW ----------
-            if (formData.listingType === "1") {
+            if (isRent) {
                 // DAY
                 if (billingType === "day") {
                     formdata.append("price", formData.dayPrice.trim());
@@ -610,12 +680,17 @@ export default function AddProductPage() {
                 formdata.append("product_main_image", mainImage);
             }
 
-            subImages.forEach((file, index: number) => {
-                formdata.append(`image[${index}]`, file);
+            subImages.forEach((file) => {
+                formdata.append("image[]", file);
             });
 
             // ---------- API CALL ----------
-            const res = await api.post(endPointApi.postVendorAddProduct, formdata);
+            const url = isEditMode
+                ? `${endPointApi.updateVendorProductDetails}/${productId}`
+                : endPointApi.postVendorAddProduct;
+            const res = isEditMode
+                ? await api.put(url, formdata)
+                : await api.post(url, formdata);
 
             if (res?.data?.status === 200) {
                 toast.success(isEditMode ? "Product updated successfully!" : "Product added successfully!");
@@ -726,7 +801,29 @@ export default function AddProductPage() {
                             onChange={(val) => {
                                 handleChange("listingType", val);
                                 const selected = productTypeOptions.find(opt => opt.value === val);
-                                setSelectedListingType(selected?.label || null);
+                                const label = selected?.label || null;
+                                setSelectedListingType(label);
+                                // When switching to Sell, clear rent-specific fields
+                                if (label === "Sell") {
+                                    setBillingType("");
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        dayPrice: "",
+                                        dayCancelPrice: "",
+                                        hourlyPrice: "",
+                                        hourlyCancelPrice: "",
+                                        months: [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
+                                    }));
+                                    setValidationErrors(prev => ({
+                                        ...prev,
+                                        billingType: undefined,
+                                        dayPrice: undefined,
+                                        dayCancelPrice: undefined,
+                                        hourlyPrice: undefined,
+                                        hourlyCancelPrice: undefined,
+                                        monthsFields: undefined,
+                                    }));
+                                }
                             }}
                             disabled={isEditMode}
                         />

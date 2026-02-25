@@ -1,6 +1,7 @@
 "use client";
 
 import Input from "@/components/common/Input";
+import Checkbox from "@/components/form/input/Checkbox";
 import Label from "@/components/form/Label";
 import type { ErrorType, KycFormDataType } from '@/pages/kyc/KycPage'
 
@@ -11,22 +12,23 @@ type KYCFormProp = {
   KYCformData: KycFormDataType;
   errors: ErrorType;
   clearError: (field: keyof ErrorType) => void;
-
 };
-
 
 export default function Identity({ setKYCFormData, KYCformData, errors, clearError }: KYCFormProp) {
 
-  {/* <!-- =========================================================== UI =========================================================== --> */ }
+  const handleNoGSTChange = (checked: boolean) => {
+    setKYCFormData((prevData) => ({
+      ...prevData,
+      no_gst: checked,
+      gst_number: checked ? "" : prevData.gst_number, // Clear GST if checked
+    }));
+    clearError("gst_number");
+  };
 
   return (
-
     <div className="w-full">
-      {/* <!-- =========================================================== Form component =========================================================== --> */}
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        {/* <!-- =========================================================== Aadhaar Number =========================================================== --> */}
-
+        {/* PAN Number */}
         <div>
           <Label>PAN Number</Label>
           <div className="relative">
@@ -36,10 +38,8 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               error={!!errors?.pancard_number}
               value={KYCformData?.pancard_number || ""}
               maxLength={10}
-
               onChange={(e) => {
                 const value = e.target.value.toUpperCase();
-
                 if (value) {
                   clearError("pancard_number");
                   setKYCFormData((prevData) => ({
@@ -55,8 +55,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
           </div>
         </div>
 
-        {/* <!-- =========================================================== Aadhaar Number =========================================================== --> */}
-
+        {/* Aadhaar Number */}
         <div>
           <Label>Aadhaar Number</Label>
           <div className="relative">
@@ -65,14 +64,11 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               type="text"
               error={!!errors?.aadharcard_number}
               value={KYCformData?.aadharcard_number || ""}
-              maxLength={14} // 12 digits + 2 spaces
+              maxLength={14}
               onChange={(e) => {
                 let value = e.target.value;
-
-                // Remove all spaces to get only digits
                 const digitsOnly = value.replace(/\s/g, '');
 
-                // Allow empty input
                 if (digitsOnly === "") {
                   clearError("aadharcard_number");
                   setKYCFormData((prevData) => ({
@@ -82,11 +78,9 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
                   return;
                 }
 
-                // Validate Aadhaar format: first digit 2-9, rest 0-9, max 12 digits
                 const isValidDigits = /^[2-9][0-9]{0,11}$/.test(digitsOnly);
 
                 if (isValidDigits) {
-                  // Auto-format with spaces: XXXX XXXX XXXX
                   let formatted = digitsOnly;
                   if (digitsOnly.length > 4) {
                     formatted = digitsOnly.slice(0, 4) + ' ' + digitsOnly.slice(4);
@@ -109,8 +103,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
           </div>
         </div>
 
-        {/* <!-- =========================================================== Business Name =========================================================== --> */}
-
+        {/* Business Name */}
         <div>
           <Label>Business Name</Label>
           <div className="relative">
@@ -120,10 +113,11 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               error={!!errors?.business_name}
               value={KYCformData?.business_name || ""}
               onChange={(e) => {
-                clearError("business_name")
+                clearError("business_name");
                 setKYCFormData((prevData) => ({
-                  ...prevData, business_name: e.target.value,
-                }))
+                  ...prevData, 
+                  business_name: e.target.value,
+                }));
               }}
             />
             {errors?.business_name && (
@@ -132,9 +126,8 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
           </div>
         </div>
 
-        {/* <!-- =========================================================== GST Number =========================================================== --> */}
-
-        <div>
+        {/* GST Number with Checkbox */}
+        <div className="space-y-2">
           <Label>GST Number</Label>
           <div className="relative">
             <Input
@@ -143,8 +136,9 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               error={!!errors?.gst_number}
               value={KYCformData?.gst_number || ""}
               maxLength={15}
+              disabled={KYCformData?.no_gst || false}
               onChange={(e) => {
-                const value = e.target.value.toUpperCase(); // Auto convert to uppercase
+                const value = e.target.value.toUpperCase();
                 clearError("gst_number");
                 setKYCFormData((prevData) => ({
                   ...prevData,
@@ -156,6 +150,48 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               <p className="mt-1 text-sm text-error">{errors.gst_number}</p>
             )}
           </div>
+          
+          {/* Checkbox for "I don't have GST" */}
+      {/* GST Number with Checkbox */}
+<div className="space-y-2">
+  {/* <Label>GST Number</Label>
+  <div className="relative">
+    <Input
+      placeholder="Enter your GST Number"
+      type="text"
+      error={!!errors?.gst_number}
+      value={KYCformData?.gst_number || ""}
+      maxLength={15}
+      disabled={KYCformData?.no_gst || false}
+      onChange={(e) => {
+        const value = e.target.value.toUpperCase();
+        clearError("gst_number");
+        setKYCFormData((prevData) => ({
+          ...prevData,
+          gst_number: value,
+        }));
+      }}
+    />
+    {errors?.gst_number && (
+      <p className="mt-1 text-sm text-error">{errors.gst_number}</p>
+    )}
+  </div> */}
+  
+  {/* Checkbox for "I don't have GST" - FIXED: Changed 'checkbox' to 'Checkbox' */}
+  <div className="flex items-center mt-2">
+    <Checkbox
+      checked={KYCformData?.no_gst || false}
+      onChange={handleNoGSTChange}
+      id="no-gst-checkbox"
+    />
+    <label 
+      htmlFor="no-gst-checkbox" 
+      className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+    >
+      I don't have GST registration
+    </label>
+  </div>
+</div>
         </div>
       </div>
     </div>

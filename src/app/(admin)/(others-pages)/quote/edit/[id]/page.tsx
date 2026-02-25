@@ -43,18 +43,16 @@ const QuoteEditPage = () => {
   };
   const getQuoteById = async () => {
     if (!params?.id) return;
-    
     try {
       setLoading(true);
-      const res = await api.post(endPointApi.postGetQuote);
-
-      if (res?.data?.status === 200) {
-        const quote = res.data.data.find((item: any) => item.quote_id === params.id);
+      const res = await api.get(`${endPointApi.getQuoteById}/${params.id}`);
+      if (res?.data?.data) {
+        const quote = res.data.data;
         setQuoteData(quote);
         setFormData({
           start_date: quote?.start_date || "",
           end_date: quote?.end_date || "",
-           status: quote?.status || "", 
+          status: quote?.status || "",
           image: null,
           video: null,
           return_image: null,
@@ -68,10 +66,28 @@ const QuoteEditPage = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const toEnum = (name: string) => {
+    const n = (name || '').toLowerCase();
+    if (n.includes('approve')) return 'approval';
+    if (n.includes('reject')) return 'reject';
+    if (n.includes('complete')) return 'complete';
+    return 'pending';
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form Data:", formData);
-    alert("Form submitted successfully!");
+    try {
+      const body: any = {};
+      if (formData.status) body.status = formData.status;
+      // Backend update supports these fields; add when needed:
+      // if (formData.start_date) body.delivery_date = formData.start_date;
+      const res = await api.put(`${endPointApi.updateQuote}/${params.id}`, body);
+      if (res?.data?.success) {
+        router.back();
+      }
+    } catch (err) {
+      console.error('Update quote error', err);
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -265,7 +281,7 @@ const QuoteEditPage = () => {
               >
                 <option value="">Select Status</option>
                 {statuses.map((status) => (
-                  <option key={status._id || status.id} value={status._id || status.id}>
+                  <option key={status._id || status.id} value={toEnum(status.name)}>
                     {status.name}
                   </option>
                 ))}
