@@ -33,7 +33,6 @@ interface AgGridTableProps {
 }
 
 const AgGridTable: React.FC<AgGridTableProps> = ({
-  tableName = "Table",
   buttonName = "",
   addButtonLink = "",
   rowData,
