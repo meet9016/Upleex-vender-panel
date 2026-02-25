@@ -10,7 +10,6 @@ export interface EndPointApi {
     postVendorCountryList?: String;
     postVendorStateList?: String;
     postVendorCityList?: string;
-    postBankAccountTypeList?: string;
     postSubImageDelete: string;
 
     postCategoryList: string;
@@ -23,9 +22,11 @@ export interface EndPointApi {
     postDeleteVendorProductList: string;
 
     postGetQuote: string;
+    getQuoteById: string;
+    updateQuote: string;
     getStatus: string;
     changeStatus: string;
-}
+    }
 
 // Define and export the API endpoint object
 const endPointApi: EndPointApi = {
@@ -40,7 +41,6 @@ const endPointApi: EndPointApi = {
     postVendorCountryList: 'vendor-country-list',
     postVendorStateList: 'vendor-state-list',
     postVendorCityList: 'vendor-city-list',
-    postBankAccountTypeList: 'vendor-account-type-list',
     postSubImageDelete: 'vendor-delete-product-image',
 
 
@@ -56,9 +56,11 @@ const endPointApi: EndPointApi = {
     postDeleteVendorProductList: 'products/delete',
 
     // Quote
-    postGetQuote: 'quotes/getall',
-    changeStatus: 'quotes/change-status',
-    getStatus: 'quotes/status-dropdown'
+    postGetQuote: 'quote/getall',
+    getQuoteById: 'quote/getById',
+    updateQuote: 'quote/update',
+    changeStatus: 'quote/change-status',
+    getStatus: 'quote/status-dropdown'
 };
 
 export default endPointApi;

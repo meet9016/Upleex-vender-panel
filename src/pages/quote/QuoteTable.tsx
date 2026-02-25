@@ -31,7 +31,7 @@ type Quote = {
   qty: string;
   price: string;
   total_price: string;
-  status_text: string;
+  status: string;
   created_at: string;
 };
 
@@ -128,7 +128,7 @@ const debouncedSearch = useDebounce(searchText, 600);
       cellStyle: { textAlign: "center", fontWeight: "600" },
     },
     {
-      field: "status_text",
+      field: "status",
       headerName: "Status",
       width: 130,
       cellStyle: { textAlign: "center" },
@@ -150,7 +150,7 @@ const debouncedSearch = useDebounce(searchText, 600);
   headerName: "Actions",
   width: 330,
   cellRenderer: (params: any) => {
-    const status = params.data?.status_text;
+    const status = params.data?.status;
     const isApproved = status === "Approved";
     const isRejected = status === "Rejected";
 
@@ -187,7 +187,7 @@ const debouncedSearch = useDebounce(searchText, 600);
 
         {/* Edit */}
         <button
-          onClick={() => router.push(`/quote/edit/${params.data.quote_id}`)}
+          onClick={() => router.push(`/quote/edit/${params.data._id}`)}
           className="px-3 py-1.5 text-xs font-medium rounded-lg border
           bg-white dark:bg-gray-800 text-blue-700 dark:text-gray-300
           border-blue-200 dark:border-gray-600
@@ -205,16 +205,15 @@ const debouncedSearch = useDebounce(searchText, 600);
 
   ];
 
-  const getQuoteData = async (filterParams = {}) => {
+  const getQuoteData = async (filterParams: any = {}) => {
     try {
-      const formData = new FormData();
-      Object.entries(filterParams).forEach(([key, value]) => {
-        if (value) formData.append(key, String(value));
-      });
+      const params: any = {};
+      if (filterParams.status) params.status = filterParams.status;
+      if (filterParams.search) params.search = filterParams.search;
 
-      const res = await api.post(endPointApi.postGetQuote, formData);
+      const res = await api.get(endPointApi.postGetQuote, { params });
 
-      if (res?.data?.status === 200) {
+      if (res?.data?.data) {
         setQuoteData(res.data.data || []);
       }
     } catch (error) {
@@ -315,14 +314,8 @@ const debouncedSearch = useDebounce(searchText, 600);
   // Apply filters with exact payload structure you want
   const applyFilters = () => {
     const params: any = {
-      product_type: filters.product_type,
-      listing_type: filters.listing_type, // This is the key you want
-      delivery_start_date: filters.delivery_start_date,
-      delivery_end_date: filters.delivery_end_date,
-      month: filters.month,
-      status: filters.status
+      status: filters.status,
     };
-
     if (searchText) params.search = searchText;
     getQuoteData(params);
     setShowFilterModal(false);

@@ -96,6 +96,7 @@ export default function AddProductPage() {
     const [mainPreview, setMainPreview] = useState<mainImg[]>([]);
     const [subPreview, setSubPreview] = useState<any[]>([]);
     const [categoryList, setCategoryList] = useState<Option[]>([]);
+    const [categoriesData, setCategoriesData] = useState<any[]>([]);
     const [subCategoryList, setSubCategoryList] = useState<Option[]>([]);
     const [productTypeOptions, setProductTypeOptions] = useState<Option[]>([]);
     const [listingTypeOptions, setListingTypeOptions] = useState<Option[]>([]);
@@ -132,7 +133,7 @@ export default function AddProductPage() {
         if (!src) return "";
         const s = String(src);
         if (s.startsWith("http://") || s.startsWith("https://")) return s;
-        const base = process.env.NEXT_PUBLIC_APP_URL || "";
+        const base = "http://service.digitalks.co.in/s3docs";
         if (!base) return s;
         const trimmedBase = base.endsWith("/") ? base.slice(0, -1) : base;
         const trimmedSrc = s.startsWith("/") ? s.slice(1) : s;
@@ -399,9 +400,11 @@ export default function AddProductPage() {
             try {
                 const res = await api.get(endPointApi.postCategoryList, {});
                 if (res?.data?.data) {
-                    const options = res.data.data.map((item: any) => ({
-                        label: item.categories_name,
-                        value: item.id,
+                    const list = res.data.data || [];
+                    setCategoriesData(list);
+                    const options = list.map((item: any) => ({
+                        label: item.categories_name || item.name,
+                        value: String(item.categories_id || item.id),
                         image: item.image,
                     }));
                     setCategoryList(options);
@@ -414,44 +417,32 @@ export default function AddProductPage() {
         fetchCategories();
     }, []);
 
-    /* <!-- ============================================ Fetch subcategories  ============================================ --> */
+    /* <!-- ============================================ Build subcategories from selected category ============================================ --> */
 
     useEffect(() => {
-        const fetchSubCategories = async () => {
-            if (!selectedCategory) {
-                setSubCategoryList([]);
-                setSelectedSubCategory(null);
-                handleChange("subCategory", null);
-                return;
-            }
+        if (!selectedCategory) {
+            setSubCategoryList([]);
+            setSelectedSubCategory(null);
+            handleChange("subCategory", null);
+            return;
+        }
 
-            try {
-                const res = await api.get(`${endPointApi.postSubCategoryList}?categoryId=${selectedCategory}`, {});
+        const cat = categoriesData.find((c: any) => String(c.categories_id || c.id) === String(selectedCategory));
+        const subcats = (cat?.subcategories || []).map((item: any) => ({
+            value: String(item.subcategory_id || item.id),
+            label: item.subcategory_name || item.name,
+            image: item.image,
+        }));
 
-                if (res?.data?.data) {
-                    const subcats = res.data.data.map((item: any) => ({
-                        value: item.id,
-                        label: item.name,
-                        image: item.image,
-                    }));
+        setSubCategoryList(subcats);
 
-                    setSubCategoryList(subcats);
-
-                    if (!isEditMode && subcats.length > 0) {
-                        setSelectedSubCategory(subcats[0].value);
-                        handleChange("subCategory", subcats[0].value);
-                    } else if (isEditMode && formData.subCategory) {
-                        setSelectedSubCategory(formData.subCategory);
-                    }
-                }
-            } catch (err) {
-                console.error("Error fetching subcategories", err);
-                toast.error("Error loading subcategories");
-            }
-        };
-
-        fetchSubCategories();
-    }, [formData.category, selectedCategory]);
+        if (!isEditMode && subcats.length > 0) {
+            setSelectedSubCategory(subcats[0].value);
+            handleChange("subCategory", subcats[0].value);
+        } else if (isEditMode && formData.subCategory) {
+            setSelectedSubCategory(formData.subCategory);
+        }
+    }, [selectedCategory, categoriesData, isEditMode, formData.subCategory]);
 
     /* <!-- ============================================ Fetch dropdown options  ============================================ --> */
 
