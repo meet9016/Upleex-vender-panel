@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { FiCalendar, FiImage, FiVideo, FiArrowLeft, FiX } from "react-icons/fi";
+import { toast } from "react-toastify"; // Make sure to import toast
 
 const QuoteEditPage = () => {
   const params = useParams();
@@ -98,16 +99,26 @@ const QuoteEditPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if params or params.id is null/undefined
+    if (!params?.id) {
+      return;
+    }
+    
     try {
       const body: any = {};
       if (formData.status) body.status = formData.status;
       
       const res = await api.put(`${endPointApi.updateQuote}/${params.id}`, body);
       if (res?.data?.success) {
+        toast.success("Quote updated successfully");
         router.back();
+      } else {
+        toast.error(res?.data?.message || "Failed to update quote");
       }
     } catch (err) {
       console.error('Update quote error', err);
+      toast.error("Failed to update quote");
     }
   };
 

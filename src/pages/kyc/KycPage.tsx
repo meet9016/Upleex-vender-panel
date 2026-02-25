@@ -357,7 +357,6 @@ export default function KYCPage() {
         if (res.data.status === 200) {
           await fetchKYCFormdata();
           setCurrentStep((s) => s + 1);
-          toast.success(res.data.message);
         } else {
           toast.error(res.data.message);
         }
@@ -436,7 +435,6 @@ export default function KYCPage() {
         const isLastStep = currentStep === steps.length - 1;
         if (!isLastStep) {
           setCurrentStep((s) => s + 1);
-          toast.success(res.data.message);
         } else {
           toast.success(res.data.message);
           setTimeout(() => {

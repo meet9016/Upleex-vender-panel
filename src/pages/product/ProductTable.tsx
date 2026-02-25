@@ -20,7 +20,8 @@ function useDebounce<T>(value: T, delay: number = 500): T {
   }, [value, delay]);
   return debouncedValue;
 }
-
+// ADD THIS at the top of your file (after imports)
+const DEFAULT_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Crect width=\'48\' height=\'48\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'24\' y=\'24\' font-family=\'Arial\' font-size=\'10\' fill=\'%23999\' text-anchor=\'middle\' dominant-baseline=\'middle\'%3ENo Image%3C/text%3E%3C/svg%3E';
 type Product = {
   id: string;
   product_name: string;
@@ -30,6 +31,8 @@ type Product = {
   cancel_price: string;
   product_listing_type_name: string;
   price: number;
+  product_main_image?: string;  // ADD THIS
+  image?: string;         
 };
 
 type Category = {
@@ -65,38 +68,78 @@ const ProductTable = () => {
   const [subCategoryOptions, setSubCategoryOptions] = useState<Option[]>([]);
   const [productTypes, setProductTypes] = useState<any[]>([]);
   const [listingTypes, setListingTypes] = useState<any[]>([]);
-  
-  // Filter state - matching backend parameters (these are the applied filters)
-  const [appliedFilters, setAppliedFilters] = useState({
+  // ADD THESE helper functions inside your component, before the columns definition
+const isValidImageUrl = (url: string | undefined | null): boolean => {
+  if (!url) return false;
+  return url.startsWith('http://') || 
+         url.startsWith('https://') || 
+         url.startsWith('data:image') ||
+         url.startsWith('/');
+};
+
+const getImageUrl = (product: any): string => {
+  const imageUrl = product?.product_main_image || product?.image || '';
+  return isValidImageUrl(imageUrl) ? imageUrl : DEFAULT_PLACEHOLDER;
+};
+  // Filter state - matching backend parameters
+  const [filters, setFilters] = useState({
     category_id: '',
     sub_category_id: '',
     filter_rent_sell: '', // 1 for Rent, 2 for Sell
     filter_tenure: '', // listing type id for Daily/Monthly/Hourly
   });
 
-  // Temporary filter state for modal (changes before apply)
-  const [tempFilters, setTempFilters] = useState({
-    category_id: '',
-    sub_category_id: '',
-    filter_rent_sell: '',
-    filter_tenure: '',
-  });
-
-  // Selected values for dropdowns in modal
-  const [tempSelectedCategory, setTempSelectedCategory] = useState<string>('');
-  const [tempSelectedSubCategory, setTempSelectedSubCategory] = useState<string>('');
+  // Selected values for dropdowns
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
 
   const debouncedSearch = useDebounce(searchText, 600);
   
   // Count active filters (excluding empty strings)
-  const activeFilterCount = Object.values(appliedFilters).filter(v => v !== '').length;
+  const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
 
   const columns: ColDef[] = [
-    { 
-      field: "product_name", 
-      headerName: "Product Name", 
-      minWidth: 200, 
-      cellStyle: { textAlign: "center" } 
+      {
+      headerName: "Product Name",
+      field: "product_name",
+      width: 240,
+      sortable: true,
+     // REPLACE your existing cellRenderer with this fixed version
+cellRenderer: (params: any) => {
+  const product = params.data;
+  const imageUrl = getImageUrl(product);  // Use the helper function
+  const productName = product?.product_name || "N/A";
+  const categoryName = product?.category_name || '';
+
+  return (
+    <div className="flex items-center gap-3 h-full">
+      <div className="flex-shrink-0">
+        <img
+          src={imageUrl}
+          alt={productName}
+          className="w-14 h-14 object-cover rounded-lg border"
+          onError={(e: any) => {
+            // Only change to placeholder if current src is not already placeholder
+            if (e.target.src !== DEFAULT_PLACEHOLDER) {
+              e.target.src = DEFAULT_PLACEHOLDER;
+            }
+          }}
+          loading="lazy"  // Add for performance
+        />
+      </div>
+      <div className="flex flex-col">
+        <span className="font-medium text-gray-800 dark:text-white">
+          {productName}
+        </span>
+        {categoryName && (
+          <span className="text-xs text-gray-500">
+            {categoryName}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+},
     },
     { 
       field: "category_name", 
@@ -267,17 +310,17 @@ const ProductTable = () => {
     }
   };
 
-  // Update subcategories when temp category changes
+  // Update subcategories when category changes
   useEffect(() => {
-    if (!tempSelectedCategory) {
+    if (!selectedCategory) {
       setSubCategoryOptions([]);
-      setTempSelectedSubCategory('');
-      setTempFilters(prev => ({ ...prev, sub_category_id: '' }));
+      setSelectedSubCategory('');
+      setFilters(prev => ({ ...prev, sub_category_id: '' }));
       return;
     }
 
     const cat = categoriesData.find((c: any) => 
-      String(c.categories_id || c.id || c._id) === String(tempSelectedCategory)
+      String(c.categories_id || c.id || c._id) === String(selectedCategory)
     );
     
     const subcats = (cat?.subcategories || []).map((item: any) => ({
@@ -288,32 +331,32 @@ const ProductTable = () => {
     setSubCategoryOptions(subcats);
     
     // Reset subcategory filter when category changes
-    setTempSelectedSubCategory('');
-    setTempFilters(prev => ({ ...prev, sub_category_id: '' }));
-  }, [tempSelectedCategory, categoriesData]);
+    setSelectedSubCategory('');
+    setFilters(prev => ({ ...prev, sub_category_id: '' }));
+  }, [selectedCategory, categoriesData]);
 
-  // Handle category change in modal
-  const handleTempCategoryChange = (value: string) => {
-    setTempSelectedCategory(value);
-    setTempFilters(prev => ({ ...prev, category_id: value }));
+  // Handle category change
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    setFilters(prev => ({ ...prev, category_id: value }));
   };
 
-  // Handle subcategory change in modal
-  const handleTempSubCategoryChange = (value: string) => {
-    setTempSelectedSubCategory(value);
-    setTempFilters(prev => ({ ...prev, sub_category_id: value }));
+  // Handle subcategory change
+  const handleSubCategoryChange = (value: string) => {
+    setSelectedSubCategory(value);
+    setFilters(prev => ({ ...prev, sub_category_id: value }));
   };
 
-  // Handle product type change in modal
-  const handleTempProductTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  // Handle product type change (Rent/Sell)
+  const handleProductTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { value } = e.target;
-    setTempFilters(prev => ({ ...prev, filter_rent_sell: value }));
+    setFilters(prev => ({ ...prev, filter_rent_sell: value }));
   };
 
-  // Handle listing type change in modal
-  const handleTempListingTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  // Handle listing type change
+  const handleListingTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { value } = e.target;
-    setTempFilters(prev => ({ ...prev, filter_tenure: value }));
+    setFilters(prev => ({ ...prev, filter_tenure: value }));
   };
 
   // Handle search input change
@@ -321,7 +364,7 @@ const ProductTable = () => {
     setSearchText(e.target.value);
   };
 
-  // Apply filters when search debounce changes (only search applies on typing)
+  // Apply filters when search debounce or filters change
   useEffect(() => {
     const params: any = {};
     
@@ -330,26 +373,29 @@ const ProductTable = () => {
       params.search = debouncedSearch.trim();
     }
     
-    // Add applied filters (these are from the Apply button)
-    if (appliedFilters.category_id) {
-      params.category_id = appliedFilters.category_id;
+    // Add category filter
+    if (filters.category_id) {
+      params.category_id = filters.category_id;
     }
     
-    if (appliedFilters.sub_category_id) {
-      params.sub_category_id = appliedFilters.sub_category_id;
+    // Add subcategory filter
+    if (filters.sub_category_id) {
+      params.sub_category_id = filters.sub_category_id;
     }
     
-    if (appliedFilters.filter_rent_sell) {
-      params.filter_rent_sell = appliedFilters.filter_rent_sell;
+    // Add rent/sell filter (1 for Rent, 2 for Sell)
+    if (filters.filter_rent_sell) {
+      params.filter_rent_sell = filters.filter_rent_sell;
     }
     
-    if (appliedFilters.filter_tenure) {
-      params.filter_tenure = appliedFilters.filter_tenure;
+    // Add tenure filter (listing type id)
+    if (filters.filter_tenure) {
+      params.filter_tenure = filters.filter_tenure;
     }
     
     console.log("Applying filters:", params);
     getProductData(params);
-  }, [debouncedSearch, appliedFilters]);
+  }, [debouncedSearch, filters]);
 
   // Handle click outside to close modal
   useEffect(() => {
@@ -369,20 +415,6 @@ const ProductTable = () => {
     fetchCategories();
     fetchDropdownData();
   }, []);
-
-  // Open filter modal and set temp values to current applied filters
-  const openFilterModal = () => {
-    setTempFilters({ ...appliedFilters });
-    setTempSelectedCategory(appliedFilters.category_id);
-    setTempSelectedSubCategory(appliedFilters.sub_category_id);
-    setShowFilterModal(true);
-  };
-
-  // Apply filters from modal
-  const applyFilters = () => {
-    setAppliedFilters({ ...tempFilters });
-    setShowFilterModal(false);
-  };
 
   // Open delete confirmation modal
   const openDeletePopup = (id: string) => {
@@ -412,25 +444,15 @@ const ProductTable = () => {
 
   // Clear all filters
   const clearFilters = () => {
-    setTempSelectedCategory('');
-    setTempSelectedSubCategory('');
-    setTempFilters({ 
+    setSelectedCategory('');
+    setSelectedSubCategory('');
+    setFilters({ 
       category_id: '', 
       sub_category_id: '', 
       filter_rent_sell: '', 
       filter_tenure: '' 
     });
     setSubCategoryOptions([]);
-  };
-
-  // Reset all filters (from clear all button)
-  const resetAllFilters = () => {
-    setAppliedFilters({ 
-      category_id: '', 
-      sub_category_id: '', 
-      filter_rent_sell: '', 
-      filter_tenure: '' 
-    });
     setSearchText('');
     setShowFilterModal(false);
   };
@@ -456,7 +478,7 @@ const ProductTable = () => {
           <div className="relative">
             <button
               ref={filterButtonRef}
-              onClick={openFilterModal}
+              onClick={() => setShowFilterModal(!showFilterModal)}
               className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2 relative"
             >
               <CiFilter size={20} />
@@ -492,9 +514,9 @@ const ProductTable = () => {
                       <SearchableDropdown
                         searchable
                         options={categoryOptions}
-                        value={tempSelectedCategory}
+                        value={selectedCategory}
                         placeholder="Select category"
-                        onChange={handleTempCategoryChange}
+                        onChange={handleCategoryChange}
                       />
                     </div>
 
@@ -506,13 +528,13 @@ const ProductTable = () => {
                       <SearchableDropdown
                         searchable
                         options={subCategoryOptions}
-                        value={tempSelectedSubCategory}
-                        placeholder={tempSelectedCategory ? "Search sub category..." : "Select category first"}
-                        error={!tempSelectedCategory}
-                        onChange={handleTempSubCategoryChange}
-                        disabled={!tempSelectedCategory}
+                        value={selectedSubCategory}
+                        placeholder={selectedCategory ? "Search sub category..." : "Select category first"}
+                        error={!selectedCategory}
+                        onChange={handleSubCategoryChange}
+                        disabled={!selectedCategory}
                       />
-                      {!tempSelectedCategory && (
+                      {!selectedCategory && (
                         <p className="text-gray-500 text-xs mt-1">Please select a category first</p>
                       )}
                     </div>
@@ -521,8 +543,8 @@ const ProductTable = () => {
                     <div>
                       <Label className="font-semibold mb-2">Product Type</Label>
                       <select
-                        value={tempFilters.filter_rent_sell}
-                        onChange={handleTempProductTypeChange}
+                        value={filters.filter_rent_sell}
+                        onChange={handleProductTypeChange}
                         className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">All Types</option>
@@ -535,8 +557,8 @@ const ProductTable = () => {
                     <div>
                       <Label className="font-semibold mb-2">Listing Type</Label>
                       <select
-                        value={tempFilters.filter_tenure}
-                        onChange={handleTempListingTypeChange}
+                        value={filters.filter_tenure}
+                        onChange={handleListingTypeChange}
                         className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">All Listing Types</option>
@@ -558,7 +580,7 @@ const ProductTable = () => {
                       Clear All
                     </button>
                     <button
-                      onClick={applyFilters}
+                      onClick={() => setShowFilterModal(false)}
                       className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
                     >
                       Apply
