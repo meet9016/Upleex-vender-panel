@@ -5,7 +5,6 @@ import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { FiCalendar, FiImage, FiVideo, FiArrowLeft, FiX } from "react-icons/fi";
 import { toast } from "react-toastify"; // Make sure to import toast
-import DatePicker from "@/components/common/DatePicker";
 
 const QuoteEditPage = () => {
   const params = useParams();
@@ -330,30 +329,33 @@ const QuoteEditPage = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Date Fields */}
             <div className="grid md:grid-cols-2 gap-4">
-             <div>
-  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-    <FiCalendar className="text-blue-600" />
-    Start Date
-  </label>
-  <DatePicker
-    value={formData.start_date}
-    onChange={(date) => setFormData({ ...formData, start_date: date })}
-    className="w-full"
-  />
-</div>
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <FiCalendar className="text-blue-600" />
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                  required
+                />
+              </div>
 
-<div>
-  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-    <FiCalendar className="text-purple-600" />
-    End Date
-  </label>
-  <DatePicker
-    value={formData.end_date}
-    onChange={(date) => setFormData({ ...formData, end_date: date })}
-    min={formData.start_date} // This ensures end date is not before start date
-    className="w-full"
-  />
-</div>
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <FiCalendar className="text-purple-600" />
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.end_date}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                  required
+                />
+              </div>
             </div>
 
             {/* Image Upload */}
