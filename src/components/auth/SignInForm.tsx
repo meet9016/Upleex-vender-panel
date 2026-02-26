@@ -76,14 +76,17 @@ export default function SignInForm() {
         toast.success(res.data.message);
         setOtpSent(true);
       } else {
+        console.log("res");
         toast.error(res.data.message);
       }
     } catch (err: any) {
+        console.log("res", err.response.data.message);
+        toast.error(err.response.data.message);
       setError(err.message || "Invalid email or password. Please try again.");
     } finally {
       setIsLoading(false);
-    }
-  };
+      }
+    };
 
   const verifyOtp = async () => {
     const newErrors: ErrorState = {};
