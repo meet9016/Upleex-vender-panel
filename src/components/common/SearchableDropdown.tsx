@@ -45,22 +45,21 @@ export default function SearchableDropdown({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [portalStyle, setPortalStyle] = useState<React.CSSProperties | undefined>(undefined);
+  const [portalStyle, setPortalStyle] = useState<React.CSSProperties>();
 
   const selectedOption = options.find(o => o.value === value);
 
   useEffect(() => {
-    if (disabled) {
-      setOpen(false);
-    }
+    if (disabled) setOpen(false);
   }, [disabled]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const target = e.target as Node;
-      const insideTrigger = ref.current?.contains(target);
-      const insideDropdown = dropdownRef.current?.contains(target);
-      if (!insideTrigger && !insideDropdown) {
+      if (
+        !ref.current?.contains(target) &&
+        !dropdownRef.current?.contains(target)
+      ) {
         setOpen(false);
         setSearch("");
       }
@@ -71,15 +70,13 @@ export default function SearchableDropdown({
 
   const filteredOptions = searchable
     ? options.filter(o =>
-        o?.label?.toLowerCase().includes(search.toLowerCase())
+        o.label.toLowerCase().includes(search.toLowerCase())
       )
     : options;
 
   useEffect(() => {
     if (!open || !searchable) return;
-    try {
-      (searchInputRef.current as any)?.focus?.({ preventScroll: true });
-    } catch {}
+    searchInputRef.current?.focus();
   }, [open, searchable]);
 
   const updatePortalPosition = () => {
@@ -97,163 +94,138 @@ export default function SearchableDropdown({
   useEffect(() => {
     if (!usePortal || !open) return;
     updatePortalPosition();
-    const handleScroll = () => updatePortalPosition();
-    const handleResize = () => updatePortalPosition();
-    window.addEventListener("scroll", handleScroll, true);
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", updatePortalPosition, true);
+    window.addEventListener("resize", updatePortalPosition);
     return () => {
-      window.removeEventListener("scroll", handleScroll, true);
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", updatePortalPosition, true);
+      window.removeEventListener("resize", updatePortalPosition);
     };
   }, [usePortal, open]);
+
+  const renderDropdown = (
+    <div
+      ref={dropdownRef}
+      style={usePortal ? portalStyle : undefined}
+      className={`${
+        usePortal ? "" : "absolute mt-2 w-full"
+      } z-50 rounded-xl border border-gray-200 dark:border-gray-700 
+      bg-white dark:bg-gray-900 shadow-xl`}
+    >
+      {searchable && (
+        <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+          <Input
+            ref={searchInputRef as any}
+            isSearch
+            size="sm"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              onSearch?.(e.target.value);
+            }}
+          />
+        </div>
+      )}
+
+      <div
+        className="max-h-52 overflow-y-auto"
+        onScroll={(e) => {
+          const target = e.target as HTMLDivElement;
+          const scrollPercentage =
+            (target.scrollTop + target.clientHeight) /
+            target.scrollHeight;
+          if (onScrollNearBottom && scrollPercentage >= 0.8) {
+            onScrollNearBottom();
+          }
+        }}
+      >
+        {filteredOptions.length ? (
+          filteredOptions.map((opt) => {
+            const isSelected = value === opt.value;
+
+            return (
+              <div
+                key={opt.value}
+                onClick={() => {
+                  if (disabled) return;
+                  onChange(opt.value);
+                  setOpen(false);
+                  setSearch("");
+                }}
+                className={`px-4 py-2 text-sm cursor-pointer flex items-center gap-2 transition
+                  ${
+                    isSelected
+                      ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
+                      : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  }
+                `}
+              >
+                {opt.image && (
+                  <img
+                    src={opt.image}
+                    alt=""
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                )}
+                {opt.label}
+              </div>
+            );
+          })
+        ) : (
+          <p className="px-4 py-2 text-sm text-gray-400 dark:text-gray-500">
+            No results found
+          </p>
+        )}
+
+        {footer && <div className="px-4 py-2">{footer}</div>}
+      </div>
+    </div>
+  );
 
   return (
     <div ref={ref} className="relative w-full">
       <button
         type="button"
         disabled={disabled}
-        onClick={() => {
-          if (!disabled) setOpen(!open);
-        }}
-        className={`w-full flex items-center justify-between px-4 py-2 rounded-lg border text-sm
+        onClick={() => !disabled && setOpen(!open)}
+        className={`w-full flex items-center justify-between px-4 py-2 rounded-lg border text-sm transition
           ${error ? "border-red-500" : "border-gray-300 dark:border-gray-700"}
-          ${disabled 
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800" 
-            : "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200"}
+          ${
+            disabled
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800"
+              : "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200"
+          }
         `}
       >
-        <span className={`flex items-center gap-2 ${selectedOption ? "text-gray-800 dark:text-gray-200" : "text-gray-400 dark:text-gray-500"}`}>
+        <span
+          className={`flex items-center gap-2 ${
+            selectedOption
+              ? "text-gray-800 dark:text-gray-200"
+              : "text-gray-400 dark:text-gray-500"
+          }`}
+        >
           {selectedOption?.image && (
-            <img src={selectedOption.image} alt="" className="w-5 h-5 rounded object-cover" />
+            <img
+              src={selectedOption.image}
+              alt=""
+              className="w-6 h-6 rounded-full object-cover "
+            />
           )}
           {selectedOption?.label || placeholder}
         </span>
-        <ChevronDownIcon className="text-gray-400" />
+        <ChevronDownIcon
+          className={`transition ${open ? "rotate-180" : ""}`}
+        />
       </button>
+
       {error && errorMessage && (
         <p className="mt-1 text-xs text-red-600">{errorMessage}</p>
       )}
 
       {open &&
         (usePortal
-          ? createPortal(
-              <div
-                ref={dropdownRef}
-                style={portalStyle}
-                className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl"
-              >
-                {searchable && (
-                  <div className="p-2 border-b border-gray-200 dark:border-gray-700">
-                    <Input
-                      ref={searchInputRef as any}
-                      isSearch
-                      size="xs"
-                      placeholder="Search..."
-                      value={search}
-                      onChange={(e) => {
-                        setSearch(e.target.value);
-                        onSearch?.(e.target.value);
-                      }}
-                    />
-                  </div>
-                )}
-                <div
-                  className="max-h-48 overflow-y-auto bg-white dark:bg-gray-900"
-                  onScroll={(e) => {
-                    const target = e.target as HTMLDivElement;
-                    const scrollPercentage =
-                      (target.scrollTop + target.clientHeight) /
-                      target.scrollHeight;
-                    if (onScrollNearBottom && scrollPercentage >= 0.8) {
-                      onScrollNearBottom();
-                    }
-                  }}
-                >
-                  {filteredOptions.length ? (
-                    filteredOptions.map((opt) => (
-                      <div
-                        key={opt.value}
-                        onClick={() => {
-                          onChange(opt.value);
-                          setOpen(false);
-                          setSearch("");
-                        }}
-                        className="px-4 py-2 text-sm cursor-pointer text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
-                      >
-                        {opt.image && (
-                          <img src={opt.image} alt="" className="w-5 h-5 rounded object-cover" />
-                        )}
-                        {opt.label}
-                      </div>
-                    ))
-                  ) : (
-                    <p className="px-4 py-2 text-sm text-gray-400 dark:text-gray-500">
-                      No results found
-                    </p>
-                  )}
-                  {footer && <div className="px-4 py-2">{footer}</div>}
-                </div>
-              </div>,
-              document.body
-            )
-          : (
-              <div
-                ref={dropdownRef}
-                className="absolute z-50 mt-2 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg"
-              >
-                {searchable && (
-                  <div className="p-2 border-b border-gray-200 dark:border-gray-700">
-                    <Input
-                      ref={searchInputRef as any}
-                      isSearch
-                      size="sm"
-                      placeholder="Search..."
-                      value={search}
-                      onChange={(e) => {
-                        setSearch(e.target.value);
-                        if (onSearch) onSearch(e.target.value);
-                      }}
-                    />
-                  </div>
-                )}
-                <div
-                  className="max-h-48 overflow-y-auto"
-                  onScroll={(e) => {
-                    const target = e.target as HTMLDivElement;
-                    const scrollPercentage =
-                      (target.scrollTop + target.clientHeight) /
-                      target.scrollHeight;
-                    if (onScrollNearBottom && scrollPercentage >= 0.8) {
-                      onScrollNearBottom();
-                    }
-                  }}
-                >
-                  {filteredOptions.length ? (
-                    filteredOptions.map((opt) => (
-                      <div
-                        key={opt.value}
-                        onClick={() => {
-                          onChange(opt.value);
-                          setOpen(false);
-                          setSearch("");
-                        }}
-                        className="px-4 py-2 text-sm cursor-pointer text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
-                      >
-                        {opt.image && (
-                          <img src={opt.image} alt="" className="w-5 h-5 rounded object-cover" />
-                        )}
-                        {opt.label}
-                      </div>
-                    ))
-                  ) : (
-                    <p className="px-4 py-2 text-sm text-gray-400 dark:text-gray-500">
-                      No results found
-                    </p>
-                  )}
-                  {footer && <div className="px-4 py-2">{footer}</div>}
-                </div>
-              </div>
-            ))}
+          ? createPortal(renderDropdown, document.body)
+          : renderDropdown)}
     </div>
   );
 }
