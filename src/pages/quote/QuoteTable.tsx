@@ -84,24 +84,28 @@ const QuoteTable = () => {
     return quotes.map(quote => {
       const product = quote.product_id || {};
       const month = months.find(m => m.id === quote.months_id);
+      const fmt = (d?: any) => {
+        if (!d) return '-';
+        const dt = new Date(d);
+        if (Number.isNaN(dt.getTime())) return '-';
+        return dt.toLocaleDateString();
+      };
 
       return {
         ...quote,
         // Flatten product fields for easy access in table
-        product_name: product.product_name || 'N/A',
-        product_type_name: product.product_type_name || 'N/A',
-        product_listing_type_name: product.product_listing_type_name || 'N/A',
+        product_name: product.product_name || '-',
+        product_type_name: product.product_type_name || '-',
+        product_listing_type_name: product.product_listing_type_name || '-',
         price: product.price || '0',
         product_main_image: product.product_main_image || '',
         total_price: quote.qty && product.price
           ? (parseInt(quote.qty) * parseFloat(product.price)).toString()
           : '0',
-        month_name: month?.month_name || 'N/A',
-        delivery_date: quote.delivery_date
-          ? new Date(quote.delivery_date).toLocaleDateString()
-          : 'N/A',
-        start_date: 'N/A', // If you have this field in backend
-        end_date: 'N/A',   // If you have this field in backend
+        month_name: month?.month_name || '-',
+        delivery_date: fmt(quote.delivery_date),
+        start_date: fmt(quote.start_date),
+        end_date: fmt(quote.end_date),
       };
     });
   };
@@ -220,6 +224,10 @@ const QuoteTable = () => {
             color = "text-yellow-700";
             bgColor = "bg-yellow-50";
             break;
+          case 'active':
+            color = "text-purple-700";
+            bgColor = "bg-purple-50";
+            break;
           case 'approval':
           case 'approved':
             color = "text-green-700";
@@ -239,7 +247,7 @@ const QuoteTable = () => {
 
         return (
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${bgColor} ${color}`}>
-            {status || 'N/A'}
+            {(status || '').toString().toUpperCase() || 'N/A'}
           </span>
         );
       },
@@ -250,6 +258,7 @@ const QuoteTable = () => {
       cellRenderer: (params: any) => {
         const status = params.data?.status?.toLowerCase();
         const isApproved = status === 'approval' || status === 'approved';
+        const isActive = status === 'active';
         const isRejected = status === 'reject' || status === 'rejected';
         const isCompleted = status === 'complete' || status === 'completed';
 
@@ -258,9 +267,9 @@ const QuoteTable = () => {
             {/* Approve */}
             <button
               onClick={() => handleApproval(params.data._id)}
-              disabled={isRejected || isApproved || isCompleted}
+              disabled={isRejected || isApproved || isActive || isCompleted}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
-              ${isRejected || isApproved || isCompleted
+              ${isRejected || isApproved || isActive || isCompleted
                   ? "bg-gray-100 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 cursor-not-allowed"
                   : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 shadow-sm hover:shadow"
                 }`}
@@ -271,9 +280,9 @@ const QuoteTable = () => {
             {/* Reject */}
             <button
               onClick={() => handleRejected(params.data._id)}
-              disabled={isRejected || isApproved || isCompleted}
+              disabled={isRejected || isApproved || isActive || isCompleted}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
-              ${isRejected || isApproved || isCompleted
+              ${isRejected || isApproved || isActive || isCompleted
                   ? "bg-gray-100 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 cursor-not-allowed"
                   : "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 shadow-sm hover:shadow"
                 }`}
@@ -360,9 +369,9 @@ const getQuoteData = async (filterParams: any = {}) => {
   const getStatusList = async () => {
     try {
       const res = await api.post(endPointApi.getStatus);
-      if (res?.data?.status === 200) {
-        setStatusList(res.data.data || []);
-      }
+      if (res?.data?.status === 200 && Array.isArray(res.data?.data)) {
+        setStatusList(res.data.data);
+      } 
     } catch (error) {
       console.log("fetch status error:", error);
     }
@@ -370,22 +379,24 @@ const getQuoteData = async (filterParams: any = {}) => {
 
   const handleApproval = async (quoteId: string) => {
     try {
-      const approvedStatus = statusList.find(s =>
-        s.name?.toLowerCase() === 'approved' || s.name?.toLowerCase() === 'approval'
+      // Prefer ACTIVE if available, else APPROVED
+      const statusActive = statusList.find((s: any) =>
+        String(s.name || '').toLowerCase().includes('active')
       );
-      if (!approvedStatus) {
-        toast.error("Approved status not found");
-        return;
-      }
+      const statusApproved = statusList.find((s: any) =>
+        String(s.name || '').toLowerCase().includes('approve')
+      );
+      const targetStatus = statusActive || statusApproved;
+      if (!targetStatus) return toast.error("Target status not found");
 
       const formData = new FormData();
       formData.append('quote_id', quoteId);
-      formData.append('status', approvedStatus.id);
+      formData.append('status', targetStatus.id);
 
       const res = await api.post(endPointApi.changeStatus, formData);
 
       if (res?.data?.status === 200) {
-        toast.success("Quote approved successfully");
+        toast.success(`Status changed to ${String(targetStatus.name).toUpperCase()}`);
         await getQuoteData(filters);
       }
     } catch (error) {

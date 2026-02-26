@@ -29,9 +29,9 @@ const QuoteEditPage = () => {
   const getStatuses = async () => {
     try {
       const res = await api.post(endPointApi.getStatus);
-      if (res?.data?.status === 200) {
-        setStatuses(res.data.data || []);
-      }
+      if (res?.data?.status === 200 && Array.isArray(res.data.data)) {
+        setStatuses(res.data.data);
+      } 
     } catch (error) {
       console.log("fetch statuses error:", error);
     }
@@ -72,9 +72,19 @@ const QuoteEditPage = () => {
         console.log("🚀 ~ Transformed Quote:", transformedQuote);
         setQuoteData(transformedQuote);
         
+        const toInputDate = (d: any) => {
+          if (!d) return "";
+          const date = new Date(d);
+          if (Number.isNaN(date.getTime())) return "";
+          const yyyy = date.getFullYear();
+          const mm = String(date.getMonth() + 1).padStart(2, '0');
+          const dd = String(date.getDate()).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd}`;
+        };
+
         setFormData({
-          start_date: quote?.start_date || "",
-          end_date: quote?.end_date || "",
+          start_date: toInputDate(quote?.start_date),
+          end_date: toInputDate(quote?.end_date),
           status: quote?.status || "",
           image: null,
           video: null,
@@ -93,6 +103,7 @@ const QuoteEditPage = () => {
     const n = (name || '').toLowerCase();
     if (n.includes('approve')) return 'approval';
     if (n.includes('reject')) return 'reject';
+    if (n.includes('active')) return 'active';
     if (n.includes('complete')) return 'complete';
     return 'pending';
   };
@@ -106,10 +117,17 @@ const QuoteEditPage = () => {
     }
     
     try {
-      const body: any = {};
-      if (formData.status) body.status = formData.status;
-      
-      const res = await api.put(`${endPointApi.updateQuote}/${params.id}`, body);
+      // Use multipart for optional files and dates
+      const fd = new FormData();
+      if (formData.status) fd.append('status', formData.status);
+      if (formData.start_date) fd.append('start_date', formData.start_date);
+      if (formData.end_date) fd.append('end_date', formData.end_date);
+      if (formData.image) fd.append('image', formData.image);
+      if (formData.video) fd.append('video', formData.video);
+      if (formData.return_image) fd.append('return_image', formData.return_image);
+      if (formData.return_video) fd.append('return_video', formData.return_video);
+
+      const res = await api.put(`${endPointApi.updateQuote}/${params.id}`, fd);
       if (res?.data?.success) {
         toast.success("Quote updated successfully");
         router.back();

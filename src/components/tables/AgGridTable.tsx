@@ -9,7 +9,6 @@ console.error = (...args) => {
   ) {
     return;
   }
-  consoleError(...args);
 };
 
 import React, { useMemo, useRef, memo, useCallback, useEffect, useState } from "react";
