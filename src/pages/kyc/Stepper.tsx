@@ -1,18 +1,21 @@
 type Props = {
   steps?: string[];
   currentStep: number;
+  completedPages?: string[];
 };
 
 export default function Stepper({
   steps = [],
   currentStep,
+  completedPages = [],
 }: Props) {
   return (
     <div className="w-full px-2 md:px-0">
       <div className="flex items-start md:items-center justify-between">
         {steps.map((label, index) => {
-          const isActive = index <= currentStep;
-          const isCompleted = index < currentStep;
+          const stepNumStr = String(index + 1);
+          const isCompleted = completedPages.includes(stepNumStr);
+          const isActive = index === currentStep || isCompleted;
           return (
             <div
               key={index}
@@ -28,21 +31,20 @@ export default function Stepper({
                   }}
                 />
               )}
-              
+
               {/* Step circle */}
               <div
                 className={`relative z-10 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center
                   rounded-full text-xs md:text-sm font-semibold
-                  ${
-                   isActive
-  ? "step-circle-active"
-  : "bg-gray-300 text-gray-600"
+                  ${isActive
+                    ? "step-circle-active"
+                    : "bg-gray-300 text-gray-600"
 
                   }`}
               >
                 {index + 1}
               </div>
-              
+
               {/* Label */}
               <span className="mt-2 md:mt-3 text-[10px] md:text-xs text-gray-700 text-center leading-tight px-1 max-w-[60px] md:max-w-[120px] dark:text-white">
                 {label}
