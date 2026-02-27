@@ -1,11 +1,13 @@
 "use client";
-import React, { memo, useCallback } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import { CalenderIcon, GridIcon, HorizontaLDots } from "../icons/index";
 import { BsChatSquareQuote } from "react-icons/bs";
+import endPointApi from "@/utils/endPointApi";
+import { api } from "@/utils/axiosInstance";
 
 type NavItem = {
   name: string;
@@ -23,6 +25,39 @@ const navItems: NavItem[] = [
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
+  const router = useRouter();
+  const [kycApproved, setKycApproved] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await api.post(endPointApi.postFetchVendorKYCFormData as string);
+        const status = res?.data?.data?.status || "";
+        if (!mounted) return;
+        setKycApproved(String(status).toLowerCase() === "approved");
+      } catch {
+        if (!mounted) return;
+        setKycApproved(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (kycApproved === false && pathname !== "/kyc") {
+      router.push("/kyc");
+    }
+  }, [kycApproved, pathname, router]);
+
+  const visibleItems = useMemo(() => {
+    if (kycApproved === false) {
+      return navItems.filter((n) => n.path === "/kyc");
+    }
+    return navItems;
+  }, [kycApproved]);
 
   const isActive = useCallback(
     (path: string) => {
@@ -86,7 +121,7 @@ const AppSidebar: React.FC = () => {
         </h2>
 
         <ul className="flex flex-col gap-4">
-          {navItems.map((nav) => (
+          {visibleItems.map((nav) => (
             <li key={nav.name}>
               <Link
                 href={nav.path}
