@@ -80,13 +80,13 @@ export default function SignInForm() {
         toast.error(res.data.message);
       }
     } catch (err: any) {
-        console.log("res", err.response.data.message);
-        toast.error(err.response.data.message);
+      console.log("res", err.response.data.message);
+      toast.error(err.response.data.message);
       setError(err.message || "Invalid email or password. Please try again.");
     } finally {
       setIsLoading(false);
-      }
-    };
+    }
+  };
 
   const verifyOtp = async () => {
     const newErrors: ErrorState = {};
@@ -108,28 +108,19 @@ export default function SignInForm() {
       if (res.data.status == 200) {
         saveToken(res.data.data.token);
         localStorage.setItem("user_info", JSON.stringify(res?.data?.data?.vendor));
-        // localStorage.setItem(
-          //   "userData",
-          //   JSON.stringify({
-            //     full_name: res.data.data.user.full_name,
-            //     email: res.data.data.user.number,
-            //   })
-            // );
-            
-            toast.success(res.data.message);
-            // navigate("/");
-            const searchParams = new URLSearchParams(window.location.search);
-            const redirectTo = searchParams.get('redirect') || '/';
 
-        // Use window.location.href for hard redirect instead of router.push
+        toast.success(res.data.message);
+        const searchParams = new URLSearchParams(window.location.search);
+        const redirectTo = searchParams.get('redirect') || '/';
         window.location.href = redirectTo;
       } else {
-        console.log("res000", res);
-
-        toast.error(res.data.message)
+        toast.error(res.data.message);
       }
     } catch (err: any) {
-      setError(err.message || "Invalid OTP. Please try again.");
+      console.log("OTP verification error:", err);
+      const errorMessage = err?.response?.data?.message || err?.message || "Invalid OTP. Please try again.";
+      toast.error(errorMessage);
+      setError({ otp: errorMessage });
     } finally {
       setIsLoading(false);
     }
