@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation';
 import AgGridTable from '@/components/tables/AgGridTable';
 import { ColDef } from 'ag-grid-community';
-import { MdDelete, MdModeEdit, MdClose, MdSearch, MdMoreVert } from "react-icons/md";
+import { MdDelete, MdModeEdit, MdClose, MdSearch, MdMoreVert, MdBlock } from "react-icons/md";
 import { api } from '@/utils/axiosInstance';
 import endPointApi from '@/utils/endPointApi';
 import ConfirmDeleteModal from '@/components/common/ConfirmDeleteModal';
@@ -12,7 +12,7 @@ import { CiFilter } from "react-icons/ci";
 import { toast } from 'react-toastify';
 import SearchableDropdown from '@/components/common/SearchableDropdown';
 import Label from '@/components/form/Label';
-
+import { HiOutlineDocumentText } from "react-icons/hi";
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -731,36 +731,58 @@ cellRenderer: (params: any) => {
           <div className="relative" ref={actionsMenuRef}>
             <button
               onClick={() => setShowActionsMenu((v) => !v)}
-              className="px-3 py-2 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium flex items-center gap-2"
+              className="px-3 py-2 hover:bg-gray-200  border-2 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium flex items-center gap-2"
               title="More actions"
             >
               <MdMoreVert className="text-lg" />
             </button>
-            {showActionsMenu && (
-              <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50">
-                <button
-                  onClick={() => openBulkAction('deactivate')}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                >
-                  Deactivate Selected ({selectedRows.length})
-                </button>
-                <button
-                  onClick={() => openBulkAction('delete')}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-red-600 dark:text-red-400"
-                >
-                  Delete Selected ({selectedRows.length})
-                </button>
-                <button
-                  onClick={() => {
-                    setShowActionsMenu(false);
-                    router.push('/draft');
-                  }}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                >
-                  View Drafts
-                </button>
-              </div>
-            )}
+   {showActionsMenu && (
+  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg z-50 overflow-hidden">
+
+    {/* Deactivate */}
+    <button
+      onClick={() => openBulkAction("deactivate")}
+      className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+    >
+      <div className="flex items-center gap-2  text-yellow-600">
+        <MdBlock className="text-base" />
+        <span>Deactivate</span>
+      </div>
+      <span className="text-xs text-gray-400">
+        {selectedRows.length}
+      </span>
+    </button>
+
+    {/* Delete */}
+    <button
+      onClick={() => openBulkAction("delete")}
+      className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+    >
+      <div className="flex items-center gap-2">
+        <MdDelete className="text-base" />
+        <span>Delete</span>
+      </div>
+      <span className="text-xs opacity-70">
+        {selectedRows.length}
+      </span>
+    </button>
+
+    <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
+
+    {/* View Drafts */}
+    <button
+      onClick={() => {
+        setShowActionsMenu(false);
+        router.push("/draft");
+      }}
+      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+    >
+      <HiOutlineDocumentText className="text-base" />
+      <span>View Drafts</span>
+    </button>
+
+  </div>
+)}
           </div>
         </div>
       </div>
