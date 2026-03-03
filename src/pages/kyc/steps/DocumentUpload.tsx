@@ -9,7 +9,7 @@ type Props = {
   file: File | string | null;
   onChange: (file: File | null) => void;
   error?: string;
-
+  clearError?: () => void; // नया prop add करें
 };
 
 export default function DocumentUpload({
@@ -17,7 +17,7 @@ export default function DocumentUpload({
   file,
   onChange,
   error,
-
+  clearError // नया prop
 }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -53,7 +53,19 @@ export default function DocumentUpload({
     }
 
     onChange(selected);
+    
+    // यहाँ error clear करें - जैसे ही file select हो
+    if (clearError) {
+      clearError();
+    }
+  };
 
+  const handleRemoveFile = () => {
+    onChange(null);
+    // file remove करने पर भी error clear हो सकता है (अगर चाहें तो)
+    // if (clearError) {
+    //   clearError();
+    // }
   };
 
   return (
@@ -66,14 +78,13 @@ export default function DocumentUpload({
         <label className={`border border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition text-center ${
           error ? "border-error-600 " : "border-gray-400 hover:bg-gray-100"
         }`}>
-          <span className={`text-sm ${ error ? "text-error-600" : "text-gray-600" }`}>Click to upload</span>
-
-<input 
-  type="file" 
-  className="hidden" 
-  onChange={handleFileChange}
-  accept="image/*"
-/>
+          <span className={`text-sm `}>Click to upload</span>
+          <input 
+            type="file" 
+            className="hidden" 
+            onChange={handleFileChange}
+            accept="image/*"
+          />
         </label>
       ) : (
         <div className={`relative p-3 border rounded-lg group ${
@@ -97,8 +108,8 @@ export default function DocumentUpload({
 
 
           <button
-            onClick={() => onChange(null)}
-            className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 text-xs"
+            onClick={handleRemoveFile}
+            className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 text-xs hover:bg-red-700"
           >
             ✕
           </button>
@@ -111,11 +122,11 @@ export default function DocumentUpload({
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[99999]">
           <button
             onClick={() => setShowModal(false)}
-            className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white text-2xl sm:text-3xl bg-red-600 rounded-full w-8 h-8 sm:w-10 sm:h-10"
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white text-2xl sm:text-3xl bg-red-600 rounded-full w-8 h-8 sm:w-10 sm:h-10 hover:bg-red-700"
           >
             ✕
           </button>
-          <img src={preview} className="max-w-[90%] max-h-[90%]" />
+          <img src={preview} className="max-w-[90%] max-h-[90%]" alt="preview" />
         </div>
       )}
     </div>

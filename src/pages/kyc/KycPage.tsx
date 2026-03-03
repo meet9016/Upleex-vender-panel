@@ -87,46 +87,175 @@ export default function KYCPage() {
     terms_conditions: 0,
     completed_pages: [],
   });
-
+console.log("KYCPage Rendered with KYCformData:", KYCformData);
   const router = useRouter();
 
   useEffect(() => {
     fetchKYCFormdata();
   }, []);
 
-  const clearError = (field: string | number) => {
-    setErrors(prev => {
+  const clearError = (field: string| number) => {
+    setErrors((prev) => {
       const newErrors = { ...prev };
-      delete newErrors[field as string];
+      delete newErrors[field];
       return newErrors;
     });
   };
 
-  const FormDataValidation = async () => {
+  // ────────────────────────────────────────────────
+  //                  VALIDATION
+  // ────────────────────────────────────────────────
+  const validateCurrentStep = () => {
     const newErrors: ErrorType = {};
-    const isEmpty = (val: string | undefined | null) => !val || !val.trim();
-    const isPANValid = (val: string) => /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(val);
-    const isIFSCValid = (val: string) => /^[A-Z]{4}0[A-Z0-9]{6}$/.test(val);
-    const isMobileValid = (val: string) => /^[6-9][0-9]{9}$/.test(val);
 
+    const isEmpty = (val: string | undefined | null) => !val || !val.trim();
+    const isOnlyLetters = (val: string) => /^[a-zA-Z\s]+$/.test(val);
+    const isOnlyDigits = (val: string) => /^\d+$/.test(val);
+    const isEmailValid = (val: string) =>
+      /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.(com|in)$/i.test(val);
+    const isMobileValid = (val: string) => /^[6-9]\d{9}$/.test(val);
+    const isPANValid = (val: string) => /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(val);
+    const isAadhaarValid = (val: string) => /^\d{4}\s?\d{4}\s?\d{4}$/.test(val);
+    const isGSTValid = (val: string) =>
+      /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(val);
+    const isIFSCValid = (val: string) => /^[A-Z]{4}0[A-Z0-9]{6}$/.test(val);
+
+    // Step 0 ─ Contact Details
     if (currentStep === 0) {
-      if (isEmpty(KYCformData.full_name)) newErrors.full_name = "Name is required";
-      if (isEmpty(KYCformData.email)) newErrors.email = "Email is required";
-      if (isEmpty(KYCformData.mobile) || !isMobileValid(KYCformData.mobile)) newErrors.mobile = "Valid 10-digit mobile required";
-      if (isEmpty(KYCformData.address)) newErrors.address = "Address is required";
+      if (isEmpty(KYCformData.full_name)) {
+        newErrors.full_name = "Full name is required";
+      } else if (!isOnlyLetters(KYCformData.full_name)) {
+        newErrors.full_name = "Name should contain only letters and spaces";
+      }
+
+      if (isEmpty(KYCformData.email)) {
+        newErrors.email = "Email is required";
+      } else if (!isEmailValid(KYCformData.email)) {
+        newErrors.email = "Please enter a valid email (ending with .com or .in)";
+      }
+
+      if (isEmpty(KYCformData.mobile)) {
+        newErrors.mobile = "Mobile number is required";
+      } else if (!isMobileValid(KYCformData.mobile)) {
+        newErrors.mobile = "Enter valid 10-digit Indian mobile number";
+      }
+
+      if (isEmpty(KYCformData.address)) {
+        newErrors.address = "Address is required";
+      } else if (KYCformData.address.trim().length < 10) {
+        newErrors.address = "Address must be at least 10 characters";
+      }
+
+      if (isEmpty(KYCformData.pincode)) {
+        newErrors.pincode = "Pincode is required";
+      } else if (!isOnlyDigits(KYCformData.pincode) || KYCformData.pincode.length !== 6) {
+        newErrors.pincode = "Pincode must be exactly 6 digits";
+      }
+
       if (!KYCformData.country_id?.value) newErrors.country_id = "Country is required";
       if (!KYCformData.state_id?.value) newErrors.state_id = "State is required";
       if (!KYCformData.city_id?.value) newErrors.city_id = "City is required";
-    } else if (currentStep === 1) {
-      if (!isPANValid(KYCformData.pancard_number)) newErrors.pancard_number = "Invalid PAN format";
-      if (isEmpty(KYCformData.aadharcard_number)) newErrors.aadharcard_number = "Aadhaar required";
-      if (isEmpty(KYCformData.business_name)) newErrors.business_name = "Business name required";
-    } else if (currentStep === 2) {
-      if (isEmpty(KYCformData.account_number)) newErrors.account_number = "Account number required";
-      if (!isIFSCValid(KYCformData.ifsc_code)) newErrors.ifsc_code = "Invalid IFSC format";
-    } else if (currentStep === 3) {
-      if (!KYCformData.pancard_front_image) newErrors.pancard_front_image = "Required";
-      if (!KYCformData.aadharcard_front_image) newErrors.aadharcard_front_image = "Required";
+    }
+
+    // Step 1 ─ Identity
+    else if (currentStep === 1) {
+      if (isEmpty(KYCformData.pancard_number)) {
+        newErrors.pancard_number = "PAN number is required";
+      } else if (!isPANValid(KYCformData.pancard_number)) {
+        newErrors.pancard_number = "Invalid PAN format (e.g. ABCDE1234F)";
+      }
+
+      if (isEmpty(KYCformData.aadharcard_number)) {
+        newErrors.aadharcard_number = "Aadhaar number is required";
+      } else if (!isAadhaarValid(KYCformData.aadharcard_number)) {
+        newErrors.aadharcard_number = "Invalid Aadhaar format (12 digits with optional spaces)";
+      }
+
+      if (isEmpty(KYCformData.business_name)) {
+        newErrors.business_name = "Business name is required";
+      } else if (KYCformData.business_name.trim().length < 3) {
+        newErrors.business_name = "Business name too short (min 3 chars)";
+      }
+
+      if (!KYCformData.no_gst) {
+        if (isEmpty(KYCformData.gst_number)) {
+          newErrors.gst_number = "GST number is required";
+        } else if (!isGSTValid(KYCformData.gst_number)) {
+          newErrors.gst_number = "Invalid GSTIN format (15 characters)";
+        }
+      }
+    }
+
+    // Step 2 ─ Bank
+    else if (currentStep === 2) {
+      if (isEmpty(KYCformData.account_holder_name)) {
+        newErrors.account_holder_name = "Account holder name is required";
+      } else if (!isOnlyLetters(KYCformData.account_holder_name)) {
+        newErrors.account_holder_name = "Only letters and spaces allowed";
+      }
+
+      if (isEmpty(KYCformData.account_number)) {
+        newErrors.account_number = "Account number is required";
+      } else if (!isOnlyDigits(KYCformData.account_number)) {
+        newErrors.account_number = "Only digits allowed";
+      } else if (
+        KYCformData.account_number.length < 9 ||
+        KYCformData.account_number.length > 18
+      ) {
+        newErrors.account_number = "Account number must be 9–18 digits";
+      }
+
+      if (isEmpty(KYCformData.confirm_account_number)) {
+        newErrors.confirm_account_number = "Please confirm account number";
+      } else if (KYCformData.account_number !== KYCformData.confirm_account_number) {
+        newErrors.confirm_account_number = "Account numbers do not match";
+      }
+
+      if (isEmpty(KYCformData.ifsc_code)) {
+        newErrors.ifsc_code = "IFSC code is required";
+      } else if (!isIFSCValid(KYCformData.ifsc_code)) {
+        newErrors.ifsc_code = "Invalid IFSC format (e.g. SBIN0123456)";
+      }
+
+      if (isEmpty(KYCformData.account_type)) {
+        newErrors.account_type = "Please select account type";
+      }
+    }
+
+    // Step 3 ─ Documents
+    else if (currentStep === 3) {
+      const isValidFile = (file: File | string | null) =>
+        file instanceof File || (typeof file === "string" && file.trim().length > 0);
+
+      if (!isValidFile(KYCformData.pancard_front_image)) {
+        newErrors.pancard_front_image = "PAN front image is required";
+      }
+      if (!isValidFile(KYCformData.aadharcard_front_image)) {
+        newErrors.aadharcard_front_image = "Aadhaar front image is required";
+      }
+      if (!isValidFile(KYCformData.aadharcard_back_image)) {
+        newErrors.aadharcard_back_image = "Aadhaar back image is required";
+      }
+
+      if (!KYCformData.gst_certificate_image) {
+        if (!isValidFile(KYCformData.gst_certificate_image)) {
+          newErrors.gst_certificate_image = "GST certificate is required";
+        }
+      }
+
+      if (!isValidFile(KYCformData.vendor_image)) {
+        newErrors.vendor_image = "Vendor photograph is required";
+      }
+      if (!isValidFile(KYCformData.business_logo_image)) {
+        newErrors.business_logo_image = "Business logo is required";
+      }
+    }
+
+    // Step 4 ─ Declaration
+    else if (currentStep === 4) {
+      if (KYCformData.terms_conditions !== 1) {
+        newErrors.terms_conditions = "Please accept the declaration";
+      }
     }
 
     setErrors(newErrors);
@@ -137,9 +266,9 @@ export default function KYCPage() {
     setIsSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append('page', String(currentStep + 1));
-      formData.append('mobile', KYCformData.mobile);
-      formData.append('email', KYCformData.email);
+      formData.append("page", String(currentStep + 1));
+      formData.append("mobile", KYCformData.mobile);
+      formData.append("email", KYCformData.email);
 
       if (currentStep === 0) {
         const contact = {
@@ -156,7 +285,7 @@ export default function KYCPage() {
           city_name: KYCformData.city_id.label,
           page: "1"
         };
-        formData.append('ContactDetails', JSON.stringify([contact]));
+        formData.append("ContactDetails", JSON.stringify([contact]));
       } else if (currentStep === 1) {
         const identity = {
           pancard_number: KYCformData.pancard_number,
@@ -165,7 +294,7 @@ export default function KYCPage() {
           gst_number: KYCformData.gst_number,
           page: "2"
         };
-        formData.append('Identity', JSON.stringify([identity]));
+        formData.append("Identity", JSON.stringify([identity]));
       } else if (currentStep === 2) {
         const bank = {
           account_holder_name: KYCformData.account_holder_name,
@@ -175,43 +304,66 @@ export default function KYCPage() {
           account_type: KYCformData.account_type,
           page: "3"
         };
-        formData.append('Bank', JSON.stringify([bank]));
+        formData.append("Bank", JSON.stringify([bank]));
       } else if (currentStep === 3) {
-        if (KYCformData.pancard_front_image instanceof File) formData.append('pancard_front_image', KYCformData.pancard_front_image);
-        if (KYCformData.aadharcard_front_image instanceof File) formData.append('aadharcard_front_image', KYCformData.aadharcard_front_image);
-        if (KYCformData.aadharcard_back_image instanceof File) formData.append('aadharcard_back_image', KYCformData.aadharcard_back_image);
-        if (KYCformData.gst_certificate_image instanceof File) formData.append('gst_certificate_image', KYCformData.gst_certificate_image);
-        if (KYCformData.vendor_image instanceof File) formData.append('vendor_image', KYCformData.vendor_image);
-        if (KYCformData.business_logo_image instanceof File) formData.append('business_logo_image', KYCformData.business_logo_image);
-        formData.append('Documents', JSON.stringify([{ page: "4" }]));
+        // Files
+        if (KYCformData.pancard_front_image instanceof File)
+          formData.append("pancard_front_image", KYCformData.pancard_front_image);
+        if (KYCformData.aadharcard_front_image instanceof File)
+          formData.append("aadharcard_front_image", KYCformData.aadharcard_front_image);
+        if (KYCformData.aadharcard_back_image instanceof File)
+          formData.append("aadharcard_back_image", KYCformData.aadharcard_back_image);
+        if (KYCformData.gst_certificate_image instanceof File)
+          formData.append("gst_certificate_image", KYCformData.gst_certificate_image);
+        if (KYCformData.vendor_image instanceof File)
+          formData.append("vendor_image", KYCformData.vendor_image);
+        if (KYCformData.business_logo_image instanceof File)
+          formData.append("business_logo_image", KYCformData.business_logo_image);
+
+        formData.append("Documents", JSON.stringify([{ page: "4" }]));
+      } else if (currentStep === 4) {
+        formData.append("terms_conditions", "1");
       }
 
       const res = await api.post(`${endPointApi.postVendorKYCFormSubmit}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       if (res.data.status === 200) {
         await fetchKYCFormdata();
+        toast.success(res.data.message || "Saved successfully");
+
         if (currentStep < steps.length - 1) {
           setCurrentStep((s) => s + 1);
         } else {
-          toast.success("KYC Submitted Successfully");
-          router.push("/");
+          toast.success("KYC Submitted Successfully!");
+          setTimeout(() => router.push("/"), 1800);
         }
       } else {
-        toast.error(res.data.message);
+        toast.error(res.data.message || "Server error");
       }
-    } catch (error) {
-      toast.error("Failed to submit");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to save data");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleNext = async () => {
+    if (validateCurrentStep()) {
+      await submitKYCFormdata();
+    } else {
+      toast.error("Please correct the errors shown");
+    }
+  };
+
+  // ────────────────────────────────────────────────
+  //                  FETCH EXISTING DATA
+  // ────────────────────────────────────────────────
   const fetchKYCFormdata = async () => {
     try {
       const res = await api.get(`${endPointApi.postFetchVendorKYCFormData}`);
-      if (res.status === 200 && res.data.data) {
+      if (res.status === 200 && res.data?.data) {
         const data = res.data.data;
         const contact = (data.ContactDetails && data.ContactDetails[0]) || data.ContactDetails || {};
         const identity = (data.Identity && data.Identity[0]) || data.Identity || {};
@@ -244,34 +396,82 @@ export default function KYCPage() {
           gst_certificate_image: docs.gst_certificate_image || null,
           vendor_image: docs.vendor_image || null,
           business_logo_image: docs.business_logo_image || null,
+
           completed_pages: data.completed_pages || [],
+          terms_conditions: data.terms_conditions || 0,
         }));
       }
-    } catch (error) {
-      console.error("Fetch Error:", error);
-    }
-  };
-
-  const handleNext = async () => {
-    if (await FormDataValidation()) {
-      await submitKYCFormdata();
+    } catch (err) {
+      console.error("Fetch KYC error:", err);
     }
   };
 
   return (
     <ComponentCard title="KYC Verification">
       <Stepper steps={steps} currentStep={currentStep} completedPages={KYCformData.completed_pages} />
-      <div className="min-h-[400px]">
-        {currentStep === 0 && <ContactDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
-        {currentStep === 1 && <Identity setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
-        {currentStep === 2 && <BankDetails setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
-        {currentStep === 3 && <Documents setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
-        {currentStep === 4 && <StepDeclaration setKYCFormData={setKYCFormData} KYCformData={KYCformData} errors={errors} clearError={clearError} />}
+
+      <div className="min-h-[400px] md:min-h-[520px]">
+        {currentStep === 0 && (
+          <ContactDetails
+            setKYCFormData={setKYCFormData}
+            KYCformData={KYCformData}
+            errors={errors}
+            clearError={clearError}
+          />
+        )}
+        {currentStep === 1 && (
+          <Identity
+            setKYCFormData={setKYCFormData}
+            KYCformData={KYCformData}
+            errors={errors}
+            clearError={clearError}
+          />
+        )}
+        {currentStep === 2 && (
+          <BankDetails
+            setKYCFormData={setKYCFormData}
+            KYCformData={KYCformData}
+            errors={errors}
+            clearError={clearError}
+          />
+        )}
+        {currentStep === 3 && (
+          <Documents
+            setKYCFormData={setKYCFormData}
+            KYCformData={KYCformData}
+            errors={errors}
+            clearError={clearError}
+          />
+        )}
+        {currentStep === 4 && (
+          <StepDeclaration
+            setKYCFormData={setKYCFormData}
+            KYCformData={KYCformData}
+            errors={errors}
+            clearError={clearError}
+          />
+        )}
       </div>
-      <div className="flex justify-between mt-8 p-4 border-t">
-        <button onClick={() => setCurrentStep(s => s - 1)} disabled={currentStep === 0 || isSubmitting} className="btn-secondary">Back</button>
-        <button onClick={handleNext} disabled={isSubmitting} className="btn-primary">
-          {isSubmitting ? "Processing..." : currentStep === steps.length - 1 ? "Submit" : "Next"}
+
+      <div className="flex justify-between mt-6 pt-4 border-t">
+        <button
+          onClick={() => setCurrentStep((s) => s - 1)}
+          disabled={currentStep === 0 || isSubmitting}
+          className="btn-secondary"
+        >
+          Back
+        </button>
+
+        <button
+          onClick={handleNext}
+          disabled={isSubmitting}
+          className="btn-primary min-w-[120px]"
+        >
+          {isSubmitting
+            ? "Saving..."
+            : currentStep === steps.length - 1
+            ? "Submit KYC"
+            : "Save & Next"}
         </button>
       </div>
     </ComponentCard>

@@ -29,6 +29,8 @@ interface AgGridTableProps {
   onEdit?: (id: number) => void;
   columns?: ColDef[];
   filter?: boolean;
+  onSelectionChange?: (rows: any[]) => void;
+  loading?: boolean;
 }
 
 const AgGridTable: React.FC<AgGridTableProps> = ({
@@ -38,6 +40,8 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   onDelete,
   onEdit,
   columns,
+  onSelectionChange,
+  loading = false,
 }) => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
@@ -132,6 +136,20 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   //   console.log("Grid ready - horizontal scroll enabled");
   // }, []);
 
+  useEffect(() => {
+    const api = gridRef.current?.api;
+    if (!api) return;
+    if (loading) {
+      try {
+        api.showLoadingOverlay();
+      } catch {}
+    } else {
+      try {
+        api.hideOverlay();
+      } catch {}
+    }
+  }, [loading]);
+
   const handleAddClick = useCallback(() => {
     router.push(addButtonLink);
   }, [router, addButtonLink]);
@@ -158,6 +176,12 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
           pagination
           paginationPageSize={20}
           rowSelection={rowSelection}
+          onSelectionChanged={() => {
+            const rows = gridRef.current?.api?.getSelectedRows() || [];
+            if (typeof onSelectionChange === 'function') {
+              onSelectionChange(rows);
+            }
+          }}
           // onGridReady={onGridReady}
           paginationPageSizeSelector={[10, 20, 50, 100]}
           columnMenu="new"
