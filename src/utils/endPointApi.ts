@@ -21,8 +21,11 @@ export interface EndPointApi {
     postBulkDeactivateProducts: string;
     postBulkDeleteProducts: string;
     postPurchasePlan: string;
+    postCreateListingPlan: string;
+    postCustomPlanRequest: string;
     postAllVendorProductList: string;
     postDeleteVendorProductList: string;
+    getPlanOptions: string;
 
     postGetQuote: string;
     getQuoteById: string;
@@ -60,6 +63,9 @@ const endPointApi: EndPointApi = {
     postBulkDeactivateProducts: 'products/bulk-deactivate',
     postBulkDeleteProducts: 'products/bulk-delete',
     postPurchasePlan: 'products/purchase-plan',
+    getPlanOptions: 'listing-plans/options',
+    postCreateListingPlan: 'listing-plans/create',
+    postCustomPlanRequest: 'listing-plans/custom-request',
 
     // Quote
     postGetQuote: 'quote/getall',

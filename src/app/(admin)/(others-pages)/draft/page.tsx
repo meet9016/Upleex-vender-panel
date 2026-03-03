@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
@@ -35,6 +35,9 @@ export default function DraftPage() {
   const [customMonths, setCustomMonths] = useState<number>(2);
   const [customMaxProducts, setCustomMaxProducts] = useState<number>(1);
   const [showPlanDialog, setShowPlanDialog] = useState(false);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [plansLoading, setPlansLoading] = useState(false);
+  const customMobileRef = useRef<string>("");
 
   const columns: ColDef[] = useMemo(() => [
     {
@@ -125,19 +128,46 @@ export default function DraftPage() {
     setSelectedSubCategory("");
   }, [selectedCategory, categoriesData]);
 
-  const applyPlan = async (plan_type: "basic" | "standard" | "premium" | "custom", months?: number, max_products?: number) => {
+  const fetchPlans = async () => {
+    setPlansLoading(true);
+    try {
+      const res = await api.get((endPointApi as any).getPlanOptions as string);
+      const list = res?.data?.data || [];
+      const normalized = list.map((p: any) => ({
+        key: p.plan_type,
+        id: p._id || p.id,
+        name: p.plan_type?.charAt(0).toUpperCase() + p.plan_type?.slice(1),
+        description: `${p.months} months, up to ${p.max_products} products`,
+        price: p.amount,
+        duration_months: p.months,
+        product_limit: p.max_products,
+      }));
+      setPlans(normalized);
+    } catch (e) {
+      setPlans([
+        { key: 'basic', name: 'Basic', description: '2 months, 1 product', price: 39, duration_months: 2, product_limit: 1 },
+        { key: 'standard', name: 'Standard', description: '5 months, up to 3 products', price: 59, duration_months: 5, product_limit: 3 },
+        { key: 'premium', name: 'Premium', description: '12 months, up to 7 products', price: 109, duration_months: 12, product_limit: 7 },
+      ]);
+    } finally {
+      setPlansLoading(false);
+    }
+  };
+
+  const applyPlan = async (plan_type: "basic" | "standard" | "premium" | "custom", months?: number, max_products?: number, plan_id?: string) => {
     try {
       const ids = selected.map((r) => r._id || r.id);
       if (!ids.length) {
         toast.info("Select draft products to activate");
         return;
       }
-      const body: any = { plan_type, product_ids: ids };
+      const body: any = { plan_type: String(plan_type).toLowerCase(), product_ids: ids };
+      if (plan_id) body.plan_id = plan_id;
       if (plan_type === "custom") {
         body.months = months;
         body.max_products = max_products;
       }
-      await api.post(endPointApi.postPurchasePlan, body);
+      await api.post(endPointApi.postCreateListingPlan, body);
       toast.success("Plan applied successfully! Selected products activated.");
       fetchDrafts();
       setSelected([]);
@@ -220,7 +250,7 @@ export default function DraftPage() {
             {selected.length} product{selected.length > 1 ? 's' : ''} selected
           </span>
           <Button 
-            onClick={() => setShowPlanDialog(true)}
+            onClick={() => { setShowPlanDialog(true); fetchPlans(); }}
             className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700"
           >
             Activate Products
@@ -269,101 +299,36 @@ export default function DraftPage() {
 
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                {/* Basic Plan */}
-                <div className="relative border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-green-400 hover:shadow-lg transition-all duration-200 group">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
+                {plansLoading ? (
+                  <div className="text-sm text-gray-500">Loading plans...</div>
+                ) : (
+                  plans.map((plan) => (
+                    <div key={plan.key} className="relative border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-blue-400 hover:shadow-lg transition-all duration-200 group">
+                      <div className="text-center">
+                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-700 dark:text-white mb-2">{plan.name}</h3>
+                        <div className="mb-4">
+                          <span className="text-3xl font-bold text-gray-900 dark:text-white">₹{plan.price}</span>
+                          <span className="text-gray-500 dark:text-gray-400 text-sm">/plan</span>
+                        </div>
+                        <div className="space-y-2 mb-6">
+                          <p className="text-sm text-gray-600 dark:text-gray-400">✓ {plan.duration_months} months duration</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">✓ Up to {plan.product_limit} products</p>
+                        </div>
+                        <Button
+                          onClick={() => applyPlan(String(plan.key).toLowerCase() as "basic" | "standard" | "premium", undefined, undefined, plan.id)}
+                          className="w-full bg-gray-700 hover:bg-gray-800 text-white py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                        >
+                          Choose {plan.name}
+                        </Button>
+                      </div>
                     </div>
-                    <h3 className="text-xl font-bold text-green-600 mb-2">Basic Plan</h3>
-                    <div className="mb-4">
-                      <span className="text-3xl font-bold text-gray-900 dark:text-white">₹39</span>
-                      <span className="text-gray-500 dark:text-gray-400 text-sm">/plan</span>
-                    </div>
-                    <div className="space-y-2 mb-6">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">✓ 2 months duration</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">✓ 1 product listing</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">✓ Basic support</p>
-                    </div>
-                    <Button 
-                      onClick={() => {
-                        // e.preventDefault();
-                        // e.stopPropagation();
-                        applyPlan("basic");
-                      }} 
-                      className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                    >
-                      Choose Basic
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Standard Plan */}
-                <div className="relative border-2 border-blue-400 rounded-xl p-6 hover:border-blue-500 hover:shadow-lg transition-all duration-200 group bg-blue-50/50 dark:bg-blue-900/10">
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">POPULAR</span>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-bold text-blue-600 mb-2">Standard Plan</h3>
-                    <div className="mb-4">
-                      <span className="text-3xl font-bold text-gray-900 dark:text-white">₹59</span>
-                      <span className="text-gray-500 dark:text-gray-400 text-sm">/plan</span>
-                    </div>
-                    <div className="space-y-2 mb-6">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">✓ 5 months duration</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">✓ 3 product listings</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">✓ Priority support</p>
-                    </div>
-                    <Button 
-                      onClick={() => {
-                        // e.preventDefault();
-                        // e.stopPropagation();
-                        applyPlan("standard");
-                      }} 
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                      Choose Standard
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Premium Plan */}
-                <div className="relative border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-purple-400 hover:shadow-lg transition-all duration-200 group">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-bold text-purple-600 mb-2">Premium Plan</h3>
-                    <div className="mb-4">
-                      <span className="text-3xl font-bold text-gray-900 dark:text-white">₹109</span>
-                      <span className="text-gray-500 dark:text-gray-400 text-sm">/plan</span>
-                    </div>
-                    <div className="space-y-2 mb-6">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">✓ 12 months duration</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">✓ 7 product listings</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">✓ Premium support</p>
-                    </div>
-                    <Button 
-                      onClick={() => {
-                        // e.preventDefault();
-                        // e.stopPropagation();
-                        applyPlan("premium");
-                      }} 
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                    >
-                      Choose Premium
-                    </Button>
-                  </div>
-                </div>
+                  ))
+                )}
               </div>
 
               {/* Custom Plan */}
@@ -375,42 +340,34 @@ export default function DraftPage() {
                     </svg>
                     Custom Plan
                   </h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Create your own plan with custom duration and product limits</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Request a call from admin for a custom plan</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Duration (Months)</Label>
+                    <div className="md:col-span-2">
+                      <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Mobile Number</Label>
                       <Input
-                        type="number"
-                        min={1}
-                        max={12}
-                        value={customMonths}
-                        onChange={(e) => setCustomMonths(parseInt(e.target.value, 10) || 1)}
+                        type="tel"
+                        placeholder="Enter your mobile number"
+                        onChange={(e: any) => (customMobileRef.current = e.target.value)}
                         className="w-full"
-                        placeholder="1-12 months"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Max Products</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={10}
-                        value={customMaxProducts}
-                        onChange={(e) => setCustomMaxProducts(parseInt(e.target.value, 10) || 1)}
-                        className="w-full"
-                        placeholder="1-10 products"
                       />
                     </div>
                     <div className="flex items-end">
                       <Button 
-                        onClick={() => {
-                          // e.preventDefault();
-                          // e.stopPropagation();
-                          applyPlan("custom", customMonths, customMaxProducts);
+                        onClick={async () => {
+                          const mobile = customMobileRef.current?.trim();
+                          if (!mobile) { toast.error("Enter mobile number"); return; }
+                          try {
+                            const ids = selected.map((r) => r._id || r.id);
+                            await api.post(endPointApi.postCustomPlanRequest, { mobile, product_ids: ids });
+                            toast.success("Request sent. Admin will contact you.");
+                            setShowPlanDialog(false);
+                          } catch (e) {
+                            toast.error("Failed to send request");
+                          }
                         }} 
-                        className="w-full bg-gray-700 hover:bg-gray-800 text-white py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                       >
-                        Apply Custom Plan
+                        Request Callback
                       </Button>
                     </div>
                   </div>

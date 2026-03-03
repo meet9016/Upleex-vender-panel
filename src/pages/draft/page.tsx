@@ -22,6 +22,8 @@ const DraftsPage = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [plansLoading, setPlansLoading] = useState(false);
 
   const columns = [
     {
@@ -96,17 +98,40 @@ const DraftsPage = () => {
     }
   };
 
-  // Static plans shown in modal (no payment flow)
-  const modalPlans = [
-    { key: 'basic', name: 'Basic', description: '2 months, 1 product', price: 39, duration_months: 2, product_limit: 1 },
-    { key: 'standard', name: 'Standard', description: '5 months, up to 3 products', price: 59, duration_months: 5, product_limit: 3 },
-    { key: 'premium', name: 'Premium', description: '12 months, up to 7 products', price: 109, duration_months: 12, product_limit: 7 },
-  ];
+  // Fetch dynamic plans from backend
+  const fetchPlans = async () => {
+    setPlansLoading(true);
+    try {
+      const res = await api.get((endPointApi as any).getPlanOptions as string);
+      const list = res?.data?.data || [];
+      // Normalize to UI shape
+      const normalized = list.map((p: any) => ({
+        key: p.plan_type,
+        name: p.plan_type?.charAt(0).toUpperCase() + p.plan_type?.slice(1),
+        description: `${p.months} months, up to ${p.max_products} products`,
+        price: p.amount,
+        duration_months: p.months,
+        product_limit: p.max_products,
+      }));
+      setPlans(normalized);
+    } catch (e) {
+      // Fallback to defaults if API fails
+      setPlans([
+        // { key: 'basic', name: 'Basic', description: '2 months, 1 product', price: 39, duration_months: 2, product_limit: 1 },
+        { key: 'standard', name: 'Standard', description: '5 months, up to 3 products', price: 59, duration_months: 5, product_limit: 3 },
+        { key: 'premium', name: 'Premium', description: '12 months, up to 7 products', price: 109, duration_months: 12, product_limit: 7 },
+      ]);
+    } finally {
+      setPlansLoading(false);
+    }
+  };
 
   const openPlanModal = (product: any) => {
     setSelectedProduct(product);
     setSelectedPlanType(product.plan_id || '');
     setShowPlanModal(true);
+    // Ensure latest plans are loaded
+    if (!plans.length) fetchPlans();
   };
 
   // Handle bulk delete with confirmation
@@ -254,7 +279,10 @@ const DraftsPage = () => {
             {/* Content */}
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
               <div className="grid gap-4 mb-6">
-                {modalPlans.map((plan) => (
+                {plansLoading ? (
+                  <div className="text-sm text-gray-500">Loading plans...</div>
+                ) : (
+                plans.map((plan) => (
                   <div
                     key={plan.key}
                     onClick={() => setSelectedPlanType(plan.key as any)}
@@ -301,7 +329,7 @@ const DraftsPage = () => {
                       </div>
                     </div>
                   </div>
-                ))}
+                )))}
                 
                 {/* Custom Plan */}
                 <div className={`p-5 border-2 rounded-xl transition-all duration-200 ${
