@@ -18,6 +18,9 @@ export interface EndPointApi {
     postVendorAddProduct: string;
     postVendorProductDetails: string;
     updateVendorProductDetails: string;
+    postBulkDeactivateProducts: string;
+    postBulkDeleteProducts: string;
+    postPurchasePlan: string;
     postAllVendorProductList: string;
     postDeleteVendorProductList: string;
 
@@ -54,6 +57,9 @@ const endPointApi: EndPointApi = {
     updateVendorProductDetails: 'products/update',
     postAllVendorProductList: 'products/getall',
     postDeleteVendorProductList: 'products/delete',
+    postBulkDeactivateProducts: 'products/bulk-deactivate',
+    postBulkDeleteProducts: 'products/bulk-delete',
+    postPurchasePlan: 'products/purchase-plan',
 
     // Quote
     postGetQuote: 'quote/getall',

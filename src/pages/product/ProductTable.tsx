@@ -3,10 +3,11 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation';
 import AgGridTable from '@/components/tables/AgGridTable';
 import { ColDef } from 'ag-grid-community';
-import { MdDelete, MdModeEdit, MdClose, MdSearch } from "react-icons/md";
+import { MdDelete, MdModeEdit, MdClose, MdSearch, MdMoreVert } from "react-icons/md";
 import { api } from '@/utils/axiosInstance';
 import endPointApi from '@/utils/endPointApi';
 import ConfirmDeleteModal from '@/components/common/ConfirmDeleteModal';
+import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import { CiFilter } from "react-icons/ci";
 import { toast } from 'react-toastify';
 import SearchableDropdown from '@/components/common/SearchableDropdown';
@@ -55,11 +56,16 @@ type Option = {
 const ProductTable = () => {
   const router = useRouter();
   const [productData, setProductData] = useState<Product[]>([]);
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [bulkAction, setBulkAction] = useState<{ type: 'deactivate' | 'delete' | null; open: boolean }>({ type: null, open: false });
+  const [loading, setLoading] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const filterModalRef = useRef<HTMLDivElement>(null);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const actionsMenuRef = useRef<HTMLDivElement>(null);
   const [searchText, setSearchText] = useState('');
   
   // Filter dropdown data
@@ -87,6 +93,7 @@ const getImageUrl = (product: any): string => {
     sub_category_id: '',
     filter_rent_sell: '', // 1 for Rent, 2 for Sell
     filter_tenure: '', // listing type id for Daily/Monthly/Hourly
+    status: '',
   });
 
   // Selected values for dropdowns
@@ -181,6 +188,29 @@ cellRenderer: (params: any) => {
       field: "product_listing_type_name", 
       headerName: "Listing Type", 
       minWidth: 150, 
+      cellStyle: { textAlign: "center" } 
+    },
+    { 
+      field: "status", 
+      headerName: "Status", 
+      minWidth: 120,
+      cellRenderer: (params: any) => {
+        const s = String(params.value || '').toLowerCase();
+        const cls = s === 'active' ? 'bg-green-100 text-green-700' : s === 'draft' ? 'bg-gray-100 text-gray-700' : 'bg-yellow-100 text-yellow-700';
+        const label = s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Unknown';
+        return (
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${cls}`}>
+            {label}
+          </span>
+        );
+      },
+      cellStyle: { justifyContent: "center" } 
+    },
+    { 
+      field: "expires_at", 
+      headerName: "Expires On", 
+      minWidth: 140, 
+      valueFormatter: (p) => p.value ? new Date(p.value).toLocaleDateString() : '-', 
       cellStyle: { textAlign: "center" } 
     },
     {
@@ -392,6 +422,9 @@ cellRenderer: (params: any) => {
     if (filters.filter_tenure) {
       params.filter_tenure = filters.filter_tenure;
     }
+    if (filters.status) {
+      params.status = filters.status;
+    }
     
     console.log("Applying filters:", params);
     getProductData(params);
@@ -403,6 +436,9 @@ cellRenderer: (params: any) => {
       if (filterModalRef.current && !filterModalRef.current.contains(event.target as Node) &&
           filterButtonRef.current && !filterButtonRef.current.contains(event.target as Node)) {
         setShowFilterModal(false);
+      }
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+        setShowActionsMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -450,11 +486,54 @@ cellRenderer: (params: any) => {
       category_id: '', 
       sub_category_id: '', 
       filter_rent_sell: '', 
-      filter_tenure: '' 
+      filter_tenure: '', 
+      status: ''
     });
     setSubCategoryOptions([]);
     setSearchText('');
     setShowFilterModal(false);
+  };
+
+  // Handle bulk deactivate
+  const handleBulkDeactivate = async () => {
+    try {
+      setLoading(true);
+      const ids = selectedRows.map((r: any) => r._id || r.id);
+      await api.post(endPointApi.postBulkDeactivateProducts, { product_ids: ids });
+      toast.success(`${ids.length} products deactivated successfully`);
+      setBulkAction({ type: null, open: false });
+      getProductData();
+    } catch (error) {
+      toast.error("Failed to deactivate selected products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    try {
+      setLoading(true);
+      const ids = selectedRows.map((r: any) => r._id || r.id);
+      await api.post(endPointApi.postBulkDeleteProducts, { product_ids: ids });
+      toast.success(`${ids.length} products deleted successfully`);
+      setBulkAction({ type: null, open: false });
+      getProductData();
+    } catch (error) {
+      toast.error("Failed to delete selected products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Open bulk action confirmation
+  const openBulkAction = (type: 'deactivate' | 'delete') => {
+    if (!selectedRows.length) {
+      toast.info(`Select products to ${type}`);
+      return;
+    }
+    setBulkAction({ type, open: true });
+    setShowActionsMenu(false);
   };
 
   return (
@@ -462,6 +541,45 @@ cellRenderer: (params: any) => {
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Products</h2>
         <div className="flex items-center gap-3">
+          {/* Bulk Actions */}
+          {/* <button
+            onClick={async () => {
+              try {
+                const ids = selectedRows.map((r: any) => r._id || r.id);
+                if (!ids.length) {
+                  toast.info("Select products to deactivate");
+                  return;
+                }
+                const res = await api.post(endPointApi.postBulkDeactivateProducts, { product_ids: ids });
+                toast.success("Selected products deactivated");
+                getProductData();
+              } catch (e) {
+                toast.error("Failed to deactivate selected");
+              }
+            }}
+            className="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors text-sm"
+          >
+            Deactivate Selected
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const ids = selectedRows.map((r: any) => r._id || r.id);
+                if (!ids.length) {
+                  toast.info("Select products to delete");
+                  return;
+                }
+                const res = await api.post(endPointApi.postBulkDeleteProducts, { product_ids: ids });
+                toast.success("Selected products deleted");
+                getProductData();
+              } catch (e) {
+                toast.error("Failed to delete selected");
+              }
+            }}
+            className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
+          >
+            Delete Selected
+          </button> */}
           {/* Search Input */}
           <div className="relative">
             <input
@@ -569,6 +687,18 @@ cellRenderer: (params: any) => {
                         ))}
                       </select>
                     </div>
+                  <div>
+                    <select
+                      value={filters.status}
+                      onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">All</option>
+                      <option value="active">Active</option>
+                      <option value="draft">Draft</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
                   </div>
 
                   {/* Action Buttons */}
@@ -598,6 +728,40 @@ cellRenderer: (params: any) => {
           >
             + Add Product
           </button>
+          <div className="relative" ref={actionsMenuRef}>
+            <button
+              onClick={() => setShowActionsMenu((v) => !v)}
+              className="px-3 py-2 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium flex items-center gap-2"
+              title="More actions"
+            >
+              <MdMoreVert className="text-lg" />
+            </button>
+            {showActionsMenu && (
+              <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50">
+                <button
+                  onClick={() => openBulkAction('deactivate')}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                >
+                  Deactivate Selected ({selectedRows.length})
+                </button>
+                <button
+                  onClick={() => openBulkAction('delete')}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-red-600 dark:text-red-400"
+                >
+                  Delete Selected ({selectedRows.length})
+                </button>
+                <button
+                  onClick={() => {
+                    setShowActionsMenu(false);
+                    router.push('/draft');
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                >
+                  View Drafts
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -607,6 +771,7 @@ cellRenderer: (params: any) => {
         rowData={productData}
         filter={false}
         tableName="Products"
+        onSelectionChange={setSelectedRows}
       />
       
       {/* Delete Confirmation Modal */}
@@ -614,6 +779,18 @@ cellRenderer: (params: any) => {
         open={openDeleteModal}
         onCancel={() => setOpenDeleteModal(false)}
         onConfirm={confirmDelete}
+      />
+
+      {/* Bulk Action Confirmation Dialog */}
+      <ConfirmationDialog
+        open={bulkAction.open}
+        actionType={bulkAction.type || 'delete'}
+        title={bulkAction.type === 'deactivate' ? 'Confirm Bulk Deactivate' : 'Confirm Bulk Delete'}
+        message={`Are you sure you want to ${bulkAction.type} ${selectedRows.length} selected product${selectedRows.length > 1 ? 's' : ''}?`}
+        confirmText={bulkAction.type === 'deactivate' ? `Deactivate ${selectedRows.length}` : `Delete ${selectedRows.length}`}
+        onConfirm={bulkAction.type === 'deactivate' ? handleBulkDeactivate : handleBulkDelete}
+        onCancel={() => setBulkAction({ type: null, open: false })}
+        loading={loading}
       />
     </div>
   )

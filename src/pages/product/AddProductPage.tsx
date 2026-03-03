@@ -693,7 +693,8 @@ export default function AddProductPage() {
                 : await api.post(url, formdata);
 
             if (res?.data?.status === 200) {
-                toast.success(isEditMode ? "Product updated successfully!" : "Product added successfully!");
+                const msg = res?.data?.message || (isEditMode ? "Product updated successfully!" : "Product added successfully!");
+                toast.success(msg);
                 router.push("/product");
             } else {
                 toast.error(res?.data?.message || "Failed to save product");
@@ -701,7 +702,13 @@ export default function AddProductPage() {
 
         } catch (error) {
             console.error("Save product error", error);
-            toast.error("Error saving product. Please try again.");
+            const anyErr: any = error;
+            const backendMsg = anyErr?.response?.data?.message;
+            if (backendMsg) {
+                toast.error(backendMsg);
+            } else {
+                toast.error("Error saving product. Please try again.");
+            }
         }
     };
 
