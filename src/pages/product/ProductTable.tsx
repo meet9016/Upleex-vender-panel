@@ -71,6 +71,7 @@ const ProductTable = () => {
   const [expiryModalOpen, setExpiryModalOpen] = useState(false);
   const [expiringProducts, setExpiringProducts] = useState<any[]>([]);
   const [showPlanDialog, setShowPlanDialog] = useState(false);
+  const [snoozeToday, setSnoozeToday] = useState(false);
   
   // Filter dropdown data
   const [categoriesData, setCategoriesData] = useState<Category[]>([]);
@@ -303,7 +304,10 @@ cellRenderer: (params: any) => {
           if (!exp) return false;
           return exp > now && (exp - now) <= threeDaysMs;
         });
-        if (nearExpiry.length) {
+        const snoozeKey = localStorage.getItem('expiry_modal_snooze');
+        const today = new Date().toISOString().slice(0, 10);
+        const isSnoozed = snoozeKey === today;
+        if (nearExpiry.length && !isSnoozed) {
           setExpiringProducts(nearExpiry);
           setExpiryModalOpen(true);
         }
@@ -326,7 +330,10 @@ cellRenderer: (params: any) => {
           if (!exp) return false;
           return exp > now && (exp - now) <= threeDaysMs;
         });
-        if (nearExpiry.length) {
+        const snoozeKey = localStorage.getItem('expiry_modal_snooze');
+        const today = new Date().toISOString().slice(0, 10);
+        const isSnoozed = snoozeKey === today;
+        if (nearExpiry.length && !isSnoozed) {
           setExpiringProducts(nearExpiry);
           setExpiryModalOpen(true);
         }
@@ -807,10 +814,10 @@ cellRenderer: (params: any) => {
       </span>
     </button>
 
-    <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
+    {/* <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" /> */}
 
     {/* Apply Plan */}
-    <button
+    {/* <button
       onClick={() => {
         if (!selectedRows.length) {
           toast.info("Select products to apply plan");
@@ -827,7 +834,7 @@ cellRenderer: (params: any) => {
       <span className="text-xs opacity-70">
         {selectedRows.length}
       </span>
-    </button>
+    </button> */}
 
     <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
 
@@ -880,6 +887,8 @@ cellRenderer: (params: any) => {
       <Modal
         isOpen={expiryModalOpen}
         onClose={() => setExpiryModalOpen(false)}
+        className="max-w-xl p-6"
+        showCloseButton
       >
         <div className="space-y-3">
           <div className="px-6 pt-6">
@@ -899,15 +908,39 @@ cellRenderer: (params: any) => {
           {expiringProducts.length > 5 && (
             <p className="text-xs text-gray-500">+{expiringProducts.length - 5} more</p>
           )}
+          <div className="flex items-center gap-2 px-1">
+            <input
+              type="checkbox"
+              id="snoozeToday"
+              checked={snoozeToday}
+              onChange={(e) => setSnoozeToday(e.target.checked)}
+            />
+            <label htmlFor="snoozeToday" className="text-xs text-gray-600">
+              Don’t show again today
+            </label>
+          </div>
           <div className="flex gap-2 pt-2">
             <button
-              onClick={() => { setExpiryModalOpen(false); }}
+              onClick={() => {
+                if (snoozeToday) {
+                  const today = new Date().toISOString().slice(0, 10);
+                  localStorage.setItem('expiry_modal_snooze', today);
+                }
+                setExpiryModalOpen(false);
+              }}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
             >
               Later
             </button>
             <button
-              onClick={() => { setExpiryModalOpen(false); router.push('/draft'); }}
+              onClick={() => {
+                if (snoozeToday) {
+                  const today = new Date().toISOString().slice(0, 10);
+                  localStorage.setItem('expiry_modal_snooze', today);
+                }
+                setExpiryModalOpen(false);
+                router.push('/draft');
+              }}
               className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
             >
               Activate Plans
