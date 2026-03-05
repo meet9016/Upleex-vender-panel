@@ -11,6 +11,8 @@ import { ColDef } from "ag-grid-community";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { toast } from "react-toastify";
+import { CiWarning } from "react-icons/ci";
+import { HiOutlineRefresh } from "react-icons/hi";
 
 const DEFAULT_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23f0f0f0'/%3E%3Ctext x='24' y='24' font-family='Arial' font-size='10' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
 const isValidImageUrl = (url?: string | null): boolean => {
@@ -38,7 +40,7 @@ export default function DraftPage() {
   const [plans, setPlans] = useState<any[]>([]);
   const [plansLoading, setPlansLoading] = useState(false);
   const customMobileRef = useRef<string>("");
-
+  const [confirmPlan, setConfirmPlan] = useState<any>(null);
   const columns: ColDef[] = useMemo(() => [
     {
       headerName: "Product",
@@ -184,9 +186,14 @@ export default function DraftPage() {
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Manage and activate your draft listings ({rows.length} drafts)
         </p>
-        <Button onClick={fetchDrafts} className="px-4 py-2 text-sm font-medium" disabled={loading}>
-          {loading ? "Loading..." : "Refresh"}
-        </Button>
+<Button
+  onClick={fetchDrafts}
+  disabled={loading}
+  className="px-4 py-2 text-sm font-medium flex items-center justify-center gap-2"
+>
+  <HiOutlineRefresh className={`${loading ? "animate-spin" : ""} text-lg`} />
+  {/* {loading ? "Refreshing..." : "Refresh"} */}
+</Button>
       </div>
 
       {/* Filters */}
@@ -249,9 +256,9 @@ export default function DraftPage() {
           <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
             {selected.length} product{selected.length > 1 ? 's' : ''} selected
           </span>
-          <Button 
+          <Button
             onClick={() => { setShowPlanDialog(true); fetchPlans(); }}
-            className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700"
+            className="text-sm font-medium bg-blue-600 hover:bg-blue-700"
           >
             Activate Products
           </Button>
@@ -268,114 +275,255 @@ export default function DraftPage() {
       />
 
       {/* Plan Selection Dialog */}
+      
       {showPlanDialog && (
         <>
-          {/* Backdrop with blur */}
+          {/* Backdrop */}
           <div className="fixed inset-0 bg-black/30 backdrop-blur-md z-[99999]"></div>
-          
+
           {/* Dialog */}
           <div className="fixed inset-0 flex items-center justify-center z-[100000] p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
-            <div className="sticky top-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 px-6 py-4 rounded-t-xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    Choose Your Plan
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Activate {selected.length} selected product{selected.length > 1 ? 's' : ''}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowPlanDialog(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                >
-                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
 
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                {plansLoading ? (
-                  <div className="text-sm text-gray-500">Loading plans...</div>
-                ) : (
-                  plans.map((plan) => (
-                    <div key={plan.key} className="relative border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-blue-400 hover:shadow-lg transition-all duration-200 group">
-                      <div className="text-center">
-                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-700 dark:text-white mb-2">{plan.name}</h3>
-                        <div className="mb-4">
-                          <span className="text-3xl font-bold text-gray-900 dark:text-white">₹{plan.price}</span>
-                          <span className="text-gray-500 dark:text-gray-400 text-sm">/plan</span>
-                        </div>
-                        <div className="space-y-2 mb-6">
-                          <p className="text-sm text-gray-600 dark:text-gray-400">✓ {plan.duration_months} months duration</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">✓ Up to {plan.product_limit} products</p>
-                        </div>
-                        <Button
-                          onClick={() => applyPlan(String(plan.key).toLowerCase() as "basic" | "standard" | "premium", undefined, undefined, plan.id)}
-                          className="w-full bg-gray-700 hover:bg-gray-800 text-white py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                        >
-                          Choose {plan.name}
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+              {/* Header */}
+              <div className="sticky top-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 px-6 py-4 rounded-t-xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      Choose Your Plan
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Activate {selected.length} selected product{selected.length > 1 ? "s" : ""}
+                    </p>
+                  </div>
 
-              {/* Custom Plan */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-6">
-                  <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                  <button
+                    onClick={() => setShowPlanDialog(false)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                  >
+                    <svg
+                      className="w-6 h-6 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    Custom Plan
-                  </h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Request a call from admin for a custom plan</p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="md:col-span-2">
-                      <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Mobile Number</Label>
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6">
+
+                {/* Plans Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+                  {plansLoading ? (
+                    <div className="text-sm text-gray-500">Loading plans...</div>
+                  ) : (
+                    plans.map((plan) => (
+                      <div
+                        key={plan.key}
+                        className="relative border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-gray-400 hover:shadow-lg transition-all duration-200 group"
+                      >
+                        <div className="text-center">
+
+                          {/* Icon */}
+                          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg
+                              className="w-8 h-8 text-gray-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+
+                          {/* Plan Name */}
+                          <h3 className="text-xl font-bold text-gray-700 dark:text-white mb-2">
+                            {plan.name}
+                          </h3>
+
+                          {/* Price */}
+                          <div className="mb-4">
+                            <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                              ₹{plan.price}
+                            </span>
+                            <span className="text-gray-500 dark:text-gray-400 text-sm">
+                              /plan
+                            </span>
+                          </div>
+
+                          {/* Features */}
+                          <div className="space-y-2 mb-6">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              ✓ {plan.duration_months} months duration
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              ✓ Up to {plan.product_limit} products
+                            </p>
+                          </div>
+
+                          {/* Button */}
+                          <Button
+                            onClick={() =>
+                              setConfirmPlan({
+                                key: plan.key,
+                                name: plan.name,
+                                id: plan.id
+                              })
+                            }
+                            className="w-full bg-gray-700 hover:bg-gray-800 text-white py-3 rounded-lg font-medium"
+                          >
+                            Choose {plan.name}
+                          </Button>
+
+                        </div>
+                      </div>
+                    ))
+                  )}
+
+                  {/* Custom Plan Card */}
+                  <div className="relative border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-gray-400 hover:shadow-lg transition-all duration-200 group">
+                    <div className="text-center">
+
+                      {/* Icon */}
+                      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg
+                          className="w-8 h-8 text-gray-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                        </svg>
+                      </div>
+
+                      {/* Title */}
+                      <h3 className="text-xl font-bold text-gray-700 dark:text-white mb-2">
+                        Custom Plan
+                      </h3>
+
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Request a custom plan
+                      </p>
+
+                      {/* Mobile Input */}
                       <Input
                         type="tel"
-                        placeholder="Enter your mobile number"
+                        placeholder="Enter mobile number"
                         onChange={(e: any) => (customMobileRef.current = e.target.value)}
-                        className="w-full"
+                        className="w-full mb-4"
                       />
-                    </div>
-                    <div className="flex items-end">
-                      <Button 
+
+                      {/* Button */}
+                      <Button
                         onClick={async () => {
                           const mobile = customMobileRef.current?.trim();
-                          if (!mobile) { toast.error("Enter mobile number"); return; }
+
+                          if (!mobile) {
+                            toast.error("Enter mobile number");
+                            return;
+                          }
+
                           try {
                             const ids = selected.map((r) => r._id || r.id);
-                            await api.post(endPointApi.postCustomPlanRequest, { mobile, product_ids: ids });
+
+                            await api.post(endPointApi.postCustomPlanRequest, {
+                              mobile,
+                              product_ids: ids,
+                            });
+
                             toast.success("Request sent. Admin will contact you.");
                             setShowPlanDialog(false);
                           } catch (e) {
                             toast.error("Failed to send request");
                           }
-                        }} 
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        }}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium"
                       >
                         Request Callback
                       </Button>
+
                     </div>
                   </div>
+
                 </div>
+
               </div>
             </div>
-            </div>
           </div>
+          {confirmPlan && (
+            <>
+              {/* Overlay */}
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110000]" />
+
+              {/* Modal */}
+              <div className="fixed inset-0 flex items-center justify-center z-[110001] p-4">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 p-8 text-center">
+
+                  {/* Focus Icon */}
+                  <div className="flex justify-center mb-4">
+                    <div className="w-14 h-14 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 text-2xl">
+                      <CiWarning />
+                    </div>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+                    Activate Plan
+                  </h3>
+
+                  {/* Subtitle */}
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                    You are about to activate
+                  </p>
+
+                  {/* Plan Highlight */}
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl py-3 mb-4">
+                    <span className="text-lg font-semibold text-indigo-600 dark:text-indigo-400">
+                      {confirmPlan.name} Plan
+                    </span>
+                  </div>
+
+                  {/* Product Count */}
+                  <div className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                    📦 {selected.length} Product{selected.length > 1 ? "s" : ""} selected
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => setConfirmPlan(null)}
+                      className="flex-1 py-2.5 rounded-lg border border-gray-300 !bg-white hover:bg-gray-100 !text-gray-700"
+                    >
+                      Cancel
+                    </Button>
+
+                    <Button
+                      onClick={() => {
+                        applyPlan(
+                          confirmPlan.key,
+                          undefined,
+                          undefined,
+                          confirmPlan.id
+                        );
+                        setConfirmPlan(null);
+                      }}
+                      className="flex-1 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg"
+                    >
+                      Confirm
+                    </Button>
+                  </div>
+
+                </div>
+              </div>
+            </>
+          )}
         </>
       )}
     </>

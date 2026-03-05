@@ -46,6 +46,14 @@ export default function SearchableDropdown({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [portalStyle, setPortalStyle] = useState<React.CSSProperties>();
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+
+  useEffect(() => {
+    if (!open) {
+      setHighlightedIndex(-1);
+      setSearch("");
+    }
+  }, [open]);
 
   const selectedOption = options.find(o => o.value === value);
 
@@ -78,6 +86,53 @@ export default function SearchableDropdown({
     if (!open || !searchable) return;
     searchInputRef.current?.focus();
   }, [open, searchable]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!open) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex(prev =>
+          prev < filteredOptions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex(prev => (prev > 0 ? prev - 1 : 0));
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
+          const opt = filteredOptions[highlightedIndex];
+          if (!disabled) {
+            const currentValue = value;
+            if (currentValue === opt.value) {
+              onChange("");
+            } else {
+              onChange(opt.value);
+            }
+            setOpen(false);
+            setSearch("");
+          }
+        }
+        break;
+      case 'Backspace':
+        
+        if (!search) {
+          if (value) {
+            onChange("");
+          }
+        }
+        break;
+        
+      case 'Escape':
+      case 'Tab':
+        setOpen(false);
+        setSearch("");
+        break;
+    }
+  };
 
   const updatePortalPosition = () => {
     if (!ref.current) return;
@@ -122,7 +177,9 @@ export default function SearchableDropdown({
             onChange={(e) => {
               setSearch(e.target.value);
               onSearch?.(e.target.value);
+              setHighlightedIndex(0);
             }}
+            onKeyDown={handleKeyDown}
           />
         </div>
       )}
@@ -140,26 +197,39 @@ export default function SearchableDropdown({
         }}
       >
         {filteredOptions.length ? (
-          filteredOptions.map((opt) => {
+          filteredOptions.map((opt, index) => {
             const isSelected = value === opt.value;
 
             return (
               <div
                 key={opt.value}
+                role="option"
+                aria-selected={isSelected}
                 onClick={() => {
                   if (disabled) return;
-                  onChange(opt.value);
+                  const currentValue = value;
+                  if (currentValue === opt.value) {
+                    onChange("");
+                  } else {
+                    onChange(opt.value);
+                  }
                   setOpen(false);
                   setSearch("");
                 }}
-                className={`px-4 py-2 text-sm cursor-pointer flex items-center gap-2 transition
+                onMouseEnter={() => setHighlightedIndex(index)}
+                className={`px-4 py-2 text-sm cursor-pointer flex items-center gap-3 transition
                   ${
                     isSelected
                       ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
                       : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                   }
+                  ${highlightedIndex === index ? "bg-gray-100 dark:bg-gray-800" : ""}
                 `}
               >
+                <div className="flex-shrink-0 w-5 h-5 rounded border-2 border-gray-300 flex items-center justify-center">
+                  {isSelected && <div className="w-3 h-3 bg-blue-500 rounded-sm" />}
+                </div>
+
                 {opt.image && (
                   <img
                     src={opt.image}
@@ -167,7 +237,7 @@ export default function SearchableDropdown({
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 )}
-                {opt.label}
+                <span className="flex-1">{opt.label}</span>
               </div>
             );
           })
@@ -188,6 +258,7 @@ export default function SearchableDropdown({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen(!open)}
+        onKeyDown={handleKeyDown}
         className={`w-full flex items-center justify-between px-4 py-2 rounded-lg border text-sm transition
           ${error ? "border-red-500" : "border-gray-300 dark:border-gray-700"}
           ${
