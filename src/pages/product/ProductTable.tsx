@@ -13,6 +13,7 @@ import { toast } from 'react-toastify';
 import SearchableDropdown from '@/components/common/SearchableDropdown';
 import Label from '@/components/form/Label';
 import { HiOutlineDocumentText } from "react-icons/hi";
+import { Modal } from '@/components/ui/modal';
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -67,6 +68,9 @@ const ProductTable = () => {
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const actionsMenuRef = useRef<HTMLDivElement>(null);
   const [searchText, setSearchText] = useState('');
+  const [expiryModalOpen, setExpiryModalOpen] = useState(false);
+  const [expiringProducts, setExpiringProducts] = useState<any[]>([]);
+  const [showPlanDialog, setShowPlanDialog] = useState(false);
   
   // Filter dropdown data
   const [categoriesData, setCategoriesData] = useState<Category[]>([]);
@@ -289,11 +293,47 @@ cellRenderer: (params: any) => {
       });
       
       setProductData(normalized);
+      // Compute expiring within 3 days (active only)
+      try {
+        const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+        const now = Date.now();
+        const nearExpiry = normalized.filter((p: any) => {
+          if (p.status?.toLowerCase() !== 'active') return false;
+          const exp = p.expires_at ? new Date(p.expires_at).getTime() : 0;
+          if (!exp) return false;
+          return exp > now && (exp - now) <= threeDaysMs;
+        });
+        if (nearExpiry.length) {
+          setExpiringProducts(nearExpiry);
+          setExpiryModalOpen(true);
+        }
+      } catch {}
     } catch (error) {
       console.log("fetch error", error);
       toast.error("Failed to fetch products");
     }
   };
+
+  // Re-check expiry periodically to show popup without refresh
+  useEffect(() => {
+    const interval = setInterval(() => {
+      try {
+        const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+        const now = Date.now();
+        const nearExpiry = productData.filter((p: any) => {
+          if (p.status?.toLowerCase() !== 'active') return false;
+          const exp = p.expires_at ? new Date(p.expires_at).getTime() : 0;
+          if (!exp) return false;
+          return exp > now && (exp - now) <= threeDaysMs;
+        });
+        if (nearExpiry.length) {
+          setExpiringProducts(nearExpiry);
+          setExpiryModalOpen(true);
+        }
+      } catch {}
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [productData]);
 
   // Fetch categories
   const fetchCategories = async () => {
@@ -769,6 +809,28 @@ cellRenderer: (params: any) => {
 
     <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
 
+    {/* Apply Plan */}
+    <button
+      onClick={() => {
+        if (!selectedRows.length) {
+          toast.info("Select products to apply plan");
+          return;
+        }
+        setShowActionsMenu(false);
+        setShowPlanDialog(true);
+      }}
+      className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
+    >
+      <div className="flex items-center gap-2">
+        <span>Apply Plan</span>
+      </div>
+      <span className="text-xs opacity-70">
+        {selectedRows.length}
+      </span>
+    </button>
+
+    <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
+
     {/* View Drafts */}
     <button
       onClick={() => {
@@ -814,6 +876,45 @@ cellRenderer: (params: any) => {
         onCancel={() => setBulkAction({ type: null, open: false })}
         loading={loading}
       />
+      {/* Expiry Warning Modal */}
+      <Modal
+        isOpen={expiryModalOpen}
+        onClose={() => setExpiryModalOpen(false)}
+      >
+        <div className="space-y-3">
+          <div className="px-6 pt-6">
+            <h3 className="text-lg font-semibold text-gray-900">Your listings are expiring soon</h3>
+          </div>
+          <p className="text-sm text-gray-600">
+            The following products will move to Draft in less than 3 days. Apply a plan to keep them active.
+          </p>
+          <ul className="space-y-2">
+            {expiringProducts.slice(0, 5).map((p: any) => (
+              <li key={p._id || p.id} className="flex items-center justify-between">
+                <span className="text-sm font-medium">{p.product_name}</span>
+                <span className="text-xs text-gray-500">Expires: {p.expires_at ? new Date(p.expires_at).toLocaleDateString() : '-'}</span>
+              </li>
+            ))}
+          </ul>
+          {expiringProducts.length > 5 && (
+            <p className="text-xs text-gray-500">+{expiringProducts.length - 5} more</p>
+          )}
+          <div className="flex gap-2 pt-2">
+            <button
+              onClick={() => { setExpiryModalOpen(false); }}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            >
+              Later
+            </button>
+            <button
+              onClick={() => { setExpiryModalOpen(false); router.push('/draft'); }}
+              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
+            >
+              Activate Plans
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

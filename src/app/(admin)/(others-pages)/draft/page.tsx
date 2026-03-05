@@ -141,6 +141,7 @@ export default function DraftPage() {
         price: p.amount,
         duration_months: p.months,
         product_limit: p.max_products,
+        popular: !!p.popular,
       }));
       setPlans(normalized);
     } catch (e) {
@@ -305,6 +306,11 @@ export default function DraftPage() {
                   plans.map((plan) => (
                     <div key={plan.key} className="relative border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-blue-400 hover:shadow-lg transition-all duration-200 group">
                       <div className="text-center">
+                        {plan.popular && (
+                          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                            <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">POPULAR</span>
+                          </div>
+                        )}
                         <div className="w-16 h-16 bg-gray-100 dark:bg-gray-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                           <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
