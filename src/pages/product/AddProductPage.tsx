@@ -436,13 +436,11 @@ export default function AddProductPage() {
 
         setSubCategoryList(subcats);
 
-        if (!isEditMode && subcats.length > 0) {
-            setSelectedSubCategory(subcats[0].value);
-            handleChange("subCategory", subcats[0].value);
-        } else if (isEditMode && formData.subCategory) {
+        if (isEditMode && formData.subCategory && subcats.some((sc: Option) => sc.value === formData.subCategory)) {
             setSelectedSubCategory(formData.subCategory);
         }
-    }, [selectedCategory, categoriesData, isEditMode, formData.subCategory]);
+        // No auto-selection or clearing here; user will select manually
+    }, [selectedCategory, categoriesData, isEditMode]);
 
     /* <!-- ============================================ Fetch dropdown options  ============================================ --> */
 
@@ -1277,13 +1275,16 @@ export default function AddProductPage() {
             </ComponentCard>
 
             <div className="flex items-center gap-5 mt-5 justify-end ">
+                <Button size="sm" variant="outline" className="!py-2 px-5">
+                    Base
+                </Button>
                 <Button size="sm" variant="primary"
                     className="btn-primary"
                     onClick={handleSubmit}
                 >
                     {isEditMode ? "Update" : "Save"}
                 </Button>
-                <Button size="sm" variant="outline" className="py-2 px-5"
+                <Button size="sm" variant="outline" className="!py-2 px-5"
                     onClick={() => router.push("/product")}
                 >
                     Cancel
