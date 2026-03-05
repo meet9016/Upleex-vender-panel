@@ -9,7 +9,7 @@ import endPointApi from "@/utils/endPointApi";
 import { saveToken } from "@/utils/tokenManager";
 import Link from "next/link";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import OtpInput from "react-otp-input";
 
@@ -87,6 +87,18 @@ export default function SignInForm() {
       setIsLoading(false);
     }
   };
+
+//   useEffect(() => {
+//   const params = new URLSearchParams(window.location.search);
+//   const token = params.get("token");
+
+//   if (token) {
+//     saveToken(token)
+//      const searchParams = new URLSearchParams(window.location.search);
+//         const redirectTo = searchParams.get('redirect') || '/';
+//         window.location.href = redirectTo;
+//   }
+// }, []);
 
   const verifyOtp = async () => {
     const newErrors: ErrorState = {};
