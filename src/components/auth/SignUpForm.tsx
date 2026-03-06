@@ -6,18 +6,50 @@ import Label from "@/components/form/Label";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { api } from "@/utils/axiosInstance";
+import endPointApi from "@/utils/endPointApi";
+import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 export default function SignUpForm() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [timer, setTimer] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     fname: "",
     lname: "",
+    businessName: "",
     email: "",
+    mobile: "",
+    altMobile: "",
+    city: "",
     password: "",
+    otp: ""
   });
+
+  const [errors, setErrors] = useState<{
+    fname?: string;
+    lname?: string;
+    businessName?: string;
+    email?: string;
+    mobile?: string;
+    city?: string;
+    password?: string;
+    otp?: string;
+  }>({});
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (timer > 0) {
+      interval = setInterval(() => setTimer(prev => prev - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -29,14 +61,99 @@ export default function SignUpForm() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSendOtp = async () => {
+    const e: { mobile?: string } = {};
+    if (formData.mobile.length < 10) e.mobile = "Enter a valid 10-digit mobile number";
+    if (Object.keys(e).length > 0) {
+      setErrors(prev => ({ ...prev, ...e }));
+      return;
+    }
+    setErrors(prev => ({ ...prev, mobile: "" }));
+    try {
+      const res = await api.post(endPointApi.businessRegister, {
+        full_name: `${formData.fname} ${formData.lname}`.trim(),
+        business_name: formData.businessName.trim(),
+        email: formData.email.trim(),
+        number: formData.mobile,
+        alternate_number: formData.altMobile || "",
+        country: "97"
+      });
+      const status = res?.data?.status;
+      const message = res?.data?.message || "OTP sent successfully";
+      if (status === 200) {
+        toast.success(message);
+        setOtpSent(true);
+        setTimer(120);
+      } else {
+        toast.error(message);
+      }
+    } catch (error: any) {
+      const message = error?.response?.data?.message || "Failed to send OTP";
+      toast.error(message);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(formData);
+    
+    if (!otpSent) {
+      const e: { fname?: string; lname?: string; businessName?: string; email?: string; mobile?: string; city?: string; password?: string } = {};
+      if (!formData.fname.trim()) e.fname = "First name is required";
+      if (!formData.lname.trim()) e.lname = "Last name is required";
+      if (!formData.businessName.trim()) e.businessName = "Business name is required";
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(formData.email.trim())) e.email = "Enter a valid email";
+      if (formData.mobile.length < 10) e.mobile = "Enter a valid 10-digit mobile number";
+      if (!formData.city.trim()) e.city = "City is required";
+      // if (!formData.password.trim() || formData.password.length < 6) e.password = "Password must be at least 6 characters";
+      if (!isChecked) {
+        toast.error("Please accept the Terms and Privacy Policy");
+        return;
+      }
+      if (Object.keys(e).length > 0) {
+        setErrors(prev => ({ ...prev, ...e }));
+        return;
+      }
+      await handleSendOtp();
+    } else {
+      const e: { otp?: string } = {};
+      if ((formData.otp || "").replace(/\D/g, "").length < 4) e.otp = "Enter the OTP";
+      if (Object.keys(e).length > 0) {
+        setErrors(prev => ({ ...prev, ...e }));
+        return;
+      }
+      try {
+        setIsSubmitting(true);
+        const res = await api.post(endPointApi.businessRegister, {
+          full_name: `${formData.fname} ${formData.lname}`.trim(),
+          business_name: formData.businessName.trim(),
+          email: formData.email.trim(),
+          number: formData.mobile,
+          alternate_number: formData.altMobile || "",
+          country: "97",
+          otp: formData.otp
+        });
+        const status = res?.data?.status;
+        const message = res?.data?.message || "Registered successfully";
+
+        if (status === 200) {
+          toast.success(message);
+          router.push("/");
+        } else {
+          toast.error(message);
+        }
+      } catch (error: any) {
+        const message = error?.response?.data?.message || "Something went wrong while registering";
+        toast.error(message);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
   };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#EEF2FF] via-white to-[#E0F2FE] dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 px-4 overflow-y-auto no-scrollbar">
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-2xl">
         {/* Soft glow background */}
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute -top-24 -right-24 h-40 w-40 rounded-full bg-gradient-to-br from-[#4F46E5]/30 to-[#22D3EE]/40 blur-3xl" />
@@ -57,10 +174,10 @@ export default function SignUpForm() {
               className="mb-2"
             />
             <h1 className="mb-2 mt-3 font-semibold text-gray-800 dark:text-white text-title-sm">
-              Sign Up
+              Vendor Sign Up
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your email and password to sign up!
+              Register your business with us!
             </p>
           </div>
 
@@ -73,10 +190,14 @@ export default function SignUpForm() {
                   type="text"
                   name="fname"
                   value={formData.fname}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    if (e.target.value.trim()) setErrors(prev => ({ ...prev, fname: '' }));
+                  }}
                   placeholder="Enter your first name"
-                  className="mt-1 "
+                  className="mt-1"
                 />
+                {errors.fname && <p className="text-red-600 text-sm mt-1">{errors.fname}</p>}
               </div>
 
               <div>
@@ -85,11 +206,32 @@ export default function SignUpForm() {
                   type="text"
                   name="lname"
                   value={formData.lname}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    if (e.target.value.trim()) setErrors(prev => ({ ...prev, lname: '' }));
+                  }}
                   placeholder="Enter your last name"
                   className="mt-1"
                 />
+                {errors.lname && <p className="text-red-600 text-sm mt-1">{errors.lname}</p>}
               </div>
+            </div>
+
+            {/* Business Name */}
+            <div>
+              <Label>Business Name *</Label>
+              <Input
+                type="text"
+                name="businessName"
+                value={formData.businessName}
+                onChange={(e) => {
+                  handleChange(e);
+                  if (e.target.value.trim()) setErrors(prev => ({ ...prev, businessName: '' }));
+                }}
+                placeholder="Enter your business name"
+                className="mt-1"
+              />
+              {errors.businessName && <p className="text-red-600 text-sm mt-1">{errors.businessName}</p>}
             </div>
 
             {/* Email */}
@@ -99,21 +241,90 @@ export default function SignUpForm() {
                 type="email"
                 name="email"
                 value={formData.email}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value.trim())) setErrors(prev => ({ ...prev, email: '' }));
+                }}
                 placeholder="Enter your email"
-                className="mt-1 "
+                className="mt-1"
               />
+              {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
+            </div>
+
+            {/* Mobile Numbers */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <Label>Mobile Number *</Label>
+                <div className="flex mt-1">
+                  <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
+                    +91
+                  </span>
+                  <Input
+                    type="tel"
+                    name="mobile"
+                    value={formData.mobile}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      if (val.length <= 10) setFormData(prev => ({ ...prev, mobile: val }));
+                      if (val.length === 10) setErrors(prev => ({ ...prev, mobile: '' }));
+                    }}
+                    placeholder="9876543210"
+                    className="rounded-l-none"
+                  />
+                </div>
+                {errors.mobile && <p className="text-red-600 text-sm mt-1">{errors.mobile}</p>}
+              </div>
+
+              <div>
+                <Label>Alternative Number</Label>
+                <div className="flex mt-1">
+                  <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
+                    +91
+                  </span>
+                  <Input
+                    type="tel"
+                    name="altMobile"
+                    value={formData.altMobile}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      if (val.length <= 10) setFormData(prev => ({ ...prev, altMobile: val }));
+                    }}
+                    placeholder="Optional"
+                    className="rounded-l-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* City */}
+            <div>
+              <Label>City *</Label>
+              <Input
+                type="text"
+                name="city"
+                value={formData.city}
+                onChange={(e) => {
+                  handleChange(e);
+                  if (e.target.value.trim()) setErrors(prev => ({ ...prev, city: '' }));
+                }}
+                placeholder="Enter your city"
+                className="mt-1"
+              />
+              {errors.city && <p className="text-red-600 text-sm mt-1">{errors.city}</p>}
             </div>
 
             {/* Password */}
-            <div>
+            {/* <div>
               <Label>Password *</Label>
               <div className="relative mt-1">
                 <Input
                   type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    if (e.target.value.length >= 6) setErrors(prev => ({ ...prev, password: '' }));
+                  }}
                   placeholder="Enter your password"
                 />
                 <span
@@ -123,8 +334,41 @@ export default function SignUpForm() {
                   {showPassword ? <EyeIcon /> : <EyeCloseIcon />}
                 </span>
               </div>
+              {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
+            </div> */}
 
-            </div>
+            {/* OTP Section */}
+            {otpSent && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label>OTP Verification *</Label>
+                  {timer > 0 ? (
+                    <span className="text-xs text-blue-600 font-medium">Resend in {timer}s</span>
+                  ) : (
+                    <button 
+                      type="button" 
+                      onClick={handleSendOtp}
+                      className="text-xs text-blue-600 font-medium hover:underline"
+                    >
+                      Resend OTP
+                    </button>
+                  )}
+                </div>
+                <Input
+                  type="text"
+                  name="otp"
+                  value={formData.otp}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    if (val.length <= 6) setFormData(prev => ({ ...prev, otp: val }));
+                    if (val.length >= 4) setErrors(prev => ({ ...prev, otp: '' }));
+                  }}
+                  placeholder="Enter OTP"
+                  className="mt-1"
+                />
+                {errors.otp && <p className="text-red-600 text-sm mt-1">{errors.otp}</p>}
+              </div>
+            )}
 
             {/* Checkbox */}
             <div className="flex items-start gap-3 rounded-2xl bg-slate-50 dark:bg-gray-800 px-3 py-3">
@@ -139,16 +383,17 @@ export default function SignUpForm() {
             {/* Button */}
             <button
               type="submit"
-              className="w-full px-4 py-3 text-sm font-medium text-white rounded-xl bg-gradient-to-r from-[#4F46E5] via-[#6366F1] to-[#22D3EE] hover:shadow-[0_10px_40px_rgba(79,70,229,0.35)] hover:translate-y-[0.5px] transition-all border-0"
+              disabled={isSubmitting || (otpSent && !formData.otp)}
+              className="w-full px-4 py-3 text-sm font-medium text-white rounded-xl bg-gradient-to-r from-[#4F46E5] via-[#6366F1] to-[#22D3EE] hover:shadow-[0_10px_40px_rgba(79,70,229,0.35)] hover:translate-y-[0.5px] transition-all border-0 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Sign Up
+              {otpSent ? (isSubmitting ? "Registering..." : "Register Now") : "Send OTP"}
             </button>
           </form>
 
           <p className="mt-6 text-xs sm:text-sm text-center text-slate-500 dark:text-gray-400">
             Already have an account?{" "}
             <Link
-              href="/signin"
+              href="/"
               className="font-medium text-[#4F46E5] hover:text-[#4338CA] dark:text-brand-400 dark:hover:text-brand-300"
             >
               Sign in
