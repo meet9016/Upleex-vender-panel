@@ -35,6 +35,7 @@ export default function SignInForm() {
   const [otpSent, setOtpSent] = useState(false);
 
   const [error, setError] = useState<ErrorState>({});
+  console.log("🚀 ~ SignInForm ~ error:", error)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -210,14 +211,23 @@ export default function SignInForm() {
                   <div className="mt-2 flex justify-center">
                     <OtpInput
                       value={formData.otp}
-                      onChange={(otp) => setFormData((prev) => ({ ...prev, otp }))}
+                      onChange={(otp) => {
+                        setFormData((prev) => ({ ...prev, otp }));
+                        if (otp.replace(/\D/g, '').length >= 4) {
+                          setError((prev) => ({ ...prev, otp: '' }));
+                        }
+                      }}
                       numInputs={6}
                       shouldAutoFocus
-                      renderSeparator={<span className="mx-1 text-slate-300">•</span>}
+                      renderSeparator={<span className="mx-2 text-slate-300">•</span>}
                       renderInput={(props) => (
                         <input
                           {...props}
-                          className="h-10 !w-10 rounded-lg border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800 text-center text-base font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-[#4F46E5] focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-[#4F46E5]/20"
+                          onBlur={() => {
+                            const len = formData.otp.replace(/\D/g, '').length;
+                            setError((prev) => ({ ...prev, otp: len < 4 ? (len === 0 ? 'OTP is required' : 'Enter a valid OTP') : '' }));
+                          }}
+                          className={`border ${error.otp ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:border-[#4F46E5] focus:ring-[#4F46E5]/20'} h-10.5 !w-10.5 rounded-lg bg-slate-50 dark:bg-gray-800 text-center text-base font-medium text-slate-900 dark:text-white outline-none transition-all focus:bg-white dark:focus:bg-gray-700`}
                         />
                       )}
                     />
