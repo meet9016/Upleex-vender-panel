@@ -91,6 +91,17 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
   const router = useRouter();
 
   useEffect(() => {
+    const userInfo = localStorage.getItem('user_info');
+    if (userInfo) {
+      const vendor = JSON.parse(userInfo);
+      setKYCFormData(prev => ({
+        ...prev,
+        full_name: vendor.full_name || '',
+        email: vendor.email || '',
+        mobile: vendor.number || '',
+        business_name: vendor.business_name || '',
+      }));
+    }
     fetchKYCFormdata();
   }, []);
 
@@ -245,9 +256,6 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
 
       if (!isValidFile(KYCformData.vendor_image)) {
         newErrors.vendor_image = "Vendor photograph is required";
-      }
-      if (!isValidFile(KYCformData.business_logo_image)) {
-        newErrors.business_logo_image = "Business logo is required";
       }
     }
 

@@ -103,7 +103,7 @@ export default function AddProductPage() {
     const [listingTypeIdMap, setListingTypeIdMap] = useState<Record<string, string>>({});
     const [monthOptions, setMonthOptions] = useState<Option[]>([]);
     const [billingType, setBillingType] = useState<"day" | "month" | "hourly" | "">("");
-
+    const [pricingType, setPricingType] = useState<"free" | "paid">("paid");
     const [mainImage, setMainImage] = useState<File | null>(null);
     const [subImages, setSubImages] = useState<File[]>([]);
 
@@ -243,6 +243,16 @@ export default function AddProductPage() {
         });
     };
 
+    const handlePricingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const isChecked = e.target.checked;
+        setPricingType(isChecked ? "paid" : "free");
+
+        if (isChecked) {
+            toast.info("This product is now marked as Base (Paid listing)");
+        } else {
+            toast.info("This product is now set as Free listing");
+        }
+    };
     /* <!-- ============================================ handle select rent time ============================================ --> */
 
     const handleRadioChange = (value: "day" | "month" | "hourly") => {
@@ -323,7 +333,7 @@ export default function AddProductPage() {
                     } else {
                         setBillingType("");
                     }
-
+                    setPricingType(data.pricing_type || "paid");
                     const monthsInit =
                         data.month_arr?.length
                             ? data.month_arr.map((m: any) => ({
@@ -592,7 +602,10 @@ export default function AddProductPage() {
         return Object.keys(errors).length === 0;
     };
     /* <!-- ============================================ Handle save ============================================ --> */
-
+    const handleMakeBase = () => {
+    setPricingType("paid");
+    toast.info("This product is now marked as Base (Paid listing)");
+};
     const handleSubmit = async () => {
         // First validate form
         if (!validateForm()) {
@@ -608,7 +621,7 @@ export default function AddProductPage() {
             formdata.append("category_id", String(selectedCategory || formData.category));
             formdata.append("sub_category_id", String(selectedSubCategory || formData.subCategory));
             formdata.append("product_type_id", String(formData.listingType));
-
+            formdata.append("pricing_type", pricingType);
             // Determine listing type based on billingType
             const listingTypeId =
                 billingType === "month"
@@ -744,7 +757,46 @@ export default function AddProductPage() {
                         </div>
 
                     </div>
+<label className="flex items-center gap-3 cursor-pointer group bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div className="relative inline-flex items-center">
+                        <input
+                            type="checkbox"
+                            checked={pricingType === "paid"}
+                            onChange={handlePricingChange}
+                            className="sr-only peer"
+                        />
+                        {/* Checkbox background & border */}
+                        <div className={`
+                            w-6 h-6 rounded-md border-2 transition-all duration-200 ease-in-out
+                            flex items-center justify-center
+                            ${pricingType === "paid" 
+                                ? "bg-blue-600 border-blue-600 shadow-sm" 
+                                : "bg-white border-gray-400 group-hover:border-blue-400"}
+                        `}>
+                            {/* Checkmark when checked */}
+                            {pricingType === "paid" && (
+                                <svg 
+                                    className="w-4 h-4 text-white stroke-2" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                            )}
+                        </div>
+                    </div>
 
+                    {/* Label */}
+                    <span className={`
+                        text-base font-medium transition-colors duration-200
+                        ${pricingType === "paid" 
+                            ? "text-blue-700 dark:text-blue-400" 
+                            : "text-gray-600 dark:text-gray-300"}
+                    `}>
+                        Base (Paid listing)
+                    </span>
+                </label>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1274,17 +1326,58 @@ export default function AddProductPage() {
                 </div>
             </ComponentCard>
 
-            <div className="flex items-center gap-5 mt-5 justify-end ">
-                <Button size="sm" variant="outline" className="!py-2 px-5">
-                    Base
-                </Button>
-                <Button size="sm" variant="primary"
-                    className="btn-primary"
-                    onClick={handleSubmit}
-                >
-                    {isEditMode ? "Update" : "Save"}
-                </Button>
-                <Button size="sm" variant="outline" className="!py-2 px-5"
+            <div className="mt-8 flex items-center justify-end gap-6 px-4">
+                    {/* Custom Checkbox - Base (Paid) */}
+                    {/* <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className="relative inline-flex items-center">
+                            <input
+                                type="checkbox"
+                                checked={pricingType === "paid"}
+                                onChange={handlePricingChange}
+                                className="sr-only peer"
+                            />
+                            <div className={`
+                                w-6 h-6 rounded-md border-2 transition-all duration-200 ease-in-out
+                                flex items-center justify-center
+                                ${pricingType === "paid" 
+                                    ? "bg-blue-600 border-blue-600 shadow-sm" 
+                                    : "bg-white border-gray-400 group-hover:border-blue-400"}
+                            `}>
+                                {pricingType === "paid" && (
+                                    <svg 
+                                        className="w-4 h-4 text-white stroke-2" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                )}
+                            </div>
+                        </div>
+
+                        <span className={`
+                            text-base font-medium transition-colors duration-200
+                            ${pricingType === "paid" 
+                                ? "text-blue-700 dark:text-blue-400" 
+                                : "text-gray-600 dark:text-gray-300"}
+                        `}>
+                            Base (Paid listing)
+                        </span>
+                    </label> */}
+
+                    {/* Save Button */}
+                    <Button 
+                        size="sm" 
+                        variant="primary"
+                        className="btn-primary px-6 py-2.5 min-w-[100px]"
+                        onClick={handleSubmit}
+                    >
+                        {isEditMode ? "Update" : "Save"}
+                    </Button>
+
+                    {/* Cancel Button */}
+                    <Button size="sm" variant="outline" className="!py-2 px-5"
                     onClick={() => router.push("/product")}
                 >
                     Cancel

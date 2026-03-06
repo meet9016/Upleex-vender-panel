@@ -52,9 +52,14 @@ export default function DocumentUpload({
       return;
     }
 
+    if (selected && selected.size > 2 * 1024 * 1024) {
+      toast.error("File size must be less than 2MB");
+      e.target.value = "";
+      return;
+    }
+
     onChange(selected);
     
-    // यहाँ error clear करें - जैसे ही file select हो
     if (clearError) {
       clearError();
     }
@@ -76,7 +81,7 @@ export default function DocumentUpload({
 
       {!file ? (
         <label className={`border border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition text-center ${
-          error ? "border-error-600 " : "border-gray-400 hover:bg-gray-100"
+          error ? "border-red-600 bg-red-50" : "border-gray-400 hover:bg-gray-100"
         }`}>
           <span className={`text-sm `}>Click to upload</span>
           <input 
@@ -88,7 +93,7 @@ export default function DocumentUpload({
         </label>
       ) : (
         <div className={`relative p-3 border rounded-lg group ${
-          error ? "border-error-600 bg-error-50" : "border-gray-300 bg-gray-50"
+          error ? "border-red-600 bg-red-50" : "border-gray-300 bg-gray-50"
         }`}>
           <div className="relative">
             {preview ? (

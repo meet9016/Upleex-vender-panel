@@ -3,6 +3,7 @@ export interface EndPointApi {
     login: string;
     register: string;
     logout: string;
+    businessRegister: string;
 
     //Vendor
     postVendorKYCFormSubmit?: string;
@@ -40,7 +41,7 @@ const endPointApi: EndPointApi = {
     login: 'vendor/auth/vendor-login',
     register: 'auth/register',
     logout: 'auth/logout',
-
+    businessRegister: 'vendor/auth/business-register',
     //Vendor
     postVendorKYCFormSubmit: 'vendor-kyc',
     postFetchVendorKYCFormData: 'vendor-single-details',
