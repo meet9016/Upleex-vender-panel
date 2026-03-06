@@ -88,17 +88,17 @@ export default function SignInForm() {
     }
   };
 
-//   useEffect(() => {
-//   const params = new URLSearchParams(window.location.search);
-//   const token = params.get("token");
+  //   useEffect(() => {
+  //   const params = new URLSearchParams(window.location.search);
+  //   const token = params.get("token");
 
-//   if (token) {
-//     saveToken(token)
-//      const searchParams = new URLSearchParams(window.location.search);
-//         const redirectTo = searchParams.get('redirect') || '/';
-//         window.location.href = redirectTo;
-//   }
-// }, []);
+  //   if (token) {
+  //     saveToken(token)
+  //      const searchParams = new URLSearchParams(window.location.search);
+  //         const redirectTo = searchParams.get('redirect') || '/';
+  //         window.location.href = redirectTo;
+  //   }
+  // }, []);
 
   const verifyOtp = async () => {
     const newErrors: ErrorState = {};
@@ -185,7 +185,14 @@ export default function SignInForm() {
                   name="mobile"
                   placeholder="Enter 10‑digit mobile"
                   value={formData.mobile}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    // Only allow digits and max 10 characters
+                    const value = e.target.value.replace(/\D/g, ""); // remove non-digit characters
+                    if (value.length <= 10) {
+                      setFormData((prev) => ({ ...prev, mobile: value }));
+                      setError((prev) => ({ ...prev, mobile: "" })); // clear error on change
+                    }
+                  }}
                   className="mt-1"
                   error={!!error.mobile}
                 />
