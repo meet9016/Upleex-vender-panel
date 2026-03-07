@@ -139,7 +139,8 @@ export default function SignUpForm() {
 
         if (status === 200) {
           toast.success(message);
-          router.push("/");
+          // Redirect to KYC page for new vendors
+          router.push("/kyc");
         } else {
           toast.error(message);
         }

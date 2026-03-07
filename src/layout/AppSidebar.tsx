@@ -23,11 +23,17 @@ const navItems: NavItem[] = [
   { icon: <CalenderIcon />, name: "Drafts", path: "/draft" },
 ];
 
+// KYC only nav items for initial render
+const kycOnlyItems: NavItem[] = [
+  { icon: <CalenderIcon />, name: "KYC", path: "/kyc" },
+];
+
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
   const router = useRouter();
   const [kycApproved, setKycApproved] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -36,10 +42,15 @@ const AppSidebar: React.FC = () => {
         const res = await api.post(endPointApi.postFetchVendorKYCFormData as string);
         const status = res?.data?.data?.status || "";
         if (!mounted) return;
-        setKycApproved(String(status).toLowerCase() === "approved");
+        const approved = String(status).toLowerCase() === "approved";
+        setKycApproved(approved);
       } catch {
         if (!mounted) return;
         setKycApproved(false);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     })();
     return () => {
@@ -47,18 +58,17 @@ const AppSidebar: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (kycApproved === false && pathname !== "/kyc") {
-      router.push("/kyc");
-    }
-  }, [kycApproved, pathname, router]);
+
 
   const visibleItems = useMemo(() => {
-    if (kycApproved === false) {
-      return navItems.filter((n) => n.path === "/kyc");
+    if (isLoading) {
+      return []; // Show nothing while loading
     }
-    return navItems;
-  }, [kycApproved]);
+    if (kycApproved === false) {
+      return kycOnlyItems; // Show only KYC if not approved
+    }
+    return navItems; // Show all items if approved
+  }, [kycApproved, isLoading]);
 
   const isActive = useCallback(
     (path: string) => {
@@ -117,6 +127,8 @@ const AppSidebar: React.FC = () => {
       </div>
 
       <nav className="flex flex-col overflow-y-auto duration-300 no-scrollbar">
+        {!isLoading && (
+      <>
         <h2 className={`mb-4 text-xs uppercase flex text-gray-400 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
           {showExpanded ? "Menu" : <HorizontaLDots />}
         </h2>
@@ -137,7 +149,16 @@ const AppSidebar: React.FC = () => {
             </li>
           ))}
         </ul>
+          </>
+        )}
       </nav>
+      
+      {/* Optional: Show loading indicator while fetching status */}
+      {isLoading && (
+        <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900 dark:border-white"></div>
+        </div>
+      )}
     </aside>
   );
 };
