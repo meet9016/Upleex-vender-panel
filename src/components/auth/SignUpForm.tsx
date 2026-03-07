@@ -11,6 +11,7 @@ import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import OtpInput from "react-otp-input";
 
 export default function SignUpForm() {
   const router = useRouter();
@@ -196,6 +197,7 @@ export default function SignUpForm() {
                   }}
                   placeholder="Enter your first name"
                   className="mt-1"
+                  error={!!errors.fname}
                 />
                 {errors.fname && <p className="text-red-600 text-sm mt-1">{errors.fname}</p>}
               </div>
@@ -212,6 +214,7 @@ export default function SignUpForm() {
                   }}
                   placeholder="Enter your last name"
                   className="mt-1"
+                  error={!!errors.lname}
                 />
                 {errors.lname && <p className="text-red-600 text-sm mt-1">{errors.lname}</p>}
               </div>
@@ -230,6 +233,7 @@ export default function SignUpForm() {
                 }}
                 placeholder="Enter your business name"
                 className="mt-1"
+                error={!!errors.businessName}
               />
               {errors.businessName && <p className="text-red-600 text-sm mt-1">{errors.businessName}</p>}
             </div>
@@ -238,15 +242,18 @@ export default function SignUpForm() {
             <div>
               <Label>Email *</Label>
               <Input
-                type="email"
+                type="text"
                 name="email"
                 value={formData.email}
+                inputMode="email"
+                autoComplete="email"
                 onChange={(e) => {
                   handleChange(e);
                   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value.trim())) setErrors(prev => ({ ...prev, email: '' }));
                 }}
                 placeholder="Enter your email"
                 className="mt-1"
+                error={!!errors.email}
               />
               {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
             </div>
@@ -270,6 +277,7 @@ export default function SignUpForm() {
                     }}
                     placeholder="9876543210"
                     className="rounded-l-none"
+                    error={!!errors.mobile}
                   />
                 </div>
                 {errors.mobile && <p className="text-red-600 text-sm mt-1">{errors.mobile}</p>}
@@ -309,6 +317,7 @@ export default function SignUpForm() {
                 }}
                 placeholder="Enter your city"
                 className="mt-1"
+                error={!!errors.city}
               />
               {errors.city && <p className="text-red-600 text-sm mt-1">{errors.city}</p>}
             </div>
@@ -354,18 +363,25 @@ export default function SignUpForm() {
                     </button>
                   )}
                 </div>
-                <Input
-                  type="text"
-                  name="otp"
-                  value={formData.otp}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, "");
-                    if (val.length <= 6) setFormData(prev => ({ ...prev, otp: val }));
-                    if (val.length >= 4) setErrors(prev => ({ ...prev, otp: '' }));
-                  }}
-                  placeholder="Enter OTP"
-                  className="mt-1"
-                />
+                <div className="mt-2 flex justify-center">
+                  <OtpInput
+                    value={formData.otp}
+                    onChange={(val) => {
+                      const clean = val.replace(/\D/g, '').slice(0, 6);
+                      setFormData(prev => ({ ...prev, otp: clean }));
+                      if (clean.length >= 4) setErrors(prev => ({ ...prev, otp: '' }));
+                    }}
+                    numInputs={6}
+                    shouldAutoFocus
+                    renderSeparator={<span className="mx-2 text-slate-300">•</span>}
+                    renderInput={(props) => (
+                      <input
+                        {...props}
+                        className={`${errors.otp ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:border-[#4F46E5] focus:ring-[#4F46E5]/20'} h-10 !w-10 rounded-lg bg-slate-50 dark:bg-gray-800 text-center text-base font-medium text-slate-900 dark:text-white outline-none transition-all`}
+                      />
+                    )}
+                  />
+                </div>
                 {errors.otp && <p className="text-red-600 text-sm mt-1">{errors.otp}</p>}
               </div>
             )}
