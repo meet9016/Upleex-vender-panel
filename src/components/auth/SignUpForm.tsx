@@ -245,8 +245,6 @@ export default function SignUpForm() {
                 type="text"
                 name="email"
                 value={formData.email}
-                inputMode="email"
-                autoComplete="email"
                 onChange={(e) => {
                   handleChange(e);
                   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value.trim())) setErrors(prev => ({ ...prev, email: '' }));
