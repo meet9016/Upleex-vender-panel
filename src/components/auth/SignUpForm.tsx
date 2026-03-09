@@ -168,13 +168,21 @@ export default function SignUpForm() {
           {/* Logo + heading */}
           <div className="mb-6 flex flex-col items-center text-center">
             <Image
-              src="/images/logo/upleex-logo-dark.png"
-              alt="Upleex"
-              width={180}
-              height={48}
-              priority
-              className="mb-2"
-            />
+                           className="dark:hidden"
+                           src="/images/logo/upleex-logo-dark.png"
+                           alt="Upleex Logo"
+                           width={150}
+                           height={40}
+                           priority
+                         />
+                         <Image
+                           className="hidden dark:block"
+                           src="/images/logo/upleex-logo.png"
+                           alt="Upleex Logo"
+                           width={150}
+                           height={40}
+                           priority
+                         />
             <h1 className="mb-2 mt-3 font-semibold text-gray-800 dark:text-white text-title-sm">
               Vendor Sign Up
             </h1>

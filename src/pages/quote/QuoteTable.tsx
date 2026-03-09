@@ -10,6 +10,7 @@ import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 import DatePicker from "@/components/common/DatePicker";
 import { CiFilter } from "react-icons/ci";
 import { toast } from "react-toastify";
+import SearchableDropdown from "@/components/common/SearchableDropdown";
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -558,69 +559,25 @@ const applyFilters = () => {
                     {/* Product Type */}
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Product Type</label>
-                      <div className="relative">
-                        <button
-                          onClick={() => setOpenDropdown(openDropdown === 'product_type' ? null : 'product_type')}
-                          className="w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left flex justify-between items-center hover:border-blue-500 transition-all text-sm"
-                        >
-                          <span className={filters.product_type ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
-                            {getSelectedLabel('product_type') || 'Select Product Type'}
-                          </span>
-                          <MdKeyboardArrowDown className={`transition-transform ${openDropdown === 'product_type' ? 'rotate-180' : ''}`} size={18} />
-                        </button>
-                        {openDropdown === 'product_type' && (
-                          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            <div onClick={() => handleFilterChange('product_type', '')} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center text-sm">
-                              <span>All Product Types</span>
-                              {!filters.product_type && <MdCheck className="text-blue-600" size={16} />}
-                            </div>
-                            {productTypes.map((type: any) => (
-                              <div
-                                key={type.id}
-                                onClick={() => handleFilterChange('product_type', type.id)}
-                                className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-t border-gray-100 dark:border-gray-700 text-sm"
-                              >
-                                <span>{type.product_type}</span>
-                                {filters.product_type === type.id && <MdCheck className="text-blue-600" size={16} />}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <SearchableDropdown
+                        searchable
+                        options={productTypes.map((t: any) => ({ label: t.product_type, value: String(t.id) }))}
+                        value={filters.product_type}
+                        placeholder="Select Product Type"
+                        onChange={(val) => handleFilterChange('product_type', val)}
+                      />
                     </div>
 
                     {/* Listing Type */}
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Listing Type</label>
-                      <div className="relative">
-                        <button
-                          onClick={() => setOpenDropdown(openDropdown === 'listing_type' ? null : 'listing_type')}
-                          className="w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left flex justify-between items-center hover:border-blue-500 transition-all text-sm"
-                        >
-                          <span className={filters.listing_type ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
-                            {getSelectedLabel('listing_type') || 'Select Listing Type'}
-                          </span>
-                          <MdKeyboardArrowDown className={`transition-transform ${openDropdown === 'listing_type' ? 'rotate-180' : ''}`} size={18} />
-                        </button>
-                        {openDropdown === 'listing_type' && (
-                          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            <div onClick={() => handleFilterChange('listing_type', '')} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center text-sm">
-                              <span>All Listing Types</span>
-                              {!filters.listing_type && <MdCheck className="text-blue-600" size={16} />}
-                            </div>
-                            {listingTypes.map((type: any) => (
-                              <div
-                                key={type.id}
-                                onClick={() => handleFilterChange('listing_type', type.id)}
-                                className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-t border-gray-100 dark:border-gray-700 text-sm"
-                              >
-                                <span>{type.name}</span>
-                                {filters.listing_type === type.id && <MdCheck className="text-blue-600" size={16} />}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <SearchableDropdown
+                        searchable
+                        options={listingTypes.map((lt: any) => ({ label: lt.name, value: String(lt.id) }))}
+                        value={filters.listing_type}
+                        placeholder="Select Listing Type"
+                        onChange={(val) => handleFilterChange('listing_type', val)}
+                      />
                     </div>
 
                     {/* Start Date */}
@@ -645,61 +602,25 @@ const applyFilters = () => {
                     {/* Month */}
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Month</label>
-                      <div className="relative">
-                        <button
-                          onClick={() => setOpenDropdown(openDropdown === 'month' ? null : 'month')}
-                          className="w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left flex justify-between items-center hover:border-blue-500 transition-all text-sm"
-                        >
-                          <span className={filters.month ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
-                            {getSelectedLabel('month') || 'Select Month'}
-                          </span>
-                          <MdKeyboardArrowDown className={`transition-transform ${openDropdown === 'month' ? 'rotate-180' : ''}`} size={18} />
-                        </button>
-                        {openDropdown === 'month' && (
-                          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            <div onClick={() => handleFilterChange('month', '')} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center text-sm">
-                              <span>All Months</span>
-                              {!filters.month && <MdCheck className="text-blue-600" size={16} />}
-                            </div>
-                            {months.map((month: any) => (
-                              <div key={month.id} onClick={() => handleFilterChange('month', month.id)} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-t border-gray-100 dark:border-gray-700 text-sm">
-                                <span>{month.month_name}</span>
-                                {filters.month === month.id && <MdCheck className="text-blue-600" size={16} />}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <SearchableDropdown
+                        searchable
+                        options={months.map((m: any) => ({ label: m.month_name, value: String(m.id) }))}
+                        value={filters.month}
+                        placeholder="Select Month"
+                        onChange={(val) => handleFilterChange('month', val)}
+                      />
                     </div>
 
                     {/* Status */}
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                      <div className="relative">
-                        <button
-                          onClick={() => setOpenDropdown(openDropdown === 'status' ? null : 'status')}
-                          className="w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left flex justify-between items-center hover:border-blue-500 transition-all text-sm"
-                        >
-                          <span className={filters.status ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
-                            {getSelectedLabel('status') || 'Select Status'}
-                          </span>
-                          <MdKeyboardArrowDown className={`transition-transform ${openDropdown === 'status' ? 'rotate-180' : ''}`} size={18} />
-                        </button>
-                        {openDropdown === 'status' && (
-                          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            <div onClick={() => handleFilterChange('status', '')} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center text-sm">
-                              <span>All Statuses</span>
-                              {!filters.status && <MdCheck className="text-blue-600" size={16} />}
-                            </div>
-                            {statusList.map((status: any) => (
-                              <div key={status.id} onClick={() => handleFilterChange('status', status.id)} className="px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center border-t border-gray-100 dark:border-gray-700 text-sm">
-                                <span>{status.name}</span>
-                                {filters.status === status.id && <MdCheck className="text-blue-600" size={16} />}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <SearchableDropdown
+                        searchable
+                        options={statusList.map((s: any) => ({ label: s.name, value: String(s.id) }))}
+                        value={filters.status}
+                        placeholder="Select Status"
+                        onChange={(val) => handleFilterChange('status', val)}
+                      />
                     </div>
                   </div>
 

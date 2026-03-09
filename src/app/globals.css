@@ -1008,7 +1008,13 @@ span.flatpickr-weekday,
   justify-content: center !important;
   margin: 0 auto !important;
 }
-
+.dark .ag-selection-checkbox{
+   display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto !important;
+  margin-left: 10px !important;
+}
 .ag-cell.ag-cell-first-right-pinned {
   display: flex !important;
   align-items: center !important;

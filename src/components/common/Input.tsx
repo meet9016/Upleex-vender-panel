@@ -122,11 +122,11 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
         // Variant styles
         const variantStyles = {
             default: error
-                ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                ? "border-red-500 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:focus:border-red-500 dark:focus:ring-red-500"
                 : "border-gray-300 focus:border-blue-500 focus:ring-blue-500",
-            error: "border-red-500 focus:border-red-500 focus:ring-red-500",
-            success: "border-green-500 focus:border-green-500 focus:ring-green-500",
-            warning: "border-yellow-500 focus:border-yellow-500 focus:ring-yellow-500",
+            error: "border-red-500 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:focus:border-red-500 dark:focus:ring-red-500",
+            success: "border-green-500 focus:border-green-500 focus:ring-green-500 dark:border-green-500 dark:focus:border-green-500 dark:focus:ring-green-500",
+            warning: "border-yellow-500 focus:border-yellow-500 focus:ring-yellow-500 dark:border-yellow-500 dark:focus:border-yellow-500 dark:focus:ring-yellow-500",
         };
 
         // Size styles

@@ -168,14 +168,22 @@ export default function SignInForm() {
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#4F46E5] via-[#6366F1] to-[#22D3EE]" />
           {/* Logo + heading */}
           <div className="mb-6 flex flex-col items-center text-center">
-            <Image
-              src="/images/logo/upleex-logo-dark.png"
-              alt="Upleex"
-              width={180}
-              height={48}
-              priority
-              className="mb-2"
-            />
+           <Image
+                className="dark:hidden"
+                src="/images/logo/upleex-logo-dark.png"
+                alt="Upleex Logo"
+                width={150}
+                height={40}
+                priority
+              />
+              <Image
+                className="hidden dark:block"
+                src="/images/logo/upleex-logo.png"
+                alt="Upleex Logo"
+                width={150}
+                height={40}
+                priority
+              />
             <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-white">
               Sign In
             </h1>
@@ -238,10 +246,6 @@ export default function SignInForm() {
                       renderInput={(props) => (
                         <input
                           {...props}
-                          onBlur={() => {
-                            const len = formData.otp.replace(/\D/g, '').length;
-                            setError((prev) => ({ ...prev, otp: len < 4 ? (len === 0 ? 'OTP is required' : 'Enter a valid OTP') : '' }));
-                          }}
                           className={`border ${error.otp ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:border-[#4F46E5] focus:ring-[#4F46E5]/20'} h-10.5 !w-10.5 rounded-lg bg-slate-50 dark:bg-gray-800 text-center text-base font-medium text-slate-900 dark:text-white outline-none transition-all focus:bg-white dark:focus:bg-gray-700`}
                         />
                       )}

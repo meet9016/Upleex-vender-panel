@@ -155,7 +155,7 @@ export default function DocumentUpload({
                   {preview && (
                     <button
                       onClick={() => setShowModal(true)}
-                      className="text-xs text-blue-600 hover:underline mt-1"
+                      className="text-xs text-blue-600 hover:underline mt-1 h-22"
                     >
                       View PDF
                     </button>
