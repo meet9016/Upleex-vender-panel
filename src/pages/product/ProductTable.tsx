@@ -583,6 +583,7 @@ cellRenderer: (params: any) => {
     setShowActionsMenu(false);
   };
 
+  
   return (
     <div>
       <div className="flex justify-between items-center mb-2">
@@ -681,7 +682,7 @@ cellRenderer: (params: any) => {
                         options={categoryOptions}
                         value={selectedCategory}
                         placeholder="Select category"
-                        onChange={handleCategoryChange}
+                        onChange={handleCategoryChange}                     
                       />
                     </div>
 
@@ -695,56 +696,58 @@ cellRenderer: (params: any) => {
                         options={subCategoryOptions}
                         value={selectedSubCategory}
                         placeholder={selectedCategory ? "Search sub category..." : "Select category first"}
-                        error={!selectedCategory}
+                        // error={!selectedCategory}
                         onChange={handleSubCategoryChange}
                         disabled={!selectedCategory}
                       />
-                      {!selectedCategory && (
+                      {/* {!selectedCategory && (
                         <p className="text-gray-500 text-xs mt-1">Please select a category first</p>
-                      )}
+                      )} */}
                     </div>
 
                     {/* Product Type Filter (Rent/Sell) */}
                     <div>
                       <Label className="font-semibold mb-2">Product Type</Label>
-                      <select
+                      <SearchableDropdown
+                        searchable
+                        options={[
+                          { label: 'Rent', value: '1' },
+                          { label: 'Sell', value: '2' },
+                        ]}
                         value={filters.filter_rent_sell}
-                        onChange={handleProductTypeChange}
-                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">All Types</option>
-                        <option value="1">Rent</option>
-                        <option value="2">Sell</option>
-                      </select>
+                        placeholder="All Types"
+                        onChange={(value) => setFilters(prev => ({ ...prev, filter_rent_sell: value }))}
+                      />
                     </div>
 
                     {/* Listing Type Filter (Tenure) */}
                     <div>
                       <Label className="font-semibold mb-2">Listing Type</Label>
-                      <select
+                      <SearchableDropdown
+                        searchable
+                        options={listingTypes.map((type: any) => ({
+                          label: type.name,
+                          value: String(type.id || type._id),
+                        }))}
                         value={filters.filter_tenure}
-                        onChange={handleListingTypeChange}
-                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">All Listing Types</option>
-                        {listingTypes.map((type: any) => (
-                          <option key={type.id || type._id} value={type.id || type._id}>
-                            {type.name}
-                          </option>
-                        ))}
-                      </select>
+                        placeholder="All Listing Types"
+                        onChange={(value) => setFilters(prev => ({ ...prev, filter_tenure: value }))}
+                      />
                     </div>
                   <div>
-                    <select
-                      value={filters.status}
-                      onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                      className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">All</option>
-                      <option value="active">Active</option>
-                      <option value="draft">Draft</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
+                     <Label className="font-semibold mb-2">Status</Label>
+                     <SearchableDropdown
+                       searchable
+                       options={[
+                        //  { label: 'All', value: '' },
+                         { label: 'Active', value: 'active' },
+                         { label: 'Draft', value: 'draft' },
+                         { label: 'Inactive', value: 'inactive' },
+                       ]}
+                       value={filters.status}
+                       placeholder="Status"
+                       onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+                     />
                   </div>
                   </div>
 

@@ -18,7 +18,7 @@ export default function StepDeclaration({
 }: KYCFormProp) {
   return (
     <div>
-      <label className="flex items-center gap-2">
+      <label className="flex items-center gap-2 dark:text-white">
         <input
           type="checkbox"
           checked={KYCformData?.terms_conditions === 1}

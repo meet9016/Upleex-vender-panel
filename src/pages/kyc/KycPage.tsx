@@ -360,9 +360,28 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
   const handleNext = async () => {
     if (validateCurrentStep()) {
       await submitKYCFormdata();
-    } else {
-      toast.error("Please correct the errors shown");
     }
+  };
+
+  const handleStepChange = (i: number) => {
+    if (i === currentStep) return;
+    const completed = (KYCformData.completed_pages || [])
+      .map((p) => parseInt(String(p), 10))
+      .filter((n) => !isNaN(n));
+    const highestCompleted = completed.length ? Math.max(...completed) : 0; // 1-based
+    const allowedIndex = Math.min(highestCompleted, steps.length - 1); // allow next incomplete step
+    if (i > allowedIndex) {
+      validateCurrentStep();
+      return;
+    }
+    if (i > currentStep) {
+      const ok = validateCurrentStep();
+      if (!ok) {
+        toast.error('Please complete required fields');
+        return;
+      }
+    }
+    setCurrentStep(i);
   };
 
   // ────────────────────────────────────────────────
@@ -416,7 +435,7 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
 
   return (
     <ComponentCard title="KYC Verification">
-      <Stepper steps={steps} currentStep={currentStep} completedPages={KYCformData.completed_pages} />
+      <Stepper steps={steps} currentStep={currentStep} completedPages={KYCformData.completed_pages} onStepChange={handleStepChange} />
 
       <div className="min-h-[400px] md:min-h-[520px]">
         {currentStep === 0 && (
@@ -461,14 +480,16 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
         )}
       </div>
 
-      <div className="flex justify-between mt-6 pt-4 border-t">
-        <button
-          onClick={() => setCurrentStep((s) => s - 1)}
-          disabled={currentStep === 0 || isSubmitting}
-          className="btn-secondary"
-        >
-          Back
-        </button>
+      <div className={`flex ${currentStep === 0 ? 'justify-end' : 'justify-between'} mt-6 pt-4 border-t`}>
+        {currentStep > 0 && (
+          <button
+            onClick={() => setCurrentStep((s) => s - 1)}
+            disabled={isSubmitting}
+            className="btn-secondary"
+          >
+            Back
+          </button>
+        )}
 
         <button
           onClick={handleNext}
