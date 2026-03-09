@@ -123,9 +123,24 @@ export default function SignInForm() {
         localStorage.setItem("user_info", JSON.stringify(res?.data?.data?.vendor));
 
         toast.success(res.data.message);
-        const searchParams = new URLSearchParams(window.location.search);
-        const redirectTo = searchParams.get('redirect') || '/';
-        window.location.href = redirectTo;
+        
+        // Check KYC status and redirect accordingly
+        try {
+          const kycRes = await api.post(endPointApi.postFetchVendorKYCFormData as string);
+          const kycStatus = kycRes?.data?.data?.status || "";
+          const isApproved = String(kycStatus).toLowerCase() === "approved";
+          
+          if (isApproved) {
+            const searchParams = new URLSearchParams(window.location.search);
+            const redirectTo = searchParams.get('redirect') || '/';
+            window.location.href = redirectTo;
+          } else {
+            window.location.href = '/kyc';
+          }
+        } catch {
+          // If KYC check fails, redirect to KYC page
+          window.location.href = '/kyc';
+        }
       } else {
         toast.error(res.data.message);
       }
