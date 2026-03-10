@@ -168,7 +168,13 @@ export default function AddProductPage() {
         }
     };
 
-    /* <!-- =================================================== handle add, change ,remove Feature =================================================== --> */
+
+    const handleNumberInput = (field: string, value: string, maxLength: number = 10) => {
+        // Remove non-numeric characters and limit length
+        const numericValue = value.replace(/[^0-9]/g, '').slice(0, maxLength);
+        handleChange(field, numericValue);
+    };
+
 
     const addFeatureField = () => {
         setFormData((prev) => ({
@@ -225,7 +231,14 @@ export default function AddProductPage() {
         value: string
     ) => {
         const updated = [...formData.months];
-        updated[index][field] = value;
+        
+        // Apply number restriction for price and cancelPrice fields
+        if (field === 'price' || field === 'cancelPrice') {
+            const numericValue = value.replace(/[^0-9]/g, '').slice(0, 10);
+            updated[index][field] = numericValue;
+        } else {
+            updated[index][field] = value;
+        }
 
         setFormData((prev) => ({
             ...prev,
@@ -957,9 +970,9 @@ export default function AddProductPage() {
                                 <Label>Day Price</Label>
                                 <Input
                                     placeholder="Enter Day Price"
-                                    type="number"
+                                    type="text"
                                     value={formData.dayPrice}
-                                    onChange={(e) => handleChange("dayPrice", e.target.value)}
+                                    onChange={(e) => handleNumberInput("dayPrice", e.target.value)}
                                     error={!!validationErrors.dayPrice}
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
@@ -974,9 +987,9 @@ export default function AddProductPage() {
                                 <Label>Day Cancel Price</Label>
                                 <Input
                                     placeholder="Enter Day Cancel Price"
-                                    type="number"
+                                    type="text"
                                     value={formData.dayCancelPrice}
-                                    onChange={(e) => handleChange("dayCancelPrice", e.target.value)}
+                                    onChange={(e) => handleNumberInput("dayCancelPrice", e.target.value)}
                                     error={!!validationErrors.dayCancelPrice}
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
@@ -996,9 +1009,9 @@ export default function AddProductPage() {
                                 <Label>Hourly Price</Label>
                                 <Input
                                     placeholder="Enter Hourly Price"
-                                    type="number"
+                                    type="text"
                                     value={formData.hourlyPrice}
-                                    onChange={(e) => handleChange("hourlyPrice", e.target.value)}
+                                    onChange={(e) => handleNumberInput("hourlyPrice", e.target.value)}
                                     error={!!validationErrors.hourlyPrice}
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
@@ -1013,9 +1026,9 @@ export default function AddProductPage() {
                                 <Label>Hourly Cancel Price</Label>
                                 <Input
                                     placeholder="Enter Hourly Cancel Price"
-                                    type="number"
+                                    type="text"
                                     value={formData.hourlyCancelPrice}
-                                    onChange={(e) => handleChange("hourlyCancelPrice", e.target.value)}
+                                    onChange={(e) => handleNumberInput("hourlyCancelPrice", e.target.value)}
                                     error={!!validationErrors.hourlyCancelPrice}
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
@@ -1081,7 +1094,7 @@ export default function AddProductPage() {
                                         <div className="w-full md:w-1/3">
                                             <div className="min-h-[68px]"> {/* Using min-height instead of fixed height */}
                                                 <Input
-                                                    type="number"
+                                                    type="text"
                                                     placeholder="₹ Price"
                                                     value={m.price}
                                                     onChange={(e) => updateMonth(index, "price", e.target.value)}
@@ -1095,7 +1108,7 @@ export default function AddProductPage() {
                                         <div className="w-full md:w-1/3">
                                             <div className="min-h-[68px]"> {/* Using min-height instead of fixed height */}
                                                 <Input
-                                                    type="number"
+                                                    type="text"
                                                     placeholder="₹ Cancel"
                                                     value={m.cancelPrice}
                                                     onChange={(e) => updateMonth(index, "cancelPrice", e.target.value)}
@@ -1128,9 +1141,9 @@ export default function AddProductPage() {
                                 <Label>Price</Label>
                                 <Input
                                     placeholder="Enter Sell Price"
-                                    type="number"
+                                    type="text"
                                     value={formData.monthPrice}
-                                    onChange={(e) => handleChange("monthPrice", e.target.value)}
+                                    onChange={(e) => handleNumberInput("monthPrice", e.target.value)}
                                     error={!!validationErrors.monthPrice}
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
@@ -1145,9 +1158,9 @@ export default function AddProductPage() {
                                 <Label>Cancel Price</Label>
                                 <Input
                                     placeholder="Enter Sell Cancel Price"
-                                    type="number"
+                                    type="text"
                                     value={formData.monthCancelPrice}
-                                    onChange={(e) => handleChange("monthCancelPrice", e.target.value)}
+                                    onChange={(e) => handleNumberInput("monthCancelPrice", e.target.value)}
                                     error={!!validationErrors.monthCancelPrice}
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />

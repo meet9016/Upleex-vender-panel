@@ -582,7 +582,7 @@ const applyFilters = () => {
 
                     {/* Start Date */}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 ">Start Date</label>
                       <DatePicker
                         value={filters.delivery_start_date}
                         onChange={(date) => handleFilterChange("delivery_start_date", date)}
