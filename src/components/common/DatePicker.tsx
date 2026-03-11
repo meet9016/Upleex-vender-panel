@@ -171,14 +171,14 @@ export default function DatePicker({
   return (
     <div
       ref={containerRef}
-   className={`relative ${className || ""}`}
+   className={`relative dark:bg-gray-700 ${className || ""}`}
 
     >
       {/* Trigger */}
       <div 
         onClick={() => setIsOpen(!isOpen)}
         className={clsx(
-          "flex items-center justify-between w-full h-9 pl-4 pr-4 border rounded-lg  bg-gray-50 transition-colors cursor-pointer",
+          "flex items-center justify-between w-full h-9 pl-4 pr-4 border rounded-lg  bg-gray-50 transition-colors cursor-pointer  dark:bg-[#0d111c] dark:border-gray-600 dark:text-gray-300",
           isOpen ? "border-blue-500 ring-1 ring-blue-200" : "border-gray-200 hover:border-blue-400"
         )}
       >
@@ -186,7 +186,7 @@ export default function DatePicker({
           {/* <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider leading-tight">
             {label}
           </span> */}
-          <span className="text-sm font-bold text-gray-500 leading-tight">
+          <span className="text-sm font-bold text-gray-500 leading-tight dark:text-gray-300">
             {value ? formatDateDisplay(value) : "Select Date"}
           </span>
         </div>
@@ -201,21 +201,21 @@ export default function DatePicker({
 
       {/* Dropdown Calendar */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-200 dark:bg-[#0d111c] dark:border-gray-600 dark:text-gray-300">
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 ">
             <button
               onClick={handlePrevMonth}
-              className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
+              className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors dark:text-gray-300"
             >
               <MdChevronLeft size={20} />
             </button>
-            <span className="font-bold text-gray-800">
+            <span className="font-bold text-gray-800 dark:text-gray-300">
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </span>
             <button
               onClick={handleNextMonth}
-              className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
+              className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors dark:text-gray-300"
             >
               <MdChevronRight size={20} />
             </button>
@@ -226,7 +226,7 @@ export default function DatePicker({
             {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
               <div
                 key={day}
-                className="h-8 flex items-center justify-center text-xs font-semibold text-gray-400"
+                className="h-8 flex items-center justify-center text-xs font-semibold text-gray-40"
               >
                 {day}
               </div>
@@ -234,7 +234,7 @@ export default function DatePicker({
           </div>
 
           {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-y-1 justify-items-center">
+          <div className="grid grid-cols-7 gap-y-1 justify-items-center !dark:text-gray-300 ">
             {renderCalendarDays()}
           </div>
         </div>

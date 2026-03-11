@@ -635,7 +635,7 @@ cellRenderer: (params: any) => {
               placeholder="Search products..."
               value={searchText}
               onChange={handleSearchChange}
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-64"
+              className="pl-10 pr-4 py-1 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-64"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           </div>
@@ -645,7 +645,7 @@ cellRenderer: (params: any) => {
             <button
               ref={filterButtonRef}
               onClick={() => setShowFilterModal(!showFilterModal)}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2 relative"
+              className="px-4 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2 relative"
             >
               <CiFilter size={20} />
               Filter
@@ -774,14 +774,14 @@ cellRenderer: (params: any) => {
           {/* Add Product Button */}
           <button
             onClick={() => router.push('/product/addProduct')}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+            className="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
           >
             + Add Product
           </button>
           <div className="relative" ref={actionsMenuRef}>
             <button
               onClick={() => setShowActionsMenu((v) => !v)}
-              className="px-3 py-2 hover:bg-gray-200  border-2 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium flex items-center gap-2"
+              className="px-3 py-1 hover:bg-gray-200  border-2 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium flex items-center gap-2"
               title="More actions"
             >
               <MdMoreVert className="text-lg" />
