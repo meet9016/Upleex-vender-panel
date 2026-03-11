@@ -70,20 +70,10 @@ const QuoteEditPage = () => {
         let totalPrice = '0';
         let unitPrice = '0';
         let monthName = '-';
-        
-        console.log('Processing edit quote:', {
-          quoteId: quote._id,
-          months_id: quote.months_id,
-          calculated_price: quote.calculated_price,
-          product_month_arr: productDetails.month_arr,
-          product_price: productDetails.price,
-          qty: quote.qty,
-          number_of_days: quote.number_of_days
-        });
-        
+      
         // Get month name from product's month_arr if months_id exists
         if (quote.months_id && productDetails.month_arr && Array.isArray(productDetails.month_arr)) {
-          const month = productDetails.month_arr.find(m => 
+          const month = productDetails.month_arr.find((m:any) => 
             m.months_id === quote.months_id || m.product_months_id === quote.months_id
           );
           if (month) {
@@ -99,7 +89,7 @@ const QuoteEditPage = () => {
           const days = parseInt(quote.number_of_days || '1');
           if (quote.months_id && productDetails.month_arr && Array.isArray(productDetails.month_arr)) {
             // Monthly product - unit price is per month
-            const month = productDetails.month_arr.find(m => 
+            const month = productDetails.month_arr.find((m:any) => 
               m.months_id === quote.months_id || m.product_months_id === quote.months_id
             );
             unitPrice = month?.price || '0';
@@ -110,7 +100,7 @@ const QuoteEditPage = () => {
           console.log('Using calculated price:', { totalPrice, unitPrice });
         } else if (quote.months_id && productDetails.month_arr && Array.isArray(productDetails.month_arr)) {
           // Monthly product - calculate from month_arr
-          const month = productDetails.month_arr.find(m => 
+          const month = productDetails.month_arr.find((m:any) => 
             m.months_id === quote.months_id || m.product_months_id === quote.months_id
           );
           if (month) {

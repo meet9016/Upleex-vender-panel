@@ -94,7 +94,7 @@ const QuoteTable = () => {
       // Get month name from product's month_arr if months_id exists
       let monthName = '-';
       if (quote.months_id && product.month_arr && Array.isArray(product.month_arr)) {
-        const month = product.month_arr.find(m => 
+        const month = product.month_arr.find((m:any) => 
           m.months_id === quote.months_id || m.product_months_id === quote.months_id
         );
         if (month) {
@@ -124,7 +124,7 @@ const QuoteTable = () => {
         const days = parseInt(quote.number_of_days || '1');
         if (quote.months_id && product.month_arr && Array.isArray(product.month_arr)) {
           // Monthly product - unit price is per month
-          const month = product.month_arr.find(m => 
+          const month = product.month_arr.find((m:any) => 
             m.months_id === quote.months_id || m.product_months_id === quote.months_id
           );
           unitPrice = month?.price || '0';
@@ -135,7 +135,7 @@ const QuoteTable = () => {
         console.log('Using calculated price:', { totalPrice, unitPrice });
       } else if (quote.months_id && product.month_arr && Array.isArray(product.month_arr)) {
         // Monthly product - calculate from month_arr
-        const month = product.month_arr.find(m => 
+        const month = product.month_arr.find((m:any)=> 
           m.months_id === quote.months_id || m.product_months_id === quote.months_id
         );
         if (month) {
