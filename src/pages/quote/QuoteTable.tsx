@@ -84,7 +84,6 @@ const QuoteTable = () => {
   const transformQuoteData = (quotes: any[]): Quote[] => {
     return quotes.map(quote => {
       const product = quote.product_id || {};
-      const month = months.find(m => m.id === quote.months_id);
       const fmt = (d?: any) => {
         if (!d) return '-';
         const dt = new Date(d);
@@ -92,18 +91,77 @@ const QuoteTable = () => {
         return dt.toLocaleDateString();
       };
 
+      // Get month name from product's month_arr if months_id exists
+      let monthName = '-';
+      if (quote.months_id && product.month_arr && Array.isArray(product.month_arr)) {
+        const month = product.month_arr.find((m:any) => 
+          m.months_id === quote.months_id || m.product_months_id === quote.months_id
+        );
+        if (month) {
+          monthName = month.month_name;
+        }
+      }
+
+      // Calculate price based on quote data
+      let totalPrice = '0';
+      let unitPrice = '0';
+      
+      console.log('Processing quote:', {
+        quoteId: quote._id,
+        months_id: quote.months_id,
+        calculated_price: quote.calculated_price,
+        product_month_arr: product.month_arr,
+        product_price: product.price,
+        qty: quote.qty,
+        number_of_days: quote.number_of_days
+      });
+      
+      if (quote.calculated_price) {
+        // Use calculated price from backend if available
+        totalPrice = quote.calculated_price.toString();
+        // Calculate unit price from total
+        const qty = parseInt(quote.qty || '1');
+        const days = parseInt(quote.number_of_days || '1');
+        if (quote.months_id && product.month_arr && Array.isArray(product.month_arr)) {
+          // Monthly product - unit price is per month
+          const month = product.month_arr.find((m:any) => 
+            m.months_id === quote.months_id || m.product_months_id === quote.months_id
+          );
+          unitPrice = month?.price || '0';
+        } else {
+          // Daily/Hourly product - calculate unit price
+          unitPrice = days > 0 ? (parseFloat(totalPrice) / (qty * days)).toString() : '0';
+        }
+        console.log('Using calculated price:', { totalPrice, unitPrice });
+      } else if (quote.months_id && product.month_arr && Array.isArray(product.month_arr)) {
+        // Monthly product - calculate from month_arr
+        const month = product.month_arr.find((m:any)=> 
+          m.months_id === quote.months_id || m.product_months_id === quote.months_id
+        );
+        if (month) {
+          unitPrice = month.price || '0';
+          totalPrice = (parseFloat(month.price || '0') * parseInt(quote.qty || '1')).toString();
+          console.log('Monthly calculation:', { month, unitPrice, totalPrice });
+        }
+      } else {
+        // Daily/Hourly product - calculate from base price
+        unitPrice = product.price || '0';
+        const days = parseInt(quote.number_of_days || '1');
+        const qty = parseInt(quote.qty || '1');
+        totalPrice = (parseFloat(unitPrice) * days * qty).toString();
+        console.log('Daily/Hourly calculation:', { unitPrice, days, qty, totalPrice });
+      }
+
       return {
         ...quote,
         // Flatten product fields for easy access in table
         product_name: product.product_name || '-',
         product_type_name: product.product_type_name || '-',
         product_listing_type_name: product.product_listing_type_name || '-',
-        price: product.price || '0',
+        price: unitPrice,
         product_main_image: product.product_main_image || '',
-        total_price: quote.qty && product.price
-          ? (parseInt(quote.qty) * parseFloat(product.price)).toString()
-          : '0',
-        month_name: month?.month_name || '-',
+        total_price: totalPrice,
+        month_name: monthName,
         delivery_date: fmt(quote.delivery_date),
         start_date: fmt(quote.start_date),
         end_date: fmt(quote.end_date),
@@ -196,18 +254,24 @@ const QuoteTable = () => {
     },
     {
       field: "price",
-      headerName: "Price",
+      headerName: "Unit Price",
       width: 120,
-      valueFormatter: (params) =>
-        params.value ? `₹${Number(params.value).toFixed(2)}` : "₹0.00",
+      valueFormatter: (params) => {
+        const value = params.value;
+        if (!value || value === '0') return "₹0.00";
+        return `₹${Number(value).toFixed(2)}`;
+      },
       cellStyle: { textAlign: "center" },
     },
     {
       field: "total_price",
-      headerName: "Total",
-      width: 120,
-      valueFormatter: (params) =>
-        params.value ? `₹${Number(params.value).toFixed(2)}` : "₹0.00",
+      headerName: "Total Price",
+      width: 140,
+      valueFormatter: (params) => {
+        const value = params.value;
+        if (!value || value === '0') return "₹0.00";
+        return `₹${Number(value).toFixed(2)}`;
+      },
       cellStyle: { textAlign: "center", fontWeight: "600" },
     },
     {

@@ -61,13 +61,66 @@ const QuoteEditPage = () => {
           category_name: productDetails.category_name || '',
           sub_category_name: productDetails.sub_category_name || '',
           description: productDetails.description || '',
-          total_price: quote.qty && productDetails.price 
-            ? (parseInt(quote.qty) * parseFloat(productDetails.price)).toString() 
-            : '0',
           delivery_date: quote.delivery_date 
             ? new Date(quote.delivery_date).toLocaleDateString() 
             : 'N/A',
         };
+        
+        // Calculate prices using same logic as QuoteTable
+        let totalPrice = '0';
+        let unitPrice = '0';
+        let monthName = '-';
+      
+        // Get month name from product's month_arr if months_id exists
+        if (quote.months_id && productDetails.month_arr && Array.isArray(productDetails.month_arr)) {
+          const month = productDetails.month_arr.find((m:any) => 
+            m.months_id === quote.months_id || m.product_months_id === quote.months_id
+          );
+          if (month) {
+            monthName = month.month_name;
+          }
+        }
+        
+        if (quote.calculated_price) {
+          // Use calculated price from backend if available
+          totalPrice = quote.calculated_price.toString();
+          // Calculate unit price from total
+          const qty = parseInt(quote.qty || '1');
+          const days = parseInt(quote.number_of_days || '1');
+          if (quote.months_id && productDetails.month_arr && Array.isArray(productDetails.month_arr)) {
+            // Monthly product - unit price is per month
+            const month = productDetails.month_arr.find((m:any) => 
+              m.months_id === quote.months_id || m.product_months_id === quote.months_id
+            );
+            unitPrice = month?.price || '0';
+          } else {
+            // Daily/Hourly product - calculate unit price
+            unitPrice = days > 0 ? (parseFloat(totalPrice) / (qty * days)).toString() : '0';
+          }
+          console.log('Using calculated price:', { totalPrice, unitPrice });
+        } else if (quote.months_id && productDetails.month_arr && Array.isArray(productDetails.month_arr)) {
+          // Monthly product - calculate from month_arr
+          const month = productDetails.month_arr.find((m:any) => 
+            m.months_id === quote.months_id || m.product_months_id === quote.months_id
+          );
+          if (month) {
+            unitPrice = month.price || '0';
+            totalPrice = (parseFloat(month.price || '0') * parseInt(quote.qty || '1')).toString();
+            console.log('Monthly calculation:', { month, unitPrice, totalPrice });
+          }
+        } else {
+          // Daily/Hourly product - calculate from base price
+          unitPrice = productDetails.price || '0';
+          const days = parseInt(quote.number_of_days || '1');
+          const qty = parseInt(quote.qty || '1');
+          totalPrice = (parseFloat(unitPrice) * days * qty).toString();
+          console.log('Daily/Hourly calculation:', { unitPrice, days, qty, totalPrice });
+        }
+        
+        // Add calculated fields to transformed quote
+        transformedQuote.price = unitPrice;
+        transformedQuote.total_price = totalPrice;
+        transformedQuote.month_name = monthName;
         
         console.log("🚀 ~ Transformed Quote:", transformedQuote);
         setQuoteData(transformedQuote);
