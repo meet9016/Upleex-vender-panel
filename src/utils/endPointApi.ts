@@ -33,6 +33,12 @@ export interface EndPointApi {
     updateQuote: string;
     getStatus: string;
     changeStatus: string;
+    
+    // Export endpoints
+    exportProductsExcel: string;
+    exportProductsPDF: string;
+    exportQuotesExcel: string;
+    exportQuotesPDF: string;
     }
 
 // Define and export the API endpoint object
@@ -73,7 +79,13 @@ const endPointApi: EndPointApi = {
     getQuoteById: 'quote/getById',
     updateQuote: 'quote/update',
     changeStatus: 'quote/change-status',
-    getStatus: 'quote/status-dropdown'
+    getStatus: 'quote/status-dropdown',
+    
+    // Export endpoints
+    exportProductsExcel: 'export/products/excel',
+    exportProductsPDF: 'export/products/pdf',
+    exportQuotesExcel: 'export/quotes/excel',
+    exportQuotesPDF: 'export/quotes/pdf'
 };
 
 export default endPointApi;

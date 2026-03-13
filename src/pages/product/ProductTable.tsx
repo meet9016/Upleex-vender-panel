@@ -14,6 +14,8 @@ import SearchableDropdown from '@/components/common/SearchableDropdown';
 import Label from '@/components/form/Label';
 import { HiOutlineDocumentText } from "react-icons/hi";
 import { Modal } from '@/components/ui/modal';
+import { exportProductsToExcel, exportProductsToPDF } from '@/utils/exportUtils';
+import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -72,6 +74,7 @@ const ProductTable = () => {
   const [expiringProducts, setExpiringProducts] = useState<any[]>([]);
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const [snoozeToday, setSnoozeToday] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   
   // Filter dropdown data
   const [categoriesData, setCategoriesData] = useState<Category[]>([]);
@@ -583,6 +586,57 @@ cellRenderer: (params: any) => {
     setShowActionsMenu(false);
   };
 
+  // Export functions
+  const handleExportExcel = async () => {
+    try {
+      setExportLoading(true);
+      const params: any = {};
+      
+      // Add current filters to export
+      if (debouncedSearch && debouncedSearch.trim() !== '') {
+        params.search = debouncedSearch.trim();
+      }
+      if (filters.category_id) params.category_id = filters.category_id;
+      if (filters.sub_category_id) params.sub_category_id = filters.sub_category_id;
+      if (filters.filter_rent_sell) params.filter_rent_sell = filters.filter_rent_sell;
+      if (filters.filter_tenure) params.filter_tenure = filters.filter_tenure;
+      if (filters.status) params.status = filters.status;
+      
+      await exportProductsToExcel(params);
+      toast.success('Products exported to Excel successfully!');
+      setShowActionsMenu(false);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to export products to Excel');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      setExportLoading(true);
+      const params: any = {};
+      
+      // Add current filters to export
+      if (debouncedSearch && debouncedSearch.trim() !== '') {
+        params.search = debouncedSearch.trim();
+      }
+      if (filters.category_id) params.category_id = filters.category_id;
+      if (filters.sub_category_id) params.sub_category_id = filters.sub_category_id;
+      if (filters.filter_rent_sell) params.filter_rent_sell = filters.filter_rent_sell;
+      if (filters.filter_tenure) params.filter_tenure = filters.filter_tenure;
+      if (filters.status) params.status = filters.status;
+      
+      await exportProductsToPDF(params);
+      toast.success('Products exported to PDF successfully!');
+      setShowActionsMenu(false);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to export products to PDF');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   
   return (
     <div>
@@ -789,6 +843,40 @@ cellRenderer: (params: any) => {
    {showActionsMenu && (
   <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg z-50 overflow-hidden">
 
+    {/* Export Section */}
+    <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Export</span>
+    </div>
+    
+    {/* Export to Excel */}
+    <button
+      onClick={handleExportExcel}
+      disabled={exportLoading}
+      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 transition disabled:opacity-50"
+    >
+      <FaFileExcel className="text-green-600 text-base" />
+      <span>Export to Excel</span>
+      {exportLoading && <div className="ml-auto w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />}
+    </button>
+
+    {/* Export to PDF */}
+    <button
+      onClick={handleExportPDF}
+      disabled={exportLoading}
+      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-50"
+    >
+      <FaFilePdf className="text-red-600 text-base" />
+      <span>Export to PDF</span>
+      {exportLoading && <div className="ml-auto w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
+    </button>
+
+    <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
+
+    {/* Bulk Actions Section */}
+    <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Bulk Actions</span>
+    </div>
+
     {/* Deactivate */}
     <button
       onClick={() => openBulkAction("deactivate")}
@@ -816,28 +904,6 @@ cellRenderer: (params: any) => {
         {selectedRows.length}
       </span>
     </button>
-
-    {/* <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" /> */}
-
-    {/* Apply Plan */}
-    {/* <button
-      onClick={() => {
-        if (!selectedRows.length) {
-          toast.info("Select products to apply plan");
-          return;
-        }
-        setShowActionsMenu(false);
-        setShowPlanDialog(true);
-      }}
-      className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
-    >
-      <div className="flex items-center gap-2">
-        <span>Apply Plan</span>
-      </div>
-      <span className="text-xs opacity-70">
-        {selectedRows.length}
-      </span>
-    </button> */}
 
     <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
 
