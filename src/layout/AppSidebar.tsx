@@ -20,6 +20,7 @@ const navItems: NavItem[] = [
   { icon: <CalenderIcon />, name: "KYC", path: "/kyc" },
   { icon: <CalenderIcon />, name: "Product", path: "/product" },
   { icon: <BsChatSquareQuote className="w-5 h-5" />, name: "Quote", path: "/quote" },
+  { icon: <CalenderIcon />, name: "Purchased", path: "/purchasedproduct" },
   { icon: <CalenderIcon />, name: "Drafts", path: "/draft" },
 ];
 
