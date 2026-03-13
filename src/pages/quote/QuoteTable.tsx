@@ -11,6 +11,9 @@ import DatePicker from "@/components/common/DatePicker";
 import { CiFilter } from "react-icons/ci";
 import { toast } from "react-toastify";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
+import { exportQuotesToExcel, exportQuotesToPDF } from '@/utils/exportUtils';
+import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
+import { MdMoreVert } from 'react-icons/md';
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -67,6 +70,9 @@ const QuoteTable = () => {
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const debouncedSearch = useDebounce(searchText, 600);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const actionsMenuRef = useRef<HTMLDivElement>(null);
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -553,6 +559,59 @@ const applyFilters = () => {
     setShowFilterModal(false);
   };
 
+  // Export functions
+  const handleExportExcel = async () => {
+    try {
+      setExportLoading(true);
+      const params: any = {};
+      
+      // Add current filters to export
+      if (debouncedSearch && debouncedSearch.trim() !== '') {
+        params.search = debouncedSearch.trim();
+      }
+      if (filters.status) params.status = filters.status;
+      if (filters.product_type) params.product_type = filters.product_type;
+      if (filters.listing_type) params.listing_type = filters.listing_type;
+      if (filters.month) params.month = filters.month;
+      if (filters.delivery_start_date) params.delivery_start_date = filters.delivery_start_date;
+      if (filters.delivery_end_date) params.delivery_end_date = filters.delivery_end_date;
+      
+      await exportQuotesToExcel(params);
+      toast.success('Quotes exported to Excel successfully!');
+      setShowActionsMenu(false);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to export quotes to Excel');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      setExportLoading(true);
+      const params: any = {};
+      
+      // Add current filters to export
+      if (debouncedSearch && debouncedSearch.trim() !== '') {
+        params.search = debouncedSearch.trim();
+      }
+      if (filters.status) params.status = filters.status;
+      if (filters.product_type) params.product_type = filters.product_type;
+      if (filters.listing_type) params.listing_type = filters.listing_type;
+      if (filters.month) params.month = filters.month;
+      if (filters.delivery_start_date) params.delivery_start_date = filters.delivery_start_date;
+      if (filters.delivery_end_date) params.delivery_end_date = filters.delivery_end_date;
+      
+      await exportQuotesToPDF(params);
+      toast.success('Quotes exported to PDF successfully!');
+      setShowActionsMenu(false);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to export quotes to PDF');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   useEffect(() => {
     const params: any = {};
     if (debouncedSearch) params.search = debouncedSearch;
@@ -565,6 +624,9 @@ const applyFilters = () => {
         filterButtonRef.current && !filterButtonRef.current.contains(event.target as Node)) {
         setOpenDropdown(null);
         setShowFilterModal(false);
+      }
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+        setShowActionsMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -698,6 +760,48 @@ const applyFilters = () => {
                     </button>
                   </div>
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Actions Menu */}
+          <div className="relative" ref={actionsMenuRef}>
+            <button
+              onClick={() => setShowActionsMenu((v) => !v)}
+              className="px-3 py-1 hover:bg-gray-200 border-2 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium flex items-center gap-2"
+              title="Export options"
+            >
+              <MdMoreVert className="text-lg" />
+            </button>
+
+            {showActionsMenu && (
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg z-50 overflow-hidden">
+                {/* Export Section */}
+                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Export</span>
+                </div>
+                
+                {/* Export to Excel */}
+                <button
+                  onClick={handleExportExcel}
+                  disabled={exportLoading}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 transition disabled:opacity-50"
+                >
+                  <FaFileExcel className="text-green-600 text-base" />
+                  <span>Export to Excel</span>
+                  {exportLoading && <div className="ml-auto w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />}
+                </button>
+
+                {/* Export to PDF */}
+                <button
+                  onClick={handleExportPDF}
+                  disabled={exportLoading}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-50"
+                >
+                  <FaFilePdf className="text-red-600 text-base" />
+                  <span>Export to PDF</span>
+                  {exportLoading && <div className="ml-auto w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
+                </button>
               </div>
             )}
           </div>
