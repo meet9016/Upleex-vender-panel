@@ -36,7 +36,7 @@ type Product = {
   product_listing_type_name: string;
   price: number;
   product_main_image?: string;  // ADD THIS
-  image?: string;         
+  image?: string;
 };
 
 type Category = {
@@ -82,19 +82,23 @@ const ProductTable = () => {
   const [subCategoryOptions, setSubCategoryOptions] = useState<Option[]>([]);
   const [productTypes, setProductTypes] = useState<any[]>([]);
   const [listingTypes, setListingTypes] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   // ADD THESE helper functions inside your component, before the columns definition
-const isValidImageUrl = (url: string | undefined | null): boolean => {
-  if (!url) return false;
-  return url.startsWith('http://') || 
-         url.startsWith('https://') || 
-         url.startsWith('data:image') ||
-         url.startsWith('/');
-};
+  const isValidImageUrl = (url: string | undefined | null): boolean => {
+    if (!url) return false;
+    return url.startsWith('http://') ||
+      url.startsWith('https://') ||
+      url.startsWith('data:image') ||
+      url.startsWith('/');
+  };
 
-const getImageUrl = (product: any): string => {
-  const imageUrl = product?.product_main_image || product?.image || '';
-  return isValidImageUrl(imageUrl) ? imageUrl : DEFAULT_PLACEHOLDER;
-};
+  const getImageUrl = (product: any): string => {
+    const imageUrl = product?.product_main_image || product?.image || '';
+    return isValidImageUrl(imageUrl) ? imageUrl : DEFAULT_PLACEHOLDER;
+  };
   // Filter state - matching backend parameters
   const [filters, setFilters] = useState({
     category_id: '',
@@ -109,98 +113,93 @@ const getImageUrl = (product: any): string => {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
 
   const debouncedSearch = useDebounce(searchText, 600);
-  
+
   // Count active filters (excluding empty strings)
   const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
 
   const columns: ColDef[] = [
-      {
+    {
       headerName: "Product Name",
       field: "product_name",
       width: 240,
       sortable: true,
-     // REPLACE your existing cellRenderer with this fixed version
-cellRenderer: (params: any) => {
-  const product = params.data;
-  const imageUrl = getImageUrl(product);  // Use the helper function
-  const productName = product?.product_name || "N/A";
-  const categoryName = product?.category_name || '';
+      // REPLACE your existing cellRenderer with this fixed version
+      cellRenderer: (params: any) => {
+        const product = params.data;
+        const imageUrl = getImageUrl(product);  // Use the helper function
+        const productName = product?.product_name || "N/A";
+        const categoryName = product?.category_name || '';
 
-  return (
-    <div className="flex items-center gap-3 h-full">
-      <div className="flex-shrink-0">
-        <img
-          src={imageUrl}
-          alt={productName}
-          className="w-14 h-14 object-cover rounded-lg border"
-          onError={(e: any) => {
-            // Only change to placeholder if current src is not already placeholder
-            if (e.target.src !== DEFAULT_PLACEHOLDER) {
-              e.target.src = DEFAULT_PLACEHOLDER;
-            }
-          }}
-          loading="lazy"  // Add for performance
-        />
-      </div>
-      <div className="flex flex-col">
-        <span className="font-medium text-gray-800 dark:text-white">
-          {productName}
-        </span>
-        {categoryName && (
-          <span className="text-xs text-gray-500">
-            {categoryName}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-},
+        return (
+          <div className="flex items-center gap-3 h-full">
+            <div className="flex-shrink-0">
+              <img
+                src={imageUrl}
+                alt={productName}
+                className="w-14 h-14 object-cover rounded-lg border"
+                onError={(e: any) => {
+                  // Only change to placeholder if current src is not already placeholder
+                  if (e.target.src !== DEFAULT_PLACEHOLDER) {
+                    e.target.src = DEFAULT_PLACEHOLDER;
+                  }
+                }}
+                loading="lazy"  // Add for performance
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-medium text-gray-800 dark:text-white">
+                {productName}
+              </span>
+            </div>
+          </div>
+        );
+      },
     },
-    { 
-      field: "category_name", 
-      headerName: "Category", 
-      minWidth: 180, 
-      cellStyle: { textAlign: "center" } 
+    {
+      field: "category_name",
+      headerName: "Category",
+      minWidth: 180,
+      cellStyle: { textAlign: "center" }
     },
-    { 
-      field: "sub_category_name", 
-      headerName: "Sub Category", 
-      minWidth: 180, 
-      cellStyle: { textAlign: "center" } 
+    {
+      field: "sub_category_name",
+      headerName: "Sub Category",
+      minWidth: 180,
+      cellStyle: { textAlign: "center" }
     },
-    { 
-      field: "product_type_name", 
-      headerName: "Type", 
-      minWidth: 120, 
-      cellStyle: { textAlign: "center" } 
+    {
+      field: "product_type_name",
+      headerName: "Type",
+      minWidth: 120,
+      cellStyle: { textAlign: "center" }
     },
-    { 
-      field: "price", 
-      headerName: "Price", 
+    {
+      field: "price",
+      headerName: "Price",
       minWidth: 120,
       valueFormatter: (params) => {
         return params.value ? `₹${Number(params.value).toFixed(2)}` : '₹0.00';
       },
-      cellStyle: { textAlign: "center" } 
+      cellStyle: { textAlign: "center" }
     },
-    { 
-      field: "cancel_price", 
-      headerName: "Cancel Price", 
+    {
+      field: "cancel_price",
+      headerName: "Cancel Price",
       minWidth: 120,
       valueFormatter: (params) => {
         return params.value ? `₹${Number(params.value).toFixed(2)}` : '₹0.00';
       },
-      cellStyle: { textAlign: "center" } 
+      cellStyle: { textAlign: "center" }
     },
-    { 
-      field: "product_listing_type_name", 
-      headerName: "Listing Type", 
-      minWidth: 150, 
-      cellStyle: { textAlign: "center" } 
+    {
+      field: "product_listing_type_name",
+      headerName: "Listing Type",
+      minWidth: 150,
+      cellStyle: { textAlign: "center" }
     },
-    { 
-      field: "status", 
-      headerName: "Status", 
+    {
+      field: "status",
+      headerName: "Status",
       minWidth: 120,
       cellRenderer: (params: any) => {
         const s = String(params.value || '').toLowerCase();
@@ -212,14 +211,14 @@ cellRenderer: (params: any) => {
           </span>
         );
       },
-      cellStyle: { justifyContent: "center" } 
+      cellStyle: { justifyContent: "center" }
     },
-    { 
-      field: "expires_at", 
-      headerName: "Expires On", 
-      minWidth: 140, 
-      valueFormatter: (p) => p.value ? new Date(p.value).toLocaleDateString() : '-', 
-      cellStyle: { textAlign: "center" } 
+    {
+      field: "expires_at",
+      headerName: "Expires On",
+      minWidth: 140,
+      valueFormatter: (p) => p.value ? new Date(p.value).toLocaleDateString() : '-',
+      cellStyle: { textAlign: "center" }
     },
     {
       headerName: "Action",
@@ -252,30 +251,34 @@ cellRenderer: (params: any) => {
   // Fetch products with filters
   const getProductData = async (filterParams = {}) => {
     try {
+      setLoading(true);
       const params = new URLSearchParams();
-      
+
       // Add all non-empty filter parameters
       Object.entries(filterParams).forEach(([key, value]) => {
-        if (value && value !== '') {
+        if (value !== undefined && value !== '') {
           params.append(key, String(value));
         }
       });
+      params.append('page', String(page));
+      params.append('limit', String(pageSize));
 
       const queryString = params.toString();
-      const url = queryString 
-        ? `${endPointApi.postAllVendorProductList}?${queryString}` 
+      const url = queryString
+        ? `${endPointApi.postAllVendorProductList}?${queryString}`
         : endPointApi.postAllVendorProductList;
-      
-      console.log("Fetching products with URL:", url);
-      
+
       const res = await api.get(url);
       const products = res?.data?.data || [];
-      
+      setTotal(res?.data?.total || 0);
+      setTotalPages(res?.data?.totalPages || 1);
+      setPage(res?.data?.page || page);
+
       // Normalize product data
       const normalized = products.map((p: any) => {
         let price = p.price;
         let cancel_price = p.cancel_price;
-        
+
         // Handle rent products with monthly pricing
         if (
           p.product_type_name?.toLowerCase() === 'rent' &&
@@ -287,15 +290,15 @@ cellRenderer: (params: any) => {
           price = first?.price ?? price;
           cancel_price = first?.cancel_price ?? cancel_price;
         }
-        
-        return { 
-          ...p, 
-          price, 
-          cancel_price, 
-          id: p._id || p.id 
+
+        return {
+          ...p,
+          price,
+          cancel_price,
+          id: p._id || p.id
         };
       });
-      
+
       setProductData(normalized);
       // Compute expiring within 3 days (active only)
       try {
@@ -314,10 +317,12 @@ cellRenderer: (params: any) => {
           setExpiringProducts(nearExpiry);
           setExpiryModalOpen(true);
         }
-      } catch {}
+      } catch { }
     } catch (error) {
       console.log("fetch error", error);
       toast.error("Failed to fetch products");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -340,7 +345,7 @@ cellRenderer: (params: any) => {
           setExpiringProducts(nearExpiry);
           setExpiryModalOpen(true);
         }
-      } catch {}
+      } catch { }
     }, 60000);
     return () => clearInterval(interval);
   }, [productData]);
@@ -352,7 +357,7 @@ cellRenderer: (params: any) => {
       if (res?.data?.data) {
         const list = res.data.data || [];
         setCategoriesData(list);
-        
+
         // Create options for SearchableDropdown without images
         const options = list.map((item: any) => ({
           label: item.categories_name || item.name,
@@ -370,14 +375,14 @@ cellRenderer: (params: any) => {
     try {
       const productDropdownRes = await api.post(endPointApi.postProductDropDownList);
       const dropdownData = productDropdownRes?.data?.data || productDropdownRes?.data;
-      
+
       // Set product types
       if (dropdownData?.products_type) {
         setProductTypes(dropdownData.products_type);
       } else if (dropdownData?.product_type) {
         setProductTypes(dropdownData.product_type);
       }
-      
+
       // Set listing types
       if (dropdownData?.products_listing_type) {
         setListingTypes(dropdownData.products_listing_type);
@@ -399,17 +404,17 @@ cellRenderer: (params: any) => {
       return;
     }
 
-    const cat = categoriesData.find((c: any) => 
+    const cat = categoriesData.find((c: any) =>
       String(c.categories_id || c.id || c._id) === String(selectedCategory)
     );
-    
+
     const subcats = (cat?.subcategories || []).map((item: any) => ({
       value: String(item.subcategory_id || item.id),
       label: item.subcategory_name || item.name,
     }));
 
     setSubCategoryOptions(subcats);
-    
+
     // Reset subcategory filter when category changes
     setSelectedSubCategory('');
     setFilters(prev => ({ ...prev, sub_category_id: '' }));
@@ -444,47 +449,32 @@ cellRenderer: (params: any) => {
     setSearchText(e.target.value);
   };
 
-  // Apply filters when search debounce or filters change
+  // Reset to page 1 when filters or search change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filters]);
+
+  // Apply filters when search/filters/page/pageSize change
   useEffect(() => {
     const params: any = {};
-    
-    // Add search parameter if exists
+
     if (debouncedSearch && debouncedSearch.trim() !== '') {
       params.search = debouncedSearch.trim();
     }
-    
-    // Add category filter
-    if (filters.category_id) {
-      params.category_id = filters.category_id;
-    }
-    
-    // Add subcategory filter
-    if (filters.sub_category_id) {
-      params.sub_category_id = filters.sub_category_id;
-    }
-    
-    // Add rent/sell filter (1 for Rent, 2 for Sell)
-    if (filters.filter_rent_sell) {
-      params.filter_rent_sell = filters.filter_rent_sell;
-    }
-    
-    // Add tenure filter (listing type id)
-    if (filters.filter_tenure) {
-      params.filter_tenure = filters.filter_tenure;
-    }
-    if (filters.status) {
-      params.status = filters.status;
-    }
-    
-    console.log("Applying filters:", params);
+    if (filters.category_id) params.category_id = filters.category_id;
+    if (filters.sub_category_id) params.sub_category_id = filters.sub_category_id;
+    if (filters.filter_rent_sell) params.filter_rent_sell = filters.filter_rent_sell;
+    if (filters.filter_tenure) params.filter_tenure = filters.filter_tenure;
+    if (filters.status) params.status = filters.status;
+
     getProductData(params);
-  }, [debouncedSearch, filters]);
+  }, [debouncedSearch, filters, page, pageSize]);
 
   // Handle click outside to close modal
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (filterModalRef.current && !filterModalRef.current.contains(event.target as Node) &&
-          filterButtonRef.current && !filterButtonRef.current.contains(event.target as Node)) {
+        filterButtonRef.current && !filterButtonRef.current.contains(event.target as Node)) {
         setShowFilterModal(false);
       }
       if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
@@ -532,11 +522,11 @@ cellRenderer: (params: any) => {
   const clearFilters = () => {
     setSelectedCategory('');
     setSelectedSubCategory('');
-    setFilters({ 
-      category_id: '', 
-      sub_category_id: '', 
-      filter_rent_sell: '', 
-      filter_tenure: '', 
+    setFilters({
+      category_id: '',
+      sub_category_id: '',
+      filter_rent_sell: '',
+      filter_tenure: '',
       status: ''
     });
     setSubCategoryOptions([]);
@@ -712,15 +702,15 @@ cellRenderer: (params: any) => {
 
             {/* Filter Modal */}
             {showFilterModal && (
-              <div 
-                ref={filterModalRef} 
+              <div
+                ref={filterModalRef}
                 className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl w-96 z-50 border border-gray-200 dark:border-gray-700"
               >
                 <div className="p-5">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="font-semibold text-gray-900 dark:text-white">Filter Products</h3>
-                    <button 
-                      onClick={() => setShowFilterModal(false)} 
+                    <button
+                      onClick={() => setShowFilterModal(false)}
                       className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                     >
                       <MdClose size={18} className="text-gray-500" />
@@ -736,7 +726,7 @@ cellRenderer: (params: any) => {
                         options={categoryOptions}
                         value={selectedCategory}
                         placeholder="Select category"
-                        onChange={handleCategoryChange}                     
+                        onChange={handleCategoryChange}
                       />
                     </div>
 
@@ -788,21 +778,21 @@ cellRenderer: (params: any) => {
                         onChange={(value) => setFilters(prev => ({ ...prev, filter_tenure: value }))}
                       />
                     </div>
-                  <div>
-                     <Label className="font-semibold mb-2">Status</Label>
-                     <SearchableDropdown
-                       searchable
-                       options={[
-                        //  { label: 'All', value: '' },
-                         { label: 'Active', value: 'active' },
-                         { label: 'Draft', value: 'draft' },
-                         { label: 'Inactive', value: 'inactive' },
-                       ]}
-                       value={filters.status}
-                       placeholder="Status"
-                       onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
-                     />
-                  </div>
+                    <div>
+                      <Label className="font-semibold mb-2">Status</Label>
+                      <SearchableDropdown
+                        searchable
+                        options={[
+                          //  { label: 'All', value: '' },
+                          { label: 'Active', value: 'active' },
+                          { label: 'Draft', value: 'draft' },
+                          { label: 'Inactive', value: 'inactive' },
+                        ]}
+                        value={filters.status}
+                        placeholder="Status"
+                        onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+                      />
+                    </div>
                   </div>
 
                   {/* Action Buttons */}
@@ -907,20 +897,20 @@ cellRenderer: (params: any) => {
 
     <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
 
-    {/* View Drafts */}
-    <button
-      onClick={() => {
-        setShowActionsMenu(false);
-        router.push("/draft");
-      }}
-      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-    >
-      <HiOutlineDocumentText className="text-base" />
-      <span>View Drafts</span>
-    </button>
+                {/* View Drafts */}
+                <button
+                  onClick={() => {
+                    setShowActionsMenu(false);
+                    router.push("/draft");
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                >
+                  <HiOutlineDocumentText className="text-base" />
+                  <span>View Drafts</span>
+                </button>
 
-  </div>
-)}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -932,8 +922,8 @@ cellRenderer: (params: any) => {
         filter={false}
         tableName="Products"
         onSelectionChange={setSelectedRows}
+        loading={loading}
       />
-      
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
         open={openDeleteModal}
