@@ -65,20 +65,20 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
 
   // IMPORTANT: No flex property for Quotes table
   const defaultColDef = useMemo(
-  () => ({
-    sortable: true,
-    resizable: true,
-    cellStyle: { 
-      display: 'flex', 
-      alignItems: 'center', 
-      // justifyContent: 'center', // ADD THIS
-      paddingLeft: '16px' 
-    },
-    headerClass: "ag-left-aligned-header",
-    cellClass: "ag-cell-with-border",
-  }),
-  []
-);
+    () => ({
+      sortable: true,
+      resizable: true,
+      cellStyle: {
+        display: 'flex',
+        alignItems: 'center',
+        // justifyContent: 'center', // ADD THIS
+        paddingLeft: '16px'
+      },
+      headerClass: "ag-left-aligned-header",
+      cellClass: "ag-cell-with-border",
+    }),
+    []
+  );
 
   const defaultColumns: ColDef[] = useMemo(
     () => [
@@ -142,11 +142,11 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
     if (loading) {
       try {
         api.showLoadingOverlay();
-      } catch {}
+      } catch { }
     } else {
       try {
         api.hideOverlay();
-      } catch {}
+      } catch { }
     }
   }, [loading]);
 
@@ -165,7 +165,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
         )}
       </div>
 
-          <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'}`}
+      <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'}`}
         style={{ width: "100%", height: "80vh" }}>
         <AgGridReact
           rowHeight={60}
