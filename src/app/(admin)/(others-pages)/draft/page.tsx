@@ -74,7 +74,7 @@ export default function DraftPage() {
     { field: "product_type_name", headerName: "Type", width: 120, cellStyle: { textAlign: "center" } },
     { field: "price", headerName: "Price", width: 200, valueFormatter: p => p.value ? `₹${Number(p.value).toFixed(2)}` : "₹0.00", cellStyle: { textAlign: "center" } },
     { field: "product_listing_type_name", headerName: "Listing Type", width: 150, cellStyle: { textAlign: "center" } },
-    { field: "expires_at", headerName: "Expires On", width: 240, valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString() : "-", cellStyle: { textAlign: "center" } },
+    { field: "expires_at", headerName: "Expires On", width: 240, valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : "-", cellStyle: { textAlign: "center" } },
   ], []);
 
   const fetchCategories = async () => {

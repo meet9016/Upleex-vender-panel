@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import AgGridTable from '@/components/tables/AgGridTable';
 import { ColDef } from 'ag-grid-community';
 import { MdDelete, MdModeEdit, MdClose, MdSearch, MdMoreVert, MdBlock } from "react-icons/md";
+import ActionButtons from "@/components/common/ActionButtons";
+import StatusBadge from "@/components/common/StatusBadge";
 import { api } from '@/utils/axiosInstance';
 import endPointApi from '@/utils/endPointApi';
 import ConfirmDeleteModal from '@/components/common/ConfirmDeleteModal';
@@ -75,7 +77,7 @@ const ProductTable = () => {
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const [snoozeToday, setSnoozeToday] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
-  
+
   // Filter dropdown data
   const [categoriesData, setCategoriesData] = useState<Category[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
@@ -99,18 +101,28 @@ const ProductTable = () => {
     const imageUrl = product?.product_main_image || product?.image || '';
     return isValidImageUrl(imageUrl) ? imageUrl : DEFAULT_PLACEHOLDER;
   };
-  // Filter state - matching backend parameters
+  // Applied filters (used for actual API calls)
   const [filters, setFilters] = useState({
     category_id: '',
     sub_category_id: '',
-    filter_rent_sell: '', // 1 for Rent, 2 for Sell
-    filter_tenure: '', // listing type id for Daily/Monthly/Hourly
+    filter_rent_sell: '',
+    filter_tenure: '',
     status: '',
   });
-
-  // Selected values for dropdowns
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
+
+  // Pending filters (shown in modal, applied only on Apply click)
+  const [pendingFilters, setPendingFilters] = useState({
+    category_id: '',
+    sub_category_id: '',
+    filter_rent_sell: '',
+    filter_tenure: '',
+    status: '',
+  });
+  const [pendingCategory, setPendingCategory] = useState<string>('');
+  const [pendingSubCategory, setPendingSubCategory] = useState<string>('');
+  const [pendingSubCategoryOptions, setPendingSubCategoryOptions] = useState<Option[]>([]);
 
   const debouncedSearch = useDebounce(searchText, 600);
 
@@ -197,93 +209,46 @@ const ProductTable = () => {
       minWidth: 150,
       cellStyle: { textAlign: "center" }
     },
-     {
-    headerName: "Approval Status by Admin",
-    field: "approval_status",
-    minWidth: 140,
-    sortable: true,
-    cellRenderer: (params: any) => {
-      const status = String(params.value || '').toLowerCase();
-      
-      // Define styles based on approval status
-      let bgColor = 'bg-gray-100';
-      let textColor = 'text-gray-700';
-      let label = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending';
-      
-      switch(status) {
-        case 'approved':
-          bgColor = 'bg-green-100';
-          textColor = 'text-green-700';
-          break;
-        case 'pending':
-          bgColor = 'bg-yellow-100';
-          textColor = 'text-yellow-700';
-          break;
-        case 'rejected':
-          bgColor = 'bg-red-100';
-          textColor = 'text-red-700';
-          break;
-        default:
-          bgColor = 'bg-gray-100';
-          textColor = 'text-gray-700';
-      }
-      
-      return (
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${bgColor} ${textColor}`}>
-          {label}
-        </span>
-      );
+    {
+      headerName: "Approval Status by Admin",
+      field: "approval_status",
+      minWidth: 140,
+      sortable: true,
+      cellRenderer: (params: any) => (
+        <div className="flex items-center h-full">
+          <StatusBadge status={params.value || 'active'} />
+        </div>
+      ),
+      cellStyle: { justifyContent: "center" }
     },
-    cellStyle: { justifyContent: "center" }
-  },
     {
       field: "status",
       headerName: "Status",
       minWidth: 120,
-      cellRenderer: (params: any) => {
-        const s = String(params.value || '').toLowerCase();
-        const cls = s === 'active' ? 'bg-green-100 text-green-700' : s === 'draft' ? 'bg-gray-100 text-gray-700' : 'bg-yellow-100 text-yellow-700';
-        const label = s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Unknown';
-        return (
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${cls}`}>
-            {label}
-          </span>
-        );
-      },
+      cellRenderer: (params: any) => (
+        <div className="flex items-center h-full">
+          <StatusBadge status={params.value || 'active'} />
+        </div>
+      ),
       cellStyle: { justifyContent: "center" }
     },
     {
       field: "expires_at",
       headerName: "Expires On",
       minWidth: 140,
-      valueFormatter: (p) => p.value ? new Date(p.value).toLocaleDateString() : '-',
+      valueFormatter: (p) => p.value ? new Date(p.value).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-',
       cellStyle: { textAlign: "center" }
     },
     {
       headerName: "Action",
       minWidth: 120,
       cellStyle: { textAlign: "center" },
-      cellRenderer: (params: any) => {
-        const id = params.data._id || params.data.id;
-        return (
-          <div className="flex items-center justify-center gap-3 w-full h-full">
-            <button
-              onClick={() => router.push(`/product/addProduct?id=${id}`)}
-              className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-[#4A90E2] text-[#4A90E2] hover:bg-[#4A90E2] hover:text-white transition"
-              title="Edit"
-            >
-              <MdModeEdit className="text-base" />
-            </button>
-            <button
-              onClick={() => openDeletePopup(id)}
-              className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-[#E55353] text-[#E55353] hover:bg-[#E55353] hover:text-white transition"
-              title="Delete"
-            >
-              <MdDelete className="text-base" />
-            </button>
-          </div>
-        );
-      },
+      cellRenderer: (params: any) => (
+        <ActionButtons
+          onEdit={() => router.push(`/product/addProduct?id=${params.data._id || params.data.id}`)}
+          onDelete={() => openDeletePopup(params.data._id || params.data.id)}
+        />
+      ),
     },
   ];
 
@@ -434,42 +399,25 @@ const ProductTable = () => {
     }
   };
 
-  // Update subcategories when category changes
+  // Update pending subcategories when pending category changes
   useEffect(() => {
-    if (!selectedCategory) {
-      setSubCategoryOptions([]);
-      setSelectedSubCategory('');
-      setFilters(prev => ({ ...prev, sub_category_id: '' }));
+    if (!pendingCategory) {
+      setPendingSubCategoryOptions([]);
+      setPendingSubCategory('');
+      setPendingFilters(prev => ({ ...prev, category_id: '', sub_category_id: '' }));
       return;
     }
-
     const cat = categoriesData.find((c: any) =>
-      String(c.categories_id || c.id || c._id) === String(selectedCategory)
+      String(c.categories_id || c.id || c._id) === String(pendingCategory)
     );
-
     const subcats = (cat?.subcategories || []).map((item: any) => ({
       value: String(item.subcategory_id || item.id),
       label: item.subcategory_name || item.name,
     }));
-
-    setSubCategoryOptions(subcats);
-
-    // Reset subcategory filter when category changes
-    setSelectedSubCategory('');
-    setFilters(prev => ({ ...prev, sub_category_id: '' }));
-  }, [selectedCategory, categoriesData]);
-
-  // Handle category change
-  const handleCategoryChange = (value: string) => {
-    setSelectedCategory(value);
-    setFilters(prev => ({ ...prev, category_id: value }));
-  };
-
-  // Handle subcategory change
-  const handleSubCategoryChange = (value: string) => {
-    setSelectedSubCategory(value);
-    setFilters(prev => ({ ...prev, sub_category_id: value }));
-  };
+    setPendingSubCategoryOptions(subcats);
+    setPendingSubCategory('');
+    setPendingFilters(prev => ({ ...prev, category_id: pendingCategory, sub_category_id: '' }));
+  }, [pendingCategory, categoriesData]);
 
   // Handle product type change (Rent/Sell)
   const handleProductTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -620,7 +568,7 @@ const ProductTable = () => {
     try {
       setExportLoading(true);
       const params: any = {};
-      
+
       // Add current filters to export
       if (debouncedSearch && debouncedSearch.trim() !== '') {
         params.search = debouncedSearch.trim();
@@ -630,7 +578,7 @@ const ProductTable = () => {
       if (filters.filter_rent_sell) params.filter_rent_sell = filters.filter_rent_sell;
       if (filters.filter_tenure) params.filter_tenure = filters.filter_tenure;
       if (filters.status) params.status = filters.status;
-      
+
       await exportProductsToExcel(params);
       toast.success('Products exported to Excel successfully!');
       setShowActionsMenu(false);
@@ -645,7 +593,7 @@ const ProductTable = () => {
     try {
       setExportLoading(true);
       const params: any = {};
-      
+
       // Add current filters to export
       if (debouncedSearch && debouncedSearch.trim() !== '') {
         params.search = debouncedSearch.trim();
@@ -655,7 +603,7 @@ const ProductTable = () => {
       if (filters.filter_rent_sell) params.filter_rent_sell = filters.filter_rent_sell;
       if (filters.filter_tenure) params.filter_tenure = filters.filter_tenure;
       if (filters.status) params.status = filters.status;
-      
+
       await exportProductsToPDF(params);
       toast.success('Products exported to PDF successfully!');
       setShowActionsMenu(false);
@@ -666,7 +614,7 @@ const ProductTable = () => {
     }
   };
 
-  
+
   return (
     <div>
       <div className="flex justify-between items-center mb-2">
@@ -727,7 +675,14 @@ const ProductTable = () => {
           <div className="relative">
             <button
               ref={filterButtonRef}
-              onClick={() => setShowFilterModal(!showFilterModal)}
+              onClick={() => {
+                // Sync pending state with current applied filters when opening
+                setPendingFilters(filters);
+                setPendingCategory(selectedCategory);
+                setPendingSubCategory(selectedSubCategory);
+                setPendingSubCategoryOptions(subCategoryOptions);
+                setShowFilterModal(!showFilterModal);
+              }}
               className="px-4 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2 relative"
             >
               <CiFilter size={20} />
@@ -763,9 +718,9 @@ const ProductTable = () => {
                       <SearchableDropdown
                         searchable
                         options={categoryOptions}
-                        value={selectedCategory}
+                        value={pendingCategory}
                         placeholder="Select category"
-                        onChange={handleCategoryChange}
+                        onChange={(value) => setPendingCategory(value)}
                       />
                     </div>
 
@@ -776,16 +731,15 @@ const ProductTable = () => {
                       </Label>
                       <SearchableDropdown
                         searchable
-                        options={subCategoryOptions}
-                        value={selectedSubCategory}
-                        placeholder={selectedCategory ? "Search sub category..." : "Select category first"}
-                        // error={!selectedCategory}
-                        onChange={handleSubCategoryChange}
-                        disabled={!selectedCategory}
+                        options={pendingSubCategoryOptions}
+                        value={pendingSubCategory}
+                        placeholder={pendingCategory ? "Search sub category..." : "Select category first"}
+                        onChange={(value) => {
+                          setPendingSubCategory(value);
+                          setPendingFilters(prev => ({ ...prev, sub_category_id: value }));
+                        }}
+                        disabled={!pendingCategory}
                       />
-                      {/* {!selectedCategory && (
-                        <p className="text-gray-500 text-xs mt-1">Please select a category first</p>
-                      )} */}
                     </div>
 
                     {/* Product Type Filter (Rent/Sell) */}
@@ -797,9 +751,9 @@ const ProductTable = () => {
                           { label: 'Rent', value: '1' },
                           { label: 'Sell', value: '2' },
                         ]}
-                        value={filters.filter_rent_sell}
+                        value={pendingFilters.filter_rent_sell}
                         placeholder="All Types"
-                        onChange={(value) => setFilters(prev => ({ ...prev, filter_rent_sell: value }))}
+                        onChange={(value) => setPendingFilters(prev => ({ ...prev, filter_rent_sell: value }))}
                       />
                     </div>
 
@@ -812,9 +766,9 @@ const ProductTable = () => {
                           label: type.name,
                           value: String(type.id || type._id),
                         }))}
-                        value={filters.filter_tenure}
+                        value={pendingFilters.filter_tenure}
                         placeholder="All Listing Types"
-                        onChange={(value) => setFilters(prev => ({ ...prev, filter_tenure: value }))}
+                        onChange={(value) => setPendingFilters(prev => ({ ...prev, filter_tenure: value }))}
                       />
                     </div>
                     <div>
@@ -822,14 +776,13 @@ const ProductTable = () => {
                       <SearchableDropdown
                         searchable
                         options={[
-                          //  { label: 'All', value: '' },
                           { label: 'Active', value: 'active' },
                           { label: 'Draft', value: 'draft' },
                           { label: 'Inactive', value: 'inactive' },
                         ]}
-                        value={filters.status}
+                        value={pendingFilters.status}
                         placeholder="Status"
-                        onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+                        onChange={(value) => setPendingFilters(prev => ({ ...prev, status: value }))}
                       />
                     </div>
                   </div>
@@ -837,13 +790,30 @@ const ProductTable = () => {
                   {/* Action Buttons */}
                   <div className="flex gap-2 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
-                      onClick={clearFilters}
+                      onClick={() => {
+                        setPendingCategory('');
+                        setPendingSubCategory('');
+                        setPendingSubCategoryOptions([]);
+                        setPendingFilters({ category_id: '', sub_category_id: '', filter_rent_sell: '', filter_tenure: '', status: '' });
+                        setSelectedCategory('');
+                        setSelectedSubCategory('');
+                        setSubCategoryOptions([]);
+                        setFilters({ category_id: '', sub_category_id: '', filter_rent_sell: '', filter_tenure: '', status: '' });
+                        setSearchText('');
+                        setShowFilterModal(false);
+                      }}
                       className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                       Clear All
                     </button>
                     <button
-                      onClick={() => setShowFilterModal(false)}
+                      onClick={() => {
+                        setSelectedCategory(pendingCategory);
+                        setSelectedSubCategory(pendingSubCategory);
+                        setSubCategoryOptions(pendingSubCategoryOptions);
+                        setFilters(pendingFilters);
+                        setShowFilterModal(false);
+                      }}
                       className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
                     >
                       Apply
@@ -869,72 +839,45 @@ const ProductTable = () => {
             >
               <MdMoreVert className="text-lg" />
             </button>
-   {showActionsMenu && (
-  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg z-50 overflow-hidden">
+            {showActionsMenu && (
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg z-50 overflow-hidden">
 
-    {/* Export Section */}
-    <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Export</span>
-    </div>
-    
-    {/* Export to Excel */}
-    <button
-      onClick={handleExportExcel}
-      disabled={exportLoading}
-      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 transition disabled:opacity-50"
-    >
-      <FaFileExcel className="text-green-600 text-base" />
-      <span>Export to Excel</span>
-      {exportLoading && <div className="ml-auto w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />}
-    </button>
+                <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
 
-    {/* Export to PDF */}
-    <button
-      onClick={handleExportPDF}
-      disabled={exportLoading}
-      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-50"
-    >
-      <FaFilePdf className="text-red-600 text-base" />
-      <span>Export to PDF</span>
-      {exportLoading && <div className="ml-auto w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
-    </button>
+                {/* Bulk Actions Section */}
+                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Bulk Actions</span>
+                </div>
 
-    <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
+                {/* Deactivate */}
+                <button
+                  onClick={() => openBulkAction("deactivate")}
+                  className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                >
+                  <div className="flex items-center gap-2  text-yellow-600">
+                    <MdBlock className="text-base" />
+                    <span>Deactivate</span>
+                  </div>
+                  <span className="text-xs text-gray-400">
+                    {selectedRows.length}
+                  </span>
+                </button>
 
-    {/* Bulk Actions Section */}
-    <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Bulk Actions</span>
-    </div>
+                {/* Delete */}
+                <button
+                  onClick={() => openBulkAction("delete")}
+                  className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                >
+                  <div className="flex items-center gap-2">
+                    <MdDelete className="text-base" />
+                    <span>Delete</span>
+                  </div>
+                  <span className="text-xs opacity-70">
+                    {selectedRows.length}
+                  </span>
+                </button>
 
-    {/* Deactivate */}
-    <button
-      onClick={() => openBulkAction("deactivate")}
-      className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-    >
-      <div className="flex items-center gap-2  text-yellow-600">
-        <MdBlock className="text-base" />
-        <span>Deactivate</span>
-      </div>
-      <span className="text-xs text-gray-400">
-        {selectedRows.length}
-      </span>
-    </button>
-
-    {/* Delete */}
-    <button
-      onClick={() => openBulkAction("delete")}
-      className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
-    >
-      <div className="flex items-center gap-2">
-        <MdDelete className="text-base" />
-        <span>Delete</span>
-      </div>
-      <span className="text-xs opacity-70">
-        {selectedRows.length}
-      </span>
-    </button>
-
-    <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
+                <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
 
                 {/* View Drafts */}
                 <button
@@ -947,7 +890,31 @@ const ProductTable = () => {
                   <HiOutlineDocumentText className="text-base" />
                   <span>View Drafts</span>
                 </button>
+                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 ">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Export</span>
+                </div>
 
+                {/* Export to Excel */}
+                <button
+                  onClick={handleExportExcel}
+                  disabled={exportLoading}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 transition disabled:opacity-50"
+                >
+                  <FaFileExcel className="text-green-600 text-base" />
+                  <span>Export to Excel</span>
+                  {exportLoading && <div className="ml-auto w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />}
+                </button>
+
+                {/* Export to PDF */}
+                <button
+                  onClick={handleExportPDF}
+                  disabled={exportLoading}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-50"
+                >
+                  <FaFilePdf className="text-red-600 text-base" />
+                  <span>Export to PDF</span>
+                  {exportLoading && <div className="ml-auto w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
+                </button>
               </div>
             )}
           </div>
@@ -999,7 +966,7 @@ const ProductTable = () => {
             {expiringProducts.slice(0, 5).map((p: any) => (
               <li key={p._id || p.id} className="flex items-center justify-between">
                 <span className="text-sm font-medium">{p.product_name}</span>
-                <span className="text-xs text-gray-500">Expires: {p.expires_at ? new Date(p.expires_at).toLocaleDateString() : '-'}</span>
+                <span className="text-xs text-gray-500">Expires: {p.expires_at ? new Date(p.expires_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}</span>
               </li>
             ))}
           </ul>
