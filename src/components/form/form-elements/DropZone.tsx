@@ -12,23 +12,22 @@ interface DropzoneProps {
   preview: any;
   setPreview: any;
   onFileSelect?: (files: File[]) => void;
+  onFileRemove?: () => void;
   multiple?: boolean;
   smallPreview?: boolean;
   maxFiles?: number;
   isEditMode?: boolean; 
-
 }
 
 const DropzoneComponent: React.FC<DropzoneProps> = ({
   preview,
   setPreview,
   onFileSelect,
+  onFileRemove,
   multiple = false,
   smallPreview = false,
-  maxFiles, // Add this
+  maxFiles,
   isEditMode = false
-
-
 }) => {
 
 
@@ -82,7 +81,10 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
 
   const removeImage = async (productImageId: string) => {
     setPreview((prev: any) => prev.filter((img: any) => img.product_image_id !== productImageId));
-
+    // Notify parent to clear the file state
+    if (!multiple) {
+      onFileRemove?.();
+    }
     if (isEditMode && productImageId && !productImageId.startsWith('temp_')) {
       try {
         const formdata = new FormData();

@@ -4,7 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { FiCalendar, FiImage, FiVideo, FiArrowLeft, FiX, FiLoader } from "react-icons/fi";
-import { toast } from "react-toastify"; // Make sure to import toast
+import { toast } from "react-toastify";
+import SearchableDropdown from "@/components/common/SearchableDropdown"; 
 
 const QuoteEditPage = () => {
   const params = useParams();
@@ -25,7 +26,8 @@ const QuoteEditPage = () => {
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [returnImagePreview, setReturnImagePreview] = useState<string | null>(null);
   const [returnVideoPreview, setReturnVideoPreview] = useState<string | null>(null);
-const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
   const getStatuses = async () => {
     try {
       const res = await api.post(endPointApi.getStatus);
@@ -62,7 +64,7 @@ const [submitting, setSubmitting] = useState(false);
           sub_category_name: productDetails.sub_category_name || '',
           description: productDetails.description || '',
           delivery_date: quote.delivery_date
-            ? new Date(quote.delivery_date).toLocaleDateString()
+            ? new Date(quote.delivery_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
             : 'N/A',
         };
 
@@ -297,6 +299,12 @@ const [submitting, setSubmitting] = useState(false);
     );
   }
 
+  // Convert statuses to dropdown options
+  const statusOptions = statuses.map(status => ({
+    label: status.name,
+    value: toEnum(status.name),
+  }));
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
       <div className="max-w-8xl mx-auto">
@@ -394,18 +402,14 @@ const [submitting, setSubmitting] = useState(false);
             {/* Status */}
             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Status</p>
-              <select
+              <SearchableDropdown
+                options={statusOptions}
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white text-sm font-semibold"
-              >
-                <option value="">Select Status</option>
-                {statuses.map((status) => (
-                  <option key={status._id || status.id} value={toEnum(status.name)}>
-                    {status.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Select Status"
+                onChange={(value) => setFormData({ ...formData, status: value })}
+                searchable={true}
+                usePortal={true}
+              />
             </div>
           </div>
         </div>

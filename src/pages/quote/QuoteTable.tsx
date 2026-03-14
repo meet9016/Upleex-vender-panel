@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import AgGridTable from "@/components/tables/AgGridTable";
 import { ColDef } from "ag-grid-community";
 import { MdDelete, MdModeEdit, MdFilterList, MdClose, MdSearch, MdKeyboardArrowDown, MdCheck } from "react-icons/md";
+import StatusBadge from "@/components/common/StatusBadge";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
@@ -94,7 +95,7 @@ const QuoteTable = () => {
         if (!d) return '-';
         const dt = new Date(d);
         if (Number.isNaN(dt.getTime())) return '-';
-        return dt.toLocaleDateString();
+        return dt.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
       };
 
       // Get month name from product's month_arr if months_id exists
@@ -278,50 +279,18 @@ const QuoteTable = () => {
         if (!value || value === '0') return "₹0.00";
         return `₹${Number(value).toFixed(2)}`;
       },
-      cellStyle: { textAlign: "center", fontWeight: "600" },
+      cellStyle: { textAlign: "left", fontWeight: "600" },
     },
     {
       field: "status",
       headerName: "Status",
       width: 130,
-      cellStyle: { textAlign: "center" },
-      cellRenderer: (params: any) => {
-        const status = params.value;
-        let color = "text-gray-600";
-        let bgColor = "bg-gray-100";
-
-        switch (status?.toLowerCase()) {
-          case 'pending':
-            color = "text-yellow-700";
-            bgColor = "bg-yellow-50";
-            break;
-          case 'active':
-            color = "text-purple-700";
-            bgColor = "bg-purple-50";
-            break;
-          case 'approval':
-          case 'approved':
-            color = "text-green-700";
-            bgColor = "bg-green-50";
-            break;
-          case 'reject':
-          case 'rejected':
-            color = "text-red-700";
-            bgColor = "bg-red-50";
-            break;
-          case 'complete':
-          case 'completed':
-            color = "text-blue-700";
-            bgColor = "bg-blue-50";
-            break;
-        }
-
-        return (
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${bgColor} ${color}`}>
-            {(status || '').toString().toUpperCase() || 'N/A'}
-          </span>
-        );
-      },
+      cellStyle: { textAlign: "left" },
+      cellRenderer: (params: any) => (
+        <div className="flex items-center h-full">
+          <StatusBadge status={params.value || 'pending'} />
+        </div>
+      ),
     },
     {
       headerName: "Actions",
@@ -329,18 +298,18 @@ const QuoteTable = () => {
       cellRenderer: (params: any) => {
         const status = params.data?.status?.toLowerCase();
         const isApproved = status === 'approval' || status === 'approved';
-        const isActive = status === 'active';
         const isRejected = status === 'reject' || status === 'rejected';
         const isCompleted = status === 'complete' || status === 'completed';
+        const isDisabled = isApproved || isRejected || isCompleted;
 
         return (
           <div className="flex items-center justify-center gap-2 h-full">
             {/* Approve */}
             <button
               onClick={() => handleApproval(params.data._id)}
-              disabled={isRejected || isApproved || isActive || isCompleted}
+              disabled={isDisabled}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
-              ${isRejected || isApproved || isActive || isCompleted
+              ${isDisabled
                   ? "bg-gray-100 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 cursor-not-allowed"
                   : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 shadow-sm hover:shadow"
                 }`}
@@ -351,9 +320,9 @@ const QuoteTable = () => {
             {/* Reject */}
             <button
               onClick={() => handleRejected(params.data._id)}
-              disabled={isRejected || isApproved || isActive || isCompleted}
+              disabled={isDisabled}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
-              ${isRejected || isApproved || isActive || isCompleted
+              ${isDisabled
                   ? "bg-gray-100 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 cursor-not-allowed"
                   : "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 shadow-sm hover:shadow"
                 }`}
@@ -450,24 +419,19 @@ const getQuoteData = async (filterParams: any = {}) => {
 
   const handleApproval = async (quoteId: string) => {
     try {
-      // Prefer ACTIVE if available, else APPROVED
-      const statusActive = statusList.find((s: any) =>
-        String(s.name || '').toLowerCase().includes('active')
-      );
       const statusApproved = statusList.find((s: any) =>
-        String(s.name || '').toLowerCase().includes('approve')
+        String(s.name || '').toLowerCase().includes('approv')
       );
-      const targetStatus = statusActive || statusApproved;
-      if (!targetStatus) return toast.error("Target status not found");
+      if (!statusApproved) return toast.error("Approval status not found");
 
       const formData = new FormData();
       formData.append('quote_id', quoteId);
-      formData.append('status', targetStatus.id);
+      formData.append('status', statusApproved.id);
 
       const res = await api.post(endPointApi.changeStatus, formData);
 
       if (res?.data?.status === 200) {
-        toast.success(`Status changed to ${String(targetStatus.name).toUpperCase()}`);
+        toast.success(`Status changed to ${String(statusApproved.name).toUpperCase()}`);
         await getQuoteData(filters);
       }
     } catch (error) {

@@ -159,11 +159,19 @@ export default function AddProductPage() {
             ...prev,
             [field]: value,
         }));
-        // Clear validation error when user starts typing
-        if (validationErrors[field as keyof typeof validationErrors]) {
+        // Clear validation error only when user directly interacts with that field
+        // Do NOT clear subCategory error when category changes
+        if (field !== 'subCategory' && validationErrors[field as keyof typeof validationErrors]) {
             setValidationErrors(prev => ({
                 ...prev,
                 [field]: undefined
+            }));
+        }
+        // Clear subCategory error only when user actually selects a subCategory
+        if (field === 'subCategory' && value) {
+            setValidationErrors(prev => ({
+                ...prev,
+                subCategory: undefined
             }));
         }
     };
@@ -873,8 +881,31 @@ export default function AddProductPage() {
                                 const selected = productTypeOptions.find(opt => opt.value === val);
                                 const label = selected?.label || null;
                                 setSelectedListingType(label);
-                                // When switching to Sell, clear rent-specific fields
-                                if (label === "Sell") {
+                                // Also clear rent fields when switching TO Rent (fresh start)
+                                if (label === "Rent") {
+                                    setBillingType("");
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        dayPrice: "",
+                                        dayCancelPrice: "",
+                                        hourlyPrice: "",
+                                        hourlyCancelPrice: "",
+                                        monthPrice: "",
+                                        monthCancelPrice: "",
+                                        months: [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
+                                    }));
+                                    setValidationErrors(prev => ({
+                                        ...prev,
+                                        billingType: undefined,
+                                        dayPrice: undefined,
+                                        dayCancelPrice: undefined,
+                                        hourlyPrice: undefined,
+                                        hourlyCancelPrice: undefined,
+                                        monthPrice: undefined,
+                                        monthCancelPrice: undefined,
+                                        monthsFields: undefined,
+                                    }));
+                                }
                                     setBillingType("");
                                     setFormData(prev => ({
                                         ...prev,
@@ -893,7 +924,7 @@ export default function AddProductPage() {
                                         hourlyCancelPrice: undefined,
                                         monthsFields: undefined,
                                     }));
-                                }
+                                
                             }}
                             disabled={isEditMode}
                         />
@@ -1311,6 +1342,7 @@ export default function AddProductPage() {
                                         }));
                                     }
                                 }}
+                                onFileRemove={() => setMainImage(null)}
                                 isEditMode={isEditMode}
                             />
                         </div>

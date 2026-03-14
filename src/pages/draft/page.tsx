@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { MdClose } from 'react-icons/md';
+import ActionButtons from '@/components/common/ActionButtons';
 import AgGridTable from '@/components/tables/AgGridTable';
 import ConfirmDeleteModal from '@/components/common/ConfirmDeleteModal';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
@@ -51,7 +52,7 @@ const DraftsPage = () => {
       flex: 1,
       minWidth: 150,
       valueFormatter: (params: any) => {
-        return params.value ? new Date(params.value).toLocaleDateString() : "";
+        return params.value ? new Date(params.value).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : "";
       },
     },
     {
@@ -68,18 +69,10 @@ const DraftsPage = () => {
             >
               Dedraft
             </button>
-            <button
-              onClick={() => router.push(`/product/edit/${params.data._id || params.data.id}`)}
-              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => openDeletePopup(params.data._id || params.data.id)}
-              className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
-            >
-              Delete
-            </button>
+            <ActionButtons
+              onEdit={() => router.push(`/product/edit/${params.data._id || params.data.id}`)}
+              onDelete={() => openDeletePopup(params.data._id || params.data.id)}
+            />
           </div>
         );
       },
