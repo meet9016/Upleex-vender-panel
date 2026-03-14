@@ -13,6 +13,7 @@ import endPointApi from "@/utils/endPointApi";
 import { toast } from "react-toastify";
 import { CiWarning } from "react-icons/ci";
 import { HiOutlineRefresh } from "react-icons/hi";
+import { IoMdStar, IoMdTrendingUp } from "react-icons/io";
 
 const DEFAULT_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23f0f0f0'/%3E%3Ctext x='24' y='24' font-family='Arial' font-size='10' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
 const isValidImageUrl = (url?: string | null): boolean => {
@@ -139,11 +140,11 @@ export default function DraftPage() {
         key: p.plan_type,
         id: p._id || p.id,
         name: p.plan_type?.charAt(0).toUpperCase() + p.plan_type?.slice(1),
-        description: `${p.months} months, up to ${p.max_products} products`,
+        description: p.description ||  `${p.months} months, up to ${p.max_products} products`,
         price: p.amount,
         duration_months: p.months,
         product_limit: p.max_products,
-        popular: !!p.popular,
+         popular: p.popular || false,
       }));
       setPlans(normalized);
     } catch (e) {
@@ -321,19 +322,38 @@ export default function DraftPage() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
                   {plansLoading ? (
-                    <div className="text-sm text-gray-500">Loading plans...</div>
+                    <div className="col-span-4 text-center py-12">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white mb-4"></div>
+                      <p className="text-sm text-gray-500">Loading plans...</p>
+                    </div>
                   ) : (
                     plans.map((plan) => (
                       <div
                         key={plan.key}
-                        className="relative border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-gray-400 hover:shadow-lg transition-all duration-200 group"
+                        className={`relative border-2 rounded-xl p-6 transition-all duration-200 group ${
+                          plan.popular 
+                            ? 'border-[#28a8e9] shadow-lg shadow-[#28a8e9]/20  dark:to-gray-800' 
+                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 hover:shadow-lg'
+                        }`}
                       >
-                        <div className="text-center">
+                        {/* Popular Badge */}
+                        {plan.popular && (
+                          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                            <div className="flex items-center gap-1 bg-[#28a8e9] text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+                              <span>Your Current Plan</span>
+                            </div>
+                          </div>
+                        )}
 
+                        <div className="text-center">
                           {/* Icon */}
-                          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                            plan.popular 
+                              ? 'bg-[#28a8e9]/10 dark:bg-[#28a8e9]/30 text-[#28a8e9]' 
+                              : 'bg-gray-100 dark:bg-gray-900/30 text-gray-600'
+                          }`}>
                             <svg
-                              className="w-8 h-8 text-gray-600"
+                              className="w-8 h-8"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -343,14 +363,26 @@ export default function DraftPage() {
                             </svg>
                           </div>
 
-                          {/* Plan Name */}
-                          <h3 className="text-xl font-bold text-gray-700 dark:text-white mb-2">
-                            {plan.name}
-                          </h3>
+                          {/* Plan Name with Popular Indicator */}
+                          <div className="flex items-center justify-center gap-2 mb-2">
+                            <h3 className={`text-xl font-bold ${
+                              plan.popular ? 'text-[#28a8e9] dark:text-[#28a8e9]' : 'text-gray-700 dark:text-white'
+                            }`}>
+                              {plan.name}
+                            </h3>
+                           
+                          </div>
+
+                          {/* Description */}
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-2">
+                            {plan.description}
+                          </p>
 
                           {/* Price */}
                           <div className="mb-4">
-                            <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                            <span className={`text-3xl font-bold ${
+                              plan.popular ? 'text-[#28a8e9]' : 'text-gray-900 dark:text-white'
+                            }`}>
                               ₹{plan.price}
                             </span>
                             <span className="text-gray-500 dark:text-gray-400 text-sm">
@@ -374,10 +406,15 @@ export default function DraftPage() {
                               setConfirmPlan({
                                 key: plan.key,
                                 name: plan.name,
-                                id: plan.id
+                                id: plan.id,
+                                popular: plan.popular
                               })
                             }
-                            className="w-full bg-gray-700 hover:bg-gray-800 text-white py-3 rounded-lg font-medium"
+                            className={`w-full py-3 rounded-lg font-medium transition-all ${
+                              plan.popular 
+                                ? 'btn-primary !py-3.5 text-white shadow-md hover:shadow-lg' 
+                                : 'bg-gray-700 hover:bg-gray-800 text-white'
+                            }`}
                           >
                             Choose {plan.name}
                           </Button>
@@ -445,7 +482,7 @@ export default function DraftPage() {
                             toast.error("Failed to send request");
                           }
                         }}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium"
+                        className="w-full bg-gray-700 hover:bg-gray-800 text-white py-3 rounded-lg font-medium"
                       >
                         Request Callback
                       </Button>
@@ -469,7 +506,9 @@ export default function DraftPage() {
 
                   {/* Focus Icon */}
                   <div className="flex justify-center mb-4">
-                    <div className="w-14 h-14 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 text-2xl">
+                    <div className={`w-14 h-14 flex items-center justify-center rounded-full ${
+                      confirmPlan.popular ? 'bg-[#28a8e9] text-[#28a8e9]' : 'bg-indigo-100 text-indigo-600'
+                    } text-2xl`}>
                       <CiWarning />
                     </div>
                   </div>
@@ -485,10 +524,23 @@ export default function DraftPage() {
                   </p>
 
                   {/* Plan Highlight */}
-                  <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl py-3 mb-4">
-                    <span className="text-lg font-semibold text-indigo-600 dark:text-indigo-400">
+                  <div className={`rounded-xl py-3 mb-4 border ${
+                    confirmPlan.popular 
+                      ? 'bg-[#28a8e9] border-[#28a8e9] dark:border-yellow-800' 
+                      : 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800'
+                  }`}>
+                    <span className={`text-lg font-semibold ${
+                      confirmPlan.popular ? 'text-[#28a8e9]' : 'text-indigo-600'
+                    }`}>
                       {confirmPlan.name} Plan
                     </span>
+                    {confirmPlan.popular && (
+                      <div className="flex items-center justify-center gap-1 mt-1">
+                        <IoMdStar className="text-[#28a8e9] text-sm" />
+                        <span className="text-xs text-[#28a8e9]">Most Popular</span>
+                        <IoMdStar className="text-[#28a8e9] text-sm" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Product Count */}
@@ -515,7 +567,11 @@ export default function DraftPage() {
                         );
                         setConfirmPlan(null);
                       }}
-                      className="flex-1 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg"
+                      className={`flex-1 py-2.5 rounded-lg text-white shadow-lg ${
+                        confirmPlan.popular 
+                          ? 'bg-[#28a8e9] hover:from-yellow-500 hover:to-yellow-600' 
+                          : 'bg-indigo-600 hover:bg-indigo-700'
+                      }`}
                     >
                       Confirm
                     </Button>

@@ -197,6 +197,45 @@ const ProductTable = () => {
       minWidth: 150,
       cellStyle: { textAlign: "center" }
     },
+     {
+    headerName: "Approval Status by Admin",
+    field: "approval_status",
+    minWidth: 140,
+    sortable: true,
+    cellRenderer: (params: any) => {
+      const status = String(params.value || '').toLowerCase();
+      
+      // Define styles based on approval status
+      let bgColor = 'bg-gray-100';
+      let textColor = 'text-gray-700';
+      let label = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending';
+      
+      switch(status) {
+        case 'approved':
+          bgColor = 'bg-green-100';
+          textColor = 'text-green-700';
+          break;
+        case 'pending':
+          bgColor = 'bg-yellow-100';
+          textColor = 'text-yellow-700';
+          break;
+        case 'rejected':
+          bgColor = 'bg-red-100';
+          textColor = 'text-red-700';
+          break;
+        default:
+          bgColor = 'bg-gray-100';
+          textColor = 'text-gray-700';
+      }
+      
+      return (
+        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${bgColor} ${textColor}`}>
+          {label}
+        </span>
+      );
+    },
+    cellStyle: { justifyContent: "center" }
+  },
     {
       field: "status",
       headerName: "Status",
