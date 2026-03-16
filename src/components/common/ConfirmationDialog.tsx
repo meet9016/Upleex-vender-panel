@@ -1,5 +1,6 @@
 import React from "react";
 import { MdDelete, MdWarning, MdBlock } from "react-icons/md";
+import Loader from "@/components/common/Loader";
 
 type ActionType = 'delete' | 'deactivate' | 'activate' | 'custom';
 
@@ -115,7 +116,7 @@ const ConfirmationDialog: React.FC<Props> = ({
         className={`flex-1 h-10 rounded-md ${config.buttonBg} text-white text-sm flex items-center justify-center gap-2 disabled:opacity-50`}
       >
         {loading ? (
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <Loader type="button" text="" iconClassName="text-white" />
         ) : (
           <>
             {/* {actionType === "delete" && <MdDelete className="text-base" />}

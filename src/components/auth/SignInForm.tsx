@@ -12,6 +12,8 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import OtpInput from "react-otp-input";
+import Loader from "@/components/common/Loader";
+import { useRouter } from "next/navigation";
 
 type FormData = {
   mobile: string;
@@ -24,7 +26,7 @@ interface ErrorState {
 }
 
 export default function SignInForm() {
-
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // Added loading state for button
@@ -133,13 +135,13 @@ export default function SignInForm() {
           if (isApproved) {
             const searchParams = new URLSearchParams(window.location.search);
             const redirectTo = searchParams.get('redirect') || '/';
-            window.location.href = redirectTo;
+            router.push(redirectTo);
           } else {
-            window.location.href = '/kyc';
+            router.push('/kyc');
           }
         } catch {
           // If KYC check fails, redirect to KYC page
-          window.location.href = '/kyc';
+          router.push('/kyc');
         }
       } else {
         toast.error(res.data.message);
@@ -280,12 +282,15 @@ export default function SignInForm() {
                 <Button
                   size="sm"
                   className="w-full bg-gradient-to-r from-[#4F46E5] via-[#6366F1] to-[#22D3EE] hover:shadow-[0_10px_40px_rgba(79,70,229,0.35)] hover:translate-y-[0.5px] transition-all border-0"
+                  disabled={isLoading}
                 >
-                  {isLoading
-                    ? "Please wait..."
-                    : otpSent
-                      ? "Login"
-                      : "Send OTP"}
+                  {isLoading ? (
+                    <Loader type="button" text="Authenticating..." iconClassName="text-white" />
+                  ) : otpSent ? (
+                    "Login"
+                  ) : (
+                    "Send OTP"
+                  )}
                 </Button>
               </div>
             </div>

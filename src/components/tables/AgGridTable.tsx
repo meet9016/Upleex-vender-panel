@@ -17,6 +17,7 @@ import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ColDef, ModuleRegistry, RowSelectionOptions } from "ag-grid-community";
 import { MdDelete, MdModeEdit } from "react-icons/md";
 import { ColumnMenuModule, ContextMenuModule } from "ag-grid-enterprise";
+import Loader from "@/components/common/Loader";
 
 ModuleRegistry.registerModules([AllCommunityModule, ColumnMenuModule, ContextMenuModule]);
 
@@ -136,19 +137,6 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   //   console.log("Grid ready - horizontal scroll enabled");
   // }, []);
 
-  useEffect(() => {
-    const api = gridRef.current?.api;
-    if (!api) return;
-    if (loading) {
-      try {
-        api.showLoadingOverlay();
-      } catch { }
-    } else {
-      try {
-        api.hideOverlay();
-      } catch { }
-    }
-  }, [loading]);
 
   const handleAddClick = useCallback(() => {
     router.push(addButtonLink);
@@ -157,7 +145,6 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   return (
     <div>
       <div className="flex justify-between items-center mb-4 dark:text-gray-200">
-        {/* <h2 className="text-xl font-bold">{tableName}</h2> */}
         {buttonName && (
           <button onClick={handleAddClick} className="btn-primary" aria-label={`Add ${buttonName}`}>
             + Add {buttonName}
@@ -165,32 +152,32 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
         )}
       </div>
 
-      <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'}`}
-        style={{ width: "100%", height: "80vh" }}>
-        <AgGridReact
-          rowHeight={60}
-          ref={gridRef}
-          rowData={rowData}
-          columnDefs={columns || defaultColumns}
-          defaultColDef={defaultColDef}
-          pagination
-          paginationPageSize={20}
-          rowSelection={rowSelection}
-          onSelectionChanged={() => {
-            const rows = gridRef.current?.api?.getSelectedRows() || [];
-            if (typeof onSelectionChange === 'function') {
-              onSelectionChange(rows);
-            }
-          }}
-          // onGridReady={onGridReady}
-          paginationPageSizeSelector={[10, 20, 50, 100]}
-          columnMenu="new"
-          suppressRowClickSelection
-          animateRows
-          // suppressHorizontalScroll={false} - REMOVED completely (default is false)
-          alwaysShowHorizontalScroll={true} // ADD THIS to always show horizontal scroll
-        // columnBorders={true} 
-        />
+      <div className="relative">
+        {loading && <Loader type="section" />}
+        <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'}`}
+          style={{ width: "100%", height: "80vh" }}>
+          <AgGridReact
+            rowHeight={60}
+            ref={gridRef}
+            rowData={rowData}
+            columnDefs={columns || defaultColumns}
+            defaultColDef={defaultColDef}
+            pagination
+            paginationPageSize={20}
+            rowSelection={rowSelection}
+            onSelectionChanged={() => {
+              const rows = gridRef.current?.api?.getSelectedRows() || [];
+              if (typeof onSelectionChange === 'function') {
+                onSelectionChange(rows);
+              }
+            }}
+            paginationPageSizeSelector={[10, 20, 50, 100]}
+            columnMenu="new"
+            suppressRowClickSelection
+            animateRows
+            alwaysShowHorizontalScroll={true}
+          />
+        </div>
       </div>
     </div>
   );
