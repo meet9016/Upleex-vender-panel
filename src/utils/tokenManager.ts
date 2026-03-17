@@ -22,6 +22,10 @@ export const getToken = (): string | null => {
 export const clearToken = () => {
   // Remove from localStorage
   localStorage.removeItem('auth_token');
+  localStorage.removeItem('user_info');
+  
+  // Clear all localStorage data
+  localStorage.clear();
 
   // Remove from cookies
   document.cookie = 'auth_token=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;';

@@ -40,17 +40,15 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               maxLength={10}
               onChange={(e) => {
                 const value = e.target.value.toUpperCase();
-                if (value) {
-                  clearError("pancard_number");
-                  setKYCFormData((prevData) => ({
-                    ...prevData,
-                    pancard_number: value,
-                  }));
-                }
+                clearError("pancard_number");
+                setKYCFormData((prevData) => ({
+                  ...prevData,
+                  pancard_number: value,
+                }));
               }}
             />
             {errors?.pancard_number && (
-              <p className="mt-1 text-sm text-error">{errors.pancard_number}</p>
+              <p className="error-message">{errors.pancard_number}</p>
             )}
           </div>
         </div>
@@ -98,7 +96,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               }}
             />
             {errors?.aadharcard_number && (
-              <p className="mt-1 text-sm text-error">{errors.aadharcard_number}</p>
+              <p className="error-message">{errors.aadharcard_number}</p>
             )}
           </div>
         </div>
@@ -121,7 +119,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               }}
             />
             {errors?.business_name && (
-              <p className="mt-1 text-sm text-error">{errors.business_name}</p>
+              <p className="error-message">{errors.business_name}</p>
             )}
           </div>
         </div>
@@ -147,7 +145,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               }}
             />
             {errors?.gst_number && (
-              <p className="mt-1 text-sm text-error">{errors.gst_number}</p>
+              <p className="error-message">{errors.gst_number}</p>
             )}
           </div>
           

@@ -223,7 +223,7 @@ export default function SignInForm() {
                   error={!!error.mobile}
                 />
                 {error.mobile && (
-                  <p className="mt-1 text-xs text-red-500">{error.mobile}</p>
+                  <p className="error-message">{error.mobile}</p>
                 )}
               </div>
 
@@ -254,7 +254,7 @@ export default function SignInForm() {
                     />
                   </div>
                   {error.otp && (
-                    <p className="mt-2 text-xs text-center text-red-500">
+                    <p className="error-message text-center">
                       {error.otp}
                     </p>
                   )}
