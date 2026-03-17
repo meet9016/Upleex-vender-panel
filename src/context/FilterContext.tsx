@@ -33,7 +33,13 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
 export function useFilter() {
   const context = useContext(FilterContext);
   if (!context) {
-    throw new Error("useFilter must be used within a FilterProvider");
+    // Return safe defaults during SSR/prerender
+    return {
+      filters: { service: false, vendor: false },
+      setFilters: () => {},
+      canFilter: true,
+      setCanFilter: () => {},
+    };
   }
   return context;
 }
