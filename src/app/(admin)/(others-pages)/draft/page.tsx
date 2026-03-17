@@ -14,6 +14,7 @@ import { toast } from "react-toastify";
 import { CiWarning } from "react-icons/ci";
 import { HiOutlineRefresh } from "react-icons/hi";
 import { IoMdStar, IoMdTrendingUp } from "react-icons/io";
+import Loader from "@/components/common/Loader";
 
 const DEFAULT_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23f0f0f0'/%3E%3Ctext x='24' y='24' font-family='Arial' font-size='10' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
 const isValidImageUrl = (url?: string | null): boolean => {
@@ -193,8 +194,14 @@ export default function DraftPage() {
   disabled={loading}
   className="px-4 py-2 text-sm font-medium flex items-center justify-center gap-2"
 >
-  <HiOutlineRefresh className={`${loading ? "animate-spin" : ""} text-lg`} />
-  {/* {loading ? "Refreshing..." : "Refresh"} */}
+  {loading ? (
+    <Loader type="button" text="Refreshing..." iconClassName="text-white h-4 w-4" />
+  ) : (
+    <>
+      <HiOutlineRefresh className="text-lg" />
+      Refresh
+    </>
+  )}
 </Button>
       </div>
 

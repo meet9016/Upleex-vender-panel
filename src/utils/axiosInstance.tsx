@@ -1,8 +1,8 @@
 import axios from 'axios'
 
 const apiAdminInstance = axios.create({  
-  // baseURL: process.env.NEXT_PUBLIC_APP_URL
-  baseURL: 'https://upleex.com/api/api/v1/',
+  baseURL: process.env.NEXT_PUBLIC_APP_URL
+  // baseURL: 'https://upleex.com/api/api/v1/',
   // headers: {
   //   'Content-Type': 'multipart/form-data'
   // }
@@ -30,8 +30,7 @@ apiAdminInstance.interceptors.response.use(
     const { response } = error;
 
     if (response?.status === 401) {
-      // optional: avoid infinite redirect
-      if (window.location.pathname !== '/signin') {
+      if (typeof window !== 'undefined' && window.location.pathname !== '/signin') {
         localStorage.removeItem('auth_token');
         window.location.replace('/signin');
       }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useSidebar } from "@/context/SidebarContext";
+import { FilterProvider } from "@/context/FilterContext";
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
@@ -31,13 +32,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen xl:flex">
-      <AppSidebar />
-      <Backdrop />
-      <div className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}>
-        <AppHeader />
-        <main className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">{children}</main>
+    <FilterProvider>
+      <div className="min-h-screen xl:flex">
+        <AppSidebar />
+        <Backdrop />
+        <div className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}>
+          <AppHeader />
+          <main className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">{children}</main>
+        </div>
       </div>
-    </div>
+    </FilterProvider>
   );
 }

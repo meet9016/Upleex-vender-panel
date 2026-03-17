@@ -16,6 +16,7 @@ import SearchableDropdown from '@/components/common/SearchableDropdown';
 import Label from '@/components/form/Label';
 import { HiOutlineDocumentText } from "react-icons/hi";
 import { Modal } from '@/components/ui/modal';
+import Loader from '@/components/common/Loader';
 import { exportProductsToExcel, exportProductsToPDF } from '@/utils/exportUtils';
 import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
 function useDebounce<T>(value: T, delay: number = 500): T {
@@ -902,7 +903,7 @@ const ProductTable = () => {
                 >
                   <FaFileExcel className="text-green-600 text-base" />
                   <span>Export to Excel</span>
-                  {exportLoading && <div className="ml-auto w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />}
+                  {exportLoading && <Loader className="ml-auto text-green-600 w-4 h-4" />}
                 </button>
 
                 {/* Export to PDF */}
@@ -913,7 +914,7 @@ const ProductTable = () => {
                 >
                   <FaFilePdf className="text-red-600 text-base" />
                   <span>Export to PDF</span>
-                  {exportLoading && <div className="ml-auto w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
+                  {exportLoading && <Loader className="ml-auto text-red-600 w-4 h-4" />}
                 </button>
               </div>
             )}

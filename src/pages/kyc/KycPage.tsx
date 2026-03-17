@@ -12,14 +12,19 @@ import { toast } from "react-toastify";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { useRouter } from "next/navigation";
+import { useFilter } from "@/context/FilterContext";
 
-const steps = [
+const ALL_STEPS = [
   "Contact Details",
   "Identity",
   "Bank",
   "Documents",
   "Declaration",
 ];
+
+// Indices of the ALL_STEPS array that are shown in service-only mode
+const SERVICE_STEP_INDICES = [0, 4]; // Contact Details, Declaration
+const SERVICE_STEPS = SERVICE_STEP_INDICES.map((i) => ALL_STEPS[i]);
 
 export type KycFormDataType = {
   full_name: string;
@@ -58,6 +63,18 @@ export default function KYCPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [errors, setErrors] = useState<ErrorType>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { filters, canFilter, setCanFilter } = useFilter();
+
+  // Mode is locked once canFilter is false (edit mode)
+  // If canFilter is true, we use the dropdown selection.
+  // If canFilter is false, we stay with whatever was selected.
+  const isServiceOnly = filters.service && !filters.vendor;
+
+  // Active steps: either full 5 steps or 2 service-only steps
+  const steps = isServiceOnly ? SERVICE_STEPS : ALL_STEPS;
+
+  // Map current visible step → actual step index in ALL_STEPS
+  const actualStep = isServiceOnly ? SERVICE_STEP_INDICES[currentStep] : currentStep;
 
   const [KYCformData, setKYCFormData] = useState<KycFormDataType>({
     full_name: "",
@@ -87,7 +104,7 @@ export default function KYCPage() {
     terms_conditions: 0,
     completed_pages: [],
   });
-console.log("KYCPage Rendered with KYCformData:", KYCformData);
+  console.log("KYCPage Rendered with KYCformData:", KYCformData);
   const router = useRouter();
 
   useEffect(() => {
@@ -105,7 +122,7 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
     fetchKYCFormdata();
   }, []);
 
-  const clearError = (field: string| number) => {
+  const clearError = (field: string | number) => {
     setErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors[field];
@@ -131,8 +148,9 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
       /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(val);
     const isIFSCValid = (val: string) => /^[A-Z]{4}0[A-Z0-9]{6}$/.test(val);
 
-    // Step 0 ─ Contact Details
-    if (currentStep === 0) {
+    // Use actualStep for validation to support both modes
+    // Step 0 ─ Contact Details (actualStep 0)
+    if (actualStep === 0) {
       if (isEmpty(KYCformData.full_name)) {
         newErrors.full_name = "Full name is required";
       } else if (!isOnlyLetters(KYCformData.full_name)) {
@@ -168,8 +186,8 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
       if (!KYCformData.city_id?.value) newErrors.city_id = "City is required";
     }
 
-    // Step 1 ─ Identity
-    else if (currentStep === 1) {
+    // Step 1 ─ Identity (actualStep 1) — only in vendor/both mode
+    else if (actualStep === 1) {
       if (isEmpty(KYCformData.pancard_number)) {
         newErrors.pancard_number = "PAN number is required";
       } else if (!isPANValid(KYCformData.pancard_number)) {
@@ -197,8 +215,8 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
       }
     }
 
-    // Step 2 ─ Bank
-    else if (currentStep === 2) {
+    // Step 2 ─ Bank (actualStep 2) — only in vendor/both mode
+    else if (actualStep === 2) {
       if (isEmpty(KYCformData.account_holder_name)) {
         newErrors.account_holder_name = "Account holder name is required";
       } else if (!isOnlyLetters(KYCformData.account_holder_name)) {
@@ -233,8 +251,8 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
       }
     }
 
-    // Step 3 ─ Documents
-    else if (currentStep === 3) {
+    // Step 3 ─ Documents (actualStep 3) — only in vendor/both mode
+    else if (actualStep === 3) {
       const isValidFile = (file: File | string | null) =>
         file instanceof File || (typeof file === "string" && file.trim().length > 0);
 
@@ -259,8 +277,8 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
       }
     }
 
-    // Step 4 ─ Declaration
-    else if (currentStep === 4) {
+    // Step 4 ─ Declaration (actualStep 4)
+    else if (actualStep === 4) {
       if (KYCformData.terms_conditions !== 1) {
         newErrors.terms_conditions = "Please accept the declaration";
       }
@@ -274,11 +292,11 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
     setIsSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append("page", String(currentStep + 1));
+      formData.append("page", String(actualStep + 1));
       formData.append("mobile", KYCformData.mobile);
       formData.append("email", KYCformData.email);
 
-      if (currentStep === 0) {
+      if (actualStep === 0) {
         const contact = {
           full_name: KYCformData.full_name,
           email: KYCformData.email,
@@ -294,7 +312,7 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
           page: "1"
         };
         formData.append("ContactDetails", JSON.stringify([contact]));
-      } else if (currentStep === 1) {
+      } else if (actualStep === 1) {
         const identity = {
           pancard_number: KYCformData.pancard_number,
           aadharcard_number: KYCformData.aadharcard_number,
@@ -303,7 +321,7 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
           page: "2"
         };
         formData.append("Identity", JSON.stringify([identity]));
-      } else if (currentStep === 2) {
+      } else if (actualStep === 2) {
         const bank = {
           account_holder_name: KYCformData.account_holder_name,
           account_number: KYCformData.account_number,
@@ -313,7 +331,7 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
           page: "3"
         };
         formData.append("Bank", JSON.stringify([bank]));
-      } else if (currentStep === 3) {
+      } else if (actualStep === 3) {
         // Files
         if (KYCformData.pancard_front_image instanceof File)
           formData.append("pancard_front_image", KYCformData.pancard_front_image);
@@ -329,7 +347,7 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
           formData.append("business_logo_image", KYCformData.business_logo_image);
 
         formData.append("Documents", JSON.stringify([{ page: "4" }]));
-      } else if (currentStep === 4) {
+      } else if (actualStep === 4) {
         formData.append("terms_conditions", "1");
       }
 
@@ -427,6 +445,12 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
           completed_pages: data.completed_pages || [],
           terms_conditions: data.terms_conditions || 0,
         }));
+
+        // If user has completed any pages or has terms accepted, it's "edit time"
+        const hasData = (data.completed_pages && data.completed_pages.length > 0) || data.id;
+        if (hasData) {
+          setCanFilter(false);
+        }
       }
     } catch (err) {
       console.error("Fetch KYC error:", err);
@@ -438,7 +462,8 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
       <Stepper steps={steps} currentStep={currentStep} completedPages={KYCformData.completed_pages} onStepChange={handleStepChange} />
 
       <div className="min-h-[400px] md:min-h-[520px]">
-        {currentStep === 0 && (
+        {/* Contact Details is always step 0 in both modes */}
+        {actualStep === 0 && (
           <ContactDetails
             setKYCFormData={setKYCFormData}
             KYCformData={KYCformData}
@@ -446,7 +471,8 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
             clearError={clearError}
           />
         )}
-        {currentStep === 1 && (
+        {/* The following steps only show in vendor/both mode */}
+        {actualStep === 1 && (
           <Identity
             setKYCFormData={setKYCFormData}
             KYCformData={KYCformData}
@@ -454,7 +480,7 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
             clearError={clearError}
           />
         )}
-        {currentStep === 2 && (
+        {actualStep === 2 && (
           <BankDetails
             setKYCFormData={setKYCFormData}
             KYCformData={KYCformData}
@@ -462,7 +488,7 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
             clearError={clearError}
           />
         )}
-        {currentStep === 3 && (
+        {actualStep === 3 && (
           <Documents
             setKYCFormData={setKYCFormData}
             KYCformData={KYCformData}
@@ -470,7 +496,8 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
             clearError={clearError}
           />
         )}
-        {currentStep === 4 && (
+        {/* Declaration is always the last step in both modes */}
+        {actualStep === 4 && (
           <StepDeclaration
             setKYCFormData={setKYCFormData}
             KYCformData={KYCformData}
@@ -499,8 +526,8 @@ console.log("KYCPage Rendered with KYCformData:", KYCformData);
           {isSubmitting
             ? "Saving..."
             : currentStep === steps.length - 1
-            ? "Submit KYC"
-            : "Save & Next"}
+              ? "Submit KYC"
+              : "Save & Next"}
         </button>
       </div>
     </ComponentCard>

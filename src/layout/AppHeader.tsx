@@ -4,6 +4,7 @@ import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "@/components/header/NotificationDropdown";
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
+import { useFilter } from "@/context/FilterContext";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -11,6 +12,12 @@ const AppHeader = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Checkbox states
+  const [isDropdownOpen, setDropdownOpen] = useState(false);
+  const { filters, setFilters, canFilter } = useFilter();
+  
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleToggle = useCallback(() => {
     if (window.innerWidth >= 1024) {
@@ -22,6 +29,30 @@ const AppHeader = () => {
 
   const toggleApplicationMenu = useCallback(() => {
     setApplicationMenuOpen(prev => !prev);
+  }, []);
+
+  const toggleDropdown = useCallback(() => {
+    setDropdownOpen(prev => !prev);
+  }, []);
+
+  const handleCheckboxChange = (type: 'service' | 'vendor') => {
+    if (!canFilter) return;
+    setFilters(prev => ({ ...prev, [type]: !prev[type] }));
+  };
+
+  // Get selected items count
+  const selectedCount = (filters.service ? 1 : 0) + (filters.vendor ? 1 : 0);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -37,7 +68,7 @@ const AppHeader = () => {
   }, []);
 
   return (
-  <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
+    <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
       <div className="flex flex-col items-center justify-between grow lg:flex-row lg:px-6">
         <div className="flex items-center justify-between w-full gap-2 px-3 py-3 border-b border-gray-200 dark:border-gray-800 sm:gap-4 lg:justify-normal lg:border-b-0 lg:px-0 lg:py-4">
           <button
@@ -59,21 +90,21 @@ const AppHeader = () => {
 
           <Link href="/" className="lg:hidden" aria-label="Home">
             <Image
-                          src="/images/logo/upleex-logo-dark.png"
-                          alt="Upleex"
-                          width={154}
-                          height={32}
-                          priority
-                          className="mb-2 dark:hidden"
-                        />
+              src="/images/logo/upleex-logo-dark.png"
+              alt="Upleex"
+              width={154}
+              height={32}
+              priority
+              className="mb-2 dark:hidden"
+            />
             <Image
-                          src="/images/logo/upleex-logo.png"
-                          alt="Upleex"
-                          width={154}
-                          height={32}
-                          priority
-                          className="mb-2 hidden dark:block"
-                        />
+              src="/images/logo/upleex-logo.png"
+              alt="Upleex"
+              width={154}
+              height={32}
+              priority
+              className="mb-2 hidden dark:block"
+            />
           </Link>
 
           <button
@@ -106,8 +137,120 @@ const AppHeader = () => {
             </form>
           </div>
         </div>
+
         <div className={`${isApplicationMenuOpen ? "flex" : "hidden"} items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}>
+          
+          {/* Mobile Checkboxes */}
+          <div className="lg:hidden w-full mb-2">
+            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Select types:</p>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.service}
+                    onChange={() => handleCheckboxChange('service')}
+                    disabled={!canFilter}
+                    className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Service</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.vendor}
+                    onChange={() => handleCheckboxChange('vendor')}
+                    disabled={!canFilter}
+                    className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Vendor</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center gap-2 2xsm:gap-3">
+            {/* Dropdown with Checkboxes - Before ThemeToggleButton */}
+         {canFilter && (
+  <div className="relative" ref={dropdownRef}>
+    <button
+      onClick={toggleDropdown}
+      className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+        selectedCount > 0 
+          ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
+          : 'text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700'
+      }`}
+      aria-label="Toggle selection menu"
+      aria-expanded={isDropdownOpen}
+    >
+      <span>Select Types</span>
+      {selectedCount > 0 && (
+        <span className="ml-1 px-1.5 py-0.5 text-xs font-bold text-white bg-blue-600 rounded-full">
+          {selectedCount}
+        </span>
+      )}
+      <svg 
+        className={`w-4 h-4 ml-1 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} 
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+
+    {/* Dropdown Menu with Checkboxes */}
+    {isDropdownOpen && (
+      <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700 py-2 z-50">
+        <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Select Options</h3>
+        </div>
+        
+        <div className="p-2">
+          {/* Service Checkbox */}
+          <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors duration-200">
+            <input
+              type="checkbox"
+              checked={filters.service}
+              onChange={() => handleCheckboxChange('service')}
+              className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+            />
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Service</span>
+              </div>
+            </div>
+          </label>
+
+          {/* Vendor Checkbox */}
+          <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors duration-200 mt-1">
+            <input
+              type="checkbox"
+              checked={filters.vendor}
+              onChange={() => handleCheckboxChange('vendor')}
+              className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+            />
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Vendor</span>
+              </div>
+            </div>
+          </label>
+        </div>
+
+        {/* Selected count display */}
+        {selectedCount > 0 && (
+          <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border-t border-blue-100 dark:border-blue-800">
+            <p className="text-xs text-blue-700 dark:text-blue-400">
+              {selectedCount} item{selectedCount !== 1 ? 's' : ''} selected
+            </p>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+)}
+
             <ThemeToggleButton />
             <NotificationDropdown />
           </div>

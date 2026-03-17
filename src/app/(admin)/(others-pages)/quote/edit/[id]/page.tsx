@@ -6,6 +6,7 @@ import endPointApi from "@/utils/endPointApi";
 import { FiCalendar, FiImage, FiVideo, FiArrowLeft, FiX, FiLoader } from "react-icons/fi";
 import { toast } from "react-toastify";
 import SearchableDropdown from "@/components/common/SearchableDropdown"; 
+import Loader from "@/components/common/Loader";
 
 const QuoteEditPage = () => {
   const params = useParams();
@@ -279,13 +280,7 @@ const QuoteEditPage = () => {
   }, [params?.id]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-        </div>
-      </div>
-    );
+    return <Loader type="page" />;
   }
 
   if (!quoteData) {
@@ -625,10 +620,7 @@ const QuoteEditPage = () => {
   }`}
 >
   {submitting ? (
-    <>
-      <FiLoader className="animate-spin" />
-      <span>Submitting...</span>
-    </>
+    <Loader type="button" text="Submitting..." iconClassName="text-white" />
   ) : (
     'Submit Changes'
   )}
