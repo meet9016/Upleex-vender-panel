@@ -180,7 +180,7 @@ const QuoteTable = () => {
     {
       headerName: "Product",
       field: "product_name",
-      width: 300,
+      minWidth: 300,
       sortable: true,
       cellRenderer: (params: any) => {
         const imageUrl = params.data?.product_main_image;
@@ -220,49 +220,49 @@ const QuoteTable = () => {
     {
       field: "product_type_name",
       headerName: "Product Type",
-      width: 180,
+      minWidth: 180,
       cellStyle: { textAlign: "center" }
     },
     {
       field: "product_listing_type_name",
       headerName: "Product Listing Type",
-      width: 220,
+      minWidth: 220,
       cellStyle: { textAlign: "center" }
     },
     {
       field: "delivery_date",
       headerName: "Delivery Date",
-      width: 150,
+      minWidth: 150,
       cellStyle: { textAlign: "center" }
     },
     {
       field: "start_date",
       headerName: "Start Date",
-      width: 150,
+      minWidth: 150,
       cellStyle: { textAlign: "center" }
     },
     {
       field: "end_date",
       headerName: "End Date",
-      width: 150,
+      minWidth: 150,
       cellStyle: { textAlign: "center" }
     },
     {
       field: "month_name",
       headerName: "Month",
-      width: 120,
+      minWidth: 120,
       cellStyle: { textAlign: "center" }
     },
     {
       field: "qty",
       headerName: "Qty",
-      width: 100,
+      minWidth: 100,
       cellStyle: { textAlign: "center" },
     },
     {
       field: "price",
       headerName: "Unit Price",
-      width: 120,
+      minWidth: 120,
       valueFormatter: (params) => {
         const value = params.value;
         if (!value || value === '0') return "₹0.00";
@@ -273,7 +273,7 @@ const QuoteTable = () => {
     {
       field: "total_price",
       headerName: "Total Price",
-      width: 140,
+      minWidth: 140,
       valueFormatter: (params) => {
         const value = params.value;
         if (!value || value === '0') return "₹0.00";
@@ -284,7 +284,7 @@ const QuoteTable = () => {
     {
       field: "status",
       headerName: "Status",
-      width: 130,
+      minWidth: 130,
       cellStyle: { textAlign: "left" },
       cellRenderer: (params: any) => (
         <div className="flex items-center h-full">
@@ -294,7 +294,8 @@ const QuoteTable = () => {
     },
     {
       headerName: "Actions",
-      width: 330,
+      minWidth: 330,
+       suppressHeaderMenuButton: true,
       cellRenderer: (params: any) => {
         const status = params.data?.status?.toLowerCase();
         const isApproved = status === 'approval' || status === 'approved';
