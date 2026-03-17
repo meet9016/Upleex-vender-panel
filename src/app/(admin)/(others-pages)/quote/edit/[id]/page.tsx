@@ -7,6 +7,7 @@ import { FiCalendar, FiImage, FiVideo, FiArrowLeft, FiX, FiLoader } from "react-
 import { toast } from "react-toastify";
 import SearchableDropdown from "@/components/common/SearchableDropdown"; 
 import Loader from "@/components/common/Loader";
+import DatePicker from "@/components/common/DatePicker"; // Import your DatePicker component
 
 const QuoteEditPage = () => {
   const params = useParams();
@@ -434,22 +435,18 @@ const QuoteEditPage = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Date Fields */}
+            {/* Date Fields - Updated with DatePicker */}
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   <FiCalendar className="text-blue-600" />
                   Start Date
                 </label>
-                <input
-                  type="date"
+                <DatePicker
                   value={formData.start_date}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                  disabled={!canAccessUploadFeatures()}
-                  className={`w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all ${
-                    !canAccessUploadFeatures() ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
-                  }`}
-                  required={canAccessUploadFeatures()}
+                  onChange={(date) => setFormData({ ...formData, start_date: date })}
+                  min={new Date().toISOString().split('T')[0]} // Optional: Set min date to today
+                  className={!canAccessUploadFeatures() ? 'opacity-50 cursor-not-allowed' : ''}
                 />
               </div>
 
@@ -458,15 +455,11 @@ const QuoteEditPage = () => {
                   <FiCalendar className="text-purple-600" />
                   End Date
                 </label>
-                <input
-                  type="date"
+                <DatePicker
                   value={formData.end_date}
-                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                  disabled={!canAccessUploadFeatures()}
-                  className={`w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all ${
-                    !canAccessUploadFeatures() ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
-                  }`}
-                  required={canAccessUploadFeatures()}
+                  onChange={(date) => setFormData({ ...formData, end_date: date })}
+                  min={formData.start_date || new Date().toISOString().split('T')[0]} // Set min date to start date if available
+                  className={!canAccessUploadFeatures() ? 'opacity-50 cursor-not-allowed' : ''}
                 />
               </div>
             </div>
@@ -612,19 +605,19 @@ const QuoteEditPage = () => {
             </div>
 
             {/* Submit Button */}
-<button
-  type="submit"
-  disabled={submitting || !canAccessUploadFeatures()}
-  className={`w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 ${
-    (submitting || !canAccessUploadFeatures()) ? 'opacity-50 cursor-not-allowed' : ''
-  }`}
->
-  {submitting ? (
-    <Loader type="button" text="Submitting..." iconClassName="text-white" />
-  ) : (
-    'Submit Changes'
-  )}
-</button>
+            <button
+              type="submit"
+              disabled={submitting || !canAccessUploadFeatures()}
+              className={`w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 ${
+                (submitting || !canAccessUploadFeatures()) ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              {submitting ? (
+                <Loader type="button" text="Submitting..." iconClassName="text-white" />
+              ) : (
+                'Submit Changes'
+              )}
+            </button>
           </form>
         </div>
       </div>

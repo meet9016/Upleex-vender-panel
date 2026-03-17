@@ -172,19 +172,19 @@ const ProductTable = () => {
       field: "category_name",
       headerName: "Category",
       minWidth: 180,
-      cellStyle: { textAlign: "center" }
+      cellStyle: { textAlign: "left" }
     },
     {
       field: "sub_category_name",
       headerName: "Sub Category",
       minWidth: 180,
-      cellStyle: { textAlign: "center" }
+      cellStyle: { textAlign: "left" }
     },
     {
       field: "product_type_name",
       headerName: "Type",
       minWidth: 120,
-      cellStyle: { textAlign: "center" }
+      cellStyle: { textAlign: "left" }
     },
     {
       field: "price",
@@ -193,7 +193,7 @@ const ProductTable = () => {
       valueFormatter: (params) => {
         return params.value ? `₹${Number(params.value).toFixed(2)}` : '₹0.00';
       },
-      cellStyle: { textAlign: "center" }
+      cellStyle: { textAlign: "left" }
     },
     {
       field: "cancel_price",
@@ -202,13 +202,13 @@ const ProductTable = () => {
       valueFormatter: (params) => {
         return params.value ? `₹${Number(params.value).toFixed(2)}` : '₹0.00';
       },
-      cellStyle: { textAlign: "center" }
+      cellStyle: { textAlign: "left" }
     },
     {
       field: "product_listing_type_name",
       headerName: "Listing Type",
       minWidth: 150,
-      cellStyle: { textAlign: "center" }
+      cellStyle: { textAlign: "left" }
     },
     {
       headerName: "Approval Status by Admin",
@@ -220,7 +220,7 @@ const ProductTable = () => {
           <StatusBadge status={params.value || 'active'} />
         </div>
       ),
-      cellStyle: { justifyContent: "center" }
+      cellStyle: { justifyContent: "left" }
     },
     {
       field: "status",
@@ -231,19 +231,20 @@ const ProductTable = () => {
           <StatusBadge status={params.value || 'active'} />
         </div>
       ),
-      cellStyle: { justifyContent: "center" }
+      cellStyle: { justifyContent: "left" }
     },
     {
       field: "expires_at",
       headerName: "Expires On",
       minWidth: 140,
       valueFormatter: (p) => p.value ? new Date(p.value).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-',
-      cellStyle: { textAlign: "center" }
+      cellStyle: { textAlign: "left" }
     },
     {
       headerName: "Action",
       minWidth: 120,
-      cellStyle: { textAlign: "center" },
+       suppressHeaderMenuButton: true,
+      cellStyle: { textAlign: "left" },
       cellRenderer: (params: any) => (
         <ActionButtons
           onEdit={() => router.push(`/product/addProduct?id=${params.data._id || params.data.id}`)}
