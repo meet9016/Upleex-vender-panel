@@ -839,7 +839,7 @@ export default function AddProductPage() {
                             }}
                         />
                         {validationErrors.category && (
-                            <p className="text-error text-xs mt-1">{validationErrors.category}</p>
+                            <p className="error-message">{validationErrors.category}</p>
                         )}
                     </div>
 
@@ -859,7 +859,7 @@ export default function AddProductPage() {
                             }}
                         />
                         {validationErrors.subCategory && (
-                            <p className="text-error text-xs mt-1">
+                            <p className="error-message">
                                 {validationErrors.subCategory}
                             </p>
                         )}
@@ -930,7 +930,7 @@ export default function AddProductPage() {
                         />
 
                         {validationErrors.listingType && (
-                            <p className="text-error text-xs mt-1">
+                            <p className="error-message">
                                 {validationErrors.listingType}
                             </p>
                         )}
@@ -948,7 +948,7 @@ export default function AddProductPage() {
                                 className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                             />
                             {validationErrors.name && (
-                                <span className="mt-1 text-xs text-error">
+                                <span className="error-message">
                                     {validationErrors.name}
                                 </span>
                             )}
@@ -989,7 +989,7 @@ export default function AddProductPage() {
                                 />
                             </div>
                             {validationErrors.billingType && (
-                                <p className="text-error text-xs mt-1">{validationErrors.billingType}</p>
+                                <p className="error-message">{validationErrors.billingType}</p>
                             )}
                         </div>
                     )}
@@ -1008,7 +1008,7 @@ export default function AddProductPage() {
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
                                 {validationErrors.dayPrice && (
-                                    <p className="mt-1 text-xs text-error">
+                                    <p className="error-message">
                                         {validationErrors.dayPrice}
                                     </p>
                                 )}
@@ -1025,7 +1025,7 @@ export default function AddProductPage() {
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
                                 {validationErrors.dayCancelPrice && (
-                                    <p className="mt-1 text-xs text-error">
+                                    <p className="error-message">
                                         {validationErrors.dayCancelPrice}
                                     </p>
                                 )}
@@ -1047,7 +1047,7 @@ export default function AddProductPage() {
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
                                 {validationErrors.hourlyPrice && (
-                                    <p className="mt-1 text-xs text-error">
+                                    <p className="error-message">
                                         {validationErrors.hourlyPrice}
                                     </p>
                                 )}
@@ -1064,7 +1064,7 @@ export default function AddProductPage() {
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
                                 {validationErrors.hourlyCancelPrice && (
-                                    <p className="mt-1 text-xs text-error">
+                                    <p className="error-message">
                                         {validationErrors.hourlyCancelPrice}
                                     </p>
                                 )}
@@ -1179,7 +1179,7 @@ export default function AddProductPage() {
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
                                 {validationErrors.monthPrice && (
-                                    <p className="mt-1 text-xs text-error">
+                                    <p className="error-message">
                                         {validationErrors.monthPrice}
                                     </p>
                                 )}
@@ -1196,7 +1196,7 @@ export default function AddProductPage() {
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
                                 {validationErrors.monthCancelPrice && (
-                                    <p className="mt-1 text-xs text-error">
+                                    <p className="error-message">
                                         {validationErrors.monthCancelPrice}
                                     </p>
                                 )}
@@ -1245,7 +1245,7 @@ export default function AddProductPage() {
                         </div>
 
                         {validationErrors.description && (
-                            <p className="text-error text-xs mt-1">{validationErrors.description}</p>
+                            <p className="error-message">{validationErrors.description}</p>
                         )}
                     </div>
 
@@ -1348,7 +1348,7 @@ export default function AddProductPage() {
                         </div>
 
                         {validationErrors.mainImage && (
-                            <p className="text-error text-xs mt-1">{validationErrors.mainImage}</p>
+                            <p className="error-message">{validationErrors.mainImage}</p>
                         )}
                     </div>
 

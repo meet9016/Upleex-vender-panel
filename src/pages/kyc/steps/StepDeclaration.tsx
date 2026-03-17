@@ -21,12 +21,12 @@ export default function StepDeclaration({
       <label className="flex items-center gap-2 dark:text-white">
         <input
           type="checkbox"
-          checked={KYCformData?.terms_conditions === 1}
+          checked={KYCformData?.terms_conditions === true}
           onChange={(e) => {
              clearError("terms_conditions")
             setKYCFormData((prev) => ({
               ...prev,
-              terms_conditions: e.target.checked ? 1 : 0,
+              terms_conditions: e.target.checked,
             }));
           }}
 
@@ -35,7 +35,7 @@ export default function StepDeclaration({
       </label>
 
       {errors?.terms_conditions && (
-        <p className="mt-1 text-sm text-error">
+        <p className="error-message">
           {errors.terms_conditions}
         </p>
       )}

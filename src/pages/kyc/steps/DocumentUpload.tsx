@@ -188,7 +188,7 @@ export default function DocumentUpload({
         </div>
       )}
 
-      {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
+      {error && <p className="error-message">{error}</p>}
 
       {showModal && preview && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[99999] p-4">

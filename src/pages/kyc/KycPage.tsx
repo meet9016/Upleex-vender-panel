@@ -51,7 +51,7 @@ export type KycFormDataType = {
   gst_certificate_image: File | string | null;
   vendor_image: File | string | null;
   business_logo_image: File | string | null;
-  terms_conditions: number;
+  terms_conditions: boolean;
   completed_pages: string[];
 };
 
@@ -101,7 +101,7 @@ export default function KYCPage() {
     gst_certificate_image: null,
     vendor_image: null,
     business_logo_image: null,
-    terms_conditions: 0,
+    terms_conditions: false,
     completed_pages: [],
   });
   console.log("KYCPage Rendered with KYCformData:", KYCformData);
@@ -277,9 +277,9 @@ export default function KYCPage() {
       }
     }
 
-    // Step 4 ─ Declaration (actualStep 4)
-    else if (actualStep === 4) {
-      if (KYCformData.terms_conditions !== 1) {
+    // Step 4 ─ Declaration
+    else if (currentStep === 4) {
+      if (!KYCformData.terms_conditions) {
         newErrors.terms_conditions = "Please accept the declaration";
       }
     }
@@ -347,8 +347,17 @@ export default function KYCPage() {
           formData.append("business_logo_image", KYCformData.business_logo_image);
 
         formData.append("Documents", JSON.stringify([{ page: "4" }]));
-      } else if (actualStep === 4) {
-        formData.append("terms_conditions", "1");
+      } else if (currentStep === 4) {
+        // For declaration step, send the terms_conditions value
+        // FIX: Send as a structured object like other steps
+        const declaration = {
+          terms_conditions: KYCformData.terms_conditions,
+          page: "5" // or "4" depending on your page numbering
+        };
+        formData.append("Declaration", JSON.stringify([declaration]));
+        
+        // Also keep the direct field for backward compatibility
+        formData.append("terms_conditions", String(KYCformData.terms_conditions));
       }
 
       const res = await api.post(`${endPointApi.postVendorKYCFormSubmit}`, formData, {
@@ -357,7 +366,17 @@ export default function KYCPage() {
 
       if (res.data.status === 200) {
         await fetchKYCFormdata();
-        toast.success(res.data.message || "Saved successfully");
+        
+        // Show success message with page name
+        const pageNames = [
+          "Contact Details",
+          "Identity", 
+          "Bank Details",
+          "Documents",
+          "Declaration"
+        ];
+        const currentPageName = pageNames[currentStep] || "Page";
+        toast.success(`${currentPageName} saved successfully!`);
 
         if (currentStep < steps.length - 1) {
           setCurrentStep((s) => s + 1);
@@ -443,7 +462,8 @@ export default function KYCPage() {
           business_logo_image: docs.business_logo_image || null,
 
           completed_pages: data.completed_pages || [],
-          terms_conditions: data.terms_conditions || 0,
+          // Handle terms_conditions from root level of response
+          terms_conditions: data.terms_conditions !== undefined ? data.terms_conditions : prev.terms_conditions,
         }));
 
         // If user has completed any pages or has terms accepted, it's "edit time"

@@ -79,7 +79,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
                 }}
               />
               {errors?.account_holder_name && (
-                <p className="mt-1 text-sm text-error-500">{errors.account_holder_name}</p>
+                <p className="error-message">{errors.account_holder_name}</p>
               )}
             </div>
           </div>
@@ -104,7 +104,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
                 }}
               />
               {errors?.account_number && (
-                <p className="mt-1 text-sm text-error-500">{errors.account_number}</p>
+                <p className="error-message">{errors.account_number}</p>
               )}
             </div>
           </div>
@@ -129,7 +129,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
                 }}
               />
               {errors?.confirm_account_number && (
-                <p className="mt-1 text-sm text-error-500">{errors.confirm_account_number}</p>
+                <p className="error-message">{errors.confirm_account_number}</p>
               )}
             </div>
           </div>
@@ -154,7 +154,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
                 }}
               />
               {errors?.ifsc_code && (
-                <p className="mt-1 text-sm text-error-500">{errors.ifsc_code}</p>
+                <p className="error-message">{errors.ifsc_code}</p>
               )}
             </div>
           </div>
@@ -183,7 +183,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
             </div>
 
             {errors?.account_type && (
-              <p className="mt-1 text-sm text-error-500">
+              <p className="error-message">
                 {errors.account_type}
               </p>
             )}

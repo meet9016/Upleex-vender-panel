@@ -107,12 +107,14 @@ export default function SignUpForm() {
       if (formData.mobile.length < 10) e.mobile = "Enter a valid 10-digit mobile number";
       if (!formData.city.trim()) e.city = "City is required";
       // if (!formData.password.trim() || formData.password.length < 6) e.password = "Password must be at least 6 characters";
-      if (!isChecked) {
-        toast.error("Please accept the Terms and Privacy Policy");
-        return;
-      }
+      
       if (Object.keys(e).length > 0) {
         setErrors(prev => ({ ...prev, ...e }));
+        return;
+      }
+      
+      if (!isChecked) {
+        toast.error("Please accept the Terms and Privacy Policy");
         return;
       }
       await handleSendOtp();
@@ -138,8 +140,25 @@ export default function SignUpForm() {
         const message = res?.data?.message || "Registered successfully";
 
         if (status === 200) {
+          // Backend now returns auth_token using generateAuthTokens
+          const authToken = res?.data?.data?.auth_token || res?.data?.data?.token;
+          const vendor = res?.data?.data?.vendor;
+          
+          console.log('Auth token:', authToken);
+          console.log('Vendor data:', vendor);
+          
+          if (authToken) {
+            localStorage.setItem('auth_token', authToken);
+            console.log('Auth token stored successfully');
+          }
+          
+          if (vendor) {
+            localStorage.setItem('user_info', JSON.stringify(vendor));
+            console.log('User info stored successfully');
+          }
+          
           toast.success(message);
-          // Redirect to KYC page for new vendors
+          // Now redirect to KYC page with proper authentication
           router.push("/kyc");
         } else {
           toast.error(message);
@@ -201,14 +220,15 @@ export default function SignUpForm() {
                   name="fname"
                   value={formData.fname}
                   onChange={(e) => {
-                    handleChange(e);
-                    if (e.target.value.trim()) setErrors(prev => ({ ...prev, fname: '' }));
+                    const value = e.target.value.replace(/[^a-zA-Z\s]/g, ''); // Only allow letters and spaces
+                    setFormData(prev => ({ ...prev, fname: value }));
+                    if (value.trim()) setErrors(prev => ({ ...prev, fname: '' }));
                   }}
                   placeholder="Enter your first name"
                   className="mt-1"
                   error={!!errors.fname}
                 />
-                {errors.fname && <p className="text-red-600 text-sm mt-1">{errors.fname}</p>}
+                {errors.fname && <p className="error-message">{errors.fname}</p>}
               </div>
 
               <div>
@@ -218,14 +238,15 @@ export default function SignUpForm() {
                   name="lname"
                   value={formData.lname}
                   onChange={(e) => {
-                    handleChange(e);
-                    if (e.target.value.trim()) setErrors(prev => ({ ...prev, lname: '' }));
+                    const value = e.target.value.replace(/[^a-zA-Z\s]/g, ''); // Only allow letters and spaces
+                    setFormData(prev => ({ ...prev, lname: value }));
+                    if (value.trim()) setErrors(prev => ({ ...prev, lname: '' }));
                   }}
                   placeholder="Enter your last name"
                   className="mt-1"
                   error={!!errors.lname}
                 />
-                {errors.lname && <p className="text-red-600 text-sm mt-1">{errors.lname}</p>}
+                {errors.lname && <p className="error-message">{errors.lname}</p>}
               </div>
             </div>
 
@@ -244,7 +265,7 @@ export default function SignUpForm() {
                 className="mt-1"
                 error={!!errors.businessName}
               />
-              {errors.businessName && <p className="text-red-600 text-sm mt-1">{errors.businessName}</p>}
+              {errors.businessName && <p className="error-message">{errors.businessName}</p>}
             </div>
 
             {/* Email */}
@@ -262,7 +283,7 @@ export default function SignUpForm() {
                 className="mt-1"
                 error={!!errors.email}
               />
-              {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
+              {errors.email && <p className="error-message">{errors.email}</p>}
             </div>
 
             {/* Mobile Numbers */}
@@ -287,7 +308,7 @@ export default function SignUpForm() {
                     error={!!errors.mobile}
                   />
                 </div>
-                {errors.mobile && <p className="text-red-600 text-sm mt-1">{errors.mobile}</p>}
+                {errors.mobile && <p className="error-message">{errors.mobile}</p>}
               </div>
 
               <div>
@@ -326,7 +347,7 @@ export default function SignUpForm() {
                 className="mt-1"
                 error={!!errors.city}
               />
-              {errors.city && <p className="text-red-600 text-sm mt-1">{errors.city}</p>}
+              {errors.city && <p className="error-message">{errors.city}</p>}
             </div>
 
             {/* Password */}
@@ -384,12 +405,12 @@ export default function SignUpForm() {
                     renderInput={(props) => (
                       <input
                         {...props}
-                        className={`${errors.otp ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:border-[#4F46E5] focus:ring-[#4F46E5]/20'} h-10 !w-10 rounded-lg bg-slate-50 dark:bg-gray-800 text-center text-base font-medium text-slate-900 dark:text-white outline-none transition-all`}
+                        className={`${errors.otp ? 'border-2 border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-2 border-slate-300 focus:border-[#4F46E5] focus:ring-[#4F46E5]/20'} h-12 !w-12 rounded-lg bg-slate-50 dark:bg-gray-800 text-center text-base font-medium text-slate-900 dark:text-white outline-none transition-all`}
                       />
                     )}
                   />
                 </div>
-                {errors.otp && <p className="text-red-600 text-sm mt-1">{errors.otp}</p>}
+                {errors.otp && <p className="error-message">{errors.otp}</p>}
               </div>
             )}
 

@@ -314,7 +314,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             }}
           />
           {errors?.full_name && (
-            <p className="mt-1 text-sm text-error">{errors.full_name}</p>
+            <p className="error-message">{errors.full_name}</p>
           )}
         </div>
 
@@ -339,7 +339,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               error={!!errors?.mobile}
           />
           {errors?.mobile && (
-            <p className="mt-1 text-sm text-error">{errors.mobile}</p>
+            <p className="error-message">{errors.mobile}</p>
           )}
         </div>
 
@@ -384,7 +384,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           />
 
           {errors?.email && (
-            <p className="mt-1 text-sm text-error">{errors.email}</p>
+            <p className="error-message">{errors.email}</p>
           )}
         </div>
 
@@ -405,7 +405,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               error={!!errors?.address}
           />
           {errors?.address && (
-            <p className="mt-1 text-sm text-error">{errors.address}</p>
+            <p className="error-message">{errors.address}</p>
           )}
         </div>
 
@@ -439,7 +439,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             footer={hasMoreCountries && loadingCountries ? <div className="px-4 py-3 text-center text-sm text-gray-400">Loading…</div> : null}
           />
           {errors?.country_id && (
-            <p className="mt-1 text-sm text-error">{errors.country_id}</p>
+            <p className="error-message">{errors.country_id}</p>
           )}
         </div>
 
@@ -473,7 +473,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             footer={hasMoreStates && loadingStates ? <div className="px-4 py-3 text-center text-sm text-gray-400">Loading…</div> : null}
           />
           {errors?.state_id && (
-            <p className="mt-1 text-sm text-error">{errors.state_id}</p>
+            <p className="error-message">{errors.state_id}</p>
           )}
         </div>
 
@@ -507,7 +507,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             footer={hasMoreCities && loadingCities ? <div className="px-4 py-3 text-center text-sm text-gray-400">Loading…</div> : null}
           />
           {errors?.city_id && (
-            <p className="mt-1 text-sm text-error">{errors.city_id}</p>
+            <p className="error-message">{errors.city_id}</p>
           )}
         </div>
 
@@ -532,7 +532,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               error={!!errors?.pincode}
           />
           {errors?.pincode && (
-            <p className="mt-1 text-sm text-error">{errors.pincode}</p>
+            <p className="error-message">{errors.pincode}</p>
           )}
         </div>
       </div>

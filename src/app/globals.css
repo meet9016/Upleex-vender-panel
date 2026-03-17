@@ -921,6 +921,16 @@ span.flatpickr-weekday,
 
 .text-error {
   color: var(--color-error-600);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Error message styling for all forms */
+.error-message {
+  color: var(--color-error-500);
+  font-size: 14px;
+  font-weight: 400;
+  margin-top: 4px;
 }
 
 /* Add to your global CSS */
