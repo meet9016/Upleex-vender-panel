@@ -10,7 +10,7 @@ import { api } from '@/utils/axiosInstance';
 import endPointApi from '@/utils/endPointApi';
 import ConfirmDeleteModal from '@/components/common/ConfirmDeleteModal';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
-import { CiFilter } from "react-icons/ci";
+import { CiFilter, CiWarning } from "react-icons/ci";
 import { toast } from 'react-toastify';
 import SearchableDropdown from '@/components/common/SearchableDropdown';
 import Label from '@/components/form/Label';
@@ -19,6 +19,9 @@ import { Modal } from '@/components/ui/modal';
 import Loader from '@/components/common/Loader';
 import { exportProductsToExcel, exportProductsToPDF } from '@/utils/exportUtils';
 import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
+import PlanSelectionDialog from '@/components/common/PlanSelectionDialog';
+import Button from '@/components/ui/button/Button';
+
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -27,8 +30,10 @@ function useDebounce<T>(value: T, delay: number = 500): T {
   }, [value, delay]);
   return debouncedValue;
 }
+
 // ADD THIS at the top of your file (after imports)
 const DEFAULT_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Crect width=\'48\' height=\'48\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'24\' y=\'24\' font-family=\'Arial\' font-size=\'10\' fill=\'%23999\' text-anchor=\'middle\' dominant-baseline=\'middle\'%3ENo Image%3C/text%3E%3C/svg%3E';
+
 type Product = {
   id: string;
   product_name: string;
@@ -38,8 +43,11 @@ type Product = {
   cancel_price: string;
   product_listing_type_name: string;
   price: number;
-  product_main_image?: string;  // ADD THIS
+  product_main_image?: string;
   image?: string;
+  _id?: string;
+  status?: string;
+  expires_at?: string;
 };
 
 type Category = {
@@ -78,7 +86,9 @@ const ProductTable = () => {
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const [snoozeToday, setSnoozeToday] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
-
+  const [productsToActivate, setProductsToActivate] = useState<any[]>([]);
+  const [selectedExpiringProducts, setSelectedExpiringProducts] = useState<string[]>([]);
+const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
   // Filter dropdown data
   const [categoriesData, setCategoriesData] = useState<Category[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
@@ -89,6 +99,7 @@ const ProductTable = () => {
   const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+
   // ADD THESE helper functions inside your component, before the columns definition
   const isValidImageUrl = (url: string | undefined | null): boolean => {
     if (!url) return false;
@@ -102,6 +113,7 @@ const ProductTable = () => {
     const imageUrl = product?.product_main_image || product?.image || '';
     return isValidImageUrl(imageUrl) ? imageUrl : DEFAULT_PLACEHOLDER;
   };
+  
   // Applied filters (used for actual API calls)
   const [filters, setFilters] = useState({
     category_id: '',
@@ -136,12 +148,10 @@ const ProductTable = () => {
       field: "product_name",
       width: 240,
       sortable: true,
-      // REPLACE your existing cellRenderer with this fixed version
       cellRenderer: (params: any) => {
         const product = params.data;
-        const imageUrl = getImageUrl(product);  // Use the helper function
+        const imageUrl = getImageUrl(product);
         const productName = product?.product_name || "N/A";
-        const categoryName = product?.category_name || '';
 
         return (
           <div className="flex items-center gap-3 h-full">
@@ -151,12 +161,11 @@ const ProductTable = () => {
                 alt={productName}
                 className="w-14 h-14 object-cover rounded-lg border"
                 onError={(e: any) => {
-                  // Only change to placeholder if current src is not already placeholder
                   if (e.target.src !== DEFAULT_PLACEHOLDER) {
                     e.target.src = DEFAULT_PLACEHOLDER;
                   }
                 }}
-                loading="lazy"  // Add for performance
+                loading="lazy"
               />
             </div>
             <div className="flex flex-col">
@@ -306,6 +315,7 @@ const ProductTable = () => {
       });
 
       setProductData(normalized);
+      
       // Compute expiring within 3 days (active only)
       try {
         const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
@@ -355,6 +365,23 @@ const ProductTable = () => {
     }, 60000);
     return () => clearInterval(interval);
   }, [productData]);
+
+  // Toggle product selection in expiry modal
+const toggleExpiringProduct = (productId: string) => {
+  setSelectedExpiringProducts(prev => 
+    prev.includes(productId) 
+      ? prev.filter(id => id !== productId)
+      : [...prev, productId]
+  );
+};
+
+// Add useEffect to handle single product activation
+useEffect(() => {
+  if (singleProductActivate) {
+    setProductsToActivate([singleProductActivate]);
+    setSingleProductActivate(null);
+  }
+}, [singleProductActivate]);
 
   // Fetch categories
   const fetchCategories = async () => {
@@ -616,51 +643,63 @@ const ProductTable = () => {
     }
   };
 
+  // Add this function to handle applying plans from expiry modal
+  const applyPlanFromExpiry = async (plan_type: "basic" | "standard" | "premium" | "custom", months?: number, max_products?: number, plan_id?: string) => {
+    try {
+      const ids = productsToActivate.map((r) => r._id || r.id);
+      if (!ids.length) {
+        toast.info("No products to activate");
+        return;
+      }
+      
+      const body: any = { 
+        plan_type: String(plan_type).toLowerCase(), 
+        product_ids: ids 
+      };
+      
+      if (plan_id) body.plan_id = plan_id;
+      if (plan_type === "custom") {
+        body.months = months;
+        body.max_products = max_products;
+      }
+      
+      await api.post(endPointApi.postCreateListingPlan, body);
+      toast.success("Plan applied successfully! Selected products activated.");
+      
+      // Refresh the product data
+      getProductData();
+      
+      // Close both modals
+      setShowPlanDialog(false);
+      setExpiryModalOpen(false);
+      setProductsToActivate([]);
+      
+    } catch (error) {
+      console.error("Error applying plan:", error);
+      toast.error("Failed to apply plan");
+    }
+  };
+
+  // Update the "Activate Plans" button handler in your expiry modal
+  const handleActivatePlans = () => {
+    if (snoozeToday) {
+      const today = new Date().toISOString().slice(0, 10);
+      localStorage.setItem('expiry_modal_snooze', today);
+    }
+    
+    // Set the products to activate (expiring products)
+    setProductsToActivate(expiringProducts);
+    
+    // Close expiry modal and open plan selection dialog
+    setExpiryModalOpen(false);
+    setShowPlanDialog(true);
+  };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Products</h2>
         <div className="flex items-center gap-3">
-          {/* Bulk Actions */}
-          {/* <button
-            onClick={async () => {
-              try {
-                const ids = selectedRows.map((r: any) => r._id || r.id);
-                if (!ids.length) {
-                  toast.info("Select products to deactivate");
-                  return;
-                }
-                const res = await api.post(endPointApi.postBulkDeactivateProducts, { product_ids: ids });
-                toast.success("Selected products deactivated");
-                getProductData();
-              } catch (e) {
-                toast.error("Failed to deactivate selected");
-              }
-            }}
-            className="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors text-sm"
-          >
-            Deactivate Selected
-          </button>
-          <button
-            onClick={async () => {
-              try {
-                const ids = selectedRows.map((r: any) => r._id || r.id);
-                if (!ids.length) {
-                  toast.info("Select products to delete");
-                  return;
-                }
-                const res = await api.post(endPointApi.postBulkDeleteProducts, { product_ids: ids });
-                toast.success("Selected products deleted");
-                getProductData();
-              } catch (e) {
-                toast.error("Failed to delete selected");
-              }
-            }}
-            className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
-          >
-            Delete Selected
-          </button> */}
           {/* Search Input */}
           <div className="relative">
             <input
@@ -836,7 +875,7 @@ const ProductTable = () => {
           <div className="relative" ref={actionsMenuRef}>
             <button
               onClick={() => setShowActionsMenu((v) => !v)}
-              className="px-3 py-1 hover:bg-gray-200  border-2 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium flex items-center gap-2"
+              className="px-3 py-1 hover:bg-gray-200 border-2 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium flex items-center gap-2"
               title="More actions"
             >
               <MdMoreVert className="text-lg" />
@@ -856,7 +895,7 @@ const ProductTable = () => {
                   onClick={() => openBulkAction("deactivate")}
                   className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                 >
-                  <div className="flex items-center gap-2  text-yellow-600">
+                  <div className="flex items-center gap-2 text-yellow-600">
                     <MdBlock className="text-base" />
                     <span>Deactivate</span>
                   </div>
@@ -892,7 +931,8 @@ const ProductTable = () => {
                   <HiOutlineDocumentText className="text-base" />
                   <span>View Drafts</span>
                 </button>
-                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 ">
+                
+                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Export</span>
                 </div>
 
@@ -950,43 +990,124 @@ const ProductTable = () => {
         onCancel={() => setBulkAction({ type: null, open: false })}
         loading={loading}
       />
+      
       {/* Expiry Warning Modal */}
       <Modal
         isOpen={expiryModalOpen}
         onClose={() => setExpiryModalOpen(false)}
-        className="max-w-xl p-6"
+        className="max-w-2xl p-0 overflow-hidden"
         showCloseButton
       >
-        <div className="space-y-3">
-          <div className="px-6 pt-6">
-            <h3 className="text-lg font-semibold text-gray-900">Your listings are expiring soon</h3>
+        <div className="space-y-0">
+          {/* Header */}
+          <div className="px-6 pt-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                <CiWarning className="text-yellow-600 dark:text-yellow-400 text-xl" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Your listings are expiring soon
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                  {expiringProducts.length} product{expiringProducts.length > 1 ? 's' : ''} will move to Draft in less than 3 days
+                </p>
+              </div>
+            </div>
           </div>
-          <p className="text-sm text-gray-600">
-            The following products will move to Draft in less than 3 days. Apply a plan to keep them active.
-          </p>
-          <ul className="space-y-2">
-            {expiringProducts.slice(0, 5).map((p: any) => (
-              <li key={p._id || p.id} className="flex items-center justify-between">
-                <span className="text-sm font-medium">{p.product_name}</span>
-                <span className="text-xs text-gray-500">Expires: {p.expires_at ? new Date(p.expires_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}</span>
-              </li>
-            ))}
-          </ul>
-          {expiringProducts.length > 5 && (
-            <p className="text-xs text-gray-500">+{expiringProducts.length - 5} more</p>
-          )}
-          <div className="flex items-center gap-2 px-1">
-            <input
-              type="checkbox"
-              id="snoozeToday"
-              checked={snoozeToday}
-              onChange={(e) => setSnoozeToday(e.target.checked)}
-            />
-            <label htmlFor="snoozeToday" className="text-xs text-gray-600">
-              Don’t show again today
-            </label>
+
+          {/* Products List with Selection */}
+          <div className="p-6">
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <Label className="font-semibold text-gray-700 dark:text-gray-300">
+                  Select products to activate
+                </Label>
+                <button
+                  onClick={() => {
+                    const allIds = expiringProducts.map(p => p._id || p.id);
+                    setSelectedExpiringProducts(
+                      selectedExpiringProducts.length === expiringProducts.length 
+                        ? [] 
+                        : expiringProducts.map(p => p._id || p.id)
+                    );
+                  }}
+                  className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium"
+                >
+                  {selectedExpiringProducts.length === expiringProducts.length ? 'Deselect All' : 'Select All'}
+                </button>
+              </div>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2">
+                {expiringProducts.map((p: any) => {
+                  const productId = p._id || p.id;
+                  const isSelected = selectedExpiringProducts.includes(productId);
+                  return (
+                    <div
+                      key={productId}
+                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
+                        isSelected 
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500' 
+                          : 'bg-gray-50 dark:bg-gray-800/50 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                      }`}
+                      onClick={() => toggleExpiringProduct(productId)}
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleExpiringProduct(productId)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-800 dark:text-white">
+                            {p.product_name}
+                          </p>
+                          <div className="flex items-center gap-4 mt-1">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              Expires: {p.expires_at ? new Date(p.expires_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}
+                            </span>
+                            <span className="text-xs font-medium text-red-600 dark:text-red-400">
+                              {Math.ceil((new Date(p.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days left
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSingleProductActivate(p);
+                          setExpiryModalOpen(false);
+                          setShowPlanDialog(true);
+                        }}
+                        className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                      >
+                        Activate
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Snooze Option */}
+            <div className="flex items-center gap-2 px-1 py-3 border-t border-gray-200 dark:border-gray-700">
+              <input
+                type="checkbox"
+                id="snoozeToday"
+                checked={snoozeToday}
+                onChange={(e) => setSnoozeToday(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+              />
+              <label htmlFor="snoozeToday" className="text-sm text-gray-600 dark:text-gray-400">
+                Don’t show again today
+              </label>
+            </div>
           </div>
-          <div className="flex gap-2 pt-2">
+
+          {/* Footer Actions */}
+          <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <button
               onClick={() => {
                 if (snoozeToday) {
@@ -995,26 +1116,52 @@ const ProductTable = () => {
                 }
                 setExpiryModalOpen(false);
               }}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
-              Later
+              Close
             </button>
-            <button
-              onClick={() => {
-                if (snoozeToday) {
-                  const today = new Date().toISOString().slice(0, 10);
-                  localStorage.setItem('expiry_modal_snooze', today);
-                }
-                setExpiryModalOpen(false);
-                router.push('/draft');
-              }}
-              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
-            >
-              Activate Plans
-            </button>
+            
+            <div className="flex gap-3">
+              <Button
+                onClick={() => {
+                  if (selectedExpiringProducts.length === 0) {
+                    toast.info("Please select at least one product to activate");
+                    return;
+                  }
+                  if (snoozeToday) {
+                    const today = new Date().toISOString().slice(0, 10);
+                    localStorage.setItem('expiry_modal_snooze', today);
+                  }
+                  
+                  // Get selected products
+                  const selectedProducts = expiringProducts.filter(p => 
+                    selectedExpiringProducts.includes(p._id || p.id)
+                  );
+                  setProductsToActivate(selectedProducts);
+                  setExpiryModalOpen(false);
+                  setShowPlanDialog(true);
+                }}
+                disabled={selectedExpiringProducts.length === 0}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Activate Selected ({selectedExpiringProducts.length})
+              </Button>
+            </div>
           </div>
         </div>
       </Modal>
+
+      {/* Plan Selection Dialog */}
+      <PlanSelectionDialog
+        isOpen={showPlanDialog}
+        onClose={() => {
+          setShowPlanDialog(false);
+          setProductsToActivate([]);
+        }}
+        selectedCount={productsToActivate.length}
+        onApplyPlan={applyPlanFromExpiry}
+        selectedProducts={productsToActivate}
+      />
     </div>
   )
 }
