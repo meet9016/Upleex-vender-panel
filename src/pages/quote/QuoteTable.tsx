@@ -295,7 +295,8 @@ const QuoteTable = () => {
     {
       headerName: "Actions",
       minWidth: 330,
-       suppressHeaderMenuButton: true,
+      pinned: 'right',
+      suppressHeaderMenuButton: true,
       cellRenderer: (params: any) => {
         const status = params.data?.status?.toLowerCase();
         const isApproved = status === 'approval' || status === 'approved';

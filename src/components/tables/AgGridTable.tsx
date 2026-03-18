@@ -99,6 +99,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
         headerName: "Action",
         width: 140,
         suppressSizeToFit: true,
+         pinned: "right",
         cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' },
         cellRenderer: (params: any) => {
           const id = params.data.id;

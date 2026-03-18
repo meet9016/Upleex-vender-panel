@@ -252,7 +252,8 @@ const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
     {
       headerName: "Action",
       minWidth: 120,
-       suppressHeaderMenuButton: true,
+      pinned: 'right',
+      suppressHeaderMenuButton: true,
       cellStyle: { textAlign: "left" },
       cellRenderer: (params: any) => (
         <ActionButtons
