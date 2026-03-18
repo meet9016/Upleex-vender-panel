@@ -1011,6 +1011,19 @@ span.flatpickr-weekday,
   width: 100% !important;
   height: 100% !important;
 }
+ /* Fix missing right border on active (focused) cell and ensure focus shadow is not clipped */
+  .ag-theme-alpine .ag-cell-focus,
+  .ag-theme-alpine-dark .ag-cell-focus {
+    z-index: 10 !important;
+    outline: none !important;
+    box-shadow: inset 0 0 0 1.5px #468be5 !important;
+    border-right: transparent !important;
+  }
+
+  .ag-theme-alpine .ag-cell-focus {
+    box-shadow: inset 0 0 0 1.5px #468be5 !important;
+  }
+
 
 .ag-selection-checkbox {
   display: flex !important;

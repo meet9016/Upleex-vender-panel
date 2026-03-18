@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { MdClose } from 'react-icons/md';
 import ActionButtons from '@/components/common/ActionButtons';
 import AgGridTable from '@/components/tables/AgGridTable';
+import { ColDef } from 'ag-grid-community';
 import ConfirmDeleteModal from '@/components/common/ConfirmDeleteModal';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import { api } from '@/utils/axiosInstance';
@@ -26,7 +27,7 @@ const DraftsPage = () => {
   const [plans, setPlans] = useState<any[]>([]);
   const [plansLoading, setPlansLoading] = useState(false);
 
-  const columns = [
+  const columns: ColDef[] = [
     {
       headerName: "Product Name",
       field: "product_name",
@@ -60,6 +61,8 @@ const DraftsPage = () => {
       field: "actions",
       flex: 1,
       minWidth: 250,
+      pinned: 'right',
+      
       cellRenderer: (params: any) => {
         return (
           <div className="flex gap-2 items-center h-full">
