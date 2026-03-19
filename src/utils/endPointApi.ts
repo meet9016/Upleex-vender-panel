@@ -15,6 +15,7 @@ export interface EndPointApi {
 
     postCategoryList: string;
     postSubCategoryList: string;
+    postServiceCategoryList: string;
     postProductDropDownList: string;
     postVendorAddProduct: string;
     postVendorProductDetails: string;
@@ -39,6 +40,13 @@ export interface EndPointApi {
     exportProductsPDF: string;
     exportQuotesExcel: string;
     exportQuotesPDF: string;
+
+    // Service
+    postVendorAddService: string;
+    postVendorServiceDetails: string;
+    updateVendorServiceDetails: string;
+    postAllVendorServiceList: string;
+    postDeleteVendorServiceList: string;
     }
 
 // Define and export the API endpoint object
@@ -61,6 +69,7 @@ const endPointApi: EndPointApi = {
     //Category 
     postCategoryList: 'categories/getall',
     postSubCategoryList: 'subcategories/getall',
+    postServiceCategoryList: 'service-categories/getall',
     postProductDropDownList: 'dropdowns',
     postVendorAddProduct: 'products/create-product',
     postVendorProductDetails: 'products/getById',
@@ -85,7 +94,14 @@ const endPointApi: EndPointApi = {
     exportProductsExcel: 'export/products/excel',
     exportProductsPDF: 'export/products/pdf',
     exportQuotesExcel: 'export/quotes/excel',
-    exportQuotesPDF: 'export/quotes/pdf'
+    exportQuotesPDF: 'export/quotes/pdf',
+
+    // Service
+    postVendorAddService: 'services/create-service',
+    postVendorServiceDetails: 'services/getById',
+    updateVendorServiceDetails: 'services/update',
+    postAllVendorServiceList: 'services/getall',
+    postDeleteVendorServiceList: 'services/delete',
 };
 
 export default endPointApi;

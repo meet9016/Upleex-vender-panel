@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
-import { CalenderIcon, GridIcon, HorizontaLDots } from "../icons/index";
+import { CalenderIcon, GridIcon, HorizontaLDots, TaskIcon } from "../icons/index";
 import { BsChatSquareQuote } from "react-icons/bs";
 import endPointApi from "@/utils/endPointApi";
 import { api } from "@/utils/axiosInstance";
@@ -19,6 +19,7 @@ const navItems: NavItem[] = [
   { icon: <GridIcon />, name: "Dashboard", path: "/" },
   { icon: <CalenderIcon />, name: "KYC", path: "/kyc" },
   { icon: <CalenderIcon />, name: "Product", path: "/product" },
+  { icon: <TaskIcon />, name: "Service", path: "/service" },
   { icon: <BsChatSquareQuote className="w-5 h-5" />, name: "Quote", path: "/quote" },
   { icon: <CalenderIcon />, name: "Purchased", path: "/purchasedproduct" },
   { icon: <CalenderIcon />, name: "Drafts", path: "/draft" },
