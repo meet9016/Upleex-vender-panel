@@ -11,8 +11,8 @@ import { FiFolder } from "react-icons/fi";
 interface DropzoneProps {
   preview: any;
   setPreview: any;
-  onFileSelect?: (files: File[]) => void;
-  onFileRemove?: () => void;
+  onFileSelect?: (files: File[], ids?: string[]) => void;
+  onFileRemove?: (id?: string) => void;
   multiple?: boolean;
   smallPreview?: boolean;
   maxFiles?: number;
@@ -51,28 +51,31 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
         if (acceptedFiles.length > remainingSlots) {
           toast.error(`Maximum limit is ${maxFiles} images.`);
           const filesToAdd = acceptedFiles.slice(0, remainingSlots);
+          const ids = filesToAdd.map((_, idx) => `temp_${Date.now()}_${idx}`);
           const newImages = filesToAdd.map((f, idx) => ({
-            product_image_id: `temp_${preview.length + idx}`,
+            product_image_id: ids[idx],
             image: URL.createObjectURL(f)
           }));
           setPreview((prev: any) => [...prev, ...newImages]);
-          onFileSelect?.(filesToAdd);
+          onFileSelect?.(filesToAdd, ids);
           return;
         }
+        const ids = acceptedFiles.map((_, idx) => `temp_${Date.now()}_${idx}`);
         const newImages = acceptedFiles.map((f, idx) => ({
-          product_image_id: `temp_${preview.length + idx}`,
+          product_image_id: ids[idx],
           image: URL.createObjectURL(f)
         }));
         setPreview((prev: any) => [...prev, ...newImages]);
-        onFileSelect?.(acceptedFiles);
+        onFileSelect?.(acceptedFiles, ids);
       } else {
         // No limit - original behavior
+        const ids = acceptedFiles.map((_, idx) => `temp_${Date.now()}_${idx}`);
         const newImages = acceptedFiles.map((f, idx) => ({
-          product_image_id: `temp_${preview.length + idx}`,
+          product_image_id: ids[idx],
           image: URL.createObjectURL(f)
         }));
         setPreview((prev: any) => [...prev, ...newImages]);
-        onFileSelect?.(acceptedFiles);
+        onFileSelect?.(acceptedFiles, ids);
       }
     }
   };
@@ -82,9 +85,8 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
   const removeImage = async (productImageId: string) => {
     setPreview((prev: any) => prev.filter((img: any) => img.product_image_id !== productImageId));
     // Notify parent to clear the file state
-    if (!multiple) {
-      onFileRemove?.();
-    }
+    onFileRemove?.(productImageId);
+
     if (isEditMode && productImageId && !productImageId.startsWith('temp_')) {
       try {
         const formdata = new FormData();
@@ -95,7 +97,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
       }
     }
   };
-  const isLimitReached = Boolean(maxFiles && preview.length >= maxFiles);
+  const isLimitReached = Boolean(maxFiles && preview && preview.length >= maxFiles);
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     multiple,
@@ -124,7 +126,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
       >
         <input {...getInputProps()} />
 
-        {preview.length > 0 && preview[0].image !== "" ? (
+        {preview && preview.length > 0 && preview[0].image !== "" ? (
           <div className="w-full ">
             { /* <!-- ======================================================  main Image  ====================================================== -->*/}
 
@@ -169,7 +171,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
 
             { /* <!-- ======================================================  Multiple Images  ====================================================== -->*/}
 
-            {multiple && (
+            {multiple && preview && (
               <div className={`
                 grid gap-4 w-full flex flex-row
                 ${smallPreview
@@ -177,7 +179,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                   : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2"
                 }
               `}>
-                {preview.filter((img: any) => img && img.image && img.image !== "").map((img: any, index: any) => (
+                {preview?.filter((img: any) => img && img.image && img.image !== "").map((img: any, index: any) => (
                   <div
                     key={index}
                     className="relative group/image aspect-square overflow-hidden rounded-xl 
@@ -225,7 +227,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-500 font-medium">
                   {maxFiles
-                    ? `Click or drag to add more images (${preview.length}/${maxFiles})`
+                    ? `Click or drag to add more images (${preview?.length || 0}/${maxFiles})`
                     : "Click or drag to add more images"
                   }
                 </p>

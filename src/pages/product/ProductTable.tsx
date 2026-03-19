@@ -85,7 +85,8 @@ const ProductTable = () => {
   const [expiringProducts, setExpiringProducts] = useState<any[]>([]);
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const [snoozeToday, setSnoozeToday] = useState(false);
-  const [exportLoading, setExportLoading] = useState(false);
+  const [excelLoading, setExcelLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [productsToActivate, setProductsToActivate] = useState<any[]>([]);
   const [selectedExpiringProducts, setSelectedExpiringProducts] = useState<string[]>([]);
 const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
@@ -596,7 +597,7 @@ useEffect(() => {
   // Export functions
   const handleExportExcel = async () => {
     try {
-      setExportLoading(true);
+      setExcelLoading(true);
       const params: any = {};
 
       // Add current filters to export
@@ -615,13 +616,13 @@ useEffect(() => {
     } catch (error: any) {
       toast.error(error.message || 'Failed to export products to Excel');
     } finally {
-      setExportLoading(false);
+      setExcelLoading(false);
     }
   };
 
   const handleExportPDF = async () => {
     try {
-      setExportLoading(true);
+      setPdfLoading(true);
       const params: any = {};
 
       // Add current filters to export
@@ -640,7 +641,7 @@ useEffect(() => {
     } catch (error: any) {
       toast.error(error.message || 'Failed to export products to PDF');
     } finally {
-      setExportLoading(false);
+      setPdfLoading(false);
     }
   };
 
@@ -940,23 +941,23 @@ useEffect(() => {
                 {/* Export to Excel */}
                 <button
                   onClick={handleExportExcel}
-                  disabled={exportLoading}
+                  disabled={excelLoading || pdfLoading}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 transition disabled:opacity-50"
                 >
                   <FaFileExcel className="text-green-600 text-base" />
                   <span>Export to Excel</span>
-                  {exportLoading && <Loader className="ml-auto text-green-600 w-4 h-4" />}
+                  {excelLoading && <Loader className="ml-auto text-green-600 w-4 h-4" />}
                 </button>
 
                 {/* Export to PDF */}
                 <button
                   onClick={handleExportPDF}
-                  disabled={exportLoading}
+                  disabled={excelLoading || pdfLoading}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-50"
                 >
                   <FaFilePdf className="text-red-600 text-base" />
                   <span>Export to PDF</span>
-                  {exportLoading && <Loader className="ml-auto text-red-600 w-4 h-4" />}
+                  {pdfLoading && <Loader className="ml-auto text-red-600 w-4 h-4" />}
                 </button>
               </div>
             )}
@@ -1125,27 +1126,33 @@ useEffect(() => {
             <div className="flex gap-3">
               <Button
                 onClick={() => {
-                  if (selectedExpiringProducts.length === 0) {
+                  if (selectedExpiringProducts.length === 0 && !snoozeToday) {
                     toast.info("Please select at least one product to activate");
                     return;
                   }
+                  
                   if (snoozeToday) {
                     const today = new Date().toISOString().slice(0, 10);
                     localStorage.setItem('expiry_modal_snooze', today);
                   }
                   
-                  // Get selected products
-                  const selectedProducts = expiringProducts.filter(p => 
-                    selectedExpiringProducts.includes(p._id || p.id)
-                  );
-                  setProductsToActivate(selectedProducts);
-                  setExpiryModalOpen(false);
-                  setShowPlanDialog(true);
+                  if (selectedExpiringProducts.length > 0) {
+                    const selectedProducts = expiringProducts.filter(p => 
+                      selectedExpiringProducts.includes(p._id || p.id)
+                    );
+                    setProductsToActivate(selectedProducts);
+                    setExpiryModalOpen(false);
+                    setShowPlanDialog(true);
+                  } else {
+                    setExpiryModalOpen(false);
+                  }
                 }}
-                disabled={selectedExpiringProducts.length === 0}
+                disabled={selectedExpiringProducts.length === 0 && !snoozeToday}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Activate Selected ({selectedExpiringProducts.length})
+                {selectedExpiringProducts.length > 0 
+                  ? `Activate Selected (${selectedExpiringProducts.length})` 
+                  : 'Confirm Snooze'}
               </Button>
             </div>
           </div>
