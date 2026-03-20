@@ -165,13 +165,13 @@ const ServiceTable = () => {
               placeholder="Search services..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-64"
+              className="pl-10 pr-4 py-1 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-64"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           </div>
           <button
             onClick={() => router.push('/service/addService')}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+            className="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
           >
             + Add Service
           </button>
