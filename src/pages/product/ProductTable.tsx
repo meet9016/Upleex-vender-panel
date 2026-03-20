@@ -89,7 +89,7 @@ const ProductTable = () => {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [productsToActivate, setProductsToActivate] = useState<any[]>([]);
   const [selectedExpiringProducts, setSelectedExpiringProducts] = useState<string[]>([]);
-const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
+  const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
   // Filter dropdown data
   const [categoriesData, setCategoriesData] = useState<Category[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
@@ -114,7 +114,7 @@ const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
     const imageUrl = product?.product_main_image || product?.image || '';
     return isValidImageUrl(imageUrl) ? imageUrl : DEFAULT_PLACEHOLDER;
   };
-  
+
   // Applied filters (used for actual API calls)
   const [filters, setFilters] = useState({
     category_id: '',
@@ -317,7 +317,7 @@ const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
       });
 
       setProductData(normalized);
-      
+
       // Compute expiring within 3 days (active only)
       try {
         const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
@@ -369,21 +369,21 @@ const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
   }, [productData]);
 
   // Toggle product selection in expiry modal
-const toggleExpiringProduct = (productId: string) => {
-  setSelectedExpiringProducts(prev => 
-    prev.includes(productId) 
-      ? prev.filter(id => id !== productId)
-      : [...prev, productId]
-  );
-};
+  const toggleExpiringProduct = (productId: string) => {
+    setSelectedExpiringProducts(prev =>
+      prev.includes(productId)
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
-// Add useEffect to handle single product activation
-useEffect(() => {
-  if (singleProductActivate) {
-    setProductsToActivate([singleProductActivate]);
-    setSingleProductActivate(null);
-  }
-}, [singleProductActivate]);
+  // Add useEffect to handle single product activation
+  useEffect(() => {
+    if (singleProductActivate) {
+      setProductsToActivate([singleProductActivate]);
+      setSingleProductActivate(null);
+    }
+  }, [singleProductActivate]);
 
   // Fetch categories
   const fetchCategories = async () => {
@@ -653,29 +653,29 @@ useEffect(() => {
         toast.info("No products to activate");
         return;
       }
-      
-      const body: any = { 
-        plan_type: String(plan_type).toLowerCase(), 
-        product_ids: ids 
+
+      const body: any = {
+        plan_type: String(plan_type).toLowerCase(),
+        product_ids: ids
       };
-      
+
       if (plan_id) body.plan_id = plan_id;
       if (plan_type === "custom") {
         body.months = months;
         body.max_products = max_products;
       }
-      
+
       await api.post(endPointApi.postCreateListingPlan, body);
       toast.success("Plan applied successfully! Selected products activated.");
-      
+
       // Refresh the product data
       getProductData();
-      
+
       // Close both modals
       setShowPlanDialog(false);
       setExpiryModalOpen(false);
       setProductsToActivate([]);
-      
+
     } catch (error) {
       console.error("Error applying plan:", error);
       toast.error("Failed to apply plan");
@@ -688,10 +688,10 @@ useEffect(() => {
       const today = new Date().toISOString().slice(0, 10);
       localStorage.setItem('expiry_modal_snooze', today);
     }
-    
+
     // Set the products to activate (expiring products)
     setProductsToActivate(expiringProducts);
-    
+
     // Close expiry modal and open plan selection dialog
     setExpiryModalOpen(false);
     setShowPlanDialog(true);
@@ -709,7 +709,7 @@ useEffect(() => {
               placeholder="Search products..."
               value={searchText}
               onChange={handleSearchChange}
-              className="pl-10 pr-4 py-1 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-64"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           </div>
@@ -726,7 +726,7 @@ useEffect(() => {
                 setPendingSubCategoryOptions(subCategoryOptions);
                 setShowFilterModal(!showFilterModal);
               }}
-              className="px-4 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2 relative"
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2 relative"
             >
               <CiFilter size={20} />
               Filter
@@ -834,15 +834,22 @@ useEffect(() => {
                   <div className="flex gap-2 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
                       onClick={() => {
+                        const hasActiveFilters = Object.values(filters).some(val => val !== '');
+                        const hadSearch = searchText !== '';
+
                         setPendingCategory('');
                         setPendingSubCategory('');
                         setPendingSubCategoryOptions([]);
                         setPendingFilters({ category_id: '', sub_category_id: '', filter_rent_sell: '', filter_tenure: '', status: '' });
-                        setSelectedCategory('');
-                        setSelectedSubCategory('');
-                        setSubCategoryOptions([]);
-                        setFilters({ category_id: '', sub_category_id: '', filter_rent_sell: '', filter_tenure: '', status: '' });
-                        setSearchText('');
+
+                        if (hasActiveFilters || hadSearch) {
+                          setSelectedCategory('');
+                          setSelectedSubCategory('');
+                          setSubCategoryOptions([]);
+                          setFilters({ category_id: '', sub_category_id: '', filter_rent_sell: '', filter_tenure: '', status: '' });
+                          setSearchText('');
+                        }
+
                         setShowFilterModal(false);
                       }}
                       className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -870,14 +877,14 @@ useEffect(() => {
           {/* Add Product Button */}
           <button
             onClick={() => router.push('/product/addProduct')}
-            className="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
           >
             + Add Product
           </button>
           <div className="relative" ref={actionsMenuRef}>
             <button
               onClick={() => setShowActionsMenu((v) => !v)}
-              className="px-3 py-1 hover:bg-gray-200 border-2 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium flex items-center gap-2"
+              className="px-3 py-2 hover:bg-gray-200 border-2 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium flex items-center gap-2"
               title="More actions"
             >
               <MdMoreVert className="text-lg" />
@@ -933,7 +940,7 @@ useEffect(() => {
                   <HiOutlineDocumentText className="text-base" />
                   <span>View Drafts</span>
                 </button>
-                
+
                 <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Export</span>
                 </div>
@@ -992,7 +999,7 @@ useEffect(() => {
         onCancel={() => setBulkAction({ type: null, open: false })}
         loading={loading}
       />
-      
+
       {/* Expiry Warning Modal */}
       <Modal
         isOpen={expiryModalOpen}
@@ -1029,8 +1036,8 @@ useEffect(() => {
                   onClick={() => {
                     const allIds = expiringProducts.map(p => p._id || p.id);
                     setSelectedExpiringProducts(
-                      selectedExpiringProducts.length === expiringProducts.length 
-                        ? [] 
+                      selectedExpiringProducts.length === expiringProducts.length
+                        ? []
                         : expiringProducts.map(p => p._id || p.id)
                     );
                   }}
@@ -1047,11 +1054,10 @@ useEffect(() => {
                   return (
                     <div
                       key={productId}
-                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
-                        isSelected 
-                          ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500' 
-                          : 'bg-gray-50 dark:bg-gray-800/50 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600'
-                      }`}
+                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${isSelected
+                        ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500'
+                        : 'bg-gray-50 dark:bg-gray-800/50 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                        }`}
                       onClick={() => toggleExpiringProduct(productId)}
                     >
                       <div className="flex items-center gap-3 flex-1">
@@ -1122,7 +1128,7 @@ useEffect(() => {
             >
               Close
             </button>
-            
+
             <div className="flex gap-3">
               <Button
                 onClick={() => {
@@ -1130,14 +1136,14 @@ useEffect(() => {
                     toast.info("Please select at least one product to activate");
                     return;
                   }
-                  
+
                   if (snoozeToday) {
                     const today = new Date().toISOString().slice(0, 10);
                     localStorage.setItem('expiry_modal_snooze', today);
                   }
-                  
+
                   if (selectedExpiringProducts.length > 0) {
-                    const selectedProducts = expiringProducts.filter(p => 
+                    const selectedProducts = expiringProducts.filter(p =>
                       selectedExpiringProducts.includes(p._id || p.id)
                     );
                     setProductsToActivate(selectedProducts);
@@ -1150,8 +1156,8 @@ useEffect(() => {
                 disabled={selectedExpiringProducts.length === 0 && !snoozeToday}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {selectedExpiringProducts.length > 0 
-                  ? `Activate Selected (${selectedExpiringProducts.length})` 
+                {selectedExpiringProducts.length > 0
+                  ? `Activate Selected (${selectedExpiringProducts.length})`
                   : 'Confirm Snooze'}
               </Button>
             </div>

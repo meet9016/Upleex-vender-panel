@@ -33,6 +33,22 @@ export default function DatePicker({
     }
   }, [isOpen, value]); // Reset when opening
 
+  // Reset value if it's less than min
+  useEffect(() => {
+    if (min && value) {
+      const currentDateVal = new Date(value);
+      const minDateVal = new Date(min);
+      
+      // Compare only dates, ignore time
+      currentDateVal.setHours(0, 0, 0, 0);
+      minDateVal.setHours(0, 0, 0, 0);
+      
+      if (currentDateVal < minDateVal && !isNaN(currentDateVal.getTime()) && !isNaN(minDateVal.getTime())) {
+        onChange(""); // Reset the date if it's before min
+      }
+    }
+  }, [min, value, onChange]);
+
   // Close on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
