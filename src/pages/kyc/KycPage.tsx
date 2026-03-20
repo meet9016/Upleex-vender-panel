@@ -60,10 +60,12 @@ export type ErrorType = {
 };
 
 export default function KYCPage() {
+  const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [errors, setErrors] = useState<ErrorType>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { filters, canFilter, setCanFilter } = useFilter();
+  const [isDataLoading, setIsDataLoading] = useState(true);
+  const { filters, setFilters, canFilter, setCanFilter } = useFilter();
 
   // Mode is locked once canFilter is false (edit mode)
   // If canFilter is true, we use the dropdown selection.
@@ -122,6 +124,15 @@ export default function KYCPage() {
     fetchKYCFormdata();
   }, []);
 
+  // Show modal if new vendor and no type selected
+  useEffect(() => {
+    if (!isDataLoading && canFilter && !filters.service && !filters.vendor) {
+      setIsTypeModalOpen(true);
+    } else {
+      setIsTypeModalOpen(false);
+    }
+  }, [canFilter, filters.service, filters.vendor, isDataLoading]);
+
   const clearError = (field: string | number) => {
     setErrors((prev) => {
       const newErrors = { ...prev };
@@ -140,7 +151,7 @@ export default function KYCPage() {
     const isOnlyLetters = (val: string) => /^[a-zA-Z\s]+$/.test(val);
     const isOnlyDigits = (val: string) => /^\d+$/.test(val);
     const isEmailValid = (val: string) =>
-      /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.(com|in)$/i.test(val);
+      /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.(com|in|org)$/i.test(val);
     const isMobileValid = (val: string) => /^[6-9]\d{9}$/.test(val);
     const isPANValid = (val: string) => /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(val);
     const isAadhaarValid = (val: string) => /^\d{4}\s?\d{4}\s?\d{4}$/.test(val);
@@ -160,7 +171,7 @@ export default function KYCPage() {
       if (isEmpty(KYCformData.email)) {
         newErrors.email = "Email is required";
       } else if (!isEmailValid(KYCformData.email)) {
-        newErrors.email = "Please enter a valid email (ending with .com or .in)";
+        newErrors.email = "Please enter a valid email (ending with .com or .in or .org)";
       }
 
       if (isEmpty(KYCformData.mobile)) {
@@ -296,6 +307,13 @@ export default function KYCPage() {
       formData.append("mobile", KYCformData.mobile);
       formData.append("email", KYCformData.email);
 
+      // Add vendor type and terms_conditions globally
+      let type = "both";
+      if (filters.service && !filters.vendor) type = "service";
+      else if (!filters.service && filters.vendor) type = "vendor";
+      formData.append("vendor_type", type);
+      formData.append("terms_conditions", String(KYCformData.terms_conditions));
+
       if (actualStep === 0) {
         const contact = {
           full_name: KYCformData.full_name,
@@ -348,16 +366,12 @@ export default function KYCPage() {
 
         formData.append("Documents", JSON.stringify([{ page: "4" }]));
       } else if (currentStep === 4) {
-        // For declaration step, send the terms_conditions value
-        // FIX: Send as a structured object like other steps
+        // For declaration step, send the structured object
         const declaration = {
           terms_conditions: KYCformData.terms_conditions,
-          page: "5" // or "4" depending on your page numbering
+          page: "5"
         };
         formData.append("Declaration", JSON.stringify([declaration]));
-
-        // Also keep the direct field for backward compatibility
-        formData.append("terms_conditions", String(KYCformData.terms_conditions));
       }
 
       const res = await api.post(`${endPointApi.postVendorKYCFormSubmit}`, formData, {
@@ -462,94 +476,183 @@ export default function KYCPage() {
           business_logo_image: docs.business_logo_image || null,
 
           completed_pages: data.completed_pages || [],
-          // Handle terms_conditions from root level of response
-          terms_conditions: data.terms_conditions !== undefined ? data.terms_conditions : prev.terms_conditions,
+          // Handle terms_conditions from root level of response or Declaration object
+          terms_conditions: data.terms_conditions !== undefined 
+            ? data.terms_conditions 
+            : (data.Declaration?.terms_conditions !== undefined ? data.Declaration.terms_conditions : prev.terms_conditions),
         }));
 
         // If user has completed any pages or has terms accepted, it's "edit time"
         const hasData = (data.completed_pages && data.completed_pages.length > 0) || data.id;
         if (hasData) {
           setCanFilter(false);
+          // Restore filters based on saved vendor_type if available
+          const savedType = data.vendor_type;
+          if (savedType) {
+            setFilters({
+              service: savedType === "service" || savedType === "both",
+              vendor: savedType === "vendor" || savedType === "both",
+            });
+          }
         }
       }
     } catch (err) {
       console.error("Fetch KYC error:", err);
+    } finally {
+      setIsDataLoading(false);
     }
   };
 
   return (
-    <ComponentCard title="KYC Verification">
-      <Stepper steps={steps} currentStep={currentStep} completedPages={KYCformData.completed_pages} onStepChange={handleStepChange} />
+    <div className="relative">
+      {/* Vendor Type Selection Modal */}
+      {isTypeModalOpen && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="p-8">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-7h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Select Business Type</h3>
+                <p className="text-gray-500 dark:text-gray-400">Please choose how you want to register on Upleex. This determines your onboarding steps.</p>
+              </div>
 
-      <div className="min-h-[400px] md:min-h-[520px]">
-        {/* Contact Details is always step 0 in both modes */}
-        {actualStep === 0 && (
-          <ContactDetails
-            setKYCFormData={setKYCFormData}
-            KYCformData={KYCformData}
-            errors={errors}
-            clearError={clearError}
-          />
-        )}
-        {/* The following steps only show in vendor/both mode */}
-        {actualStep === 1 && (
-          <Identity
-            setKYCFormData={setKYCFormData}
-            KYCformData={KYCformData}
-            errors={errors}
-            clearError={clearError}
-          />
-        )}
-        {actualStep === 2 && (
-          <BankDetails
-            setKYCFormData={setKYCFormData}
-            KYCformData={KYCformData}
-            errors={errors}
-            clearError={clearError}
-          />
-        )}
-        {actualStep === 3 && (
-          <Documents
-            setKYCFormData={setKYCFormData}
-            KYCformData={KYCformData}
-            errors={errors}
-            clearError={clearError}
-          />
-        )}
-        {/* Declaration is always the last step in both modes */}
-        {actualStep === 4 && (
-          <StepDeclaration
-            setKYCFormData={setKYCFormData}
-            KYCformData={KYCformData}
-            errors={errors}
-            clearError={clearError}
-          />
-        )}
-      </div>
+              <div className="grid gap-4">
+                <button
+                  onClick={() => {
+                    setFilters({ service: true, vendor: false });
+                    setIsTypeModalOpen(false);
+                  }}
+                  className="group flex items-center gap-4 p-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 text-left"
+                >
+                  <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 rounded-lg flex items-center justify-center transition-colors">
+                    <svg className="w-6 h-6 text-gray-500 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="block font-bold text-gray-900 dark:text-white">Service Provider</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Register as a company or individual offering services.</span>
+                  </div>
+                </button>
 
-      <div className={`flex ${currentStep === 0 ? 'justify-end' : 'justify-between'} mt-6 pt-4 border-t`}>
-        {currentStep > 0 && (
+                <button
+                  onClick={() => {
+                    setFilters({ service: false, vendor: true });
+                    setIsTypeModalOpen(false);
+                  }}
+                  className="group flex items-center gap-4 p-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 text-left"
+                >
+                  <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 rounded-lg flex items-center justify-center transition-colors">
+                    <svg className="w-6 h-6 text-gray-500 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="block font-bold text-gray-900 dark:text-white">Direct Vendor</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Register as a seller of products or equipment.</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setFilters({ service: true, vendor: true });
+                    setIsTypeModalOpen(false);
+                  }}
+                  className="group flex items-center gap-4 p-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 text-left"
+                >
+                  <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 rounded-lg flex items-center justify-center transition-colors">
+                    <svg className="w-6 h-6 text-gray-500 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="block font-bold text-gray-900 dark:text-white">Both</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Register as both a service provider and product seller.</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ComponentCard title="KYC Verification">
+        <Stepper steps={steps} currentStep={currentStep} completedPages={KYCformData.completed_pages} onStepChange={handleStepChange} />
+
+        <div className="min-h-[400px] md:min-h-[520px]">
+          {/* Contact Details is always step 0 in both modes */}
+          {actualStep === 0 && (
+            <ContactDetails
+              setKYCFormData={setKYCFormData}
+              KYCformData={KYCformData}
+              errors={errors}
+              clearError={clearError}
+            />
+          )}
+          {/* The following steps only show in vendor/both mode */}
+          {actualStep === 1 && (
+            <Identity
+              setKYCFormData={setKYCFormData}
+              KYCformData={KYCformData}
+              errors={errors}
+              clearError={clearError}
+            />
+          )}
+          {actualStep === 2 && (
+            <BankDetails
+              setKYCFormData={setKYCFormData}
+              KYCformData={KYCformData}
+              errors={errors}
+              clearError={clearError}
+            />
+          )}
+          {actualStep === 3 && (
+            <Documents
+              setKYCFormData={setKYCFormData}
+              KYCformData={KYCformData}
+              errors={errors}
+              clearError={clearError}
+            />
+          )}
+          {/* Declaration is always the last step in both modes */}
+          {actualStep === 4 && (
+            <StepDeclaration
+              setKYCFormData={setKYCFormData}
+              KYCformData={KYCformData}
+              errors={errors}
+              clearError={clearError}
+            />
+          )}
+        </div>
+
+        <div className={`flex ${currentStep === 0 ? 'justify-end' : 'justify-between'} mt-6 pt-4 border-t`}>
+          {currentStep > 0 && (
+            <button
+              onClick={() => setCurrentStep((s) => s - 1)}
+              disabled={isSubmitting}
+              className="btn-secondary"
+            >
+              Back
+            </button>
+          )}
+
           <button
-            onClick={() => setCurrentStep((s) => s - 1)}
+            onClick={handleNext}
             disabled={isSubmitting}
-            className="btn-secondary"
+            className="btn-primary min-w-[120px]"
           >
-            Back
+            {isSubmitting
+              ? "Saving..."
+              : currentStep === steps.length - 1
+                ? "Submit KYC"
+                : "Save & Next"}
           </button>
-        )}
-
-        <button
-          onClick={handleNext}
-          disabled={isSubmitting}
-          className="btn-primary min-w-[120px]"
-        >
-          {isSubmitting
-            ? "Saving..."
-            : currentStep === steps.length - 1
-              ? "Submit KYC"
-              : "Save & Next"}
-        </button>
-      </div>
-    </ComponentCard>
+        </div>
+      </ComponentCard>
+    </div>
   );
 }

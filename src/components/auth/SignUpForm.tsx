@@ -103,8 +103,10 @@ export default function SignUpForm() {
       if (!formData.fname.trim()) e.fname = "First name is required";
       if (!formData.lname.trim()) e.lname = "Last name is required";
       if (!formData.businessName.trim()) e.businessName = "Business name is required";
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailPattern.test(formData.email.trim())) e.email = "Enter a valid email";
+      // const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+          const emailPattern = /^[^\s@]+@[^\s@]+\.(com|in|org)$/;
+      if (!emailPattern.test(formData.email.trim())) e.email = "Enter a valid email (example@domain.com/in/org)";
+      // if (!emailPattern.test(formData.email.trim())) e.email = "Enter a valid email address";
       if (!/^[6-9]\d{9}$/.test(formData.mobile)) e.mobile = "Enter valid 10-digit Indian mobile number";
       if (!formData.city.trim()) e.city = "City is required";
       // if (!formData.password.trim() || formData.password.length < 6) e.password = "Password must be at least 6 characters";
@@ -278,7 +280,7 @@ export default function SignUpForm() {
                 value={formData.email}
                 onChange={(e) => {
                   handleChange(e);
-                  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value.trim())) setErrors(prev => ({ ...prev, email: '' }));
+                  if (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(e.target.value.trim())) setErrors(prev => ({ ...prev, email: '' }));
                 }}
                 placeholder="Enter your email"
                 className="mt-1"
