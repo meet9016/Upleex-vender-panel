@@ -355,7 +355,7 @@ export default function KYCPage() {
           page: "5" // or "4" depending on your page numbering
         };
         formData.append("Declaration", JSON.stringify([declaration]));
-        
+
         // Also keep the direct field for backward compatibility
         formData.append("terms_conditions", String(KYCformData.terms_conditions));
       }
@@ -366,21 +366,21 @@ export default function KYCPage() {
 
       if (res.data.status === 200) {
         await fetchKYCFormdata();
-        
-        // Show success message with page name
-        const pageNames = [
-          "Contact Details",
-          "Identity", 
-          "Bank Details",
-          "Documents",
-          "Declaration"
-        ];
-        const currentPageName = pageNames[currentStep] || "Page";
-        toast.success(`${currentPageName} saved successfully!`);
 
         if (currentStep < steps.length - 1) {
+          // Not last step - Show page saved message and move to next step
+          const pageNames = [
+            "Contact Details",
+            "Identity",
+            "Bank Details",
+            "Documents",
+            "Declaration"
+          ];
+          const currentPageName = pageNames[currentStep] || "Page";
+          toast.success(`${currentPageName} saved successfully!`);
           setCurrentStep((s) => s + 1);
         } else {
+          // Last step (Declaration) - Show only KYC Submitted Successfully
           toast.success("KYC Submitted Successfully!");
           setTimeout(() => router.push("/"), 1800);
         }
