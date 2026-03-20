@@ -152,13 +152,13 @@ export default function AddProductPage() {
     const generateSKU = (categoryName: string, businessName: string, counter: number): string => {
         // Get first 3 characters of category name (uppercase, remove spaces)
         const categoryCode = categoryName.replace(/\s+/g, '').substring(0, 3).toUpperCase().padEnd(3, 'X');
-        
+
         // Get first 3 characters of business name (uppercase, remove spaces)
         const businessCode = businessName.replace(/\s+/g, '').substring(0, 3).toUpperCase().padEnd(3, 'X');
-        
+
         // Generate 3-digit counter with leading zeros
         const counterCode = counter.toString().padStart(3, '0');
-        
+
         return `${categoryCode}-${businessCode}-${counterCode}`;
     };
 
@@ -175,7 +175,7 @@ export default function AddProductPage() {
                     return;
                 }
             }
-            
+
             // Fallback to API call if localStorage doesn't have business_name
             const res = await api.get(endPointApi.postFetchVendorKYCFormData || 'vendor-single-details');
             if (res?.data?.status === 200 && res?.data?.data) {
@@ -213,7 +213,7 @@ export default function AddProductPage() {
             if (res?.data?.data && Array.isArray(res.data.data)) {
                 const products = res.data.data;
                 let maxCounter = 0;
-                
+
                 // Find the highest counter from existing SKUs
                 products.forEach((product: any) => {
                     if (product.sku) {
@@ -226,7 +226,7 @@ export default function AddProductPage() {
                         }
                     }
                 });
-                
+
                 setSkuCounter(maxCounter + 1);
             }
         } catch (error) {
@@ -237,11 +237,11 @@ export default function AddProductPage() {
 
     const updateSKU = () => {
         if (selectedCategory && vendorBusinessName) {
-            const categoryData = categoriesData.find((c: any) => 
+            const categoryData = categoriesData.find((c: any) =>
                 String(c.categories_id || c.id) === String(selectedCategory)
             );
             const categoryName = categoryData?.categories_name || categoryData?.name || "Category";
-            
+
             const newSKU = generateSKU(categoryName, vendorBusinessName, skuCounter);
             handleChange("sku", newSKU);
         }
@@ -346,7 +346,7 @@ export default function AddProductPage() {
         value: string
     ) => {
         const updated = [...formData.months];
-        
+
         // Apply number restriction for price and cancelPrice fields
         if (field === 'price' || field === 'cancelPrice') {
             const numericValue = value.replace(/[^0-9]/g, '').slice(0, 10);
@@ -441,7 +441,7 @@ export default function AddProductPage() {
     useEffect(() => {
         const fetchProductDetails = async () => {
             if (!productId) return;
-            
+
             try {
                 const res = await api.get(`${endPointApi.postVendorProductDetails}/${productId}`);
 
@@ -530,7 +530,7 @@ export default function AddProductPage() {
             } catch (err) {
                 console.error("Error fetching product details:", err);
                 toast.error("Error loading product details");
-            } 
+            }
         };
 
         fetchProductDetails();
@@ -752,9 +752,9 @@ export default function AddProductPage() {
     };
     /* <!-- ============================================ Handle save ============================================ --> */
     const handleMakeBase = () => {
-    setPricingType("paid");
-    toast.info("This product is now marked as Base (Paid listing)");
-};
+        setPricingType("paid");
+        toast.info("This product is now marked as Base (Paid listing)");
+    };
     const handleSubmit = async () => {
         // First validate form
         if (!validateForm()) {
@@ -920,46 +920,46 @@ export default function AddProductPage() {
                         </div>
 
                     </div>
-<label className="flex items-center gap-3 cursor-pointer group bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-                    <div className="relative inline-flex items-center">
-                        <input
-                            type="checkbox"
-                            checked={pricingType === "paid"}
-                            onChange={handlePricingChange}
-                            className="sr-only peer"
-                        />
-                        {/* Checkbox background & border */}
-                        <div className={`
+                    <label className="flex items-center gap-3 cursor-pointer group bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div className="relative inline-flex items-center">
+                            <input
+                                type="checkbox"
+                                checked={pricingType === "paid"}
+                                onChange={handlePricingChange}
+                                className="sr-only peer"
+                            />
+                            {/* Checkbox background & border */}
+                            <div className={`
                             w-6 h-6 rounded-md border-2 transition-all duration-200 ease-in-out
                             flex items-center justify-center
-                            ${pricingType === "paid" 
-                                ? "bg-blue-600 border-blue-600 shadow-sm" 
-                                : "bg-white border-gray-400 group-hover:border-blue-400"}
+                            ${pricingType === "paid"
+                                    ? "bg-blue-600 border-blue-600 shadow-sm"
+                                    : "bg-white border-gray-400 group-hover:border-blue-400"}
                         `}>
-                            {/* Checkmark when checked */}
-                            {pricingType === "paid" && (
-                                <svg 
-                                    className="w-4 h-4 text-white stroke-2" 
-                                    fill="none" 
-                                    stroke="currentColor" 
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                            )}
+                                {/* Checkmark when checked */}
+                                {pricingType === "paid" && (
+                                    <svg
+                                        className="w-4 h-4 text-white stroke-2"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                )}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Label */}
-                    <span className={`
+                        {/* Label */}
+                        <span className={`
                         text-base font-medium transition-colors duration-200
-                        ${pricingType === "paid" 
-                            ? "text-blue-700 dark:text-blue-400" 
-                            : "text-gray-600 dark:text-gray-300"}
+                        ${pricingType === "paid"
+                                ? "text-blue-700 dark:text-blue-400"
+                                : "text-gray-600 dark:text-gray-300"}
                     `}>
-                        Base (Paid listing)
-                    </span>
-                </label>
+                            Base (Paid listing)
+                        </span>
+                    </label>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1048,25 +1048,25 @@ export default function AddProductPage() {
                                         monthsFields: undefined,
                                     }));
                                 }
-                                    setBillingType("");
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        dayPrice: "",
-                                        dayCancelPrice: "",
-                                        hourlyPrice: "",
-                                        hourlyCancelPrice: "",
-                                        months: [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
-                                    }));
-                                    setValidationErrors(prev => ({
-                                        ...prev,
-                                        billingType: undefined,
-                                        dayPrice: undefined,
-                                        dayCancelPrice: undefined,
-                                        hourlyPrice: undefined,
-                                        hourlyCancelPrice: undefined,
-                                        monthsFields: undefined,
-                                    }));
-                                
+                                setBillingType("");
+                                setFormData(prev => ({
+                                    ...prev,
+                                    dayPrice: "",
+                                    dayCancelPrice: "",
+                                    hourlyPrice: "",
+                                    hourlyCancelPrice: "",
+                                    months: [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
+                                }));
+                                setValidationErrors(prev => ({
+                                    ...prev,
+                                    billingType: undefined,
+                                    dayPrice: undefined,
+                                    dayCancelPrice: undefined,
+                                    hourlyPrice: undefined,
+                                    hourlyCancelPrice: undefined,
+                                    monthsFields: undefined,
+                                }));
+
                             }}
                             disabled={isEditMode}
                         />
@@ -1114,11 +1114,11 @@ export default function AddProductPage() {
                                     {validationErrors.sku}
                                 </span>
                             )}
-                            {!isEditMode && (
+                            {/* {!isEditMode && (
                                 <span className="text-xs text-gray-500 mt-1">
                                     Format: Category(3)-BusinessName(3)-Number(3)
                                 </span>
-                            )}
+                            )} */}
                         </div>
                     </div>
 
@@ -1617,8 +1617,8 @@ export default function AddProductPage() {
             </ComponentCard>
 
             <div className="mt-8 flex items-center justify-end gap-6 px-4">
-                    {/* Custom Checkbox - Base (Paid) */}
-                    {/* <label className="flex items-center gap-3 cursor-pointer group">
+                {/* Custom Checkbox - Base (Paid) */}
+                {/* <label className="flex items-center gap-3 cursor-pointer group">
                         <div className="relative inline-flex items-center">
                             <input
                                 type="checkbox"
@@ -1656,18 +1656,18 @@ export default function AddProductPage() {
                         </span>
                     </label> */}
 
-                    {/* Save Button */}
-                    <Button 
-                        size="sm" 
-                        variant="primary"
-                        className="btn-primary px-6 py-2.5 min-w-[100px]"
-                        onClick={handleSubmit}
-                    >
-                        {isEditMode ? "Update" : "Save"}
-                    </Button>
+                {/* Save Button */}
+                <Button
+                    size="sm"
+                    variant="primary"
+                    className="btn-primary px-6 py-2.5 min-w-[100px]"
+                    onClick={handleSubmit}
+                >
+                    {isEditMode ? "Update" : "Save"}
+                </Button>
 
-                    {/* Cancel Button */}
-                    <Button size="sm" variant="outline" className="!py-2 px-5"
+                {/* Cancel Button */}
+                <Button size="sm" variant="outline" className="!py-2 px-5"
                     onClick={() => router.push("/product")}
                 >
                     Cancel

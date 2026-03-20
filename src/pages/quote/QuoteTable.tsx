@@ -101,7 +101,7 @@ const QuoteTable = () => {
       // Get month name from product's month_arr if months_id exists
       let monthName = '-';
       if (quote.months_id && product.month_arr && Array.isArray(product.month_arr)) {
-        const month = product.month_arr.find((m:any) => 
+        const month = product.month_arr.find((m: any) =>
           m.months_id === quote.months_id || m.product_months_id === quote.months_id
         );
         if (month) {
@@ -112,7 +112,7 @@ const QuoteTable = () => {
       // Calculate price based on quote data
       let totalPrice = '0';
       let unitPrice = '0';
-      
+
       console.log('Processing quote:', {
         quoteId: quote._id,
         months_id: quote.months_id,
@@ -122,7 +122,7 @@ const QuoteTable = () => {
         qty: quote.qty,
         number_of_days: quote.number_of_days
       });
-      
+
       if (quote.calculated_price) {
         // Use calculated price from backend if available
         totalPrice = quote.calculated_price.toString();
@@ -131,7 +131,7 @@ const QuoteTable = () => {
         const days = parseInt(quote.number_of_days || '1');
         if (quote.months_id && product.month_arr && Array.isArray(product.month_arr)) {
           // Monthly product - unit price is per month
-          const month = product.month_arr.find((m:any) => 
+          const month = product.month_arr.find((m: any) =>
             m.months_id === quote.months_id || m.product_months_id === quote.months_id
           );
           unitPrice = month?.price || '0';
@@ -142,7 +142,7 @@ const QuoteTable = () => {
         console.log('Using calculated price:', { totalPrice, unitPrice });
       } else if (quote.months_id && product.month_arr && Array.isArray(product.month_arr)) {
         // Monthly product - calculate from month_arr
-        const month = product.month_arr.find((m:any)=> 
+        const month = product.month_arr.find((m: any) =>
           m.months_id === quote.months_id || m.product_months_id === quote.months_id
         );
         if (month) {
@@ -349,40 +349,40 @@ const QuoteTable = () => {
     }
   ];
 
-const getQuoteData = async (filterParams: any = {}) => {
-  try {
-    // Build query params
-    const params: any = {};
-    
-    if (filterParams.status) params.status = filterParams.status;
-    if (filterParams.search) params.search = filterParams.search;
-    if (filterParams.product_type) params.product_type = filterParams.product_type;
-    if (filterParams.listing_type) params.listing_type = filterParams.listing_type;
-    if (filterParams.month) params.month = filterParams.month;
-    if (filterParams.delivery_start_date) params.delivery_start_date = filterParams.delivery_start_date;
-    if (filterParams.delivery_end_date) params.delivery_end_date = filterParams.delivery_end_date;
-    if (filterParams.page) params.page = filterParams.page;
-    if (filterParams.limit) params.limit = filterParams.limit;
+  const getQuoteData = async (filterParams: any = {}) => {
+    try {
+      // Build query params
+      const params: any = {};
 
-    console.log("🚀 ~ API Request Params:", params);
-    
-    const res = await api.get(endPointApi.postGetQuote, { params });
-    console.log("🚀 ~ API Response:", res);
+      if (filterParams.status) params.status = filterParams.status;
+      if (filterParams.search) params.search = filterParams.search;
+      if (filterParams.product_type) params.product_type = filterParams.product_type;
+      if (filterParams.listing_type) params.listing_type = filterParams.listing_type;
+      if (filterParams.month) params.month = filterParams.month;
+      if (filterParams.delivery_start_date) params.delivery_start_date = filterParams.delivery_start_date;
+      if (filterParams.delivery_end_date) params.delivery_end_date = filterParams.delivery_end_date;
+      if (filterParams.page) params.page = filterParams.page;
+      if (filterParams.limit) params.limit = filterParams.limit;
 
-    if (res?.data?.success && res?.data?.data) {
-      const transformedData = transformQuoteData(res.data.data);
-      console.log("🚀 ~ Transformed Data:", transformedData);
-      setQuoteData(transformedData);
-      
-      // You might want to store pagination info in state
-      // setTotalPages(res.data.totalPages);
-      // setCurrentPage(res.data.page);
+      console.log("🚀 ~ API Request Params:", params);
+
+      const res = await api.get(endPointApi.postGetQuote, { params });
+      console.log("🚀 ~ API Response:", res);
+
+      if (res?.data?.success && res?.data?.data) {
+        const transformedData = transformQuoteData(res.data.data);
+        console.log("🚀 ~ Transformed Data:", transformedData);
+        setQuoteData(transformedData);
+
+        // You might want to store pagination info in state
+        // setTotalPages(res.data.totalPages);
+        // setCurrentPage(res.data.page);
+      }
+    } catch (error) {
+      console.log("fetch quotes error:", error);
+      toast.error("Failed to fetch quotes");
     }
-  } catch (error) {
-    console.log("fetch quotes error:", error);
-    toast.error("Failed to fetch quotes");
-  }
-};
+  };
 
   const getDropdownData = async () => {
     try {
@@ -413,7 +413,7 @@ const getQuoteData = async (filterParams: any = {}) => {
       const res = await api.post(endPointApi.getStatus);
       if (res?.data?.status === 200 && Array.isArray(res.data?.data)) {
         setStatusList(res.data.data);
-      } 
+      }
     } catch (error) {
       console.log("fetch status error:", error);
     }
@@ -490,38 +490,44 @@ const getQuoteData = async (filterParams: any = {}) => {
         return value;
     }
   };
-const applyFilters = () => {
-  const params: any = {};
-  
-  // Add all filter parameters
-  if (filters.status) params.status = filters.status;
-  if (filters.product_type) params.product_type = filters.product_type;
-  if (filters.listing_type) params.listing_type = filters.listing_type;
-  if (filters.month) params.month = filters.month;
-  if (filters.delivery_start_date) params.delivery_start_date = filters.delivery_start_date;
-  if (filters.delivery_end_date) params.delivery_end_date = filters.delivery_end_date;
-  if (searchText) params.search = searchText;
-  
-  // Add pagination params (optional)
-  params.page = 1; // Reset to first page when applying filters
-  params.limit = 10;
-  
-  console.log("🚀 ~ Applying filters:", params);
-  getQuoteData(params);
-  setShowFilterModal(false);
-};
+  const applyFilters = () => {
+    const params: any = {};
+
+    // Add all filter parameters
+    if (filters.status) params.status = filters.status;
+    if (filters.product_type) params.product_type = filters.product_type;
+    if (filters.listing_type) params.listing_type = filters.listing_type;
+    if (filters.month) params.month = filters.month;
+    if (filters.delivery_start_date) params.delivery_start_date = filters.delivery_start_date;
+    if (filters.delivery_end_date) params.delivery_end_date = filters.delivery_end_date;
+    if (searchText) params.search = searchText;
+
+    // Add pagination params (optional)
+    params.page = 1; // Reset to first page when applying filters
+    params.limit = 10;
+
+    console.log("🚀 ~ Applying filters:", params);
+    getQuoteData(params);
+    setShowFilterModal(false);
+  };
 
   const clearFilters = () => {
-    setFilters({
-      product_type: '',
-      listing_type: '',
-      delivery_start_date: '',
-      delivery_end_date: '',
-      month: '',
-      status: ''
-    });
-    setSearchText('');
-    getQuoteData();
+    const hasActiveFilters = Object.values(filters).some(val => val !== '');
+    const hadSearch = searchText !== '';
+
+    if (hasActiveFilters || hadSearch) {
+      setFilters({
+        product_type: '',
+        listing_type: '',
+        delivery_start_date: '',
+        delivery_end_date: '',
+        month: '',
+        status: ''
+      });
+      setSearchText('');
+      getQuoteData();
+    }
+
     setShowFilterModal(false);
   };
 
@@ -530,7 +536,7 @@ const applyFilters = () => {
     try {
       setExportLoading(true);
       const params: any = {};
-      
+
       // Add current filters to export
       if (debouncedSearch && debouncedSearch.trim() !== '') {
         params.search = debouncedSearch.trim();
@@ -541,7 +547,7 @@ const applyFilters = () => {
       if (filters.month) params.month = filters.month;
       if (filters.delivery_start_date) params.delivery_start_date = filters.delivery_start_date;
       if (filters.delivery_end_date) params.delivery_end_date = filters.delivery_end_date;
-      
+
       await exportQuotesToExcel(params);
       toast.success('Quotes exported to Excel successfully!');
       setShowActionsMenu(false);
@@ -556,7 +562,7 @@ const applyFilters = () => {
     try {
       setExportLoading(true);
       const params: any = {};
-      
+
       // Add current filters to export
       if (debouncedSearch && debouncedSearch.trim() !== '') {
         params.search = debouncedSearch.trim();
@@ -567,7 +573,7 @@ const applyFilters = () => {
       if (filters.month) params.month = filters.month;
       if (filters.delivery_start_date) params.delivery_start_date = filters.delivery_start_date;
       if (filters.delivery_end_date) params.delivery_end_date = filters.delivery_end_date;
-      
+
       await exportQuotesToPDF(params);
       toast.success('Quotes exported to PDF successfully!');
       setShowActionsMenu(false);
@@ -617,7 +623,7 @@ const applyFilters = () => {
               placeholder="Search quotes..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="pl-10 pr-4 py-1 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-64"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           </div>
@@ -626,7 +632,7 @@ const applyFilters = () => {
             <button
               ref={filterButtonRef}
               onClick={() => setShowFilterModal(!showFilterModal)}
-              className="px-4 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2 relative"
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2 relative"
             >
               <CiFilter size={20} />
               Filter
@@ -734,7 +740,7 @@ const applyFilters = () => {
           <div className="relative" ref={actionsMenuRef}>
             <button
               onClick={() => setShowActionsMenu((v) => !v)}
-              className="px-3 py-1 hover:bg-gray-200 border-2 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium flex items-center gap-2"
+              className="px-3 py-2 hover:bg-gray-200 border-2 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium flex items-center gap-2"
               title="Export options"
             >
               <MdMoreVert className="text-lg" />
@@ -746,7 +752,7 @@ const applyFilters = () => {
                 <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Export</span>
                 </div>
-                
+
                 {/* Export to Excel */}
                 <button
                   onClick={handleExportExcel}
