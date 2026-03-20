@@ -76,6 +76,8 @@ export default function AddProductPage() {
         months: { month: string; price: string; productMonthsId: string; cancelPrice: string }[];
         description: string;
         keyFeatures: { key: string; value: string; specification_id?: string }[];
+        isNew: boolean;
+        depositAmount: string;
     }>({
         category: null,
         subCategory: null,
@@ -93,6 +95,8 @@ export default function AddProductPage() {
         ],
         description: "",
         keyFeatures: [{ key: "", value: "" }],
+        isNew: false,
+        depositAmount: "",
     });
 
     const [mainPreview, setMainPreview] = useState<mainImg[]>([]);
@@ -489,6 +493,8 @@ export default function AddProductPage() {
                                 value: item.detail || "",
                             }))
                             : [{ key: "", value: "" }],
+                        isNew: data.is_new || false,
+                        depositAmount: productTypeName === "sell" ? String(data.available_quantity || "1") : String(data.deposit_amount || ""),
                     });
 
                     setSelectedCategory(String(data.category_id || ""));
@@ -779,10 +785,23 @@ export default function AddProductPage() {
             formdata.append("product_name", formData.name.trim());
             formdata.append("sku", formData.sku.trim());
             formdata.append("description", formData.description.trim());
-
-            // ---------- SELL FLOW ----------
+            formdata.append("is_new", String(formData.isNew));
+            
+            // Determine if it's rent or sell product
             const isSell = selectedListingType === "Sell";
             const isRent = selectedListingType === "Rent";
+            
+            // Add deposit amount for rent products
+            if (isRent && formData.depositAmount.trim()) {
+                formdata.append("deposit_amount", formData.depositAmount.trim());
+            }
+            
+            // Add available quantity for sell products
+            if (isSell && formData.depositAmount.trim()) {
+                formdata.append("available_quantity", formData.depositAmount.trim());
+            }
+
+            // ---------- SELL FLOW ----------
             if (isSell) {
                 formdata.append("price", formData.monthPrice.trim());
                 formdata.append("cancel_price", formData.monthCancelPrice.trim());
@@ -1102,6 +1121,84 @@ export default function AddProductPage() {
                             )} */}
                         </div>
                     </div>
+
+                    {/* New Product Checkbox */}
+                    <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-3 cursor-pointer group">
+                            <div className="relative inline-flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.isNew}
+                                    onChange={(e) => handleChange("isNew", e.target.checked)}
+                                    className="sr-only peer"
+                                />
+                                <div className={`
+                                    w-6 h-6 rounded-md border-2 transition-all duration-200 ease-in-out
+                                    flex items-center justify-center
+                                    ${formData.isNew 
+                                        ? "bg-green-600 border-green-600 shadow-sm" 
+                                        : "bg-white border-gray-400 group-hover:border-green-400"}
+                                `}>
+                                    {formData.isNew && (
+                                        <svg 
+                                            className="w-4 h-4 text-white stroke-2" 
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    )}
+                                </div>
+                            </div>
+                            <span className={`
+                                text-base font-medium transition-colors duration-200
+                                ${formData.isNew 
+                                    ? "text-green-700 dark:text-green-400" 
+                                    : "text-gray-600 dark:text-gray-300"}
+                            `}>
+                                New Product
+                            </span>
+                        </label>
+                    </div>
+
+                    {/* Deposit Amount - Only for Rent products */}
+                    {selectedListingType === "Rent" && (
+                        <div>
+                            <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Deposit Amount</Label>
+                            <div className="flex flex-col">
+                                <Input
+                                    placeholder="Enter Deposit Amount"
+                                    type="text"
+                                    value={formData.depositAmount}
+                                    onChange={(e) => handleNumberInput("depositAmount", e.target.value)}
+                                    className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                                />
+                                <span className="text-xs text-gray-500 mt-1">
+                                    Security deposit required for rental
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Quantity - Only for Sell products */}
+                    {selectedListingType === "Sell" && (
+                        <div>
+                            <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Available Quantity</Label>
+                            <div className="flex flex-col">
+                                <Input
+                                    placeholder="Enter Available Quantity"
+                                    type="text"
+                                    value={formData.depositAmount}
+                                    onChange={(e) => handleNumberInput("depositAmount", e.target.value, 6)}
+                                    className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                                />
+                                <span className="text-xs text-gray-500 mt-1">
+                                    Number of items available for sale
+                                </span>
+                            </div>
+                        </div>
+                    )}
 
                     {/* ================= Row 3: Rent Type ================= */}
                     {selectedListingType === "Rent" && (
