@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
-import { CalenderIcon, GridIcon, HorizontaLDots, BoxIcon, DocsIcon, ListIcon, DollarLineIcon } from "../icons/index";
+import { CalenderIcon, GridIcon, HorizontaLDots, BoxIcon, DocsIcon, ListIcon, DollarLineIcon, TaskIcon } from "../icons/index";
 import { BsChatSquareQuote } from "react-icons/bs";
 import endPointApi from "@/utils/endPointApi";
 import { api } from "@/utils/axiosInstance";
