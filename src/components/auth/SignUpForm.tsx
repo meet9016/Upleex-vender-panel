@@ -64,7 +64,8 @@ export default function SignUpForm() {
 
   const handleSendOtp = async () => {
     const e: { mobile?: string } = {};
-    if (formData.mobile.length < 10) e.mobile = "Enter a valid 10-digit mobile number";
+    const isMobileValid = (val: string) => /^[6-9]\d{9}$/.test(val);
+    if (!isMobileValid(formData.mobile)) e.mobile = "Enter valid 10-digit Indian mobile number";
     if (Object.keys(e).length > 0) {
       setErrors(prev => ({ ...prev, ...e }));
       return;
@@ -104,7 +105,7 @@ export default function SignUpForm() {
       if (!formData.businessName.trim()) e.businessName = "Business name is required";
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailPattern.test(formData.email.trim())) e.email = "Enter a valid email";
-      if (formData.mobile.length < 10) e.mobile = "Enter a valid 10-digit mobile number";
+      if (!/^[6-9]\d{9}$/.test(formData.mobile)) e.mobile = "Enter valid 10-digit Indian mobile number";
       if (!formData.city.trim()) e.city = "City is required";
       // if (!formData.password.trim() || formData.password.length < 6) e.password = "Password must be at least 6 characters";
       
