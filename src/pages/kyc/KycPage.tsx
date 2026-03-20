@@ -51,6 +51,8 @@ export type KycFormDataType = {
   gst_certificate_image: File | string | null;
   vendor_image: File | string | null;
   business_logo_image: File | string | null;
+  qr_code_image: File | string | null;
+  cheque_image: File | string | null;
   terms_conditions: boolean;
   completed_pages: string[];
 };
@@ -101,6 +103,8 @@ export default function KYCPage() {
     gst_certificate_image: null,
     vendor_image: null,
     business_logo_image: null,
+    qr_code_image: null,
+    cheque_image: null,
     terms_conditions: false,
     completed_pages: [],
   });
@@ -275,6 +279,14 @@ export default function KYCPage() {
       if (!isValidFile(KYCformData.vendor_image)) {
         newErrors.vendor_image = "Vendor photograph is required";
       }
+      
+      if (!isValidFile(KYCformData.qr_code_image)) {
+        newErrors.qr_code_image = "QR code image is required";
+      }
+      
+      if (!isValidFile(KYCformData.cheque_image)) {
+        newErrors.cheque_image = "Cheque image is required";
+      }
     }
 
     // Step 4 ─ Declaration
@@ -345,6 +357,10 @@ export default function KYCPage() {
           formData.append("vendor_image", KYCformData.vendor_image);
         if (KYCformData.business_logo_image instanceof File)
           formData.append("business_logo_image", KYCformData.business_logo_image);
+        if (KYCformData.qr_code_image instanceof File)
+          formData.append("qr_code_image", KYCformData.qr_code_image);
+        if (KYCformData.cheque_image instanceof File)
+          formData.append("cheque_image", KYCformData.cheque_image);
 
         formData.append("Documents", JSON.stringify([{ page: "4" }]));
       } else if (currentStep === 4) {
@@ -460,6 +476,8 @@ export default function KYCPage() {
           gst_certificate_image: docs.gst_certificate_image || null,
           vendor_image: docs.vendor_image || null,
           business_logo_image: docs.business_logo_image || null,
+          qr_code_image: docs.qr_code_image || null,
+          cheque_image: docs.cheque_image || null,
 
           completed_pages: data.completed_pages || [],
           // Handle terms_conditions from root level of response

@@ -70,12 +70,20 @@ type Option = {
 const ProductTable = () => {
   const router = useRouter();
   const [productData, setProductData] = useState<Product[]>([]);
+  const [rentProducts, setRentProducts] = useState<Product[]>([]);
+  const [sellProducts, setSellProducts] = useState<Product[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [bulkAction, setBulkAction] = useState<{ type: 'deactivate' | 'delete' | null; open: boolean }>({ type: null, open: false });
   const [loading, setLoading] = useState(false);
+  const [tabLoading, setTabLoading] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'rent' | 'sell'>('rent');
+  const [dataCache, setDataCache] = useState<{
+    rent: { data: Product[], total: number, totalPages: number, page: number } | null,
+    sell: { data: Product[], total: number, totalPages: number, page: number } | null
+  }>({ rent: null, sell: null });
   const filterModalRef = useRef<HTMLDivElement>(null);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
@@ -221,6 +229,63 @@ const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
       cellStyle: { textAlign: "left" }
     },
     {
+      field: "is_new",
+      headerName: "New Product",
+      minWidth: 120,
+      cellRenderer: (params: any) => (
+        <div className="flex items-center h-full">
+          {params.value ? (
+            <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
+              NEW
+            </span>
+          ) : (
+            <span className="text-gray-400 text-xs">-</span>
+          )}
+        </div>
+      ),
+      cellStyle: { justifyContent: "left" }
+    },
+    {
+      field: "deposit_amount",
+      headerName: "Deposit",
+      minWidth: 120,
+      valueFormatter: (params) => {
+        const value = params.value;
+        if (!value || value === '0') return '-';
+        return `₹${Number(value).toFixed(2)}`;
+      },
+      cellStyle: { textAlign: "left" }
+    },
+    {
+      field: "available_quantity",
+      headerName: "Stock",
+      minWidth: 120,
+      cellRenderer: (params: any) => {
+        const product = params.data;
+        if (product.product_type_name !== 'Sell') {
+          return <span className="text-gray-400 text-xs">-</span>;
+        }
+        const available = product.available_quantity || 0;
+        const isOutOfStock = product.is_out_of_stock || available <= 0;
+        
+        return (
+          <div className="flex items-center h-full">
+            <div className="flex flex-col">
+              <span className={`text-xs font-medium ${
+                isOutOfStock ? 'text-red-600' : 'text-gray-800 dark:text-white'
+              }`}>
+                {available}
+              </span>
+              {isOutOfStock && (
+                <span className="text-xs text-red-500 font-medium">OUT OF STOCK</span>
+              )}
+            </div>
+          </div>
+        );
+      },
+      cellStyle: { justifyContent: "left" }
+    },
+    {
       headerName: "Approval Status by Admin",
       field: "approval_status",
       minWidth: 140,
@@ -266,9 +331,25 @@ const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
   ];
 
   // Fetch products with filters
-  const getProductData = async (filterParams = {}) => {
+  const getProductData = async (filterParams = {}, tabType?: 'rent' | 'sell') => {
     try {
-      setLoading(true);
+      const targetTab = tabType || activeTab;
+      setTabLoading(true);
+      
+      // Check if we have cached data for this tab and no filters are applied
+      const hasFilters = Object.values(filterParams).some(v => v !== undefined && v !== '');
+      const cachedData = dataCache[targetTab];
+      
+      if (cachedData && !hasFilters && !debouncedSearch) {
+        // Use cached data
+        setProductData(cachedData.data);
+        setTotal(cachedData.total);
+        setTotalPages(cachedData.totalPages);
+        setPage(cachedData.page);
+        setTabLoading(false);
+        return;
+      }
+      
       const params = new URLSearchParams();
 
       // Add all non-empty filter parameters
@@ -277,6 +358,14 @@ const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
           params.append(key, String(value));
         }
       });
+      
+      // Add tab-based filtering
+      if (targetTab === 'rent') {
+        params.append('filter_rent_sell', '1');
+      } else if (targetTab === 'sell') {
+        params.append('filter_rent_sell', '2');
+      }
+      
       params.append('page', String(page));
       params.append('limit', String(pageSize));
 
@@ -287,9 +376,9 @@ const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
 
       const res = await api.get(url);
       const products = res?.data?.data || [];
-      setTotal(res?.data?.total || 0);
-      setTotalPages(res?.data?.totalPages || 1);
-      setPage(res?.data?.page || page);
+      const responseTotal = res?.data?.total || 0;
+      const responseTotalPages = res?.data?.totalPages || 1;
+      const responsePage = res?.data?.page || page;
 
       // Normalize product data
       const normalized = products.map((p: any) => {
@@ -317,6 +406,22 @@ const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
       });
 
       setProductData(normalized);
+      setTotal(responseTotal);
+      setTotalPages(responseTotalPages);
+      setPage(responsePage);
+      
+      // Cache the data if no filters are applied
+      if (!hasFilters && !debouncedSearch) {
+        setDataCache(prev => ({
+          ...prev,
+          [targetTab]: {
+            data: normalized,
+            total: responseTotal,
+            totalPages: responseTotalPages,
+            page: responsePage
+          }
+        }));
+      }
       
       // Compute expiring within 3 days (active only)
       try {
@@ -341,6 +446,7 @@ const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
       toast.error("Failed to fetch products");
     } finally {
       setLoading(false);
+      setTabLoading(false);
     }
   };
 
@@ -470,7 +576,7 @@ useEffect(() => {
   // Reset to page 1 when filters or search change
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, filters]);
+  }, [debouncedSearch, filters, activeTab]);
 
   // Apply filters when search/filters/page/pageSize change
   useEffect(() => {
@@ -486,7 +592,7 @@ useEffect(() => {
     if (filters.status) params.status = filters.status;
 
     getProductData(params);
-  }, [debouncedSearch, filters, page, pageSize]);
+  }, [debouncedSearch, filters, page, pageSize, activeTab]);
 
   // Handle click outside to close modal
   useEffect(() => {
@@ -962,6 +1068,40 @@ useEffect(() => {
               </div>
             )}
           </div>
+        </div>
+      </div>
+      
+      {/* Product Type Tabs */}
+      <div className="flex justify-left mb-6">
+        <div className="inline-flex rounded-xl bg-gray-100/80 dark:bg-gray-800/80 p-1.5 border border-gray-200 dark:border-gray-700 shadow-sm backdrop-blur-sm">
+          
+          <button
+            onClick={() => setActiveTab('rent')}
+            className={`group flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              activeTab === 'rent'
+                ? 'bg-white dark:bg-gray-700 text-indigo-700 dark:text-indigo-300 shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Rent
+          </button>
+
+          <button
+            onClick={() => setActiveTab('sell')}
+            className={`group flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              activeTab === 'sell'
+                ? 'bg-white dark:bg-gray-700 text-orange-700 dark:text-orange-300 shadow-md'
+                : 'text-gray-600 dark:text-gray-400 hover:text-orange-700 dark:hover:text-orange-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            Sell
+          </button>
         </div>
       </div>
 

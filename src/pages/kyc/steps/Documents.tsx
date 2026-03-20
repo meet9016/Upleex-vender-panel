@@ -74,6 +74,22 @@ export default function Documents({
         error={errors?.vendor_image}
         clearError={() => clearError('vendor_image')}
       />
+      
+      <DocumentUpload
+        label="Upload QR Code"
+        file={KYCformData?.qr_code_image}
+        onChange={updateFile("qr_code_image")}
+        error={errors?.qr_code_image}
+        clearError={() => clearError('qr_code_image')}
+      />
+      
+      <DocumentUpload
+        label="Upload Cheque"
+        file={KYCformData?.cheque_image}
+        onChange={updateFile("cheque_image")}
+        error={errors?.cheque_image}
+        clearError={() => clearError('cheque_image')}
+      />
     </div>
   );
 }
