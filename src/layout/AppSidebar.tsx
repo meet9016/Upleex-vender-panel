@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
-import { CalenderIcon, GridIcon, HorizontaLDots } from "../icons/index";
+import { CalenderIcon, GridIcon, HorizontaLDots, BoxIcon, DocsIcon, ListIcon, DollarLineIcon } from "../icons/index";
 import { BsChatSquareQuote } from "react-icons/bs";
 import endPointApi from "@/utils/endPointApi";
 import { api } from "@/utils/axiosInstance";
@@ -18,10 +18,11 @@ type NavItem = {
 const navItems: NavItem[] = [
   { icon: <GridIcon />, name: "Dashboard", path: "/" },
   { icon: <CalenderIcon />, name: "KYC", path: "/kyc" },
-  { icon: <CalenderIcon />, name: "Product", path: "/product" },
+  { icon: <BoxIcon />, name: "Product", path: "/product" },
   { icon: <BsChatSquareQuote className="w-5 h-5" />, name: "Quote", path: "/quote" },
-  { icon: <CalenderIcon />, name: "Purchased", path: "/purchasedproduct" },
-  { icon: <CalenderIcon />, name: "Drafts", path: "/draft" },
+  { icon: <DollarLineIcon />, name: "Purchased", path: "/purchasedproduct" },
+  { icon: <ListIcon />, name: "Orders", path: "/order" },
+  { icon: <DocsIcon />, name: "Drafts", path: "/draft" },
 ];
 
 // KYC only nav items for initial render

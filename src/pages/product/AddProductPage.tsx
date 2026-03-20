@@ -66,6 +66,7 @@ export default function AddProductPage() {
         subCategory: string | null;
         listingType: string | null;
         name: string;
+        sku: string;
         dayPrice: string;
         dayCancelPrice: string;
         hourlyPrice: string;
@@ -80,6 +81,7 @@ export default function AddProductPage() {
         subCategory: null,
         listingType: null,
         name: "",
+        sku: "",
         dayPrice: "",
         dayCancelPrice: "",
         hourlyPrice: "",
@@ -110,12 +112,15 @@ export default function AddProductPage() {
     const [selectedListingType, setSelectedListingType] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
+    const [vendorBusinessName, setVendorBusinessName] = useState<string>("");
+    const [skuCounter, setSkuCounter] = useState<number>(1);
     // Separate validation states for each section
     const [validationErrors, setValidationErrors] = useState<{
         category?: string;
         subCategory?: string;
         listingType?: string;
         name?: string;
+        sku?: string;
         dayPrice?: string;
         dayCancelPrice?: string;
         hourlyPrice?: string;
@@ -138,6 +143,104 @@ export default function AddProductPage() {
         const trimmedBase = base.endsWith("/") ? base.slice(0, -1) : base;
         const trimmedSrc = s.startsWith("/") ? s.slice(1) : s;
         return `${trimmedBase}/${trimmedSrc}`;
+    };
+
+    const generateSKU = (categoryName: string, businessName: string, counter: number): string => {
+        // Get first 3 characters of category name (uppercase, remove spaces)
+        const categoryCode = categoryName.replace(/\s+/g, '').substring(0, 3).toUpperCase().padEnd(3, 'X');
+        
+        // Get first 3 characters of business name (uppercase, remove spaces)
+        const businessCode = businessName.replace(/\s+/g, '').substring(0, 3).toUpperCase().padEnd(3, 'X');
+        
+        // Generate 3-digit counter with leading zeros
+        const counterCode = counter.toString().padStart(3, '0');
+        
+        return `${categoryCode}-${businessCode}-${counterCode}`;
+    };
+
+    const fetchVendorProfile = async () => {
+        try {
+            // First try to get business name from localStorage
+            const userInfo = localStorage.getItem('user_info');
+            if (userInfo) {
+                const user = JSON.parse(userInfo);
+                const businessName = user.business_name;
+                console.log("Fetched vendor business name from localStorage:", businessName);
+                if (businessName) {
+                    setVendorBusinessName(businessName);
+                    return;
+                }
+            }
+            
+            // Fallback to API call if localStorage doesn't have business_name
+            const res = await api.get(endPointApi.postFetchVendorKYCFormData || 'vendor-single-details');
+            if (res?.data?.status === 200 && res?.data?.data) {
+                const businessName = res.data.data.business_name || res.data.data.businessName;
+                console.log("Fetched vendor business name from API:", businessName);
+                setVendorBusinessName(businessName || "Vendor"); // Fallback to "Vendor"
+            } else {
+                setVendorBusinessName("Vendor"); // Fallback
+            }
+        } catch (error) {
+            console.error("Error fetching vendor profile:", error);
+            // Try localStorage as final fallback
+            try {
+                const userInfo = localStorage.getItem('user_info');
+                if (userInfo) {
+                    const user = JSON.parse(userInfo);
+                    const businessName = user.business_name;
+                    if (businessName) {
+                        console.log("Using localStorage business name as fallback:", businessName);
+                        setVendorBusinessName(businessName);
+                        return;
+                    }
+                }
+            } catch (localStorageError) {
+                console.error("Error reading from localStorage:", localStorageError);
+            }
+            setVendorBusinessName("Vendor"); // Final fallback
+        }
+    };
+
+    const fetchNextSKUCounter = async () => {
+        try {
+            // Fetch existing products to determine next SKU counter
+            const res = await api.get(endPointApi.postAllVendorProductList);
+            if (res?.data?.data && Array.isArray(res.data.data)) {
+                const products = res.data.data;
+                let maxCounter = 0;
+                
+                // Find the highest counter from existing SKUs
+                products.forEach((product: any) => {
+                    if (product.sku) {
+                        const skuParts = product.sku.split('-');
+                        if (skuParts.length === 3) {
+                            const counter = parseInt(skuParts[2], 10);
+                            if (!isNaN(counter) && counter > maxCounter) {
+                                maxCounter = counter;
+                            }
+                        }
+                    }
+                });
+                
+                setSkuCounter(maxCounter + 1);
+            }
+        } catch (error) {
+            console.error("Error fetching SKU counter:", error);
+            setSkuCounter(1); // Fallback to 1
+        }
+    };
+
+    const updateSKU = () => {
+        if (selectedCategory && vendorBusinessName) {
+            const categoryData = categoriesData.find((c: any) => 
+                String(c.categories_id || c.id) === String(selectedCategory)
+            );
+            const categoryName = categoryData?.categories_name || categoryData?.name || "Category";
+            
+            const newSKU = generateSKU(categoryName, vendorBusinessName, skuCounter);
+            handleChange("sku", newSKU);
+        }
     };
 
     /* <!-- ========================================================== disable unavailable months ========================================================== --> */
@@ -370,6 +473,7 @@ export default function AddProductPage() {
                         subCategory: String(data.sub_category_id || ""),
                         listingType: String(data.product_type_id || ""),
                         name: data.product_name || "",
+                        sku: data.sku || "",
                         dayPrice: productTypeName === "rent" && listingTypeName === "daily" ? String(data.price || "") : "",
                         dayCancelPrice: productTypeName === "rent" && listingTypeName === "daily" ? String(data.cancel_price || "") : "",
                         hourlyPrice: productTypeName === "rent" && listingTypeName === "hourly" ? String(data.price || "") : "",
@@ -425,6 +529,21 @@ export default function AddProductPage() {
 
         fetchProductDetails();
     }, [productId]);
+
+    useEffect(() => {
+        // Fetch vendor profile and SKU counter on component mount
+        if (!isEditMode) {
+            fetchVendorProfile();
+            fetchNextSKUCounter();
+        }
+    }, [isEditMode]);
+
+    useEffect(() => {
+        // Update SKU when category, business name, or counter changes
+        if (!isEditMode && selectedCategory && vendorBusinessName && skuCounter > 0) {
+            updateSKU();
+        }
+    }, [selectedCategory, vendorBusinessName, skuCounter, isEditMode]);
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -536,6 +655,9 @@ export default function AddProductPage() {
         }
         if (!formData.name?.trim()) {
             errors.name = "Please enter item/property name";
+        }
+        if (!formData.sku?.trim()) {
+            errors.sku = "SKU is required";
         }
         if (!formData.description?.trim()) {
             errors.description = "Please enter description";
@@ -655,6 +777,7 @@ export default function AddProductPage() {
             formdata.append("product_listing_type_id", listingTypeId);
 
             formdata.append("product_name", formData.name.trim());
+            formdata.append("sku", formData.sku.trim());
             formdata.append("description", formData.description.trim());
 
             // ---------- SELL FLOW ----------
@@ -950,6 +1073,31 @@ export default function AddProductPage() {
                             {validationErrors.name && (
                                 <span className="error-message">
                                     {validationErrors.name}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div>
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">SKU (Stock Keeping Unit)</Label>
+                        <div className="flex flex-col">
+                            <Input
+                                placeholder="Auto-generated SKU"
+                                type="text"
+                                value={formData.sku}
+                                onChange={(e) => handleChange("sku", e.target.value)}
+                                error={!!validationErrors.sku}
+                                className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full bg-gray-50"
+                                readOnly={!isEditMode}
+                            />
+                            {validationErrors.sku && (
+                                <span className="error-message">
+                                    {validationErrors.sku}
+                                </span>
+                            )}
+                            {!isEditMode && (
+                                <span className="text-xs text-gray-500 mt-1">
+                                    Format: Category(3)-BusinessName(3)-Number(3)
                                 </span>
                             )}
                         </div>

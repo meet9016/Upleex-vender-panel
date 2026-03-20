@@ -34,6 +34,13 @@ export interface EndPointApi {
     getStatus: string;
     changeStatus: string;
     
+    // Payment & Orders
+    getVendorOrders: string;
+    getVendorPaymentHistory: string;
+    getVendorOrderStatusOptions: string;
+    updateVendorOrderStatus: string;
+    getVendorOrderDetails: string;
+    
     // Export endpoints
     exportProductsExcel: string;
     exportProductsPDF: string;
@@ -80,6 +87,13 @@ const endPointApi: EndPointApi = {
     updateQuote: 'quote/update',
     changeStatus: 'quote/change-status',
     getStatus: 'quote/status-dropdown',
+    
+    // Payment & Orders
+    getVendorOrders: 'vendor/orders',
+    getVendorPaymentHistory: 'payment/vendor-payment-history',
+    getVendorOrderStatusOptions: 'vendor/orders/status-options',
+    updateVendorOrderStatus: 'vendor/orders',
+    getVendorOrderDetails: 'vendor/orders',
     
     // Export endpoints
     exportProductsExcel: 'export/products/excel',
