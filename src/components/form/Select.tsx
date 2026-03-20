@@ -47,11 +47,11 @@ const Select: React.FC<SelectProps> = ({
         {placeholder}
       </option>
 
-      {options.map((op) => (
+      {options?.map((op) => (
         <option key={op.value} value={op.value}>
           {op.label}
         </option>
-      ))}
+      )) || []}
     </select>
   );
 };
