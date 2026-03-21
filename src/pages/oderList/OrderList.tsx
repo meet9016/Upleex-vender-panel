@@ -6,8 +6,13 @@ import { api } from '@/utils/axiosInstance';
 import endPointApi from '@/utils/endPointApi';
 import { toast } from 'react-toastify';
 import { MdPayment, MdShoppingCart, MdDateRange, MdPending, MdCheckCircle, MdCancel } from 'react-icons/md';
-import { FaRupeeSign, FaUser, FaBox, FaEdit, FaEye } from 'react-icons/fa';
+import { FaRupeeSign, FaUser, FaBox, FaEdit } from 'react-icons/fa';
+import { FiRefreshCw } from 'react-icons/fi';
 import ComponentCard from '@/components/common/ComponentCard';
+import SearchableDropdown from '@/components/common/SearchableDropdown';
+import { HiOutlineEye } from 'react-icons/hi';
+import ActionButtons from '@/components/common/ActionButtons';
+import { useRouter } from 'next/navigation';
 
 interface PaymentOrder {
   order_id: string;
@@ -75,6 +80,7 @@ interface StatusOption {
 }
 
 const OrderList = () => {
+  const router = useRouter();
   const [paymentOrders, setPaymentOrders] = useState<PaymentOrder[]>([]);
   const [vendorOrders, setVendorOrders] = useState<VendorOrder[]>([]);
   const [loading, setLoading] = useState(false);
@@ -130,7 +136,8 @@ const OrderList = () => {
     {
       headerName: "Order ID",
       field: "order_id",
-      width: 150,
+      minWidth: 150,
+      flex: 1,
       cellRenderer: (params: any) => (
         <div className="font-mono text-blue-600 font-semibold">
           #{params.value}
@@ -140,7 +147,8 @@ const OrderList = () => {
     {
       headerName: "Date",
       field: "order_date",
-      width: 120,
+      minWidth: 120,
+      flex: 1,
       valueFormatter: (params) => {
         return params.value ? new Date(params.value).toLocaleDateString('en-GB', {
           day: '2-digit',
@@ -153,7 +161,8 @@ const OrderList = () => {
     {
       headerName: "Customer",
       field: "customer_name",
-      width: 200,
+      minWidth: 200,
+      flex: 1.5,
       cellRenderer: (params: any) => (
         <div className="flex flex-col">
           <span className="font-medium text-gray-800 dark:text-white">
@@ -168,7 +177,8 @@ const OrderList = () => {
     {
       headerName: "Items",
       field: "items_count",
-      width: 100,
+      minWidth: 100,
+      flex: 0.8,
       cellRenderer: (params: any) => (
         <div className="flex items-center justify-center h-full">
           <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
@@ -181,7 +191,8 @@ const OrderList = () => {
     {
       headerName: "Amount",
       field: "vendor_amount",
-      width: 120,
+      minWidth: 120,
+      flex: 1,
       cellRenderer: (params: any) => (
         <div className="font-semibold text-green-600 text-center">
           ₹{Number(params.value || 0).toLocaleString('en-IN')}
@@ -192,7 +203,8 @@ const OrderList = () => {
     {
       headerName: "Payment Status",
       field: "payment_status",
-      width: 140,
+      minWidth: 140,
+      flex: 1,
       cellRenderer: (params: any) => {
         const status = params.value;
         return (
@@ -208,7 +220,8 @@ const OrderList = () => {
     {
       headerName: "Paid On",
       field: "paid_at",
-      width: 120,
+      minWidth: 120,
+      flex: 1,
       valueFormatter: (params) => {
         return params.value ? new Date(params.value).toLocaleDateString('en-GB', {
           day: '2-digit',
@@ -225,7 +238,8 @@ const OrderList = () => {
     {
       headerName: "Order ID",
       field: "order_id",
-      width: 150,
+      minWidth: 150,
+      flex: 1,
       cellRenderer: (params: any) => (
         <div className="font-mono text-blue-600 font-semibold">
           #{params.value}
@@ -235,7 +249,8 @@ const OrderList = () => {
     {
       headerName: "Date",
       field: "createdAt",
-      width: 120,
+      minWidth: 120,
+      flex: 1,
       valueFormatter: (params) => {
         return new Date(params.value).toLocaleDateString('en-GB', {
           day: '2-digit',
@@ -248,7 +263,8 @@ const OrderList = () => {
     {
       headerName: "Customer",
       field: "user_id",
-      width: 200,
+      minWidth: 200,
+      flex: 1.5,
       cellRenderer: (params: any) => (
         <div className="flex flex-col">
           <span className="font-medium text-gray-800 dark:text-white">
@@ -263,7 +279,8 @@ const OrderList = () => {
     {
       headerName: "Items",
       field: "items",
-      width: 100,
+      minWidth: 100,
+      flex: 0.8,
       cellRenderer: (params: any) => (
         <div className="flex items-center justify-center h-full">
           <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
@@ -276,7 +293,8 @@ const OrderList = () => {
     {
       headerName: "Amount",
       field: "total_amount",
-      width: 120,
+      minWidth: 120,
+      flex: 1,
       cellRenderer: (params: any) => (
         <div className="font-semibold text-green-600 text-center">
           ₹{Number(params.value || 0).toLocaleString('en-IN')}
@@ -287,7 +305,8 @@ const OrderList = () => {
     {
       headerName: "Order Status",
       field: "vendor_status",
-      width: 150,
+      minWidth: 150,
+      flex: 1.2,
       cellRenderer: (params: any) => {
         const status = params.value || params.data.order_status || 'pending';
         return (
@@ -303,7 +322,8 @@ const OrderList = () => {
     {
       headerName: "Payment",
       field: "payment_status",
-      width: 120,
+      minWidth: 120,
+      flex: 1,
       cellRenderer: (params: any) => {
         const status = params.value || 'pending';
         return (
@@ -317,7 +337,8 @@ const OrderList = () => {
     {
         headerName: "Actions",
         field: "actions",
-        width: 150,
+        minWidth: 150,
+        flex: 1,
         cellRenderer: (params: any) => {
           return (
             <div className="flex items-center justify-center gap-2 h-full">
@@ -326,23 +347,16 @@ const OrderList = () => {
                   console.log('View order:', params.data);
                   handleViewOrder(params.data);
                 }}
-                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-all shadow-sm"
                 title="View Details"
                 type="button"
               >
-                <FaEye />
+                <HiOutlineEye  size={17} />
               </button>
-              <button
-                onClick={() => {
-                  console.log('Edit order:', params.data);
-                  handleUpdateStatus(params.data);
-                }}
-                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                title="Update Status"
-                type="button"
-              >
-                <FaEdit />
-              </button>
+
+              <ActionButtons
+                 onEdit={() => handleUpdateStatus(params.data)}
+                />
             </div>
           );
         },
@@ -634,27 +648,25 @@ const OrderList = () => {
             </h2>
             <div className="flex items-center gap-4">
               {activeTab === 'orders' && (
-                <select
-                  value={statusFilter}
-                  onChange={(e) => {
-                    setStatusFilter(e.target.value);
-                    setPage(1);
-                  }}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">All Status</option>
-                  {statusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="w-52">
+                  <SearchableDropdown
+                    value={statusFilter || ''}
+                    options={[{ value: '', label: 'All Status' }, ...statusOptions]}
+                    placeholder="All Status"
+                    searchable
+                    onChange={(val) => {
+                      setStatusFilter(val);
+                      setPage(1);
+                    }}
+                  />
+                </div>
               )}
               <button
                 onClick={fetchOrders}
                 disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
+                <FiRefreshCw className="h-4 w-4" />
                 {loading ? 'Refreshing...' : 'Refresh'}
               </button>
             </div>
@@ -664,6 +676,7 @@ const OrderList = () => {
             columns={activeTab === 'orders' ? vendorColumns : paymentColumns}
             rowData={activeTab === 'orders' ? vendorOrders : paymentOrders}
             loading={loading}
+            autoHeight
             tableName={activeTab === 'orders' ? 'VendorOrders' : 'PaymentHistory'}
             filter={false}
           />
@@ -908,17 +921,14 @@ const OrderList = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   New Status
                 </label>
-                <select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {statusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                <SearchableDropdown
+                  value={newStatus || ''}
+                  options={statusOptions}
+                  placeholder="Select status"
+                  searchable
+                  onChange={(val) => setNewStatus(val)}
+                  disabled={loading}
+                />
               </div>
               
               <div>

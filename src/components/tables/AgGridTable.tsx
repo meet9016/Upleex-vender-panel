@@ -32,6 +32,7 @@ interface AgGridTableProps {
   filter?: boolean;
   onSelectionChange?: (rows: any[]) => void;
   loading?: boolean;
+  autoHeight?: boolean;
 }
 
 const AgGridTable: React.FC<AgGridTableProps> = ({
@@ -43,6 +44,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   columns,
   onSelectionChange,
   loading = false,
+  autoHeight = false,
 }) => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
@@ -132,12 +134,13 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
     []
   );
 
-  // const onGridReady = useCallback((params: any) => {
-  //   // DON'T call sizeColumnsToFit for any table - let columns keep their defined widths
-  //   // This ensures horizontal scroll works when total width > container width
-  //   console.log("Grid ready - horizontal scroll enabled");
-  // }, []);
-
+  const onGridReady = useCallback((params: any) => {
+    try {
+      params.api.sizeColumnsToFit();
+    } catch (err) {
+      consoleError('AgGrid sizeColumnsToFit failed', err);
+    }
+  }, []);
 
   const handleAddClick = useCallback(() => {
     router.push(addButtonLink);
@@ -156,10 +159,12 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
       <div className="relative">
         {loading && <Loader type="section" />}
         <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'}`}
-          style={{ width: "100%", height: "80vh" }}>
+          style={{ width: "100%", height: autoHeight ? 'auto' : '80vh', minHeight: autoHeight ? 240 : 'auto' }}>
           <AgGridReact
             rowHeight={60}
             ref={gridRef}
+            domLayout={autoHeight ? 'autoHeight' : undefined}
+            onGridReady={onGridReady}
             rowData={rowData}
             columnDefs={columns || defaultColumns}
             defaultColDef={defaultColDef}
