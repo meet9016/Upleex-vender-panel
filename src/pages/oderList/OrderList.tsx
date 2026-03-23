@@ -57,6 +57,23 @@ interface VendorOrder {
       timestamp: string;
     }>;
   };
+  // Payment information from backend
+  vendor_payment_info?: {
+    payment_id: string;
+    vendor_amount: number;
+    payment_status: string;
+    delivered_at: string;
+    release_date: string;
+    released_at?: string;
+    released_by?: string;
+    notes?: string;
+  };
+  payment_status_info?: {
+    has_payment_record: boolean;
+    is_delivered: boolean;
+    payment_status: string;
+    can_be_released: boolean;
+  };
 }
 
 interface OrderStats {
@@ -301,14 +318,136 @@ const OrderList = () => {
       cellStyle: { textAlign: "center" }
     },
     {
-      headerName: "Payment",
-      field: "payment_status",
-      width: 120,
+      headerName: "User Payment",
+      field: "user_payment_status",
+      width: 140,
       cellRenderer: (params: any) => {
-        const status = params.value || 'pending';
+        const order = params.data;
+        const userPaymentStatus = order.payment_status || 'pending';
+        
+        let statusColor = '';
+        let icon = null;
+        
+        switch (userPaymentStatus.toLowerCase()) {
+          case 'paid':
+            statusColor = 'bg-green-100 text-green-800 border-green-200';
+            icon = <MdCheckCircle className="w-3 h-3" />;
+            break;
+          case 'pending':
+            statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            icon = <MdPending className="w-3 h-3" />;
+            break;
+          case 'failed':
+            statusColor = 'bg-red-100 text-red-800 border-red-200';
+            icon = <MdCancel className="w-3 h-3" />;
+            break;
+          default:
+            statusColor = 'bg-gray-100 text-gray-800 border-gray-200';
+        }
+        
         return (
-          <div className={`font-medium text-center ${status === 'paid' ? 'text-green-600' : 'text-yellow-600'}`}>
-            {status.toUpperCase()}
+          <div className="flex items-center justify-center h-full">
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border ${statusColor}`}>
+              {icon}
+              <span>{userPaymentStatus.toUpperCase()}</span>
+            </div>
+          </div>
+        );
+      },
+      cellStyle: { textAlign: "center" }
+    },
+    {
+      headerName: "Admin Payment",
+      field: "payment_status",
+      width: 200,
+      cellRenderer: (params: any) => {
+        const order = params.data;
+        const paymentInfo = order.payment_status_info;
+        const vendorPaymentInfo = order.vendor_payment_info;
+        
+        if (!paymentInfo?.has_payment_record) {
+          return (
+            <div className="flex items-center justify-center h-full">
+              <div className="flex flex-col items-center gap-1">
+                <span className="px-3 py-1 rounded-full text-xs font-medium border bg-gray-100 text-gray-600 border-gray-200">
+                  No Payment Record
+                </span>
+                <span className="text-xs text-gray-500">
+                  Order not delivered yet
+                </span>
+              </div>
+            </div>
+          );
+        }
+        
+        const status = paymentInfo.payment_status;
+        let statusText = '';
+        let statusColor = '';
+        let icon = null;
+        
+        switch (status) {
+          case 'pending':
+            statusText = 'Admin Review Pending';
+            statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            icon = <MdPending className="w-3 h-3" />;
+            break;
+          case 'released':
+            statusText = 'Payment Released';
+            statusColor = 'bg-green-100 text-green-800 border-green-200';
+            icon = <MdCheckCircle className="w-3 h-3" />;
+            break;
+          case 'cancelled':
+            statusText = 'Payment Cancelled';
+            statusColor = 'bg-red-100 text-red-800 border-red-200';
+            icon = <MdCancel className="w-3 h-3" />;
+            break;
+          default:
+            statusText = status?.toUpperCase() || 'UNKNOWN';
+            statusColor = 'bg-gray-100 text-gray-800 border-gray-200';
+        }
+        
+        return (
+          <div className="flex flex-col items-center justify-center h-full gap-1">
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border ${statusColor}`}>
+              {icon}
+              <span>{statusText}</span>
+            </div>
+            {status === 'pending' && vendorPaymentInfo?.release_date && (
+              <span className="text-xs text-gray-500">
+                Release: {new Date(vendorPaymentInfo.release_date).toLocaleDateString('en-GB')}
+              </span>
+            )}
+            {status === 'released' && vendorPaymentInfo?.released_at && (
+              <span className="text-xs text-green-600 font-medium">
+                Released: {new Date(vendorPaymentInfo.released_at).toLocaleDateString('en-GB')}
+              </span>
+            )}
+            {vendorPaymentInfo?.vendor_amount && (
+              <span className="text-xs font-semibold text-purple-600">
+                ₹{Number(vendorPaymentInfo.vendor_amount).toLocaleString('en-IN')}
+              </span>
+            )}
+          </div>
+        );
+      },
+      cellStyle: { textAlign: "center" }
+    },
+    {
+      headerName: "Vendor Amount",
+      field: "vendor_payment_info",
+      width: 140,
+      cellRenderer: (params: any) => {
+        const vendorPaymentInfo = params.value;
+        if (!vendorPaymentInfo) {
+          return (
+            <div className="text-center text-gray-500">
+              -
+            </div>
+          );
+        }
+        return (
+          <div className="font-semibold text-purple-600 text-center">
+            ₹{Number(vendorPaymentInfo.vendor_amount || 0).toLocaleString('en-IN')}
           </div>
         );
       },
@@ -352,11 +491,24 @@ const OrderList = () => {
   const fetchPaymentHistory = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`${endPointApi.getVendorPaymentHistory}?page=${page}&limit=20`);
+      const response = await api.get(`${endPointApi.getVendorPayments}?page=${page}&limit=20`);
       
       if (response.data.success) {
-        const paymentHistory = response.data.data.payment_history || [];
-        setPaymentOrders(paymentHistory);
+        const payments = response.data.data.payments || [];
+        // Transform payments to match PaymentOrder interface
+        const transformedPayments = payments.map((payment: any) => ({
+          order_id: payment.order_id?.order_id || 'N/A',
+          order_date: payment.delivered_at || payment.createdAt,
+          customer_name: payment.order_id?.user_name || 'N/A',
+          customer_email: 'N/A', // Not available in payment data
+          items_count: 1, // Simplified
+          vendor_amount: payment.vendor_amount || 0,
+          payment_status: payment.payment_status || 'pending',
+          paid_at: payment.released_at,
+          order_status: 'delivered', // Since payment exists, order is delivered
+          razorpay_payment_id: 'N/A'
+        }));
+        setPaymentOrders(transformedPayments);
         setTotalPages(response.data.data.pagination?.pages || 1);
       }
     } catch (error: any) {
@@ -478,16 +630,20 @@ const OrderList = () => {
   const fetchStats = async () => {
     try {
       const [paymentResponse, ordersResponse] = await Promise.all([
-        api.get(`${endPointApi.getVendorPaymentHistory}?page=1&limit=100`),
+        api.get(`${endPointApi.getVendorPayments}?page=1&limit=100`),
         api.get(`${endPointApi.getVendorOrders}?page=1&limit=100`)
       ]);
       
-      const paymentData = paymentResponse.data.data.payment_history || [];
+      const paymentData = paymentResponse.data.data.payments || [];
       const ordersData = ordersResponse.data.data.orders || [];
       
-      const totalEarnings = paymentResponse.data.data.total_earnings || 0;
-      const completedPayments = paymentData.filter((order: PaymentOrder) => order.payment_status === 'paid').length;
-      const pendingPayments = paymentData.filter((order: PaymentOrder) => order.payment_status === 'pending').length;
+      // Calculate total earnings from payments
+      const totalEarnings = paymentData
+        .filter((payment: any) => payment.payment_status === 'released')
+        .reduce((sum: number, payment: any) => sum + (payment.vendor_amount || 0), 0);
+      
+      const completedPayments = paymentData.filter((payment: any) => payment.payment_status === 'released').length;
+      const pendingPayments = paymentData.filter((payment: any) => payment.payment_status === 'pending').length;
       
       const pendingOrders = ordersData.filter((order: VendorOrder) => order.vendor_status === 'pending').length;
       const deliveredOrders = ordersData.filter((order: VendorOrder) => order.vendor_status === 'delivered').length;
@@ -819,6 +975,72 @@ const OrderList = () => {
                 </div>
               </div>
 
+              {/* Payment Information */}
+              {selectedOrder.vendor_payment_info && (
+                <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                  <h4 className="font-semibold text-gray-800 dark:text-white mb-3">Payment Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Vendor Amount</p>
+                      <p className="font-medium text-purple-600 dark:text-purple-400">
+                        ₹{Number(selectedOrder.vendor_payment_info.vendor_amount).toLocaleString('en-IN')}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Payment Status</p>
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                        selectedOrder.vendor_payment_info.payment_status === 'released' 
+                          ? 'bg-green-100 text-green-800' 
+                          : selectedOrder.vendor_payment_info.payment_status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {selectedOrder.vendor_payment_info.payment_status === 'pending' ? 'Admin Review Pending' :
+                         selectedOrder.vendor_payment_info.payment_status === 'released' ? 'Payment Released' :
+                         selectedOrder.vendor_payment_info.payment_status === 'cancelled' ? 'Payment Cancelled' :
+                         selectedOrder.vendor_payment_info.payment_status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Delivered Date</p>
+                      <p className="font-medium text-gray-800 dark:text-white">
+                        {new Date(selectedOrder.vendor_payment_info.delivered_at).toLocaleDateString('en-GB')}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Expected Release</p>
+                      <p className="font-medium text-gray-800 dark:text-white">
+                        {new Date(selectedOrder.vendor_payment_info.release_date).toLocaleDateString('en-GB')}
+                      </p>
+                    </div>
+                    {selectedOrder.vendor_payment_info.released_at && (
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Released On</p>
+                        <p className="font-medium text-green-600">
+                          {new Date(selectedOrder.vendor_payment_info.released_at).toLocaleDateString('en-GB')}
+                        </p>
+                      </div>
+                    )}
+                    {selectedOrder.vendor_payment_info.released_by && (
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Released By</p>
+                        <p className="font-medium text-gray-800 dark:text-white">
+                          {selectedOrder.vendor_payment_info.released_by === 'admin' ? 'Admin' : 'System'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  {selectedOrder.vendor_payment_info.notes && (
+                    <div className="mt-3">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Notes</p>
+                      <p className="font-medium text-gray-800 dark:text-white">
+                        {selectedOrder.vendor_payment_info.notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Order Total */}
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                 <div className="flex items-center justify-between">
@@ -849,6 +1071,81 @@ const OrderList = () => {
                 </div>
               )}
             </div>
+            
+            {/* Payment Status Message */}
+            {selectedOrder.vendor_status === 'delivered' && (
+              <div className="mt-4 p-4 rounded-lg border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/20">
+                {selectedOrder.payment_status_info?.has_payment_record ? (
+                  <div>
+                    {selectedOrder.payment_status_info.payment_status === 'pending' ? (
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-yellow-100 flex items-center justify-center mt-0.5">
+                          <MdPending className="w-4 h-4 text-yellow-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-yellow-800 dark:text-yellow-200">
+                            Payment Pending Admin Approval
+                          </p>
+                          <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                            Your order has been delivered and payment record has been created. 
+                            Expected release date: {selectedOrder.vendor_payment_info?.release_date ? 
+                              new Date(selectedOrder.vendor_payment_info.release_date).toLocaleDateString('en-GB') : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    ) : selectedOrder.payment_status_info.payment_status === 'released' ? (
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                          <MdCheckCircle className="w-4 h-4 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-green-800 dark:text-green-200">
+                            Payment Released!
+                          </p>
+                          <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                            Your payment has been released by admin on {selectedOrder.vendor_payment_info?.released_at ? 
+                              new Date(selectedOrder.vendor_payment_info.released_at).toLocaleDateString('en-GB') : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    ) : selectedOrder.payment_status_info.payment_status === 'cancelled' ? (
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
+                          <MdCancel className="w-4 h-4 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-red-800 dark:text-red-200">
+                            Payment Cancelled
+                          </p>
+                          <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                            Payment has been cancelled by admin. {selectedOrder.vendor_payment_info?.notes && 
+                              `Reason: ${selectedOrder.vendor_payment_info.notes}`}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-blue-800 dark:text-blue-200">
+                        Payment status: {selectedOrder.payment_status_info.payment_status}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mt-0.5">
+                      <MdPending className="w-4 h-4 text-gray-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800 dark:text-gray-200">
+                        Order Delivered - Payment Processing
+                      </p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                        Payment record will be created automatically. Please wait for admin approval.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             
             <div className="flex items-center justify-end gap-3 mt-6">
               <button
