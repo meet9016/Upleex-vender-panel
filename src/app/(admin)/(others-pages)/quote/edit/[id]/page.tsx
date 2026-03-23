@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
@@ -166,16 +166,16 @@ const QuoteEditPage = () => {
   };
 
   // Check if user can access date/image/video upload based on status
-  const canAccessUploadFeatures = () => {
+  const canAccessUploadFeatures = useMemo(() => {
     const currentStatus = formData.status || quoteData?.status;
-    return currentStatus === 'approval'; // Only allow when status is 'approval'
-  };
+    return currentStatus === 'approval';
+  }, [formData.status, quoteData?.status]);
 
   // Check if all features should be disabled (when status is complete)
-  const isCompleteStatus = () => {
+  const isCompleteStatus = useMemo(() => {
     const currentStatus = formData.status || quoteData?.status;
     return currentStatus === 'complete';
-  };
+  }, [formData.status, quoteData?.status]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -415,7 +415,7 @@ const QuoteEditPage = () => {
           <h2 className="text-base font-semibold text-gray-800 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Update Quote Details</h2>
           
           {/* Access Control Warning */}
-          {!canAccessUploadFeatures() && (
+          {!canAccessUploadFeatures && (
             <div className="mb-6 p-4 rounded-lg border-l-4 border-red-500 bg-red-50 dark:bg-red-900/20">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -425,7 +425,7 @@ const QuoteEditPage = () => {
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-red-700 dark:text-red-400 font-medium">
-                    {isCompleteStatus() 
+                    {isCompleteStatus 
                       ? 'Upload features are disabled because the quote status is Complete.' 
                       : 'Upload features (dates, images, videos) are only available when the quote status is Approved.'}
                   </p>
@@ -446,7 +446,7 @@ const QuoteEditPage = () => {
                   value={formData.start_date}
                   onChange={(date) => setFormData({ ...formData, start_date: date })}
                   min={new Date().toISOString().split('T')[0]} // Optional: Set min date to today
-                  className={!canAccessUploadFeatures() ? 'opacity-50 cursor-not-allowed' : ''}
+                  className={!canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed' : ''}
                 />
               </div>
 
@@ -459,7 +459,7 @@ const QuoteEditPage = () => {
                   value={formData.end_date}
                   onChange={(date) => setFormData({ ...formData, end_date: date })}
                   min={formData.start_date || new Date().toISOString().split('T')[0]} // Set min date to start date if available
-                  className={!canAccessUploadFeatures() ? 'opacity-50 cursor-not-allowed' : ''}
+                  className={!canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed' : ''}
                 />
               </div>
             </div>
@@ -477,15 +477,15 @@ const QuoteEditPage = () => {
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    disabled={!canAccessUploadFeatures()}
+                    disabled={!canAccessUploadFeatures}
                     className={`w-full px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 dark:file:bg-green-900 dark:file:text-green-300 transition-all ${
-                      !canAccessUploadFeatures() ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+                      !canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
                     }`}
                   />
                   {imagePreview && (
                     <div className="mt-2 relative inline-block">
                       <img src={imagePreview} alt="Preview" className="w-24 h-24 object-cover rounded-lg border border-green-200 dark:border-green-800" />
-                      {canAccessUploadFeatures() && (
+                      {canAccessUploadFeatures && (
                         <button
                           type="button"
                           onClick={handleRemoveImage}
@@ -511,15 +511,15 @@ const QuoteEditPage = () => {
                     type="file"
                     accept="video/*"
                     onChange={handleVideoChange}
-                    disabled={!canAccessUploadFeatures()}
+                    disabled={!canAccessUploadFeatures}
                     className={`w-full px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-700 dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 dark:file:bg-red-900 dark:file:text-red-300 transition-all ${
-                      !canAccessUploadFeatures() ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+                      !canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
                     }`}
                   />
                   {videoPreview && (
                     <div className="mt-2 relative inline-block">
                       <video src={videoPreview} controls className="w-48 h-32 rounded-lg border border-red-200 dark:border-red-800" />
-                      {canAccessUploadFeatures() && (
+                      {canAccessUploadFeatures && (
                         <button
                           type="button"
                           onClick={handleRemoveVideo}
@@ -547,15 +547,15 @@ const QuoteEditPage = () => {
                     type="file"
                     accept="image/*"
                     onChange={handleReturnImageChange}
-                    disabled={!canAccessUploadFeatures()}
+                    disabled={!canAccessUploadFeatures}
                     className={`w-full px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300 transition-all ${
-                      !canAccessUploadFeatures() ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+                      !canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
                     }`}
                   />
                   {returnImagePreview && (
                     <div className="mt-2 relative inline-block">
                       <img src={returnImagePreview} alt="Return Preview" className="w-24 h-24 object-cover rounded-lg border border-blue-200 dark:border-blue-800" />
-                      {canAccessUploadFeatures() && (
+                      {canAccessUploadFeatures && (
                         <button
                           type="button"
                           onClick={handleRemoveReturnImage}
@@ -581,15 +581,15 @@ const QuoteEditPage = () => {
                     type="file"
                     accept="video/*"
                     onChange={handleReturnVideoChange}
-                    disabled={!canAccessUploadFeatures()}
+                    disabled={!canAccessUploadFeatures}
                     className={`w-full px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 dark:file:bg-purple-900 dark:file:text-purple-300 transition-all ${
-                      !canAccessUploadFeatures() ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+                      !canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
                     }`}
                   />
                   {returnVideoPreview && (
                     <div className="mt-2 relative inline-block">
                       <video src={returnVideoPreview} controls className="w-48 h-32 rounded-lg border border-purple-200 dark:border-purple-800" />
-                      {canAccessUploadFeatures() && (
+                      {canAccessUploadFeatures && (
                         <button
                           type="button"
                           onClick={handleRemoveReturnVideo}
@@ -607,9 +607,9 @@ const QuoteEditPage = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={submitting || !canAccessUploadFeatures()}
+              disabled={submitting || !canAccessUploadFeatures}
               className={`w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 ${
-                (submitting || !canAccessUploadFeatures()) ? 'opacity-50 cursor-not-allowed' : ''
+                (submitting || !canAccessUploadFeatures) ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
               {submitting ? (

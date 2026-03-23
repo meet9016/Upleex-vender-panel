@@ -286,7 +286,21 @@ export default function SearchableDropdown({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => !disabled && setOpen(!open)}
+        onClick={() => {
+          if (disabled) return;
+          if (!open && usePortal && ref.current) {
+            // Compute position synchronously BEFORE opening to avoid first-render blink
+            const r = ref.current.getBoundingClientRect();
+            setPortalStyle({
+              position: "fixed",
+              top: r.bottom + 4,
+              left: r.left,
+              width: r.width,
+              zIndex: 9999,
+            });
+          }
+          setOpen(!open);
+        }}
         onKeyDown={handleKeyDown}
         className={`w-full flex items-center justify-between px-4 py-2 rounded-lg border text-sm transition
           ${error ? "border-red-500  dark:border-red-500" : "border-gray-300 dark:border-gray-700"}

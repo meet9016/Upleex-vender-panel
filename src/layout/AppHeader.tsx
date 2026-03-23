@@ -7,16 +7,18 @@ import { useSidebar } from "@/context/SidebarContext";
 import { useFilter } from "@/context/FilterContext";
 import Image from "next/image";
 import Link from "next/link";
+import { api } from "@/utils/axiosInstance";
+import endPointApi from "@/utils/endPointApi";
 
 const AppHeader = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
   const inputRef = useRef<HTMLInputElement>(null);
-  
+
   // Checkbox states
   const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const { filters, setFilters, canFilter } = useFilter();
-  
+  const { filters, setFilters, canFilter, isLoadingFilter } = useFilter();
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleToggle = useCallback(() => {
@@ -35,9 +37,24 @@ const AppHeader = () => {
     setDropdownOpen(prev => !prev);
   }, []);
 
-  const handleCheckboxChange = (type: 'service' | 'vendor') => {
+  const handleCheckboxChange = async (type: 'service' | 'vendor') => {
     if (!canFilter) return;
-    setFilters(prev => ({ ...prev, [type]: !prev[type] }));
+    const newFilters = { ...filters, [type]: !filters[type] };
+    setFilters(newFilters);
+
+    // Compute vendor_type from new state and call the API
+    const { service, vendor } = newFilters;
+    let vendor_type: string;
+    if (service && vendor) vendor_type = 'both';
+    else if (service) vendor_type = 'service';
+    else if (vendor) vendor_type = 'product';
+    else vendor_type = 'both'; // fallback — nothing selected
+
+    try {
+      await api.post(endPointApi.postUpdateVendorType, { vendor_type });
+    } catch (err) {
+      console.error('Failed to update vendor type:', err);
+    }
   };
 
   // Get selected items count
@@ -139,7 +156,7 @@ const AppHeader = () => {
         </div>
 
         <div className={`${isApplicationMenuOpen ? "flex" : "hidden"} items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}>
-          
+
           {/* Mobile Checkboxes */}
           <div className="lg:hidden w-full mb-2">
             <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -169,16 +186,20 @@ const AppHeader = () => {
             </div>
           </div>
 
+          {/* Guided Tour Overlay */}
+          {!isLoadingFilter && canFilter && !filters.service && !filters.vendor && (
+            <div className="fixed inset-0 z-[999990] bg-black/60 backdrop-blur-sm pointer-events-auto" />
+          )}
+
           <div className="flex items-center gap-2 2xsm:gap-3">
-              {/* Dropdown with Checkboxes - Always visible but disabled if canFilter is false */}
-            <div className="relative" ref={dropdownRef}>
+            {/* Dropdown with Checkboxes - Always visible but disabled if canFilter is false */}
+            <div className={`relative ${!isLoadingFilter && canFilter && !filters.service && !filters.vendor ? 'z-[999995]' : ''}`} ref={dropdownRef}>
               <button
                 onClick={toggleDropdown}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                  selectedCount > 0 
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
-                    : 'text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700'
-                }`}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${selectedCount > 0
+                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                  : 'text-gray-700 bg-gray-100 hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700'
+                  }`}
                 aria-label="Toggle selection menu"
                 aria-expanded={isDropdownOpen}
               >
@@ -188,10 +209,10 @@ const AppHeader = () => {
                     {selectedCount}
                   </span>
                 )}
-                <svg 
-                  className={`w-4 h-4 ml-1 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className={`w-4 h-4 ml-1 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -204,7 +225,7 @@ const AppHeader = () => {
                   <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Select Options</h3>
                   </div>
-                  
+
                   <div className="p-2">
                     {/* Service Checkbox */}
                     <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors duration-200">
@@ -256,6 +277,17 @@ const AppHeader = () => {
                       </p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Guided Tour Tooltip */}
+              {!isLoadingFilter && canFilter && !filters.service && !filters.vendor && !isDropdownOpen && (
+                <div className="absolute right-0 top-full mt-4 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-4 animate-in fade-in slide-in-from-top-2 border-2 border-blue-500 z-[99999]">
+                  <div className="absolute -top-[11px] right-6 w-5 h-5 bg-white dark:bg-gray-800 border-l-2 border-t-2 border-blue-500 transform rotate-45"></div>
+                  <div className="relative z-10">
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Select Business Type</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Please select your business type to proceed with the application.</p>
+                  </div>
                 </div>
               )}
             </div>

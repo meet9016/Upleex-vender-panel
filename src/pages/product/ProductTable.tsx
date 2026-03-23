@@ -330,6 +330,13 @@ const ProductTable = () => {
     },
   ];
 
+  const getRowStyle = (params: any) => {
+    if (params.data.status?.toLowerCase() === 'draft') {
+      return { backgroundColor: '#f3f4f6' }; // Light grey for Draft
+    }
+    return undefined;
+  };
+
   // Fetch products with filters
   const getProductData = async (filterParams = {}, tabType?: 'rent' | 'sell') => {
     try {
@@ -1121,6 +1128,7 @@ const ProductTable = () => {
         tableName="Products"
         onSelectionChange={setSelectedRows}
         loading={loading}
+        getRowStyle={getRowStyle}
       />
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal

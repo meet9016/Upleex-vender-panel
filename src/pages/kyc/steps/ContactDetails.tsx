@@ -16,6 +16,7 @@ import { toast } from "react-toastify";
 export type Option = {
   value: string;
   label: string;
+  extra?: any;
 };
 
 type KYCFormProp = {
@@ -97,7 +98,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         if (!endPointApi.postVendorCityList) {
           throw new Error("City endpoint not configured");
         }
-        if (selectedState?.value) {
+        if (selectedState?.value && search === "") {
           payload.state_id = selectedState.value;
         }
         res = await api.post(endPointApi.postVendorCityList as string, payload);
@@ -125,8 +126,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
       }
       if (type === "city") {
         setCities((prev) => page === 1 ?
-          list.map((item: any) => ({ value: String(item.id), label: item.city_name })) :
-          [...prev, ...list.map((item: any) => ({ value: String(item.id), label: item.city_name }))]
+          list.map((item: any) => ({ value: String(item.id), label: item.city_name, extra: item })) :
+          [...prev, ...list.map((item: any) => ({ value: String(item.id), label: item.city_name, extra: item }))]
         );
         pageRefCity.current += 1;
       }
@@ -179,7 +180,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
     fetchOptions("city", searchCity, 1);
   }, [searchCity]);
 
-  // Auto-fetch states when country is selected and states are empty
+  // Auto-fetch states when country is selected, search is empty, and page is 1
   useEffect(() => {
     if (selectedCountry && states.length === 0 && searchState === "") {
       fetchOptions("state", "", pageRefState.current);
@@ -193,36 +194,15 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
     }
   }, [selectedState?.value, cities.length, searchCity]);
 
-  // Load initial country list on mount
+  // Load initial lists on mount
   useEffect(() => {
-    if (!countries.length) {
-      fetchOptions("country", "", 1);
-    }
+    if (!countries.length) fetchOptions("country", "", 1);
+    if (!states.length) fetchOptions("state", "", 1);
+    if (!cities.length) fetchOptions("city", "", 1);
   }, []);
 
-  // When country changes, clear states and cities
-  useEffect(() => {
-    if (selectedCountry && selectedCountry.value !== KYCformData?.country_id?.value) {
-      setStates([]);
-      setCities([]);
-      setSelectedState(null);
-      setSelectedCity(null);
-      pageRefState.current = 1;
-      pageRefCity.current = 1;
-      setHasMoreStates(true);
-      setHasMoreCities(true);
-    }
-  }, [selectedCountry?.value]);
-
-  // When state changes, clear cities
-  useEffect(() => {
-    if (selectedState && selectedState.value !== KYCformData?.state_id?.value) {
-      setCities([]);
-      setSelectedCity(null);
-      pageRefCity.current = 1;
-      setHasMoreCities(true);
-    }
-  }, [selectedState?.value]);
+  // Removed the buggy useEffects that tried to clear states/cities.
+  // Clearing dependent arrays is now handled explicitly in the onChange handlers.
 
   // Initialize/ensure selected country exists in options
   useEffect(() => {
@@ -421,10 +401,25 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               const selected = filteredCountries.find((c) => c.value === value);
               if (selected) {
                 clearError("country_id");
+                
+                // Clear dependent states
+                setStates([]);
+                setSelectedState(null);
+                pageRefState.current = 1;
+                setHasMoreStates(true);
+                
+                // Clear dependent cities
+                setCities([]);
+                setSelectedCity(null);
+                pageRefCity.current = 1;
+                setHasMoreCities(true);
+                
                 setSelectedCountry(selected);
                 setKYCFormData((prevData) => ({
                   ...prevData,
                   country_id: { value: selected.value, label: selected.label },
+                  state_id: { value: "", label: "" },
+                  city_id: { value: "", label: "" },
                 }));
               }
             }}
@@ -455,10 +450,18 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               const selected = filteredStates.find((s) => s.value === value);
               if (selected) {
                 clearError("state_id");
+                
+                // Clear dependent cities
+                setCities([]);
+                setSelectedCity(null);
+                pageRefCity.current = 1;
+                setHasMoreCities(true);
+                
                 setSelectedState(selected);
                 setKYCFormData((prevData) => ({
                   ...prevData,
                   state_id: { value: selected.value, label: selected.label },
+                  city_id: { value: "", label: "" },
                 }));
               }
             }}
@@ -490,10 +493,36 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               if (selected) {
                 clearError("city_id");
                 setSelectedCity(selected);
-                setKYCFormData((prevData) => ({
-                  ...prevData,
-                  city_id: { value: selected.value, label: selected.label },
-                }));
+                
+                const extra = selected.extra;
+                if (extra && extra.state_id && extra.country_id) {
+                    const newCountry = { value: extra.country_id, label: extra.country_name };
+                    const newState = { value: extra.state_id, label: extra.state_name };
+                    
+                    // If auto-filling country that is different from current, clear states so it fetches new country states
+                    if (selectedCountry?.value !== extra.country_id) {
+                        setStates([]);
+                        pageRefState.current = 1;
+                        setHasMoreStates(true);
+                    }
+                    
+                    setSelectedCountry(newCountry);
+                    setSelectedState(newState);
+                    clearError("country_id");
+                    clearError("state_id");
+                    
+                    setKYCFormData((prevData) => ({
+                      ...prevData,
+                      city_id: { value: selected.value, label: selected.label },
+                      state_id: newState,
+                      country_id: newCountry
+                    }));
+                } else {
+                    setKYCFormData((prevData) => ({
+                      ...prevData,
+                      city_id: { value: selected.value, label: selected.label },
+                    }));
+                }
               }
             }}
             error={!!errors?.city_id}

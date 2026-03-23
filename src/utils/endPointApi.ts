@@ -12,6 +12,7 @@ export interface EndPointApi {
     postVendorStateList?: String;
     postVendorCityList?: string;
     postSubImageDelete: string;
+    postUpdateVendorType: string;
 
     postCategoryList: string;
     postSubCategoryList: string;
@@ -70,6 +71,7 @@ const endPointApi: EndPointApi = {
     postVendorStateList: 'vendor-state-list',
     postVendorCityList: 'vendor-city-list',
     postSubImageDelete: 'vendor-delete-product-image',
+    postUpdateVendorType: 'vendor-type',
 
 
 

@@ -33,6 +33,7 @@ interface AgGridTableProps {
   onSelectionChange?: (rows: any[]) => void;
   loading?: boolean;
   autoHeight?: boolean;
+  getRowStyle?: (params: any) => any;
 }
 
 const AgGridTable: React.FC<AgGridTableProps> = ({
@@ -45,6 +46,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   onSelectionChange,
   loading = false,
   autoHeight = false,
+  getRowStyle,
 }) => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
@@ -101,7 +103,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
         headerName: "Action",
         width: 140,
         suppressSizeToFit: true,
-         pinned: "right",
+        pinned: "right",
         cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' },
         cellRenderer: (params: any) => {
           const id = params.data.id;
@@ -180,8 +182,8 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             paginationPageSizeSelector={[10, 20, 50, 100]}
             columnMenu="new"
             suppressRowClickSelection
-            animateRows
             alwaysShowHorizontalScroll={true}
+            getRowStyle={getRowStyle}
           />
         </div>
       </div>
