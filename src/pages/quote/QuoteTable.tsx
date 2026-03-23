@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AgGridTable from "@/components/tables/AgGridTable";
 import { ColDef } from "ag-grid-community";
-import { MdDelete, MdModeEdit, MdFilterList, MdClose, MdSearch, MdKeyboardArrowDown, MdCheck } from "react-icons/md";
+import { MdDelete, MdModeEdit, MdFilterList, MdClose, MdSearch, MdKeyboardArrowDown, MdCheck, MdMoreVert } from "react-icons/md";
 import StatusBadge from "@/components/common/StatusBadge";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
@@ -14,7 +14,7 @@ import { toast } from "react-toastify";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
 import { exportQuotesToExcel, exportQuotesToPDF } from '@/utils/exportUtils';
 import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
-import { MdMoreVert } from 'react-icons/md';
+import { FiEdit3, FiCheck, FiX, FiMoreVertical } from 'react-icons/fi';
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -74,6 +74,22 @@ const QuoteTable = () => {
   const [exportLoading, setExportLoading] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const actionsMenuRef = useRef<HTMLDivElement>(null);
+
+  const [hoveredImage, setHoveredImage] = useState<string | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  // Robustly clear hover when mouse is NOT over a trigger
+  useEffect(() => {
+    if (!hoveredImage) return;
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.hover-zoom-trigger')) {
+        setHoveredImage(null);
+      }
+    };
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+  }, [hoveredImage]);
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -188,28 +204,38 @@ const QuoteTable = () => {
 
         return (
           <div className="flex items-center gap-3 h-full">
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 relative">
               {imageUrl ? (
                 <img
                   src={imageUrl}
                   alt={productName}
-                  className="w-14 h-14 object-cover rounded-lg border"
+                  className="w-9 h-9 object-cover rounded-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer transition-shadow hover:shadow-md hover-zoom-trigger"
+                  onMouseEnter={(e: any) => {
+                    setHoveredImage(imageUrl);
+                    setMousePos({ x: e.clientX, y: e.clientY });
+                  }}
+                  onMouseMove={(e: any) => {
+                    setMousePos({ x: e.clientX, y: e.clientY });
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredImage(null);
+                  }}
                   onError={(e: any) => {
                     e.target.src =
                       "https://via.placeholder.com/60x60?text=No+Image";
                   }}
                 />
               ) : (
-                <div className="w-14 h-14 flex items-center justify-center bg-gray-100 text-gray-400 text-xs rounded-lg border">
-                  No Image
+                <div className="w-9 h-9 flex items-center justify-center bg-gray-100 text-gray-400 text-[10px] rounded-lg border">
+                  No
                 </div>
               )}
             </div>
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-800 dark:text-white">
+            <div className="flex flex-col min-w-0">
+              <span className="font-medium text-[13px] text-gray-800 dark:text-white truncate" title={productName}>
                 {productName || "N/A"}
               </span>
-              <span className="text-xs text-gray-500">
+              <span className="text-[10px] text-gray-500 truncate">
                 {params.data?.category_name || ''}
               </span>
             </div>
@@ -265,8 +291,8 @@ const QuoteTable = () => {
       minWidth: 120,
       valueFormatter: (params) => {
         const value = params.value;
-        if (!value || value === '0') return "₹0.00";
-        return `₹${Number(value).toFixed(2)}`;
+        if (!value || value === '0') return "₹0";
+        return `₹${Number(value).toLocaleString('en-IN')}`;
       },
       cellStyle: { textAlign: "center" },
     },
@@ -276,8 +302,8 @@ const QuoteTable = () => {
       minWidth: 140,
       valueFormatter: (params) => {
         const value = params.value;
-        if (!value || value === '0') return "₹0.00";
-        return `₹${Number(value).toFixed(2)}`;
+        if (!value || value === '0') return "₹0";
+        return `₹${Number(value).toLocaleString('en-IN')}`;
       },
       cellStyle: { textAlign: "left", fontWeight: "600" },
     },
@@ -294,7 +320,8 @@ const QuoteTable = () => {
     },
     {
       headerName: "Actions",
-      minWidth: 330,
+      width: 130,
+      minWidth: 130,
       pinned: 'right',
       suppressHeaderMenuButton: true,
       cellRenderer: (params: any) => {
@@ -310,38 +337,37 @@ const QuoteTable = () => {
             <button
               onClick={() => handleApproval(params.data._id)}
               disabled={isDisabled}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
+              className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200
               ${isDisabled
-                  ? "bg-gray-100 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 cursor-not-allowed"
-                  : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 shadow-sm hover:shadow"
+                  ? "bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed opacity-50"
+                  : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 shadow-sm hover:shadow"
                 }`}
+              title="Approve"
             >
-              Approve
+              <FiCheck className="text-base" />
             </button>
 
             {/* Reject */}
             <button
               onClick={() => handleRejected(params.data._id)}
               disabled={isDisabled}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200
+              className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200
               ${isDisabled
-                  ? "bg-gray-100 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 cursor-not-allowed"
-                  : "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-700 hover:bg-rose-100 dark:hover:bg-rose-900/30 shadow-sm hover:shadow"
+                  ? "bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed opacity-50"
+                  : "bg-rose-50 text-rose-600 hover:bg-rose-100 shadow-sm hover:shadow"
                 }`}
+              title="Reject"
             >
-              Reject
+              <FiX className="text-base" />
             </button>
 
             {/* Edit */}
             <button
               onClick={() => router.push(`/quote/edit/${params.data._id}`)}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg border
-              bg-white dark:bg-gray-800 text-blue-700 dark:text-gray-300
-              border-blue-200 dark:border-gray-600
-              hover:bg-blue-50 dark:hover:bg-gray-700
-              transition-all duration-200"
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all duration-200 shadow-sm hover:shadow"
+              title="Edit"
             >
-              Edit
+              <FiEdit3 className="text-base" />
             </button>
           </div>
         );
@@ -736,44 +762,46 @@ const QuoteTable = () => {
             )}
           </div>
 
-          {/* Actions Menu */}
+          {/* Actions Menu (3-dots) - Ultra Sophisticated Design */}
           <div className="relative" ref={actionsMenuRef}>
             <button
               onClick={() => setShowActionsMenu((v) => !v)}
-              className="px-3 py-2 hover:bg-gray-200 border-2 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium flex items-center gap-2"
+              className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
               title="Export options"
             >
-              <MdMoreVert className="text-lg" />
+              <FiMoreVertical className="text-xl" />
             </button>
 
             {showActionsMenu && (
-              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg z-50 overflow-hidden">
+              <div className="absolute right-0 mt-3 w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
                 {/* Export Section */}
-                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Export</span>
+                <div className="px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100/30 dark:border-gray-800/30">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Export Options</span>
                 </div>
 
-                {/* Export to Excel */}
-                <button
-                  onClick={handleExportExcel}
-                  disabled={exportLoading}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 transition disabled:opacity-50"
-                >
-                  <FaFileExcel className="text-green-600 text-base" />
-                  <span>Export to Excel</span>
-                  {exportLoading && <div className="ml-auto w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />}
-                </button>
+                <div className="py-1">
+                  {/* Export to Excel */}
+                  <button
+                    onClick={handleExportExcel}
+                    disabled={exportLoading}
+                    className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200 disabled:opacity-50"
+                  >
+                    <FaFileExcel className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="group-hover:translate-x-0.5 transition-transform duration-200">Export to Excel</span>
+                    {exportLoading && <div className="ml-auto w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />}
+                  </button>
 
-                {/* Export to PDF */}
-                <button
-                  onClick={handleExportPDF}
-                  disabled={exportLoading}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-50"
-                >
-                  <FaFilePdf className="text-red-600 text-base" />
-                  <span>Export to PDF</span>
-                  {exportLoading && <div className="ml-auto w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
-                </button>
+                  {/* Export to PDF */}
+                  <button
+                    onClick={handleExportPDF}
+                    disabled={exportLoading}
+                    className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-rose-500 hover:bg-rose-50/50 dark:hover:bg-rose-900/10 transition-all duration-200 disabled:opacity-50"
+                  >
+                    <FaFilePdf className="text-lg text-rose-600 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="group-hover:translate-x-0.5 transition-transform duration-200">Export to PDF</span>
+                    {exportLoading && <div className="ml-auto w-3.5 h-3.5 border-2 border-rose-600 border-t-transparent rounded-full animate-spin" />}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -785,7 +813,27 @@ const QuoteTable = () => {
         rowData={quoteData}
         filter={true}
         tableName="Quotes"
+        rowHeight={52}
       />
+      {/* Floating Image Preview */}
+      {hoveredImage && (
+        <div
+          className="fixed z-[9999] pointer-events-none transition-opacity duration-200"
+          style={{
+            top: mousePos.y + 25,
+            left: mousePos.x + 25,
+            opacity: hoveredImage ? 1 : 0
+          }}
+        >
+          <div className="bg-white dark:bg-gray-800 p-1.5 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700">
+            <img
+              src={hoveredImage}
+              alt="Preview"
+              className="w-48 h-48 object-cover rounded-xl"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
