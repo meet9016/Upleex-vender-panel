@@ -62,7 +62,7 @@ export type ErrorType = {
 };
 
 export default function KYCPage() {
-  const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
+  // Deleted isTypeModalOpen state
   const [currentStep, setCurrentStep] = useState(0);
   const [errors, setErrors] = useState<ErrorType>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,14 +128,7 @@ export default function KYCPage() {
     fetchKYCFormdata();
   }, []);
 
-  // Show modal if new vendor and no type selected
-  useEffect(() => {
-    if (!isDataLoading && canFilter && !filters.service && !filters.vendor) {
-      setIsTypeModalOpen(true);
-    } else {
-      setIsTypeModalOpen(false);
-    }
-  }, [canFilter, filters.service, filters.vendor, isDataLoading]);
+  // Show modal logic moved to AppHeader in the form of an overlay tooltip
 
   const clearError = (field: string | number) => {
     setErrors((prev) => {
@@ -523,80 +516,7 @@ export default function KYCPage() {
 
   return (
     <div className="relative">
-      {/* Vendor Type Selection Modal */}
-      {isTypeModalOpen && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="p-8">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-7h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Select Business Type</h3>
-                <p className="text-gray-500 dark:text-gray-400">Please choose how you want to register on Upleex. This determines your onboarding steps.</p>
-              </div>
-
-              <div className="grid gap-4">
-                <button
-                  onClick={() => {
-                    setFilters({ service: true, vendor: false });
-                    setIsTypeModalOpen(false);
-                  }}
-                  className="group flex items-center gap-4 p-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 text-left"
-                >
-                  <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 rounded-lg flex items-center justify-center transition-colors">
-                    <svg className="w-6 h-6 text-gray-500 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <span className="block font-bold text-gray-900 dark:text-white">Service Provider</span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Register as a company or individual offering services.</span>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setFilters({ service: false, vendor: true });
-                    setIsTypeModalOpen(false);
-                  }}
-                  className="group flex items-center gap-4 p-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 text-left"
-                >
-                  <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 rounded-lg flex items-center justify-center transition-colors">
-                    <svg className="w-6 h-6 text-gray-500 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <span className="block font-bold text-gray-900 dark:text-white">Direct Vendor</span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Register as a seller of products or equipment.</span>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setFilters({ service: true, vendor: true });
-                    setIsTypeModalOpen(false);
-                  }}
-                  className="group flex items-center gap-4 p-4 rounded-xl border-2 border-gray-100 dark:border-gray-800 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 text-left"
-                >
-                  <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 rounded-lg flex items-center justify-center transition-colors">
-                    <svg className="w-6 h-6 text-gray-500 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <span className="block font-bold text-gray-900 dark:text-white">Both</span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Register as both a service provider and product seller.</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Vendor Type Selection is now handled globally via AppHeader and FilterContext */}
 
       <ComponentCard title="KYC Verification">
         <Stepper steps={steps} currentStep={currentStep} completedPages={KYCformData.completed_pages} onStepChange={handleStepChange} />
