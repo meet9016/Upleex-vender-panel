@@ -12,6 +12,7 @@ export interface EndPointApi {
     postVendorStateList?: String;
     postVendorCityList?: string;
     postSubImageDelete: string;
+    postUpdateVendorType: string;
 
     postCategoryList: string;
     postSubCategoryList: string;
@@ -38,7 +39,6 @@ export interface EndPointApi {
     // Payment & Orders
     getVendorOrders: string;
     getVendorPaymentHistory: string;
-    getVendorPayments: string;
     getVendorOrderStatusOptions: string;
     updateVendorOrderStatus: string;
     getVendorOrderDetails: string;
@@ -71,6 +71,7 @@ const endPointApi: EndPointApi = {
     postVendorStateList: 'vendor-state-list',
     postVendorCityList: 'vendor-city-list',
     postSubImageDelete: 'vendor-delete-product-image',
+    postUpdateVendorType: 'vendor-type',
 
 
 
@@ -100,8 +101,7 @@ const endPointApi: EndPointApi = {
     
     // Payment & Orders
     getVendorOrders: 'vendor/orders',
-    getVendorPaymentHistory: 'vendor/payments/vendor',
-    getVendorPayments: 'vendor/payments/vendor',
+    getVendorPaymentHistory: 'payment/vendor-payment-history',
     getVendorOrderStatusOptions: 'vendor/orders/status-options',
     updateVendorOrderStatus: 'vendor/orders',
     getVendorOrderDetails: 'vendor/orders',

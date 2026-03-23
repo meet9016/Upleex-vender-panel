@@ -44,6 +44,7 @@ export default function SearchableDropdown({
   const ref = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [portalStyle, setPortalStyle] = useState<React.CSSProperties>();
@@ -87,6 +88,20 @@ export default function SearchableDropdown({
     if (!open || !searchable) return;
     searchInputRef.current?.focus();
   }, [open, searchable]);
+
+  useEffect(() => {
+    if (highlightedIndex >= 0 && scrollContainerRef.current) {
+      const highlightedElement = scrollContainerRef.current.querySelector(
+        `[data-index="${highlightedIndex}"]`
+      );
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({
+          block: 'nearest',
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [highlightedIndex]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!open) return;
@@ -186,6 +201,7 @@ export default function SearchableDropdown({
       )}
 
       <div
+        ref={scrollContainerRef}
         className="max-h-52 overflow-y-auto"
         onScroll={(e) => {
           const target = e.target as HTMLDivElement;
@@ -205,6 +221,7 @@ export default function SearchableDropdown({
       <div
         key={opt.value}
         role="option"
+        data-index={index}
         aria-selected={isSelected}
         onClick={() => {
           if (disabled) return;
@@ -269,7 +286,21 @@ export default function SearchableDropdown({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => !disabled && setOpen(!open)}
+        onClick={() => {
+          if (disabled) return;
+          if (!open && usePortal && ref.current) {
+            // Compute position synchronously BEFORE opening to avoid first-render blink
+            const r = ref.current.getBoundingClientRect();
+            setPortalStyle({
+              position: "fixed",
+              top: r.bottom + 4,
+              left: r.left,
+              width: r.width,
+              zIndex: 9999,
+            });
+          }
+          setOpen(!open);
+        }}
         onKeyDown={handleKeyDown}
         className={`w-full flex items-center justify-between px-4 py-2 rounded-lg border text-sm transition
           ${error ? "border-red-500  dark:border-red-500" : "border-gray-300 dark:border-gray-700"}

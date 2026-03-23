@@ -157,6 +157,7 @@ export default function DatePicker({
 
       days.push(
         <button
+          type="button"
           key={day}
           onClick={(e) => {
             e.stopPropagation();
@@ -221,6 +222,7 @@ export default function DatePicker({
           {/* Header */}
           <div className="flex items-center justify-between mb-4 ">
             <button
+              type="button"
               onClick={handlePrevMonth}
               className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors dark:text-gray-300"
             >
@@ -230,6 +232,7 @@ export default function DatePicker({
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </span>
             <button
+              type="button"
               onClick={handleNextMonth}
               className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors dark:text-gray-300"
             >
