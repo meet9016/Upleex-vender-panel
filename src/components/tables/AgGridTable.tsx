@@ -32,6 +32,7 @@ interface AgGridTableProps {
   filter?: boolean;
   onSelectionChange?: (rows: any[]) => void;
   loading?: boolean;
+  rowHeight?: number;
 }
 
 const AgGridTable: React.FC<AgGridTableProps> = ({
@@ -43,6 +44,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   columns,
   onSelectionChange,
   loading = false,
+  rowHeight = 60,
 }) => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
@@ -158,7 +160,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
         <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'}`}
           style={{ width: "100%", height: "80vh" }}>
           <AgGridReact
-            rowHeight={60}
+            rowHeight={rowHeight}
             ref={gridRef}
             rowData={rowData}
             columnDefs={columns || defaultColumns}

@@ -35,6 +35,21 @@ const ServiceTable = () => {
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [hoveredImage, setHoveredImage] = useState<string | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  // Robustly clear hover when mouse is NOT over a trigger
+  useEffect(() => {
+    if (!hoveredImage) return;
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.hover-zoom-trigger')) {
+        setHoveredImage(null);
+      }
+    };
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+  }, [hoveredImage]);
 
   const columns: ColDef[] = [
     {
@@ -50,11 +65,21 @@ const ServiceTable = () => {
 
         return (
           <div className="flex items-center gap-3 h-full">
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 relative">
               <img
                 src={imageUrl}
                 alt={serviceName}
-                className="w-14 h-14 object-cover rounded-lg border"
+                className="w-9 h-9 object-cover rounded-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer transition-shadow hover:shadow-md hover-zoom-trigger"
+                onMouseEnter={(e: any) => {
+                  setHoveredImage(imageUrl);
+                  setMousePos({ x: e.clientX, y: e.clientY });
+                }}
+                onMouseMove={(e: any) => {
+                  setMousePos({ x: e.clientX, y: e.clientY });
+                }}
+                onMouseLeave={() => {
+                  setHoveredImage(null);
+                }}
                 onError={(e: any) => {
                   if (e.target.src !== DEFAULT_PLACEHOLDER) {
                     e.target.src = DEFAULT_PLACEHOLDER;
@@ -63,8 +88,8 @@ const ServiceTable = () => {
                 loading="lazy"
               />
             </div>
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-800 dark:text-white">
+            <div className="flex flex-col min-w-0">
+              <span className="font-medium text-[13px] text-gray-800 dark:text-white truncate" title={serviceName}>
                 {serviceName}
               </span>
             </div>
@@ -81,10 +106,9 @@ const ServiceTable = () => {
     {
       field: "price",
       headerName: "Price",
-      flex: 1,
-      minWidth: 100,
+      width: 120,
       valueFormatter: (params) => {
-        return params.value ? `₹${Number(params.value).toFixed(2)}` : '₹0.00';
+        return params.value ? `₹${Number(params.value).toLocaleString('en-IN')}` : '₹0';
       },
     },
     {
@@ -106,9 +130,11 @@ const ServiceTable = () => {
     },
     {
       headerName: "Action",
-      width: 120,
+      width: 100,
+      minWidth: 100,
       pinned: 'right',
       suppressHeaderMenuButton: true,
+      cellStyle: { textAlign: "center" },
       cellRenderer: (params: any) => (
         <ActionButtons
           onEdit={() => router.push(`/service/addService?id=${params.data._id || params.data.id}`)}
@@ -184,6 +210,7 @@ const ServiceTable = () => {
         filter={false}
         tableName="Services"
         loading={loading}
+        rowHeight={52}
       />
 
       <ConfirmDeleteModal
@@ -191,6 +218,26 @@ const ServiceTable = () => {
         onCancel={() => setOpenDeleteModal(false)}
         onConfirm={confirmDelete}
       />
+
+      {/* Floating Image Preview */}
+      {hoveredImage && (
+        <div
+          className="fixed z-[9999] pointer-events-none transition-opacity duration-200"
+          style={{
+            top: mousePos.y + 25,
+            left: mousePos.x + 25,
+            opacity: hoveredImage ? 1 : 0
+          }}
+        >
+          <div className="bg-white dark:bg-gray-800 p-1.5 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700">
+            <img
+              src={hoveredImage}
+              alt="Preview"
+              className="w-48 h-48 object-cover rounded-xl"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

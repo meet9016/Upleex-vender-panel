@@ -19,6 +19,7 @@ import { Modal } from '@/components/ui/modal';
 import Loader from '@/components/common/Loader';
 import { exportProductsToExcel, exportProductsToPDF } from '@/utils/exportUtils';
 import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
+import { FiMoreVertical, FiSlash, FiTrash2, FiFileText, FiPauseCircle } from 'react-icons/fi';
 import PlanSelectionDialog from '@/components/common/PlanSelectionDialog';
 import Button from '@/components/ui/button/Button';
 
@@ -108,6 +109,23 @@ const ProductTable = () => {
   const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [hoveredImage, setHoveredImage] = useState<string | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+
+
+  // Robustly clear hover when mouse is NOT over a trigger
+  useEffect(() => {
+    if (!hoveredImage) return;
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.hover-zoom-trigger')) {
+        setHoveredImage(null);
+      }
+    };
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+  }, [hoveredImage]);
 
   // ADD THESE helper functions inside your component, before the columns definition
   const isValidImageUrl = (url: string | undefined | null): boolean => {
@@ -164,11 +182,21 @@ const ProductTable = () => {
 
         return (
           <div className="flex items-center gap-3 h-full">
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 relative">
               <img
                 src={imageUrl}
                 alt={productName}
-                className="w-14 h-14 object-cover rounded-lg border"
+                className="w-9 h-9 object-cover rounded-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer transition-shadow hover:shadow-md hover-zoom-trigger"
+                onMouseEnter={(e: any) => {
+                  setHoveredImage(imageUrl);
+                  setMousePos({ x: e.clientX, y: e.clientY });
+                }}
+                onMouseMove={(e: any) => {
+                  setMousePos({ x: e.clientX, y: e.clientY });
+                }}
+                onMouseLeave={() => {
+                  setHoveredImage(null);
+                }}
                 onError={(e: any) => {
                   if (e.target.src !== DEFAULT_PLACEHOLDER) {
                     e.target.src = DEFAULT_PLACEHOLDER;
@@ -177,8 +205,8 @@ const ProductTable = () => {
                 loading="lazy"
               />
             </div>
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-800 dark:text-white">
+            <div className="flex flex-col min-w-0">
+              <span className="font-medium text-[13px] text-gray-800 dark:text-white truncate" title={productName}>
                 {productName}
               </span>
             </div>
@@ -189,13 +217,13 @@ const ProductTable = () => {
     {
       field: "category_name",
       headerName: "Category",
-      minWidth: 180,
+      minWidth: 150,
       cellStyle: { textAlign: "left" }
     },
     {
       field: "sub_category_name",
       headerName: "Sub Category",
-      minWidth: 180,
+      minWidth: 150,
       cellStyle: { textAlign: "left" }
     },
     {
@@ -207,35 +235,35 @@ const ProductTable = () => {
     {
       field: "price",
       headerName: "Price",
-      minWidth: 120,
+      minWidth: 100,
       valueFormatter: (params) => {
-        return params.value ? `₹${Number(params.value).toFixed(2)}` : '₹0.00';
+        return params.value ? `₹${Number(params.value).toLocaleString('en-IN')}` : '₹0';
       },
       cellStyle: { textAlign: "left" }
     },
     {
       field: "cancel_price",
       headerName: "Cancel Price",
-      minWidth: 120,
+      minWidth: 100,
       valueFormatter: (params) => {
-        return params.value ? `₹${Number(params.value).toFixed(2)}` : '₹0.00';
+        return params.value ? `₹${Number(params.value).toLocaleString('en-IN')}` : '₹0';
       },
       cellStyle: { textAlign: "left" }
     },
     {
       field: "product_listing_type_name",
       headerName: "Listing Type",
-      minWidth: 150,
+      minWidth: 120,
       cellStyle: { textAlign: "left" }
     },
     {
       field: "is_new",
-      headerName: "New Product",
-      minWidth: 120,
+      headerName: "New",
+      minWidth: 80,
       cellRenderer: (params: any) => (
         <div className="flex items-center h-full">
           {params.value ? (
-            <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
+            <span className="bg-green-50 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-100">
               NEW
             </span>
           ) : (
@@ -248,18 +276,18 @@ const ProductTable = () => {
     {
       field: "deposit_amount",
       headerName: "Deposit",
-      minWidth: 120,
+      minWidth: 100,
       valueFormatter: (params) => {
         const value = params.value;
         if (!value || value === '0') return '-';
-        return `₹${Number(value).toFixed(2)}`;
+        return `₹${Number(value).toLocaleString('en-IN')}`;
       },
       cellStyle: { textAlign: "left" }
     },
     {
       field: "available_quantity",
       headerName: "Stock",
-      minWidth: 120,
+      minWidth: 80,
       cellRenderer: (params: any) => {
         const product = params.data;
         if (product.product_type_name !== 'Sell') {
@@ -270,25 +298,20 @@ const ProductTable = () => {
         
         return (
           <div className="flex items-center h-full">
-            <div className="flex flex-col">
-              <span className={`text-xs font-medium ${
-                isOutOfStock ? 'text-red-600' : 'text-gray-800 dark:text-white'
-              }`}>
-                {available}
-              </span>
-              {isOutOfStock && (
-                <span className="text-xs text-red-500 font-medium">OUT OF STOCK</span>
-              )}
-            </div>
+            <span className={`text-xs font-semibold ${
+              isOutOfStock ? 'text-red-500' : 'text-gray-700 dark:text-gray-200'
+            }`}>
+              {available} {isOutOfStock && "(OOS)"}
+            </span>
           </div>
         );
       },
       cellStyle: { justifyContent: "left" }
     },
     {
-      headerName: "Approval Status by Admin",
+      headerName: "Admin",
       field: "approval_status",
-      minWidth: 140,
+      minWidth: 110,
       sortable: true,
       cellRenderer: (params: any) => (
         <div className="flex items-center h-full">
@@ -300,7 +323,7 @@ const ProductTable = () => {
     {
       field: "status",
       headerName: "Status",
-      minWidth: 120,
+      minWidth: 100,
       cellRenderer: (params: any) => (
         <div className="flex items-center h-full">
           <StatusBadge status={params.value || 'active'} />
@@ -311,16 +334,17 @@ const ProductTable = () => {
     {
       field: "expires_at",
       headerName: "Expires On",
-      minWidth: 140,
+      minWidth: 120,
       valueFormatter: (p) => p.value ? new Date(p.value).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-',
       cellStyle: { textAlign: "left" }
     },
     {
       headerName: "Action",
-      minWidth: 120,
+      width: 100,
+      minWidth: 100,
       pinned: 'right',
       suppressHeaderMenuButton: true,
-      cellStyle: { textAlign: "left" },
+      cellStyle: { textAlign: "center" },
       cellRenderer: (params: any) => (
         <ActionButtons
           onEdit={() => router.push(`/product/addProduct?id=${params.data._id || params.data.id}`)}
@@ -988,127 +1012,138 @@ const ProductTable = () => {
           >
             + Add Product
           </button>
+          {/* Actions Menu (3-dots) - Ultra Sophisticated Design */}
           <div className="relative" ref={actionsMenuRef}>
             <button
               onClick={() => setShowActionsMenu((v) => !v)}
-              className="px-3 py-2 hover:bg-gray-200 border-2 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors font-medium flex items-center gap-2"
+              className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
               title="More actions"
             >
-              <MdMoreVert className="text-lg" />
+              <FiMoreVertical className="text-xl" />
             </button>
+            
             {showActionsMenu && (
-              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg z-50 overflow-hidden">
-
-                <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
-
+              <div className="absolute right-0 mt-3 w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
                 {/* Bulk Actions Section */}
-                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Bulk Actions</span>
+                <div className="px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100/30 dark:border-gray-800/30">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Bulk Operations</span>
                 </div>
 
-                {/* Deactivate */}
-                <button
-                  onClick={() => openBulkAction("deactivate")}
-                  className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-                >
-                  <div className="flex items-center gap-2 text-yellow-600">
-                    <MdBlock className="text-base" />
-                    <span>Deactivate</span>
-                  </div>
-                  <span className="text-xs text-gray-400">
-                    {selectedRows.length}
-                  </span>
-                </button>
+                <div className="py-1">
+                  {/* Deactivate */}
+                  <button
+                    onClick={() => {
+                      setShowActionsMenu(false);
+                      openBulkAction("deactivate");
+                    }}
+                    className="group w-full flex items-center justify-between px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-amber-500 hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-all duration-200"
+                  >
+                    <div className="flex items-center gap-3">
+                      <FiPauseCircle className="text-lg text-amber-500 group-hover:scale-110 transition-transform duration-200" />
+                      <span>Deactivate</span>
+                    </div>
+                    <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] font-bold rounded-full">
+                      {selectedRows.length}
+                    </span>
+                  </button>
 
-                {/* Delete */}
-                <button
-                  onClick={() => openBulkAction("delete")}
-                  className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
-                >
-                  <div className="flex items-center gap-2">
-                    <MdDelete className="text-base" />
-                    <span>Delete</span>
-                  </div>
-                  <span className="text-xs opacity-70">
-                    {selectedRows.length}
-                  </span>
-                </button>
-
-                <div className="h-px bg-gray-200 dark:bg-gray-800 my-1" />
-
-                {/* View Drafts */}
-                <button
-                  onClick={() => {
-                    setShowActionsMenu(false);
-                    router.push("/draft");
-                  }}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-                >
-                  <HiOutlineDocumentText className="text-base" />
-                  <span>View Drafts</span>
-                </button>
-
-                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Export</span>
+                  {/* Delete */}
+                  <button
+                    onClick={() => {
+                      setShowActionsMenu(false);
+                      openBulkAction("delete");
+                    }}
+                    className="group w-full flex items-center justify-between px-4 py-3 text-[13px] font-medium text-rose-600 dark:text-rose-400 border-l-4 border-transparent hover:border-rose-500 hover:bg-rose-50/50 dark:hover:bg-rose-900/10 transition-all duration-200"
+                  >
+                    <div className="flex items-center gap-3">
+                      <FiTrash2 className="text-lg group-hover:scale-110 transition-transform duration-200" />
+                      <span>Delete Selected</span>
+                    </div>
+                    <span className="px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-[10px] font-bold rounded-full">
+                      {selectedRows.length}
+                    </span>
+                  </button>
                 </div>
 
-                {/* Export to Excel */}
-                <button
-                  onClick={handleExportExcel}
-                  disabled={excelLoading || pdfLoading}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 transition disabled:opacity-50"
-                >
-                  <FaFileExcel className="text-green-600 text-base" />
-                  <span>Export to Excel</span>
-                  {excelLoading && <Loader className="ml-auto text-green-600 w-4 h-4" />}
-                </button>
+                {/* Management Section */}
+                <div className="px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border-y border-gray-100/30 dark:border-gray-800/30">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Management</span>
+                </div>
 
-                {/* Export to PDF */}
-                <button
-                  onClick={handleExportPDF}
-                  disabled={excelLoading || pdfLoading}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-50"
-                >
-                  <FaFilePdf className="text-red-600 text-base" />
-                  <span>Export to PDF</span>
-                  {pdfLoading && <Loader className="ml-auto text-red-600 w-4 h-4" />}
-                </button>
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setShowActionsMenu(false);
+                      router.push("/draft");
+                    }}
+                    className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all duration-200"
+                  >
+                    <FiFileText className="text-lg text-indigo-500 group-hover:scale-110 transition-transform duration-200" />
+                    <span>View Drafts</span>
+                  </button>
+                </div>
+
+                {/* Export Section */}
+                <div className="px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border-y border-gray-100/30 dark:border-gray-800/30">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Export Options</span>
+                </div>
+
+                <div className="py-1">
+                  <button
+                    onClick={handleExportExcel}
+                    disabled={excelLoading || pdfLoading}
+                    className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200 disabled:opacity-50"
+                  >
+                    <FaFileExcel className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
+                    <span>Export to Excel</span>
+                    {excelLoading && <Loader className="ml-auto text-emerald-600 w-3.5 h-3.5" />}
+                  </button>
+
+                  <button
+                    onClick={handleExportPDF}
+                    disabled={excelLoading || pdfLoading}
+                    className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-rose-500 hover:bg-rose-50/50 dark:hover:bg-rose-900/10 transition-all duration-200 disabled:opacity-50"
+                  >
+                    <FaFilePdf className="text-lg text-rose-600 group-hover:scale-110 transition-transform duration-200" />
+                    <span>Export to PDF</span>
+                    {pdfLoading && <Loader className="ml-auto text-rose-600 w-3.5 h-3.5" />}
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
       
-      {/* Product Type Tabs */}
-      <div className="flex justify-left mb-6">
-        <div className="inline-flex rounded-xl bg-gray-100/80 dark:bg-gray-800/80 p-1.5 border border-gray-200 dark:border-gray-700 shadow-sm backdrop-blur-sm">
+      <div className="flex justify-start mb-6">
+        <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 shadow-sm">
           
           <button
             onClick={() => setActiveTab('rent')}
-            className={`group flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            className={`group flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 ${
               activeTab === 'rent'
-                ? 'bg-white dark:bg-gray-700 text-indigo-700 dark:text-indigo-300 shadow-md'
-                : 'text-gray-600 dark:text-gray-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-md ring-1 ring-black/[0.04]'
+                : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <svg className={`w-3.5 h-3.5 ${activeTab === 'rent' ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            Rent
+            RENT
           </button>
 
           <button
             onClick={() => setActiveTab('sell')}
-            className={`group flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            className={`group flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 ${
               activeTab === 'sell'
-                ? 'bg-white dark:bg-gray-700 text-orange-700 dark:text-orange-300 shadow-md'
-                : 'text-gray-600 dark:text-gray-400 hover:text-orange-700 dark:hover:text-orange-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-md ring-1 ring-black/[0.04]'
+                : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            <svg className={`w-3.5 h-3.5 ${activeTab === 'sell' ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-            Sell
+            SELL
           </button>
         </div>
       </div>
@@ -1121,6 +1156,7 @@ const ProductTable = () => {
         tableName="Products"
         onSelectionChange={setSelectedRows}
         loading={loading}
+        rowHeight={52}
       />
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
@@ -1317,6 +1353,26 @@ const ProductTable = () => {
         onApplyPlan={applyPlanFromExpiry}
         selectedProducts={productsToActivate}
       />
+
+      {/* Floating Image Preview */}
+      {hoveredImage && (
+        <div
+          className="fixed z-[9999] pointer-events-none transition-opacity duration-200"
+          style={{
+            top: mousePos.y + 20,
+            left: mousePos.x + 20,
+            transform: `translate(${mousePos.x + 220 > window.innerWidth ? '-110%' : '0'}, ${mousePos.y + 220 > window.innerHeight ? '-110%' : '0'})`
+          }}
+        >
+          <div className="bg-white dark:bg-gray-800 p-1 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <img
+              src={hoveredImage}
+              alt="Preview"
+              className="w-48 h-48 object-cover rounded-lg"
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
