@@ -197,8 +197,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
   // Load initial lists on mount
   useEffect(() => {
     if (!countries.length) fetchOptions("country", "", 1);
-    if (!states.length) fetchOptions("state", "", 1);
-    if (!cities.length) fetchOptions("city", "", 1);
+    // Removed redundant state/city fetches that cause race conditions on remount
   }, []);
 
   // Removed the buggy useEffects that tried to clear states/cities.
@@ -278,7 +277,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Input
             placeholder="Enter your full name"
             className="py-3"
-  error={!!errors?.full_name}
+            error={!!errors?.full_name}
             type="text"
             value={KYCformData?.full_name}
             onChange={(e) => {
@@ -316,7 +315,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             }}
             maxLength={10}
             className="py-3"
-              error={!!errors?.mobile}
+            error={!!errors?.mobile}
           />
           {errors?.mobile && (
             <p className="error-message">{errors.mobile}</p>
@@ -329,7 +328,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Label>Email <span className="text-required">*</span></Label>
           <Input
             className="py-3"
-  error={!!errors?.email}
+            error={!!errors?.email}
             placeholder="Enter your email address"
             type="email"
             value={KYCformData?.email}
@@ -382,13 +381,12 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                 address: e.target.value,
               }));
             }}
-              error={!!errors?.address}
+            error={!!errors?.address}
           />
           {errors?.address && (
             <p className="error-message">{errors.address}</p>
           )}
         </div>
-
         {/* <!-- =========================================================== Country =========================================================== --> */}
 
         <div>
@@ -401,19 +399,19 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               const selected = filteredCountries.find((c) => c.value === value);
               if (selected) {
                 clearError("country_id");
-                
+
                 // Clear dependent states
                 setStates([]);
                 setSelectedState(null);
                 pageRefState.current = 1;
                 setHasMoreStates(true);
-                
+
                 // Clear dependent cities
                 setCities([]);
                 setSelectedCity(null);
                 pageRefCity.current = 1;
                 setHasMoreCities(true);
-                
+
                 setSelectedCountry(selected);
                 setKYCFormData((prevData) => ({
                   ...prevData,
@@ -450,13 +448,13 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               const selected = filteredStates.find((s) => s.value === value);
               if (selected) {
                 clearError("state_id");
-                
+
                 // Clear dependent cities
                 setCities([]);
                 setSelectedCity(null);
                 pageRefCity.current = 1;
                 setHasMoreCities(true);
-                
+
                 setSelectedState(selected);
                 setKYCFormData((prevData) => ({
                   ...prevData,
@@ -493,36 +491,11 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               if (selected) {
                 clearError("city_id");
                 setSelectedCity(selected);
-                
-                const extra = selected.extra;
-                if (extra && extra.state_id && extra.country_id) {
-                    const newCountry = { value: extra.country_id, label: extra.country_name };
-                    const newState = { value: extra.state_id, label: extra.state_name };
-                    
-                    // If auto-filling country that is different from current, clear states so it fetches new country states
-                    if (selectedCountry?.value !== extra.country_id) {
-                        setStates([]);
-                        pageRefState.current = 1;
-                        setHasMoreStates(true);
-                    }
-                    
-                    setSelectedCountry(newCountry);
-                    setSelectedState(newState);
-                    clearError("country_id");
-                    clearError("state_id");
-                    
-                    setKYCFormData((prevData) => ({
-                      ...prevData,
-                      city_id: { value: selected.value, label: selected.label },
-                      state_id: newState,
-                      country_id: newCountry
-                    }));
-                } else {
-                    setKYCFormData((prevData) => ({
-                      ...prevData,
-                      city_id: { value: selected.value, label: selected.label },
-                    }));
-                }
+
+                setKYCFormData((prevData) => ({
+                  ...prevData,
+                  city_id: { value: selected.value, label: selected.label },
+                }));
               }
             }}
             error={!!errors?.city_id}
@@ -539,6 +512,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             <p className="error-message">{errors.city_id}</p>
           )}
         </div>
+
+
 
         <div>
           <Label>Pincode <span className="text-required">*</span></Label>
@@ -558,7 +533,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }
             }}
             className="py-3"
-              error={!!errors?.pincode}
+            error={!!errors?.pincode}
           />
           {errors?.pincode && (
             <p className="error-message">{errors.pincode}</p>
