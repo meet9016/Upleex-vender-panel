@@ -12,11 +12,11 @@ interface Transaction {
 }
 
 interface TransactionHistoryProps {
-  transactions: Transaction[];
+  transactions?: Transaction[];
 }
 
 const TransactionHistory: React.FC<TransactionHistoryProps> = ({
-  transactions,
+  transactions = [],
 }) => {
   const [filter, setFilter] = useState<"all" | "credit" | "debit">("all");
 
@@ -45,14 +45,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
   const filtered =
     filter === "all"
-      ? transactions
-      : transactions.filter((t) => t.type === filter);
+      ? transactions || []
+      : (transactions || []).filter((t) => t.type === filter);
 
-  const totalCredit = transactions
+  const totalCredit = (transactions || [])
     .filter((t) => t.type === "credit" && t.status === "completed")
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const totalDebit = transactions
+  const totalDebit = (transactions || [])
     .filter((t) => t.type === "debit" && t.status === "completed")
     .reduce((sum, t) => sum + t.amount, 0);
 
@@ -66,7 +66,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               Transaction History
             </h3>
             <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-              {transactions.length} total transaction{transactions.length !== 1 ? "s" : ""}
+              {(transactions || []).length} total transaction{(transactions || []).length !== 1 ? "s" : ""}
             </p>
           </div>
 
@@ -89,7 +89,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         </div>
 
         {/* Summary Stats */}
-        {transactions.length > 0 && (
+        {(transactions || []).length > 0 && (
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="flex items-center gap-2.5 p-3 rounded-lg bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30">

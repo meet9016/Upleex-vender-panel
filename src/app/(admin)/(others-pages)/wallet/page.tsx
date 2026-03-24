@@ -1,9 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import WalletBalance from "@/pages/wallet/WalletBalance";
-import AddMoneyModal from "@/pages/wallet/AddMoneyModal";
-import TransactionHistory from "@/pages/wallet/TransactionHistory";
+import WalletBalance from "@/components/wallet/WalletBalance";
+import AddMoneyModal from "@/components/wallet/AddMoneyModal";
+import TransactionHistory from "@/components/wallet/TransactionHistory";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 

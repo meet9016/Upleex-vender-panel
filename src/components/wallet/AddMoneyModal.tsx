@@ -18,7 +18,6 @@ type ModalStep = "amount" | "payment" | "success";
 const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
   isOpen,
   onClose,
-  onAddMoney,
 }) => {
   const { refreshBalance } = useWallet();
   const [amount, setAmount] = useState<string>("");
@@ -214,7 +213,7 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
         Enter the amount you wish to add
       </p>
 
-      <form onSubmit={handleAmountSubmit} className="space-y-4">
+      <form onSubmit={(e) => { e.preventDefault(); handleAmountSubmit(e); }} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
             Enter Amount
@@ -274,7 +273,6 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
 
         <div className="flex gap-3 pt-2">
           <Button
-            // type="button"
             variant="outline"
             onClick={handleClose}
             className="flex-1"
@@ -282,7 +280,7 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
             Cancel
           </Button>
           <Button
-            // type="submit"
+            onClick={() => handleAmountSubmit(new Event('submit') as any)}
             className="flex-1"
             disabled={!amount || parseFloat(amount) < 50}
           >

@@ -61,7 +61,18 @@ export default function AddProductPage() {
     const searchParams = useSearchParams();
     const productId = searchParams?.get("id") ?? null;
     const isEditMode = !!productId;
-    const { balance, refreshBalance } = useWallet();
+    
+    // Safely use wallet hook - may not be available during build
+    let balance = 0;
+    let refreshBalance = async () => {};
+    try {
+        const walletContext = useWallet();
+        balance = walletContext.balance;
+        refreshBalance = walletContext.refreshBalance;
+    } catch (error) {
+        // Wallet context not available (e.g., during build)
+        console.warn("Wallet context not available");
+    }
 
     const [formData, setFormData] = useState<{
         category: string | null;

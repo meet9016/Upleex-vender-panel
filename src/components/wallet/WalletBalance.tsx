@@ -4,14 +4,14 @@ import Button from "@/components/ui/button/Button";
 import { PlusIcon, WalletIcon } from "@/icons";
 
 interface WalletBalanceProps {
-  balance: number;
-  currency: string;
+  balance?: number;
+  currency?: string;
   onAddMoney: () => void;
 }
 
 const WalletBalance: React.FC<WalletBalanceProps> = ({
-  balance,
-  currency,
+  balance = 0,
+  currency = "₹",
   onAddMoney,
 }) => {
   return (
@@ -40,7 +40,7 @@ const WalletBalance: React.FC<WalletBalanceProps> = ({
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Balance</p>
           <div className="text-3xl font-bold text-gray-900 dark:text-white">
             {currency}
-            {balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            {(balance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           </div>
         </div>
 
