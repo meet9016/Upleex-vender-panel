@@ -889,6 +889,11 @@ export default function AddProductPage() {
             if (res?.data?.status === 200) {
                 const msg = res?.data?.message || (isEditMode ? "Product updated successfully!" : "Product added successfully!");
                 toast.success(msg);
+
+                setTimeout(() => {
+                    router.push("/product");
+                }, 500);
+
                 
                 // Refresh wallet balance if it was a paid listing
                 if (pricingType === "paid" && !isEditMode) {
@@ -896,6 +901,7 @@ export default function AddProductPage() {
                 }
                 
                 router.push("/product");
+
             } else {
                 toast.error(res?.data?.message || "Failed to save product");
             }
