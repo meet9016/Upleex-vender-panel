@@ -35,6 +35,7 @@ export default function Documents({
         onChange={updateFile("pancard_front_image")}
         error={errors?.pancard_front_image}
         clearError={() => clearError('pancard_front_image')}
+        required={true}
       />
 
       <DocumentUpload
@@ -43,6 +44,7 @@ export default function Documents({
         onChange={updateFile("aadharcard_front_image")}
         error={errors?.aadharcard_front_image}
         clearError={() => clearError('aadharcard_front_image')}
+        required={true}
       />
 
       <DocumentUpload
@@ -51,6 +53,7 @@ export default function Documents({
         onChange={updateFile("aadharcard_back_image")}
         error={errors?.aadharcard_back_image}
         clearError={() => clearError('aadharcard_back_image')}
+        required={true}
       />
 
       <DocumentUpload
@@ -85,6 +88,7 @@ export default function Documents({
             onChange={updateFile("qr_code_image")}
             error={errors?.qr_code_image}
             clearError={() => clearError('qr_code_image')}
+            required={true}
           />
 
           <DocumentUpload
@@ -93,6 +97,7 @@ export default function Documents({
             onChange={updateFile("cheque_image")}
             error={errors?.cheque_image}
             clearError={() => clearError('cheque_image')}
+            required={true}
           />
         </>
       )}
