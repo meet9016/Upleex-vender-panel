@@ -88,9 +88,9 @@ export default function AddServicePage() {
                         setMainPreview([{ image: data.image }]);
                     }
                     if (data.sub_images && Array.isArray(data.sub_images)) {
-                        setSubPreviews(data.sub_images.map((img: string, idx: number) => ({ 
-                            product_image_id: `existing_${idx}`, 
-                            image: img 
+                        setSubPreviews(data.sub_images.map((img: string, idx: number) => ({
+                            product_image_id: `existing_${idx}`,
+                            image: img
                         })));
                     }
                 }
@@ -209,7 +209,7 @@ export default function AddServicePage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <Label className="font-semibold mb-2">Service Name *</Label>
                         <Input
@@ -273,7 +273,7 @@ export default function AddServicePage() {
                         )}
                     </div>
 
-                    <div className="md:col-span-2">
+                    <div >
                         <Label className="font-semibold mb-2">Providing City *</Label>
                         <Input
                             value={formData.location}
@@ -373,7 +373,7 @@ export default function AddServicePage() {
                                         return next;
                                     });
                                 }}
-                                 onFileRemove={(id) => {
+                                onFileRemove={(id) => {
                                     if (id) {
                                         // Remove from new files state
                                         setSubImages((prev) => {
