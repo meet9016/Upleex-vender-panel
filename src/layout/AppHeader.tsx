@@ -47,7 +47,7 @@ const AppHeader = () => {
     let vendor_type: string;
     if (service && vendor) vendor_type = 'both';
     else if (service) vendor_type = 'service';
-    else if (vendor) vendor_type = 'product';
+    else if (vendor) vendor_type = 'vendor';
     else vendor_type = 'both'; // fallback — nothing selected
 
     try {
