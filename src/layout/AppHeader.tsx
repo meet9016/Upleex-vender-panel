@@ -3,6 +3,7 @@ import { memo, useState, useEffect, useRef, useCallback } from "react";
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "@/components/header/NotificationDropdown";
 import UserDropdown from "@/components/header/UserDropdown";
+import WalletHeader from "@/components/header/WalletHeader";
 import { useSidebar } from "@/context/SidebarContext";
 import { useFilter } from "@/context/FilterContext";
 import Image from "next/image";
@@ -293,6 +294,7 @@ const AppHeader = () => {
             </div>
 
             <ThemeToggleButton />
+            <WalletHeader />
             <NotificationDropdown />
           </div>
           <UserDropdown />

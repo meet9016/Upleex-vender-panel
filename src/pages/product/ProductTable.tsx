@@ -811,8 +811,9 @@ const ProductTable = () => {
         body.max_products = max_products;
       }
 
-      await api.post(endPointApi.postCreateListingPlan, body);
-      toast.success("Plan applied successfully! Selected products activated.");
+      const response = await api.post(endPointApi.postCreateListingPlan, body);
+      const message = response?.data?.message || "Plan applied successfully! Selected products activated.";
+      toast.success(message);
 
       // Refresh the product data
       getProductData();
@@ -821,10 +822,12 @@ const ProductTable = () => {
       setShowPlanDialog(false);
       setExpiryModalOpen(false);
       setProductsToActivate([]);
+      setSelectedExpiringProducts([]);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error applying plan:", error);
-      toast.error("Failed to apply plan");
+      const errorMessage = error?.response?.data?.message || "Failed to apply plan";
+      toast.error(errorMessage);
     }
   };
 

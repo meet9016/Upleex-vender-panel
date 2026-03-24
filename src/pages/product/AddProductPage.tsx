@@ -16,6 +16,7 @@ import endPointApi from "@/utils/endPointApi";
 import Radio from "@/components/form/input/Radio";
 import { toast } from "react-toastify";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
+import { useWallet } from "@/context/WalletContext";
 import { FiArrowLeft } from "react-icons/fi";
 
 /* <!-- ========================================================== Types ========================================================== --> */
@@ -60,6 +61,18 @@ export default function AddProductPage() {
     const searchParams = useSearchParams();
     const productId = searchParams?.get("id") ?? null;
     const isEditMode = !!productId;
+    
+    // Safely use wallet hook - may not be available during build
+    let balance = 0;
+    let refreshBalance = async () => {};
+    try {
+        const walletContext = useWallet();
+        balance = walletContext.balance;
+        refreshBalance = walletContext.refreshBalance;
+    } catch (error) {
+        // Wallet context not available (e.g., during build)
+        console.warn("Wallet context not available");
+    }
 
     const [formData, setFormData] = useState<{
         category: string | null;
@@ -383,10 +396,17 @@ export default function AddProductPage() {
 
     const handlePricingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const isChecked = e.target.checked;
+        
+        // Check wallet balance before allowing paid listing
+        if (isChecked && balance < 10) {
+            toast.error("Insufficient wallet balance. Minimum ₹10 required for Base (Paid listing). Please add money to your wallet.");
+            return; // Don't change the state
+        }
+        
         setPricingType(isChecked ? "paid" : "free");
 
         if (isChecked) {
-            toast.info("This product is now marked as Base (Paid listing)");
+            toast.info("This product will be marked as Base (Paid listing). ₹10 will be deducted from your wallet.");
         } else {
             toast.info("This product is now set as Free listing");
         }
