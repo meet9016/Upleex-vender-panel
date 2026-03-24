@@ -2,6 +2,7 @@
 
 import { useSidebar } from "@/context/SidebarContext";
 import { FilterProvider } from "@/context/FilterContext";
+import { WalletProvider } from "@/context/WalletContext";
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
@@ -33,6 +34,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <FilterProvider>
+      <WalletProvider>
       <div className="min-h-screen xl:flex">
         <AppSidebar />
         <Backdrop />
@@ -41,6 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <main className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">{children}</main>
         </div>
       </div>
+      </WalletProvider>
     </FilterProvider>
   );
 }

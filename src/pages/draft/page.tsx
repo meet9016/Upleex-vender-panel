@@ -168,14 +168,16 @@ const DraftsPage = () => {
         body.months = customMonths;
         body.max_products = customMaxProducts;
       }
-      await api.post(endPointApi.postPurchasePlan, body);
-      toast.success("Plan applied successfully! Selected products activated.");
+      const response = await api.post(endPointApi.postCreateListingPlan, body);
+      const message = response?.data?.message || "Plan applied successfully! Selected products activated.";
+      toast.success(message);
       setShowPlanModal(false);
       setSelectedPlanType('');
       getDraftData();
-    } catch (error) {
+    } catch (error: any) {
       console.log("assign plan error", error);
-      toast.error("Failed to assign plan");
+      const errorMessage = error?.response?.data?.message || "Failed to assign plan";
+      toast.error(errorMessage);
     }
   };
 

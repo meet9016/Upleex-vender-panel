@@ -55,6 +55,13 @@ export interface EndPointApi {
     updateVendorServiceDetails: string;
     postAllVendorServiceList: string;
     postDeleteVendorServiceList: string;
+    
+    // Wallet
+    getWalletBalance: string;
+    addWalletMoney: string;
+    getWalletTransactions: string;
+    verifyWalletPayment: string;
+    getWalletSummary: string;
     }
 
 // Define and export the API endpoint object
@@ -118,6 +125,13 @@ const endPointApi: EndPointApi = {
     updateVendorServiceDetails: 'services/update',
     postAllVendorServiceList: 'services/getall',
     postDeleteVendorServiceList: 'services/delete',
+    
+    // Wallet
+    getWalletBalance: 'wallet/balance',
+    addWalletMoney: 'wallet/add-money',
+    getWalletTransactions: 'wallet/transactions',
+    verifyWalletPayment: 'wallet/verify-payment',
+    getWalletSummary: 'wallet/summary',
 };
 
 export default endPointApi;
