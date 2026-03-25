@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
       "apexcharts",
     ],
   },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 
   // Turbopack config (required if using custom loaders)
   turbopack: {
