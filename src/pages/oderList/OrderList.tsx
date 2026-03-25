@@ -40,12 +40,14 @@ interface VendorOrder {
     product_id?: {
       name?: string;
       images?: string[];
+      sku?: string;
     };
     product_name?: string;
     name?: string;
     product_image?: string;
     image?: string;
     images?: string[];
+    sku?: string;
     quantity: number;
     price?: number;
     product_price?: number;
@@ -819,7 +821,7 @@ const OrderList = () => {
                     const productImage = item.product_id?.images?.[0] || item.product_image || item.image || item.images?.[0];
                     const itemPrice = item.price || item.product_price || 0;
                     const itemQuantity = item.quantity || 1;
-                    const productSku = item.product_id?.sku || item.sku || 'N/A';
+                    const productSku = (item.product_id as any)?.sku || item.sku || 'N/A';
                     
                     return (
                       <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-gray-600 rounded-lg">
