@@ -300,7 +300,7 @@ const ProductTable = () => {
       // Add Stock for Sell products
       baseColumns.push({
         field: "available_quantity",
-        headerName: "Stock",
+        headerName: "Stock details",
         minWidth: 100,
         cellRenderer: (params: any) => {
           const product = params.data;
