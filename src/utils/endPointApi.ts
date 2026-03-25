@@ -29,6 +29,7 @@ export interface EndPointApi {
     postAllVendorProductList: string;
     postDeleteVendorProductList: string;
     getPlanOptions: string;
+    toggleProductVisibility: string;
 
     postGetQuote: string;
     getQuoteById: string;
@@ -98,6 +99,7 @@ const endPointApi: EndPointApi = {
     getPlanOptions: 'listing-plans/options',
     postCreateListingPlan: 'listing-plans/create',
     postCustomPlanRequest: 'listing-plans/custom-request',
+    toggleProductVisibility: 'products/toggle-visibility',
 
     // Quote
     postGetQuote: 'quote/getall',

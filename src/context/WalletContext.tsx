@@ -33,7 +33,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   // Fetch balance from API
   const refreshBalance = useCallback(async () => {
     try {
-      const response = await api.get(endPointApi.getWalletBalance);
+      // Add timestamp to prevent caching
+      const timestamp = Date.now();
+      const response = await api.get(`${endPointApi.getWalletBalance}?t=${timestamp}`);
       if (response.data.success) {
         setBalance(response.data.data?.balance || 0);
       }

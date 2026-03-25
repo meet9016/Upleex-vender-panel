@@ -367,39 +367,42 @@ const OrderList = () => {
       cellStyle: { textAlign: "center" }
     },
     {
-        headerName: "Actions",
-        field: "actions",
-        minWidth: 150,
-        flex: 1,
-        cellRenderer: (params: any) => {
-          return (
-            <div className="flex items-center justify-center gap-2 h-full">
-              <button
-                onClick={() => {
-                  console.log('View order:', params.data);
-                  handleViewOrder(params.data);
-                }}
-                className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-all shadow-sm"
-                title="View Details"
-                type="button"
-              >
-                <HiOutlineEye  size={17} />
-              </button>
+      headerName: "Actions",
+      field: "actions",
+      minWidth: 150,
+      suppressSizeToFit: true,
+      pinned: "right",
+      suppressHeaderMenuButton: true,
+      flex: 1,
+      cellRenderer: (params: any) => {
+        return (
+          <div className="flex items-center justify-center gap-2 h-full">
+            <button
+              onClick={() => {
+                console.log('View order:', params.data);
+                handleViewOrder(params.data);
+              }}
+              className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-all shadow-sm"
+              title="View Details"
+              type="button"
+            >
+              <HiOutlineEye size={17} />
+            </button>
 
-              <ActionButtons
-                 onEdit={() => handleUpdateStatus(params.data)}
-                />
-            </div>
-          );
-        },
-      }
+            <ActionButtons
+              onEdit={() => handleUpdateStatus(params.data)}
+            />
+          </div>
+        );
+      },
+    }
   ];
 
   const fetchPaymentHistory = async () => {
     try {
       setLoading(true);
       const response = await api.get(`${endPointApi.getVendorPaymentHistory}?page=${page}&limit=20`);
-      
+
       if (response.data.success) {
         const paymentHistory = response.data.data.payment_history || [];
         setPaymentOrders(paymentHistory);
@@ -421,9 +424,9 @@ const OrderList = () => {
         limit: '20',
         ...(statusFilter && { status: statusFilter })
       });
-      
+
       const response = await api.get(`${endPointApi.getVendorOrders}?${params}`);
-      
+
       if (response.data.success) {
         setVendorOrders(response.data.data.orders || []);
         setTotalPages(response.data.data.pagination?.pages || 1);
@@ -454,13 +457,13 @@ const OrderList = () => {
 
   const handleUpdateStatus = (order: VendorOrder) => {
     console.log('Selected order for status update:', order);
-    
+
     if (!order) {
       toast.error('Order data is missing');
       console.error('Order is null or undefined');
       return;
     }
-    
+
     // Check for both _id and id fields
     const orderId = order._id || order.id;
     if (!orderId) {
@@ -468,17 +471,17 @@ const OrderList = () => {
       console.error('Order object missing both _id and id:', order);
       return;
     }
-    
+
     if (!order.order_id) {
       console.warn('Order missing order_id:', order);
     }
-    
+
     // Create normalized order with _id
     const normalizedOrder = {
       ...order,
       _id: orderId
     };
-    
+
     setSelectedOrder(normalizedOrder);
     setNewStatus(order.vendor_status || order.order_status || 'pending');
     setStatusNotes('');
@@ -486,40 +489,40 @@ const OrderList = () => {
   };
 
   const updateOrderStatus = async () => {
-  if (!selectedOrder || !newStatus) {
-    toast.error('Order or status not selected');
-    return;
-  }
-
-  if (!selectedOrder._id) {
-    toast.error('Order ID is missing');
-    console.error('Order object:', selectedOrder);
-    return;
-  }
-
-  try {
-    setLoading(true);
-    console.log('Updating order:', selectedOrder._id, 'to status:', newStatus);
-    
-    // Make sure the URL is correct
-    const response = await api.put(`${endPointApi.updateVendorOrderStatus}/${selectedOrder._id}/status`, {
-      status: newStatus,
-      notes: statusNotes
-    });
-
-    if (response.data.success) {
-      toast.success('Order status updated successfully');
-      setShowStatusModal(false);
-      fetchVendorOrders(); // Refresh the orders list
-      fetchStats(); // Refresh stats
+    if (!selectedOrder || !newStatus) {
+      toast.error('Order or status not selected');
+      return;
     }
-  } catch (error: any) {
-    console.error('Error updating status:', error);
-    toast.error(error?.response?.data?.message || 'Failed to update status');
-  } finally {
-    setLoading(false);
-  }
-};
+
+    if (!selectedOrder._id) {
+      toast.error('Order ID is missing');
+      console.error('Order object:', selectedOrder);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log('Updating order:', selectedOrder._id, 'to status:', newStatus);
+
+      // Make sure the URL is correct
+      const response = await api.put(`${endPointApi.updateVendorOrderStatus}/${selectedOrder._id}/status`, {
+        status: newStatus,
+        notes: statusNotes
+      });
+
+      if (response.data.success) {
+        toast.success('Order status updated successfully');
+        setShowStatusModal(false);
+        fetchVendorOrders(); // Refresh the orders list
+        fetchStats(); // Refresh stats
+      }
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast.error(error?.response?.data?.message || 'Failed to update status');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -527,18 +530,18 @@ const OrderList = () => {
         api.get(`${endPointApi.getVendorPaymentHistory}?page=1&limit=100`),
         api.get(`${endPointApi.getVendorOrders}?page=1&limit=100`)
       ]);
-      
+
       const paymentData = paymentResponse.data.data.payment_history || [];
       const ordersData = ordersResponse.data.data.orders || [];
-      
+
       const totalEarnings = paymentResponse.data.data.total_earnings || 0;
       const completedPayments = paymentData.filter((order: PaymentOrder) => order.payment_status === 'paid').length;
       const pendingPayments = paymentData.filter((order: PaymentOrder) => order.payment_status === 'pending').length;
-      
+
       const pendingOrders = ordersData.filter((order: VendorOrder) => order.vendor_status === 'pending').length;
       const deliveredOrders = ordersData.filter((order: VendorOrder) => order.vendor_status === 'delivered').length;
       const cancelledOrders = ordersData.filter((order: VendorOrder) => order.vendor_status === 'cancelled').length;
-      
+
       setStats({
         total_orders: ordersData.length,
         total_earnings: totalEarnings,
@@ -622,11 +625,10 @@ const OrderList = () => {
             setPage(1);
             setStatusFilter('');
           }}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'orders'
-              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-          }`}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'orders'
+            ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+            : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+            }`}
         >
           Order Management
         </button>
@@ -636,11 +638,10 @@ const OrderList = () => {
             setPage(1);
             setStatusFilter('');
           }}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'payments'
-              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-          }`}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'payments'
+            ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+            : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+            }`}
         >
           Payment History
         </button>
@@ -703,7 +704,7 @@ const OrderList = () => {
               </button>
             </div>
           </div>
-          
+
           <AgGridTable
             columns={activeTab === 'orders' ? vendorColumns : paymentColumns}
             rowData={activeTab === 'orders' ? vendorOrders : paymentOrders}
@@ -712,7 +713,7 @@ const OrderList = () => {
             tableName={activeTab === 'orders' ? 'VendorOrders' : 'PaymentHistory'}
             filter={false}
           />
-          
+
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center mt-6 space-x-2">
@@ -740,7 +741,7 @@ const OrderList = () => {
 
       {/* Order Details Modal */}
       {showOrderModal && selectedOrder && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99999]"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -749,18 +750,18 @@ const OrderList = () => {
           }}
           style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999 }}
         >
-<div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative z-[100000]">                <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                Order Details - #{selectedOrder.order_id}
-              </h3>
-              <button
-                onClick={() => setShowOrderModal(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                ×
-              </button>
-            </div>
-            
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative z-[100000]">                <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+              Order Details - #{selectedOrder.order_id}
+            </h3>
+            <button
+              onClick={() => setShowOrderModal(false)}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              ×
+            </button>
+          </div>
+
             <div className="space-y-6">
               {/* Customer Information */}
               <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
@@ -822,13 +823,13 @@ const OrderList = () => {
                     const itemPrice = item.price || item.product_price || 0;
                     const itemQuantity = item.quantity || 1;
                     const productSku = (item.product_id as any)?.sku || item.sku || 'N/A';
-                    
+
                     return (
                       <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-gray-600 rounded-lg">
                         <div className="flex items-center gap-3">
                           {productImage ? (
-                            <img 
-                              src={productImage} 
+                            <img
+                              src={productImage}
                               alt={productName}
                               className="w-12 h-12 object-cover rounded-lg"
                               onError={(e) => {
@@ -863,8 +864,8 @@ const OrderList = () => {
                       </div>
                     );
                   }) || (
-                    <p className="text-gray-600 dark:text-gray-400">No items found</p>
-                  )}
+                      <p className="text-gray-600 dark:text-gray-400">No items found</p>
+                    )}
                 </div>
               </div>
 
@@ -898,7 +899,7 @@ const OrderList = () => {
                 </div>
               )}
             </div>
-            
+
             <div className="flex items-center justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowOrderModal(false)}
@@ -922,7 +923,7 @@ const OrderList = () => {
 
       {/* Status Update Modal */}
       {showStatusModal && selectedOrder && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99999]"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -931,18 +932,18 @@ const OrderList = () => {
           }}
           style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999 }}
         >
-<div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md shadow-2xl relative z-[100000]">            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                Update Order Status
-              </h3>
-              <button
-                onClick={() => setShowStatusModal(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                ×
-              </button>
-            </div>
-            
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md shadow-2xl relative z-[100000]">            <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+              Update Order Status
+            </h3>
+            <button
+              onClick={() => setShowStatusModal(false)}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              ×
+            </button>
+          </div>
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -952,7 +953,7 @@ const OrderList = () => {
                   Order ID: {selectedOrder?._id || 'Not available'}
                 </p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   New Status
@@ -966,7 +967,7 @@ const OrderList = () => {
                   disabled={loading}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Notes (Optional)
@@ -980,7 +981,7 @@ const OrderList = () => {
                 />
               </div>
             </div>
-            
+
             <div className="flex items-center justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowStatusModal(false)}

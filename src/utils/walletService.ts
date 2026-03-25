@@ -29,7 +29,9 @@ export interface AddMoneyResponse {
 class WalletService {
   async getBalance(): Promise<WalletBalance> {
     try {
-      const response = await api.get(endPointApi.getWalletBalance);
+      // Add timestamp to prevent caching
+      const timestamp = Date.now();
+      const response = await api.get(`${endPointApi.getWalletBalance}?t=${timestamp}`);
       return response.data.data || { balance: 0, currency: "₹" };
     } catch (error) {
       console.error("Error fetching wallet balance:", error);

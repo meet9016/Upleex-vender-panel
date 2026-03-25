@@ -61,10 +61,10 @@ export default function AddProductPage() {
     const searchParams = useSearchParams();
     const productId = searchParams?.get("id") ?? null;
     const isEditMode = !!productId;
-    
+
     // Safely use wallet hook - may not be available during build
     let balance = 0;
-    let refreshBalance = async () => {};
+    let refreshBalance = async () => { };
     try {
         const walletContext = useWallet();
         balance = walletContext.balance;
@@ -396,13 +396,13 @@ export default function AddProductPage() {
 
     const handlePricingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const isChecked = e.target.checked;
-        
+
         // Check wallet balance before allowing paid listing
         if (isChecked && balance < 10) {
             toast.error("Insufficient wallet balance. Minimum ₹10 required for Base (Paid listing). Please add money to your wallet.");
             return; // Don't change the state
         }
-        
+
         setPricingType(isChecked ? "paid" : "free");
 
         if (isChecked) {
@@ -819,16 +819,16 @@ export default function AddProductPage() {
             formdata.append("sku", formData.sku.trim());
             formdata.append("description", formData.description.trim());
             formdata.append("is_new", String(formData.isNew));
-            
+
             // Determine if it's rent or sell product
             const isSell = selectedListingType === "Sell";
             const isRent = selectedListingType === "Rent";
-            
+
             // Add deposit amount for rent products
             if (isRent && formData.depositAmount.trim()) {
                 formdata.append("deposit_amount", formData.depositAmount.trim());
             }
-            
+
             // Add available quantity for sell products
             if (isSell && formData.depositAmount.trim()) {
                 formdata.append("available_quantity", formData.depositAmount.trim());
@@ -1172,15 +1172,15 @@ export default function AddProductPage() {
                                 <div className={`
                                     w-6 h-6 rounded-md border-2 transition-all duration-200 ease-in-out
                                     flex items-center justify-center
-                                    ${formData.isNew 
-                                        ? "bg-green-600 border-green-600 shadow-sm" 
+                                    ${formData.isNew
+                                        ? "bg-green-600 border-green-600 shadow-sm"
                                         : "bg-white border-gray-400 group-hover:border-green-400"}
                                 `}>
                                     {formData.isNew && (
-                                        <svg 
-                                            className="w-4 h-4 text-white stroke-2" 
-                                            fill="none" 
-                                            stroke="currentColor" 
+                                        <svg
+                                            className="w-4 h-4 text-white stroke-2"
+                                            fill="none"
+                                            stroke="currentColor"
                                             viewBox="0 0 24 24"
                                         >
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -1190,8 +1190,8 @@ export default function AddProductPage() {
                             </div>
                             <span className={`
                                 text-base font-medium transition-colors duration-200
-                                ${formData.isNew 
-                                    ? "text-green-700 dark:text-green-400" 
+                                ${formData.isNew
+                                    ? "text-green-700 dark:text-green-400"
                                     : "text-gray-600 dark:text-gray-300"}
                             `}>
                                 New Product
@@ -1497,7 +1497,7 @@ export default function AddProductPage() {
 
                         <div
                             className={`rounded-xl overflow-hidden transition-all duration-200 border ${validationErrors.description
-                                ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
+                                ? "border-red-400 focus-within:ring-red-400 focus-within:ring-2"
                                 : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
                                 }`}
                         >
@@ -1606,7 +1606,7 @@ export default function AddProductPage() {
                             className={`h-[300px] rounded-lg border transition-all duration-200 
                                 flex items-center justify-center overflow-hidden
                                 ${validationErrors.mainImage
-                                    ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
+                                    ? "border-red-400 focus-within:ring-red-400 focus-within:ring-2"
                                     : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
                                 }`}
                         >

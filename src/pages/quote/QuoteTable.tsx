@@ -257,24 +257,7 @@ const QuoteTable = () => {
       minWidth: 220,
       cellStyle: { textAlign: "center" }
     },
-    {
-      field: "delivery_date",
-      headerName: "Delivery Date",
-      minWidth: 150,
-      cellStyle: { textAlign: "center" }
-    },
-    {
-      field: "start_date",
-      headerName: "Start Date",
-      minWidth: 150,
-      cellStyle: { textAlign: "center" }
-    },
-    {
-      field: "end_date",
-      headerName: "End Date",
-      minWidth: 150,
-      cellStyle: { textAlign: "center" }
-    },
+
     {
       field: "month_name",
       headerName: "Month",
@@ -319,6 +302,24 @@ const QuoteTable = () => {
           <StatusBadge status={params.value || 'pending'} />
         </div>
       ),
+    },
+      {
+      field: "delivery_date",
+      headerName: "Delivery Date",
+      minWidth: 150,
+      cellStyle: { textAlign: "center" }
+    },
+    {
+      field: "start_date",
+      headerName: "Start Date",
+      minWidth: 150,
+      cellStyle: { textAlign: "center" }
+    },
+    {
+      field: "end_date",
+      headerName: "End Date",
+      minWidth: 150,
+      cellStyle: { textAlign: "center" }
     },
 
     {

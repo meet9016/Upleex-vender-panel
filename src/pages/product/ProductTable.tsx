@@ -19,9 +19,10 @@ import { Modal } from '@/components/ui/modal';
 import Loader from '@/components/common/Loader';
 import { exportProductsToExcel, exportProductsToPDF } from '@/utils/exportUtils';
 import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
-import { FiMoreVertical, FiSlash, FiTrash2, FiFileText, FiPauseCircle } from 'react-icons/fi';
+import { FiMoreVertical, FiSlash, FiTrash2, FiFileText, FiPauseCircle, FiEye, FiEyeOff } from 'react-icons/fi';
 import PlanSelectionDialog from '@/components/common/PlanSelectionDialog';
 import Button from '@/components/ui/button/Button';
+import Switch from '@/components/form/switch/Switch';
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -49,6 +50,8 @@ type Product = {
   _id?: string;
   status?: string;
   expires_at?: string;
+  approval_status?: string;
+  is_visible?: boolean;
 };
 
 type Category = {
@@ -169,190 +172,273 @@ const ProductTable = () => {
   // Count active filters (excluding empty strings)
   const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
 
-  const columns: ColDef[] = [
-    {
-      headerName: "Product Name",
-      field: "product_name",
-      width: 240,
-      sortable: true,
-      cellRenderer: (params: any) => {
-        const product = params.data;
-        const imageUrl = getImageUrl(product);
-        const productName = product?.product_name || "N/A";
+  // Toggle product visibility
+  const toggleProductVisibility = async (productId: string, currentVisibility: boolean) => {
+    try {
+      await api.post(endPointApi.toggleProductVisibility, {
+        product_id: productId,
+        is_visible: !currentVisibility
+      });
+      
+      const message = !currentVisibility 
+        ? 'Product is now visible to users'
+        : 'Product is now hidden from users';
+      
+      toast.success(message);
+      
+      // Refresh the product data
+      getProductData(getCurrentParams(), undefined, true);
+    } catch (error: any) {
+      console.error('Error toggling visibility:', error);
+      const errorMessage = error?.response?.data?.message || 'Failed to update product visibility';
+      toast.error(errorMessage);
+    }
+  };
 
-        return (
-          <div className="flex items-center gap-3 h-full">
-            <div className="flex-shrink-0 relative">
-              <img
-                src={imageUrl}
-                alt={productName}
-                className="w-9 h-9 object-cover rounded-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer transition-shadow hover:shadow-md hover-zoom-trigger"
-                onMouseEnter={(e: any) => {
-                  setHoveredImage(imageUrl);
-                  setMousePos({ x: e.clientX, y: e.clientY });
-                }}
-                onMouseMove={(e: any) => {
-                  setMousePos({ x: e.clientX, y: e.clientY });
-                }}
-                onMouseLeave={() => {
-                  setHoveredImage(null);
-                }}
-                onError={(e: any) => {
-                  if (e.target.src !== DEFAULT_PLACEHOLDER) {
-                    e.target.src = DEFAULT_PLACEHOLDER;
-                  }
-                }}
-                loading="lazy"
-              />
+  // Create columns based on active tab
+  const getColumns = (): ColDef[] => {
+    const baseColumns: ColDef[] = [
+      {
+        headerName: "Product Name",
+        field: "product_name",
+        width: 240,
+        sortable: true,
+        cellRenderer: (params: any) => {
+          const product = params.data;
+          const imageUrl = getImageUrl(product);
+          const productName = product?.product_name || "N/A";
+
+          return (
+            <div className="flex items-center gap-3 h-full">
+              <div className="flex-shrink-0 relative">
+                <img
+                  src={imageUrl}
+                  alt={productName}
+                  className="w-9 h-9 object-cover rounded-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer transition-shadow hover:shadow-md hover-zoom-trigger"
+                  onMouseEnter={(e: any) => {
+                    setHoveredImage(imageUrl);
+                    setMousePos({ x: e.clientX, y: e.clientY });
+                  }}
+                  onMouseMove={(e: any) => {
+                    setMousePos({ x: e.clientX, y: e.clientY });
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredImage(null);
+                  }}
+                  onError={(e: any) => {
+                    if (e.target.src !== DEFAULT_PLACEHOLDER) {
+                      e.target.src = DEFAULT_PLACEHOLDER;
+                    }
+                  }}
+                  loading="lazy"
+                />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="font-medium text-[13px] text-gray-800 dark:text-white truncate" title={productName}>
+                  {productName}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="font-medium text-[13px] text-gray-800 dark:text-white truncate" title={productName}>
-                {productName}
+          );
+        },
+      },
+      {
+        field: "category_name",
+        headerName: "Category",
+        minWidth: 150,
+        cellStyle: { textAlign: "left" }
+      },
+      {
+        field: "sub_category_name",
+        headerName: "Sub Category",
+        minWidth: 150,
+        cellStyle: { textAlign: "left" }
+      },
+      {
+        field: "price",
+        headerName: "Price",
+        minWidth: 100,
+        valueFormatter: (params) => {
+          return params.value ? `₹${Number(params.value).toLocaleString('en-IN')}` : '₹0';
+        },
+        cellStyle: { textAlign: "left" }
+      },
+      {
+        field: "cancel_price",
+        headerName: "Cancel Price",
+        minWidth: 120,
+        valueFormatter: (params) => {
+          return params.value ? `₹${Number(params.value).toLocaleString('en-IN')}` : '₹0';
+        },
+        cellStyle: { textAlign: "left" }
+      }
+    ];
+
+    // Add conditional columns based on activeTab
+    if (activeTab === 'rent') {
+      // Add Listing Type and Deposit for Rent products
+      baseColumns.push(
+        {
+          field: "product_listing_type_name",
+          headerName: "Listing Type",
+          minWidth: 120,
+          cellStyle: { textAlign: "left" }
+        },
+        {
+          field: "deposit_amount",
+          headerName: "Deposit",
+          minWidth: 120,
+          valueFormatter: (params) => {
+            const value = params.value;
+            if (!value || value === '0') return '-';
+            return `₹${Number(value).toLocaleString('en-IN')}`;
+          },
+          cellStyle: { textAlign: "left" }
+        }
+      );
+    } else if (activeTab === 'sell') {
+      // Add Stock for Sell products
+      baseColumns.push({
+        field: "available_quantity",
+        headerName: "Stock",
+        minWidth: 100,
+        cellRenderer: (params: any) => {
+          const product = params.data;
+          const available = product.available_quantity || 0;
+          const isOutOfStock = product.is_out_of_stock || available <= 0;
+
+          return (
+            <div className="flex items-center h-full">
+              <span className={`text-xs font-semibold ${
+                isOutOfStock ? 'text-red-500' : 'text-gray-700 dark:text-gray-200'
+              }`}>
+                {available} {isOutOfStock && "(OOS)"}
               </span>
             </div>
-          </div>
-        );
-      },
-    },
-    {
-      field: "category_name",
-      headerName: "Category",
-      minWidth: 150,
-      cellStyle: { textAlign: "left" }
-    },
-    {
-      field: "sub_category_name",
-      headerName: "Sub Category",
-      minWidth: 150,
-      cellStyle: { textAlign: "left" }
-    },
-    {
-      field: "product_type_name",
-      headerName: "Type",
-      minWidth: 120,
-      cellStyle: { textAlign: "left" }
-    },
-    {
-      field: "price",
-      headerName: "Price",
-      minWidth: 100,
-      valueFormatter: (params) => {
-        return params.value ? `₹${Number(params.value).toLocaleString('en-IN')}` : '₹0';
-      },
-      cellStyle: { textAlign: "left" }
-    },
-    {
-      field: "cancel_price",
-      headerName: "Cancel Price",
-      minWidth: 100,
-      valueFormatter: (params) => {
-        return params.value ? `₹${Number(params.value).toLocaleString('en-IN')}` : '₹0';
-      },
-      cellStyle: { textAlign: "left" }
-    },
-    {
-      field: "product_listing_type_name",
-      headerName: "Listing Type",
-      minWidth: 120,
-      cellStyle: { textAlign: "left" }
-    },
-    {
-      field: "is_new",
-      headerName: "New",
-      minWidth: 80,
-      cellRenderer: (params: any) => (
-        <div className="flex items-center h-full">
-          {params.value ? (
-            <span className="bg-green-50 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-100">
-              NEW
-            </span>
-          ) : (
-            <span className="text-gray-400 text-xs">-</span>
-          )}
-        </div>
-      ),
-      cellStyle: { justifyContent: "left" }
-    },
-    {
-      field: "deposit_amount",
-      headerName: "Deposit",
-      minWidth: 100,
-      valueFormatter: (params) => {
-        const value = params.value;
-        if (!value || value === '0') return '-';
-        return `₹${Number(value).toLocaleString('en-IN')}`;
-      },
-      cellStyle: { textAlign: "left" }
-    },
-    {
-      field: "available_quantity",
-      headerName: "Stock",
-      minWidth: 80,
-      cellRenderer: (params: any) => {
-        const product = params.data;
-        if (product.product_type_name !== 'Sell') {
-          return <span className="text-gray-400 text-xs">-</span>;
-        }
-        const available = product.available_quantity || 0;
-        const isOutOfStock = product.is_out_of_stock || available <= 0;
-        
-        return (
+          );
+        },
+        cellStyle: { justifyContent: "left" }
+      });
+    }
+
+    // Add remaining common columns
+    baseColumns.push(
+      {
+        field: "is_new",
+        headerName: "New",
+        minWidth: 100,
+        cellRenderer: (params: any) => (
           <div className="flex items-center h-full">
-            <span className={`text-xs font-semibold ${
-              isOutOfStock ? 'text-red-500' : 'text-gray-700 dark:text-gray-200'
-            }`}>
-              {available} {isOutOfStock && "(OOS)"}
-            </span>
+            {params.value ? (
+              <StatusBadge status={'New'} />
+            ) : (
+              <span className="text-gray-400 text-xs">-</span>
+            )}
           </div>
-        );
+        ),
+        cellStyle: { justifyContent: "left" }
       },
-      cellStyle: { justifyContent: "left" }
-    },
-    {
-      headerName: "Admin",
-      field: "approval_status",
-      minWidth: 110,
-      sortable: true,
-      cellRenderer: (params: any) => (
-        <div className="flex items-center h-full">
-          <StatusBadge status={params.value || 'active'} />
-        </div>
-      ),
-      cellStyle: { justifyContent: "left" }
-    },
-    {
-      field: "status",
-      headerName: "Status",
-      minWidth: 100,
-      cellRenderer: (params: any) => (
-        <div className="flex items-center h-full">
-          <StatusBadge status={params.value || 'active'} />
-        </div>
-      ),
-      cellStyle: { justifyContent: "left" }
-    },
-    {
-      field: "expires_at",
-      headerName: "Expires On",
-      minWidth: 120,
-      valueFormatter: (p) => p.value ? new Date(p.value).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-',
-      cellStyle: { textAlign: "left" }
-    },
-    {
-      headerName: "Action",
-      width: 100,
-      minWidth: 100,
-      pinned: 'right',
-      suppressHeaderMenuButton: true,
-      cellStyle: { textAlign: "center" },
-      cellRenderer: (params: any) => (
-        <ActionButtons
-          onEdit={() => router.push(`/product/addProduct?id=${params.data._id || params.data.id}`)}
-          onDelete={() => openDeletePopup(params.data._id || params.data.id)}
-        />
-      ),
-    },
-  ];
+      {
+        headerName: "Admin",
+        field: "approval_status",
+        minWidth: 110,
+        sortable: true,
+        cellRenderer: (params: any) => (
+          <div className="flex items-center h-full">
+            <StatusBadge status={params.value || 'active'} />
+          </div>
+        ),
+        cellStyle: { justifyContent: "left" }
+      },
+      {
+        field: "status",
+        headerName: "Status",
+        minWidth: 100,
+        cellRenderer: (params: any) => (
+          <div className="flex items-center h-full">
+            <StatusBadge status={params.value || 'active'} />
+          </div>
+        ),
+        cellStyle: { justifyContent: "left" }
+      },
+      {
+        field: "expires_at",
+        headerName: "Exp Date",
+        minWidth: 120,
+        valueFormatter: (p) => p.value ? new Date(p.value).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-',
+        cellStyle: { textAlign: "left" }
+      },
+      {
+        field: "is_visible",
+        headerName: "Visibility",
+        minWidth: 110,
+        cellRenderer: (params: any) => {
+          const product = params.data;
+          const isVisible = product.is_visible !== false;
+          const isApproved = product.approval_status === 'approved';
+          
+          return (
+            <div className="flex items-center h-full">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={isVisible}
+                  onChange={(checked) => {
+                    if (isApproved) {
+                      toggleProductVisibility(product._id || product.id, isVisible);
+                    }
+                  }}
+                  disabled={!isApproved}
+                  size="sm"
+                  className={`${
+                    !isApproved ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                />
+                {/* <span className={`text-xs font-medium ${
+                  !isApproved 
+                    ? 'text-gray-400' 
+                    : isVisible 
+                      ? 'text-green-600 dark:text-green-400' 
+                      : 'text-gray-600 dark:text-gray-400'
+                }`}>
+                  {isVisible ? 'Visible' : 'Hidden'}
+                </span> */}
+              </div>
+            </div>
+          );
+        },
+        cellStyle: { justifyContent: "left" }
+      },
+      {
+        headerName: "Action",
+        width: 100,
+        minWidth: 100,
+        pinned: 'right',
+        suppressHeaderMenuButton: true,
+        cellStyle: { textAlign: "center" },
+        cellRenderer: (params: any) => {
+          const product = params.data;
+          const isApproved = product.approval_status === 'approved';
+          
+          return (
+            <ActionButtons
+              onEdit={() => router.push(`/product/addProduct?id=${product._id || product.id}`)}
+              onDelete={() => {
+                if (!isApproved) {
+                  openDeletePopup(product._id || product.id);
+                }
+              }}
+              showDelete={true}
+              disableDelete={isApproved}
+            />
+          );
+        },
+      }
+    );
+
+    return baseColumns;
+  };
+
+  const columns = getColumns();
 
   const getRowStyle = (params: any) => {
     if (params.data.status?.toLowerCase() === 'draft') {
@@ -361,17 +447,30 @@ const ProductTable = () => {
     return undefined;
   };
 
+  const getCurrentParams = () => {
+    const params: any = {};
+    if (debouncedSearch && debouncedSearch.trim() !== '') {
+      params.search = debouncedSearch.trim();
+    }
+    if (filters.category_id) params.category_id = filters.category_id;
+    if (filters.sub_category_id) params.sub_category_id = filters.sub_category_id;
+    if (filters.filter_rent_sell) params.filter_rent_sell = filters.filter_rent_sell;
+    if (filters.filter_tenure) params.filter_tenure = filters.filter_tenure;
+    if (filters.status) params.status = filters.status;
+    return params;
+  };
+
   // Fetch products with filters
-  const getProductData = async (filterParams = {}, tabType?: 'rent' | 'sell') => {
+  const getProductData = async (filterParams = {}, tabType?: 'rent' | 'sell', skipCache = false) => {
     try {
       const targetTab = tabType || activeTab;
       setTabLoading(true);
-      
+
       // Check if we have cached data for this tab and no filters are applied
       const hasFilters = Object.values(filterParams).some(v => v !== undefined && v !== '');
       const cachedData = dataCache[targetTab];
-      
-      if (cachedData && !hasFilters && !debouncedSearch) {
+
+      if (!skipCache && cachedData && !hasFilters && !debouncedSearch) {
         // Use cached data
         setProductData(cachedData.data);
         setTotal(cachedData.total);
@@ -380,7 +479,7 @@ const ProductTable = () => {
         setTabLoading(false);
         return;
       }
-      
+
       const params = new URLSearchParams();
 
       // Add all non-empty filter parameters
@@ -389,14 +488,14 @@ const ProductTable = () => {
           params.append(key, String(value));
         }
       });
-      
+
       // Add tab-based filtering
       if (targetTab === 'rent') {
         params.append('filter_rent_sell', '1');
       } else if (targetTab === 'sell') {
         params.append('filter_rent_sell', '2');
       }
-      
+
       params.append('page', String(page));
       params.append('limit', String(pageSize));
 
@@ -440,7 +539,7 @@ const ProductTable = () => {
       setTotal(responseTotal);
       setTotalPages(responseTotalPages);
       setPage(responsePage);
-      
+
       // Cache the data if no filters are applied
       if (!hasFilters && !debouncedSearch) {
         setDataCache(prev => ({
@@ -453,7 +552,7 @@ const ProductTable = () => {
           }
         }));
       }
-      
+
 
       // Compute expiring within 3 days (active only)
       try {
@@ -659,7 +758,7 @@ const ProductTable = () => {
     try {
       const res = await api.delete(`${endPointApi.postDeleteVendorProductList}/${id}`);
       toast.success("Deleted successfully");
-      getProductData();
+      getProductData(getCurrentParams(), undefined, true);
     } catch (error) {
       console.log("Delete error:", error);
       toast.error("Delete failed");
@@ -698,7 +797,7 @@ const ProductTable = () => {
       await api.post(endPointApi.postBulkDeactivateProducts, { product_ids: ids });
       toast.success(`${ids.length} products deactivated successfully`);
       setBulkAction({ type: null, open: false });
-      getProductData();
+      getProductData(getCurrentParams(), undefined, true);
     } catch (error) {
       toast.error("Failed to deactivate selected products");
     } finally {
@@ -714,7 +813,7 @@ const ProductTable = () => {
       await api.post(endPointApi.postBulkDeleteProducts, { product_ids: ids });
       toast.success(`${ids.length} products deleted successfully`);
       setBulkAction({ type: null, open: false });
-      getProductData();
+      getProductData(getCurrentParams(), undefined, true);
     } catch (error) {
       toast.error("Failed to delete selected products");
     } finally {
@@ -808,7 +907,7 @@ const ProductTable = () => {
       toast.success(message);
 
       // Refresh the product data
-      getProductData();
+      getProductData(getCurrentParams(), undefined, true);
 
       // Close both modals
       setShowPlanDialog(false);
@@ -927,7 +1026,7 @@ const ProductTable = () => {
                     </div>
 
                     {/* Product Type Filter (Rent/Sell) */}
-                    <div>
+                    {/* <div>
                       <Label className="font-semibold mb-2">Product Type</Label>
                       <SearchableDropdown
                         searchable
@@ -939,7 +1038,7 @@ const ProductTable = () => {
                         placeholder="All Types"
                         onChange={(value) => setPendingFilters(prev => ({ ...prev, filter_rent_sell: value }))}
                       />
-                    </div>
+                    </div> */}
 
                     {/* Listing Type Filter (Tenure) */}
                     <div>
@@ -1031,7 +1130,7 @@ const ProductTable = () => {
             >
               <FiMoreVertical className="text-xl" />
             </button>
-            
+
             {showActionsMenu && (
               <div className="absolute right-0 mt-3 w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
                 {/* Bulk Actions Section */}
@@ -1124,17 +1223,16 @@ const ProductTable = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="flex justify-start mb-6">
         <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 shadow-sm">
-          
+
           <button
             onClick={() => setActiveTab('rent')}
-            className={`group flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 ${
-              activeTab === 'rent'
-                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-md ring-1 ring-black/[0.04]'
-                : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
-            }`}
+            className={`group flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 ${activeTab === 'rent'
+              ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-md ring-1 ring-black/[0.04]'
+              : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
           >
             <svg className={`w-3.5 h-3.5 ${activeTab === 'rent' ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -1144,11 +1242,10 @@ const ProductTable = () => {
 
           <button
             onClick={() => setActiveTab('sell')}
-            className={`group flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 ${
-              activeTab === 'sell'
-                ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-md ring-1 ring-black/[0.04]'
-                : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
-            }`}
+            className={`group flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 ${activeTab === 'sell'
+              ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-md ring-1 ring-black/[0.04]'
+              : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
           >
             <svg className={`w-3.5 h-3.5 ${activeTab === 'sell' ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
