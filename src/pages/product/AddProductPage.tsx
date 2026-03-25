@@ -1160,7 +1160,7 @@ export default function AddProductPage() {
                     </div>
 
                     {/* New Product Checkbox */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 mt-7">
                         <label className="flex items-center gap-3 cursor-pointer group">
                             <div className="relative inline-flex items-center">
                                 <input
@@ -1491,7 +1491,7 @@ export default function AddProductPage() {
 
                     {/* ================= LEFT – DESCRIPTION EDITOR (FIXED) ================= */}
                     <div className="">
-                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-4 ">
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2 ">
                             Description
                         </Label>
 
@@ -1535,7 +1535,7 @@ export default function AddProductPage() {
 
                     <div className="h-[300px] flex flex-col">
                         {/* HEADER */}
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-1">
                             <Label className="font-semibold text-gray-700 dark:text-gray-200">
                                 Key Features
                             </Label>
