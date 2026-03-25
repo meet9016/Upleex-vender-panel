@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
   { icon: <DollarLineIcon />, name: "Purchased", path: "/purchasedproduct" },
   { icon: <ListIcon />, name: "Orders", path: "/order" },
   { icon: <WalletIcon />, name: "Wallet", path: "/wallet" },
-   { icon: <DocsIcon />, name: "Drafts", path: "/draft" },
+  { icon: <DocsIcon />, name: "Drafts", path: "/draft" },
 
 ];
 
@@ -72,7 +72,19 @@ const AppSidebar: React.FC = () => {
     if (kycApproved === false) {
       return kycOnlyItems; // Show only KYC if not approved
     }
-    return navItems; // Show all items if approved
+    
+    // Filter out Service option if vendor type is selected
+    const filteredItems = navItems.filter(item => {
+      // Check if this is the Service item and if vendor type is selected
+      if (item.path === '/service') {
+        // Get vendor type from localStorage or context
+        const vendorType = localStorage.getItem('vendor_type') || 'both';
+        return vendorType !== 'vendor'; // Hide service if vendor type is selected
+      }
+      return true;
+    });
+    
+    return filteredItems;
   }, [kycApproved, isLoading]);
 
   const isActive = useCallback(
@@ -96,9 +108,8 @@ const AppSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all border-r ${
-        showExpanded ? "w-[290px]" : "w-[90px]"
-      } ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all border-r ${showExpanded ? "w-[290px]" : "w-[90px]"
+        } ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       role="navigation"
@@ -133,31 +144,31 @@ const AppSidebar: React.FC = () => {
 
       <nav className="flex flex-col overflow-y-auto duration-300 no-scrollbar">
         {!isLoading && (
-      <>
-        <h2 className={`mb-4 text-xs uppercase flex text-gray-400 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
-          {showExpanded ? "Menu" : <HorizontaLDots />}
-        </h2>
+          <>
+            <h2 className={`mb-4 text-xs uppercase flex text-gray-400 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
+              {showExpanded ? "Menu" : <HorizontaLDots />}
+            </h2>
 
-        <ul className="flex flex-col gap-4">
-          {visibleItems.map((nav) => (
-            <li key={nav.name}>
-              <Link
-                href={nav.path}
-                className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"}`}
-                aria-current={isActive(nav.path) ? "page" : undefined}
-              >
-                <span className={isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}>
-                  {nav.icon}
-                </span>
-                {showExpanded && <span className="menu-item-text">{nav.name}</span>}
-              </Link>
-            </li>
-          ))}
-        </ul>
+            <ul className="flex flex-col gap-4">
+              {visibleItems.map((nav) => (
+                <li key={nav.name}>
+                  <Link
+                    href={nav.path}
+                    className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"}`}
+                    aria-current={isActive(nav.path) ? "page" : undefined}
+                  >
+                    <span className={isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}>
+                      {nav.icon}
+                    </span>
+                    {showExpanded && <span className="menu-item-text">{nav.name}</span>}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </>
         )}
       </nav>
-      
+
       {/* Optional: Show loading indicator while fetching status */}
       {isLoading && (
         <div className="absolute bottom-4 left-0 right-0 flex justify-center">

@@ -76,11 +76,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md capitalize transition-all duration-150 ${
-                  filter === f
+                className={`px-3 py-1.5 text-xs font-medium rounded-md capitalize transition-all duration-150 ${filter === f
                     ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                     : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                }`}
+                  }`}
               >
                 {f}
               </button>
@@ -142,11 +141,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className={`flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0 ${
-                      transaction.type === "credit"
+                    className={`flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0 ${transaction.type === "credit"
                         ? "bg-green-50 dark:bg-green-900/20"
                         : "bg-red-50 dark:bg-red-900/20"
-                    }`}
+                      }`}
                   >
                     {transaction.type === "credit" ? (
                       <ArrowDownIcon className="w-4 h-4 text-green-600 dark:text-green-400 rotate-180" />
@@ -166,11 +164,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
                 <div className="flex flex-col items-end gap-1 ml-3 flex-shrink-0">
                   <p
-                    className={`text-sm font-semibold ${
-                      transaction.type === "credit"
+                    className={`text-sm font-semibold ${transaction.type === "credit"
                         ? "text-green-600 dark:text-green-400"
                         : "text-red-600 dark:text-red-400"
-                    }`}
+                      }`}
                   >
                     {transaction.type === "credit" ? "+" : "-"}₹
                     {transaction.amount.toLocaleString("en-IN", {
