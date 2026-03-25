@@ -11,7 +11,7 @@ import ComponentCard from "@/components/common/ComponentCard";
 import { toast } from "react-toastify";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useFilter } from "@/context/FilterContext";
 
 const ALL_STEPS = [
@@ -23,7 +23,7 @@ const ALL_STEPS = [
 ];
 
 // Indices of the ALL_STEPS array that are shown in service-only mode
-const SERVICE_STEP_INDICES = [0, 4]; // Contact Details, Declaration
+const SERVICE_STEP_INDICES = [0, 1, 3, 4]; // Contact Details, Identity, Documents, Declaration
 const SERVICE_STEPS = SERVICE_STEP_INDICES.map((i) => ALL_STEPS[i]);
 
 export type KycFormDataType = {
@@ -62,8 +62,16 @@ export type ErrorType = {
 };
 
 export default function KYCPage() {
-  // Deleted isTypeModalOpen state
-  const [currentStep, setCurrentStep] = useState(0);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  // Initialize currentStep from URL search params if present
+  const [currentStep, setCurrentStep] = useState(() => {
+    const step = searchParams ? searchParams.get("step") : null;
+    return step ? parseInt(step, 10) : 0;
+  });
+
   const [errors, setErrors] = useState<ErrorType>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
@@ -111,7 +119,18 @@ export default function KYCPage() {
     completed_pages: [],
   });
   console.log("KYCPage Rendered with KYCformData:", KYCformData);
-  const router = useRouter();
+
+  // Sync currentStep to URL
+  useEffect(() => {
+    if (searchParams && pathname) {
+      const currentUrlStep = searchParams.get("step");
+      if (currentUrlStep !== currentStep.toString()) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("step", currentStep.toString());
+        router.replace(`${pathname}?${params.toString()}`);
+      }
+    }
+  }, [currentStep, pathname, router, searchParams]);
 
   useEffect(() => {
     const userInfo = localStorage.getItem('user_info');
@@ -194,7 +213,7 @@ export default function KYCPage() {
       if (!KYCformData.city_id?.value) newErrors.city_id = "City is required";
     }
 
-    // Step 1 ─ Identity (actualStep 1) — only in vendor/both mode
+    // Step 1 ─ Identity (actualStep 1)
     else if (actualStep === 1) {
       if (isEmpty(KYCformData.pancard_number)) {
         newErrors.pancard_number = "PAN number is required";
@@ -259,7 +278,7 @@ export default function KYCPage() {
       }
     }
 
-    // Step 3 ─ Documents (actualStep 3) — only in vendor/both mode
+    // Step 3 ─ Documents (actualStep 3)
     else if (actualStep === 3) {
       const isValidFile = (file: File | string | null) =>
         file instanceof File || (typeof file === "string" && file.trim().length > 0);
@@ -274,22 +293,16 @@ export default function KYCPage() {
         newErrors.aadharcard_back_image = "Aadhaar back image is required";
       }
 
-      if (!KYCformData.gst_certificate_image) {
-        if (!isValidFile(KYCformData.gst_certificate_image)) {
-          newErrors.gst_certificate_image = "GST certificate is required";
+      // GST, Vendor image, and Business logo are now optional (no validation)
+      
+      if (!isServiceOnly) {
+        if (!isValidFile(KYCformData.qr_code_image)) {
+          newErrors.qr_code_image = "QR code image is required";
         }
-      }
-
-      if (!isValidFile(KYCformData.vendor_image)) {
-        newErrors.vendor_image = "Vendor photograph is required";
-      }
-      
-      if (!isValidFile(KYCformData.qr_code_image)) {
-        newErrors.qr_code_image = "QR code image is required";
-      }
-      
-      if (!isValidFile(KYCformData.cheque_image)) {
-        newErrors.cheque_image = "Cheque image is required";
+        
+        if (!isValidFile(KYCformData.cheque_image)) {
+          newErrors.cheque_image = "Cheque image is required";
+        }
       }
     }
 
@@ -362,16 +375,20 @@ export default function KYCPage() {
           formData.append("aadharcard_front_image", KYCformData.aadharcard_front_image);
         if (KYCformData.aadharcard_back_image instanceof File)
           formData.append("aadharcard_back_image", KYCformData.aadharcard_back_image);
+
         if (KYCformData.gst_certificate_image instanceof File)
           formData.append("gst_certificate_image", KYCformData.gst_certificate_image);
         if (KYCformData.vendor_image instanceof File)
           formData.append("vendor_image", KYCformData.vendor_image);
         if (KYCformData.business_logo_image instanceof File)
           formData.append("business_logo_image", KYCformData.business_logo_image);
-        if (KYCformData.qr_code_image instanceof File)
-          formData.append("qr_code_image", KYCformData.qr_code_image);
-        if (KYCformData.cheque_image instanceof File)
-          formData.append("cheque_image", KYCformData.cheque_image);
+
+        if (!isServiceOnly) {
+          if (KYCformData.qr_code_image instanceof File)
+            formData.append("qr_code_image", KYCformData.qr_code_image);
+          if (KYCformData.cheque_image instanceof File)
+            formData.append("cheque_image", KYCformData.cheque_image);
+        }
 
         formData.append("Documents", JSON.stringify([{ page: "4" }]));
       } else if (currentStep === 4) {
@@ -428,10 +445,18 @@ export default function KYCPage() {
     const completed = (KYCformData.completed_pages || [])
       .map((p) => parseInt(String(p), 10))
       .filter((n) => !isNaN(n));
-    const highestCompleted = completed.length ? Math.max(...completed) : 0; // 1-based
-    const allowedIndex = Math.min(highestCompleted, steps.length - 1); // allow next incomplete step
+    
+    // Calculate the first incomplete step index
+    const nextIncompleteStepIdx = steps.findIndex((_, idx) => {
+      const pageNum = isServiceOnly ? SERVICE_STEP_INDICES[idx] + 1 : idx + 1;
+      return !completed.includes(pageNum);
+    });
+
+    const allowedIndex = nextIncompleteStepIdx === -1 ? steps.length - 1 : nextIncompleteStepIdx;
+
     if (i > allowedIndex) {
       validateCurrentStep();
+      toast.info('Please complete current step first');
       return;
     }
     if (i > currentStep) {
@@ -533,13 +558,13 @@ export default function KYCPage() {
           )}
           {/* The following steps only show in vendor/both mode */}
           {actualStep === 1 && (
-            <Identity
-              setKYCFormData={setKYCFormData}
-              KYCformData={KYCformData}
-              errors={errors}
-              clearError={clearError}
-            />
-          )}
+          <Identity
+            KYCformData={KYCformData}
+            setKYCFormData={setKYCFormData}
+            errors={errors}
+            clearError={clearError}
+          />
+        )}
           {actualStep === 2 && (
             <BankDetails
               setKYCFormData={setKYCFormData}
@@ -554,6 +579,7 @@ export default function KYCPage() {
               KYCformData={KYCformData}
               errors={errors}
               clearError={clearError}
+              isServiceOnly={isServiceOnly}
             />
           )}
           {/* Declaration is always the last step in both modes */}

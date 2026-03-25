@@ -11,7 +11,8 @@ type Props = {
   file: File | string | null;
   onChange: (file: File | null) => void;
   error?: string;
-  clearError?: () => void; // नया prop add करें
+  clearError?: () => void; 
+  required?: boolean;
 };
 
 export default function DocumentUpload({
@@ -19,7 +20,8 @@ export default function DocumentUpload({
   file,
   onChange,
   error,
-  clearError // नया prop
+  clearError,
+  required = false,
 }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);

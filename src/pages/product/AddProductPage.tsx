@@ -131,7 +131,7 @@ export default function AddProductPage() {
     const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
     const [vendorBusinessName, setVendorBusinessName] = useState<string>("");
     const [skuCounter, setSkuCounter] = useState<number>(1);
-    // Separate validation states for each section
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [validationErrors, setValidationErrors] = useState<{
         category?: string;
         subCategory?: string;
@@ -275,24 +275,34 @@ export default function AddProductPage() {
     /* <!-- ========================================================== Input change ========================================================== --> */
 
     const handleChange = (field: string, value: any) => {
-        setFormData((prev) => ({
-            ...prev,
-            [field]: value,
-        }));
+        setFormData((prev) => {
+            if (prev[field as keyof typeof prev] === value) return prev;
+            return {
+                ...prev,
+                [field]: value,
+            };
+        });
+
         // Clear validation error only when user directly interacts with that field
         // Do NOT clear subCategory error when category changes
         if (field !== 'subCategory' && validationErrors[field as keyof typeof validationErrors]) {
-            setValidationErrors(prev => ({
-                ...prev,
-                [field]: undefined
-            }));
+            setValidationErrors(prev => {
+                if (!prev[field as keyof typeof prev]) return prev;
+                return {
+                    ...prev,
+                    [field]: undefined
+                };
+            });
         }
         // Clear subCategory error only when user actually selects a subCategory
         if (field === 'subCategory' && value) {
-            setValidationErrors(prev => ({
-                ...prev,
-                subCategory: undefined
-            }));
+            setValidationErrors(prev => {
+                if (!prev.subCategory) return prev;
+                return {
+                    ...prev,
+                    subCategory: undefined
+                };
+            });
         }
     };
 
@@ -776,11 +786,14 @@ export default function AddProductPage() {
         toast.info("This product is now marked as Base (Paid listing)");
     };
     const handleSubmit = async () => {
+        if (isSubmitting) return;
+
         // First validate form
         if (!validateForm()) {
             return; // Stop if validation fails
         }
 
+        setIsSubmitting(true);
         try {
             const formdata = new FormData();
 
@@ -886,22 +899,12 @@ export default function AddProductPage() {
                 ? await api.put(url, formdata)
                 : await api.post(url, formdata);
 
-            if (res?.data?.status === 200) {
+            if ((res?.status >= 200 && res?.status < 300) || (res?.data?.status >= 200 && res?.data?.status < 300)) {
                 const msg = res?.data?.message || (isEditMode ? "Product updated successfully!" : "Product added successfully!");
                 toast.success(msg);
-
                 setTimeout(() => {
                     router.push("/product");
                 }, 500);
-
-                
-                // Refresh wallet balance if it was a paid listing
-                if (pricingType === "paid" && !isEditMode) {
-                    await refreshBalance();
-                }
-                
-                router.push("/product");
-
             } else {
                 toast.error(res?.data?.message || "Failed to save product");
             }
@@ -915,6 +918,8 @@ export default function AddProductPage() {
             } else {
                 toast.error("Error saving product. Please try again.");
             }
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -1694,13 +1699,16 @@ export default function AddProductPage() {
                     variant="primary"
                     className="btn-primary px-6 py-2.5 min-w-[100px]"
                     onClick={handleSubmit}
+                    disabled={isSubmitting}
                 >
-                    {isEditMode ? "Update" : "Save"}
+                    {isSubmitting ? (isEditMode ? "Updating..." : "Saving...") : (isEditMode ? "Update" : "Save")}
                 </Button>
 
                 {/* Cancel Button */}
                 <Button size="sm" variant="outline" className="!py-2 px-5"
-                    onClick={() => router.push("/product")}
+                    onClick={() => {
+                        router.push("/product");
+                    }}
                 >
                     Cancel
                 </Button>
