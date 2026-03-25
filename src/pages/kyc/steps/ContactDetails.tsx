@@ -197,7 +197,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
   // Load initial lists on mount
   useEffect(() => {
     if (!countries.length) fetchOptions("country", "", 1);
-    // Removed redundant state/city fetches that cause race conditions on remount
+    if (!states.length) fetchOptions("state", "", 1);
+    if (!cities.length) fetchOptions("city", "", 1);
   }, []);
 
   // Removed the buggy useEffects that tried to clear states/cities.
@@ -277,7 +278,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Input
             placeholder="Enter your full name"
             className="py-3"
-            error={!!errors?.full_name}
+  error={!!errors?.full_name}
             type="text"
             value={KYCformData?.full_name}
             onChange={(e) => {
@@ -315,7 +316,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             }}
             maxLength={10}
             className="py-3"
-            error={!!errors?.mobile}
+              error={!!errors?.mobile}
           />
           {errors?.mobile && (
             <p className="error-message">{errors.mobile}</p>
@@ -328,7 +329,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Label>Email <span className="text-required">*</span></Label>
           <Input
             className="py-3"
-            error={!!errors?.email}
+  error={!!errors?.email}
             placeholder="Enter your email address"
             type="email"
             value={KYCformData?.email}
@@ -381,7 +382,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                 address: e.target.value,
               }));
             }}
-            error={!!errors?.address}
+              error={!!errors?.address}
           />
           {errors?.address && (
             <p className="error-message">{errors.address}</p>
@@ -502,19 +503,19 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               const selected = filteredCountries.find((c) => c.value === value);
               if (selected) {
                 clearError("country_id");
-
+                
                 // Clear dependent states
                 setStates([]);
                 setSelectedState(null);
                 pageRefState.current = 1;
                 setHasMoreStates(true);
-
+                
                 // Clear dependent cities
                 setCities([]);
                 setSelectedCity(null);
                 pageRefCity.current = 1;
                 setHasMoreCities(true);
-
+                
                 setSelectedCountry(selected);
                 setKYCFormData((prevData) => ({
                   ...prevData,
@@ -540,8 +541,6 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         </div>
 
 
-
-
         <div>
           <Label>Pincode <span className="text-required">*</span></Label>
           <Input
@@ -560,7 +559,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }
             }}
             className="py-3"
-            error={!!errors?.pincode}
+              error={!!errors?.pincode}
           />
           {errors?.pincode && (
             <p className="error-message">{errors.pincode}</p>

@@ -1,11 +1,20 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { WalletIcon } from "@/icons";
 import { useWallet } from "@/context/WalletContext";
 
 const WalletHeader: React.FC = () => {
-  const { balance, currency, isLoading } = useWallet();
+  const { balance, currency, isLoading, refreshBalance } = useWallet();
+
+  useEffect(() => {
+    const handleWalletUpdate = () => {
+      refreshBalance();
+    };
+
+    window.addEventListener('walletUpdated', handleWalletUpdate);
+    return () => window.removeEventListener('walletUpdated', handleWalletUpdate);
+  }, [refreshBalance]);
 
   if (isLoading) {
     return (

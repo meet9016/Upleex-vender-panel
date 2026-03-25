@@ -244,7 +244,7 @@ const ProductTable = () => {
     {
       field: "cancel_price",
       headerName: "Cancel Price",
-      minWidth: 120,
+      minWidth: 100,
       valueFormatter: (params) => {
         return params.value ? `₹${Number(params.value).toLocaleString('en-IN')}` : '₹0';
       },
@@ -259,22 +259,14 @@ const ProductTable = () => {
     {
       field: "is_new",
       headerName: "New",
-      minWidth: 100,
-      // cellRenderer: (params: any) => (
-      //   <div className="flex items-center h-full">
-      //     {params.value ? (
-      //       <span className="bg-green-50 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-100">
-      //         NEW
-      //       </span>
-          // ) : (
-          //   <span className="text-gray-400 text-xs">-</span>
-          // )}
-      //   </div>
-       cellRenderer: (params: any) => (
+      minWidth: 80,
+      cellRenderer: (params: any) => (
         <div className="flex items-center h-full">
-           {params.value ? (
-          <StatusBadge status={'New'} />
-           ) : (
+          {params.value ? (
+            <span className="bg-green-50 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-100">
+              NEW
+            </span>
+          ) : (
             <span className="text-gray-400 text-xs">-</span>
           )}
         </div>
@@ -284,7 +276,7 @@ const ProductTable = () => {
     {
       field: "deposit_amount",
       headerName: "Deposit",
-      minWidth: 120,
+      minWidth: 100,
       valueFormatter: (params) => {
         const value = params.value;
         if (!value || value === '0') return '-';
@@ -295,7 +287,7 @@ const ProductTable = () => {
     {
       field: "available_quantity",
       headerName: "Stock",
-      minWidth: 100,
+      minWidth: 80,
       cellRenderer: (params: any) => {
         const product = params.data;
         if (product.product_type_name !== 'Sell') {
@@ -341,7 +333,7 @@ const ProductTable = () => {
     },
     {
       field: "expires_at",
-      headerName: "Exp Date",
+      headerName: "Expires On",
       minWidth: 120,
       valueFormatter: (p) => p.value ? new Date(p.value).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-',
       cellStyle: { textAlign: "left" }

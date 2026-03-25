@@ -5,15 +5,13 @@ import type { ErrorType, KycFormDataType } from "@/pages/kyc/KycPage";
 import { toast } from "react-toastify";
 import imageCompression from 'browser-image-compression';
 import { FiUploadCloud, FiFileText, FiCheckCircle, FiX, FiEye, FiImage } from "react-icons/fi";
-import Label from "@/components/form/Label";
 
 type Props = {
   label: string;
   file: File | string | null;
   onChange: (file: File | null) => void;
   error?: string;
-  clearError?: () => void;
-  required?: boolean;
+  clearError?: () => void; // नया prop add करें
 };
 
 export default function DocumentUpload({
@@ -21,8 +19,7 @@ export default function DocumentUpload({
   file,
   onChange,
   error,
-  clearError,
-  required = false
+  clearError // नया prop
 }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -117,9 +114,9 @@ export default function DocumentUpload({
 
   return (
     <div className="w-full relative group/upload">
-      <Label>
-        {label} {required && <span className="text-required">*</span>}
-      </Label>
+      <label className="block mb-2 text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+        {label}
+      </label>
 
       {!file ? (
         <label className={`relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 text-center overflow-hidden ${
@@ -210,7 +207,10 @@ export default function DocumentUpload({
       )}
 
       {error && (
-        <p className="error-message">{error}</p>
+        <div className="mt-2 flex items-center gap-2 text-rose-500 text-xs font-semibold animate-in fade-in slide-in-from-top-1">
+          <span className="w-1 h-1 rounded-full bg-rose-500" />
+          {error}
+        </div>
       )}
 
       {showModal && preview && (

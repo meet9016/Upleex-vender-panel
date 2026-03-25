@@ -8,17 +8,15 @@ type KYCFormProp = {
   KYCformData: KycFormDataType;
   errors: ErrorType;
   clearError: (field: keyof ErrorType) => void;
-  isServiceOnly: boolean;
 };
 
 export default function Documents({
   setKYCFormData,
   KYCformData,
   errors,
-  clearError,
-  isServiceOnly,
+  clearError
 }: KYCFormProp) {
-
+  
   // Update function without calling clearError for file fields
   const updateFile = (key: keyof KycFormDataType) => (file: File | null) => {
     setKYCFormData((prev) => ({
@@ -34,8 +32,7 @@ export default function Documents({
         file={KYCformData?.pancard_front_image}
         onChange={updateFile("pancard_front_image")}
         error={errors?.pancard_front_image}
-        clearError={() => clearError('pancard_front_image')}
-        required={true}
+         clearError={() => clearError('pancard_front_image')} 
       />
 
       <DocumentUpload
@@ -43,8 +40,7 @@ export default function Documents({
         file={KYCformData?.aadharcard_front_image}
         onChange={updateFile("aadharcard_front_image")}
         error={errors?.aadharcard_front_image}
-        clearError={() => clearError('aadharcard_front_image')}
-        required={true}
+        clearError={() => clearError('aadharcard_front_image')} 
       />
 
       <DocumentUpload
@@ -52,8 +48,7 @@ export default function Documents({
         file={KYCformData?.aadharcard_back_image}
         onChange={updateFile("aadharcard_back_image")}
         error={errors?.aadharcard_back_image}
-        clearError={() => clearError('aadharcard_back_image')}
-        required={true}
+        clearError={() => clearError('aadharcard_back_image')} 
       />
 
       <DocumentUpload
@@ -61,7 +56,7 @@ export default function Documents({
         file={KYCformData?.gst_certificate_image}
         onChange={updateFile("gst_certificate_image")}
         error={errors?.gst_certificate_image}
-        clearError={() => clearError('gst_certificate_image')}
+        clearError={() => clearError('gst_certificate_image')} 
       />
 
       <DocumentUpload
@@ -79,28 +74,22 @@ export default function Documents({
         error={errors?.vendor_image}
         clearError={() => clearError('vendor_image')}
       />
-
-      {!isServiceOnly && (
-        <>
-          <DocumentUpload
-            label="Upload QR Code"
-            file={KYCformData?.qr_code_image}
-            onChange={updateFile("qr_code_image")}
-            error={errors?.qr_code_image}
-            clearError={() => clearError('qr_code_image')}
-            required={true}
-          />
-
-          <DocumentUpload
-            label="Upload Cheque"
-            file={KYCformData?.cheque_image}
-            onChange={updateFile("cheque_image")}
-            error={errors?.cheque_image}
-            clearError={() => clearError('cheque_image')}
-            required={true}
-          />
-        </>
-      )}
+      
+      <DocumentUpload
+        label="Upload QR Code"
+        file={KYCformData?.qr_code_image}
+        onChange={updateFile("qr_code_image")}
+        error={errors?.qr_code_image}
+        clearError={() => clearError('qr_code_image')}
+      />
+      
+      <DocumentUpload
+        label="Upload Cheque"
+        file={KYCformData?.cheque_image}
+        onChange={updateFile("cheque_image")}
+        error={errors?.cheque_image}
+        clearError={() => clearError('cheque_image')}
+      />
     </div>
   );
 }
