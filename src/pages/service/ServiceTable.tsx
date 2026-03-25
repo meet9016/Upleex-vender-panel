@@ -118,6 +118,17 @@ const ServiceTable = () => {
       minWidth: 120,
     },
     {
+      field: "approval_status",
+      headerName: "Admin Approval",
+      flex: 1,
+      minWidth: 120,
+      cellRenderer: (params: any) => (
+        <div className="flex items-center h-full">
+          <StatusBadge status={params.value || 'active'} />
+        </div>
+      ),
+    },
+    {
       field: "status",
       headerName: "Status",
       flex: 1,

@@ -119,8 +119,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
       }
       if (type === "state") {
         setStates((prev) => page === 1 ?
-          list.map((item: any) => ({ value: String(item.id), label: item.state_name })) :
-          [...prev, ...list.map((item: any) => ({ value: String(item.id), label: item.state_name }))]
+          list.map((item: any) => ({ value: String(item.id), label: item.state_name, extra: item })) :
+          [...prev, ...list.map((item: any) => ({ value: String(item.id), label: item.state_name, extra: item }))]
         );
         pageRefState.current += 1;
       }
@@ -389,6 +389,108 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           )}
         </div>
 
+        {/* <!-- =========================================================== City =========================================================== --> */}
+
+        <div>
+          <Label>Select City <span className="text-required">*</span></Label>
+          <SearchableDropdown
+            options={filteredCities}
+            value={KYCformData?.city_id?.value || null}
+            placeholder="Select City"
+            onChange={(value: string) => {
+              const selected = filteredCities.find((c) => c.value === value);
+              if (selected) {
+                clearError("city_id");
+                setSelectedCity(selected);
+
+                // Auto-select state and country from metadata
+                const cityData = selected.extra;
+                const newState = cityData?.state_id ? { value: String(cityData.state_id), label: cityData.state_name } : null;
+                const newCountry = cityData?.country_id ? { value: String(cityData.country_id), label: cityData.country_name } : null;
+
+                setKYCFormData((prevData) => ({
+                  ...prevData,
+                  city_id: { value: selected.value, label: selected.label },
+                  ...(newState && { state_id: newState }),
+                  ...(newCountry && { country_id: newCountry }),
+                }));
+
+                if (newState) {
+                  setSelectedState(newState);
+                  setStates((prev) => prev.some(s => s.value === newState.value) ? prev : [newState, ...prev]);
+                }
+                if (newCountry) {
+                  setSelectedCountry(newCountry);
+                  setCountries((prev) => prev.some(c => c.value === newCountry.value) ? prev : [newCountry, ...prev]);
+                }
+              }
+            }}
+            error={!!errors?.city_id}
+            searchable={true}
+            onSearch={(value: string) => debounceSearch("city", value)}
+            onScrollNearBottom={() => {
+              if (hasMoreCities && !loadingCities) {
+                fetchOptions("city", searchCity, pageRefCity.current);
+              }
+            }}
+            footer={hasMoreCities && loadingCities ? <div className="px-4 py-3 text-center text-sm text-gray-400">Loading…</div> : null}
+          />
+          {errors?.city_id && (
+            <p className="error-message">{errors.city_id}</p>
+          )}
+        </div>
+
+        {/* <!-- =========================================================== State =========================================================== --> */}
+
+        <div>
+          <Label>Select State <span className="text-required">*</span></Label>
+          <SearchableDropdown
+            options={filteredStates}
+            value={KYCformData?.state_id?.value || null}
+            placeholder="Select State"
+            onChange={(value: string) => {
+              const selected = filteredStates.find((s) => s.value === value);
+              if (selected) {
+                clearError("state_id");
+
+                // Auto-select country from metadata
+                const stateData = selected.extra;
+                const newCountry = stateData?.country_id ? { value: String(stateData.country_id), label: stateData.country_name } : null;
+
+                // Clear dependent cities
+                setCities([]);
+                setSelectedCity(null);
+                pageRefCity.current = 1;
+                setHasMoreCities(true);
+
+                setSelectedState(selected);
+                setKYCFormData((prevData) => ({
+                  ...prevData,
+                  state_id: { value: selected.value, label: selected.label },
+                  city_id: { value: "", label: "" },
+                  ...(newCountry && { country_id: newCountry }),
+                }));
+
+                if (newCountry) {
+                  setSelectedCountry(newCountry);
+                  setCountries((prev) => prev.some(c => c.value === newCountry.value) ? prev : [newCountry, ...prev]);
+                }
+              }
+            }}
+            error={!!errors?.state_id}
+            searchable={true}
+            onSearch={(value: string) => debounceSearch("state", value)}
+            onScrollNearBottom={() => {
+              if (hasMoreStates && !loadingStates) {
+                fetchOptions("state", searchState, pageRefState.current);
+              }
+            }}
+            footer={hasMoreStates && loadingStates ? <div className="px-4 py-3 text-center text-sm text-gray-400">Loading…</div> : null}
+          />
+          {errors?.state_id && (
+            <p className="error-message">{errors.state_id}</p>
+          )}
+        </div>
         {/* <!-- =========================================================== Country =========================================================== --> */}
 
         <div>
@@ -438,107 +540,6 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           )}
         </div>
 
-        {/* <!-- =========================================================== State =========================================================== --> */}
-
-        <div>
-          <Label>Select State <span className="text-required">*</span></Label>
-          <SearchableDropdown
-            options={filteredStates}
-            value={KYCformData?.state_id?.value || null}
-            placeholder="Select State"
-            onChange={(value: string) => {
-              const selected = filteredStates.find((s) => s.value === value);
-              if (selected) {
-                clearError("state_id");
-                
-                // Clear dependent cities
-                setCities([]);
-                setSelectedCity(null);
-                pageRefCity.current = 1;
-                setHasMoreCities(true);
-                
-                setSelectedState(selected);
-                setKYCFormData((prevData) => ({
-                  ...prevData,
-                  state_id: { value: selected.value, label: selected.label },
-                  city_id: { value: "", label: "" },
-                }));
-              }
-            }}
-            error={!!errors?.state_id}
-            searchable={true}
-            onSearch={(value: string) => debounceSearch("state", value)}
-            onScrollNearBottom={() => {
-              if (hasMoreStates && !loadingStates) {
-                fetchOptions("state", searchState, pageRefState.current);
-              }
-            }}
-            footer={hasMoreStates && loadingStates ? <div className="px-4 py-3 text-center text-sm text-gray-400">Loading…</div> : null}
-          />
-          {errors?.state_id && (
-            <p className="error-message">{errors.state_id}</p>
-          )}
-        </div>
-
-        {/* <!-- =========================================================== City =========================================================== --> */}
-
-        <div>
-          <Label>Select City <span className="text-required">*</span></Label>
-          <SearchableDropdown
-            options={filteredCities}
-            value={KYCformData?.city_id?.value || null}
-            placeholder="Select City"
-            onChange={(value: string) => {
-              const selected = filteredCities.find((c) => c.value === value);
-              if (selected) {
-                clearError("city_id");
-                setSelectedCity(selected);
-                
-                const extra = selected.extra;
-                if (extra && extra.state_id && extra.country_id) {
-                    const newCountry = { value: extra.country_id, label: extra.country_name };
-                    const newState = { value: extra.state_id, label: extra.state_name };
-                    
-                    // If auto-filling country that is different from current, clear states so it fetches new country states
-                    if (selectedCountry?.value !== extra.country_id) {
-                        setStates([]);
-                        pageRefState.current = 1;
-                        setHasMoreStates(true);
-                    }
-                    
-                    setSelectedCountry(newCountry);
-                    setSelectedState(newState);
-                    clearError("country_id");
-                    clearError("state_id");
-                    
-                    setKYCFormData((prevData) => ({
-                      ...prevData,
-                      city_id: { value: selected.value, label: selected.label },
-                      state_id: newState,
-                      country_id: newCountry
-                    }));
-                } else {
-                    setKYCFormData((prevData) => ({
-                      ...prevData,
-                      city_id: { value: selected.value, label: selected.label },
-                    }));
-                }
-              }
-            }}
-            error={!!errors?.city_id}
-            searchable={true}
-            onSearch={(value: string) => debounceSearch("city", value)}
-            onScrollNearBottom={() => {
-              if (hasMoreCities && !loadingCities) {
-                fetchOptions("city", searchCity, pageRefCity.current);
-              }
-            }}
-            footer={hasMoreCities && loadingCities ? <div className="px-4 py-3 text-center text-sm text-gray-400">Loading…</div> : null}
-          />
-          {errors?.city_id && (
-            <p className="error-message">{errors.city_id}</p>
-          )}
-        </div>
 
         <div>
           <Label>Pincode <span className="text-required">*</span></Label>
