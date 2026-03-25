@@ -15,6 +15,7 @@ import SearchableDropdown from "@/components/common/SearchableDropdown";
 import { exportQuotesToExcel, exportQuotesToPDF } from '@/utils/exportUtils';
 import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
 import { FiEdit3, FiCheck, FiX, FiMoreVertical } from 'react-icons/fi';
+import ActionButtons from "@/components/common/ActionButtons";
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -100,6 +101,7 @@ const QuoteTable = () => {
     month: '',
     status: '',
   });
+  console.log("🚀 ~ QuoteTable ~ filters:", filters)
 
   const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
 
@@ -318,12 +320,14 @@ const QuoteTable = () => {
         </div>
       ),
     },
+
     {
-      headerName: "Actions",
+      headerName: "Action",
       width: 130,
       minWidth: 130,
       pinned: 'right',
       suppressHeaderMenuButton: true,
+
       cellRenderer: (params: any) => {
         const status = params.data?.status?.toLowerCase();
         const isApproved = status === 'approval' || status === 'approved';
@@ -360,15 +364,9 @@ const QuoteTable = () => {
             >
               <FiX className="text-base" />
             </button>
-
-            {/* Edit */}
-            <button
-              onClick={() => router.push(`/quote/edit/${params.data._id}`)}
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all duration-200 shadow-sm hover:shadow"
-              title="Edit"
-            >
-              <FiEdit3 className="text-base" />
-            </button>
+            <ActionButtons
+              onEdit={() => router.push(`/quote/edit/${params.data._id || params.data.id}`)}
+            />
           </div>
         );
       },
