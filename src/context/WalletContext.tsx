@@ -45,9 +45,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   // Add money to wallet (calls backend API)
   const addMoney = async (amount: number) => {
     try {
-      await api.post(endPointApi.addWalletMoney, { amount });
+      const response = await api.post(endPointApi.addWalletMoney, { amount });
       // Refresh balance immediately after adding money
       await refreshBalance();
+      return response.data;
     } catch (error) {
       console.error("Error adding money:", error);
       throw error;
@@ -64,11 +65,21 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     loadBalance();
   }, [refreshBalance]);
 
-  // Auto-refresh balance every 30 seconds
+  // Listen for wallet update events
+  useEffect(() => {
+    const handleWalletUpdate = async () => {
+      await refreshBalance();
+    };
+
+    window.addEventListener('walletUpdated', handleWalletUpdate);
+    return () => window.removeEventListener('walletUpdated', handleWalletUpdate);
+  }, [refreshBalance]);
+
+  // Auto-refresh balance every 30 seconds (reduced from 10 to minimize API calls)
   useEffect(() => {
     const interval = setInterval(() => {
       refreshBalance();
-    }, 30000); // 30 seconds
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [refreshBalance]);

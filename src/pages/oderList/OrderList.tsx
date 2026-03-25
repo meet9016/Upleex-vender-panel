@@ -291,6 +291,36 @@ const OrderList = () => {
       cellStyle: { textAlign: "center" }
     },
     {
+      headerName: "Product Name",
+      field: "items",
+      minWidth: 200,
+      flex: 1.5,
+      cellRenderer: (params: any) => {
+        const items = params.value || [];
+        const productNames = items.map((item: any) => item.product_id?.name || item.product_name || item.name || 'N/A').join(', ');
+        return (
+          <div className="text-gray-800 dark:text-white text-sm">
+            {productNames || 'N/A'}
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "SKU",
+      field: "items",
+      minWidth: 150,
+      flex: 1,
+      cellRenderer: (params: any) => {
+        const items = params.value || [];
+        const skus = items.map((item: any) => item.product_id?.sku || item.sku || 'N/A').join(', ');
+        return (
+          <div className="font-mono text-gray-800 dark:text-white text-sm">
+            {skus || 'N/A'}
+          </div>
+        );
+      },
+    },
+    {
       headerName: "Amount",
       field: "total_amount",
       minWidth: 120,
@@ -789,6 +819,7 @@ const OrderList = () => {
                     const productImage = item.product_id?.images?.[0] || item.product_image || item.image || item.images?.[0];
                     const itemPrice = item.price || item.product_price || 0;
                     const itemQuantity = item.quantity || 1;
+                    const productSku = item.product_id?.sku || item.sku || 'N/A';
                     
                     return (
                       <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-gray-600 rounded-lg">
@@ -810,6 +841,9 @@ const OrderList = () => {
                           <div>
                             <p className="font-medium text-gray-800 dark:text-white">
                               {productName}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                              SKU: {productSku}
                             </p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                               Quantity: {itemQuantity}

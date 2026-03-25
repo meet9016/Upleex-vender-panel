@@ -100,6 +100,8 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
               if (verifyResponse.data.success) {
                 setTransactionId(transaction_id);
                 await refreshBalance();
+                // Dispatch event to notify all listeners about wallet update
+                window.dispatchEvent(new Event('walletUpdated'));
                 setCurrentStep("success");
               } else {
                 throw new Error("Payment verification failed");
