@@ -368,26 +368,55 @@ export default function KYCPage() {
         };
         formData.append("Bank", JSON.stringify([bank]));
       } else if (actualStep === 3) {
-        // Files
-        if (KYCformData.pancard_front_image instanceof File)
+        // Files - Handle both new files and deletions
+        if (KYCformData.pancard_front_image instanceof File) {
           formData.append("pancard_front_image", KYCformData.pancard_front_image);
-        if (KYCformData.aadharcard_front_image instanceof File)
+        } else if (KYCformData.pancard_front_image === null) {
+          formData.append("pancard_front_image", ""); // Empty string to indicate deletion
+        }
+        
+        if (KYCformData.aadharcard_front_image instanceof File) {
           formData.append("aadharcard_front_image", KYCformData.aadharcard_front_image);
-        if (KYCformData.aadharcard_back_image instanceof File)
+        } else if (KYCformData.aadharcard_front_image === null) {
+          formData.append("aadharcard_front_image", "");
+        }
+        
+        if (KYCformData.aadharcard_back_image instanceof File) {
           formData.append("aadharcard_back_image", KYCformData.aadharcard_back_image);
+        } else if (KYCformData.aadharcard_back_image === null) {
+          formData.append("aadharcard_back_image", "");
+        }
 
-        if (KYCformData.gst_certificate_image instanceof File)
+        if (KYCformData.gst_certificate_image instanceof File) {
           formData.append("gst_certificate_image", KYCformData.gst_certificate_image);
-        if (KYCformData.vendor_image instanceof File)
+        } else if (KYCformData.gst_certificate_image === null) {
+          formData.append("gst_certificate_image", "");
+        }
+        
+        if (KYCformData.vendor_image instanceof File) {
           formData.append("vendor_image", KYCformData.vendor_image);
-        if (KYCformData.business_logo_image instanceof File)
+        } else if (KYCformData.vendor_image === null) {
+          formData.append("vendor_image", "");
+        }
+        
+        if (KYCformData.business_logo_image instanceof File) {
           formData.append("business_logo_image", KYCformData.business_logo_image);
+        } else if (KYCformData.business_logo_image === null) {
+          formData.append("business_logo_image", "");
+        }
 
         if (!isServiceOnly) {
-          if (KYCformData.qr_code_image instanceof File)
+          if (KYCformData.qr_code_image instanceof File) {
             formData.append("qr_code_image", KYCformData.qr_code_image);
-          if (KYCformData.cheque_image instanceof File)
+          } else if (KYCformData.qr_code_image === null) {
+            formData.append("qr_code_image", "");
+          }
+          
+          if (KYCformData.cheque_image instanceof File) {
             formData.append("cheque_image", KYCformData.cheque_image);
+          } else if (KYCformData.cheque_image === null) {
+            formData.append("cheque_image", "");
+          }
         }
 
         formData.append("Documents", JSON.stringify([{ page: "4" }]));

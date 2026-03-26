@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ErrorType, KycFormDataType } from "@/pages/kyc/KycPage";
 import { toast } from "react-toastify";
-import imageCompression from 'browser-image-compression';
+import { compressImage } from "@/utils/imageCompression";
 import { FiUploadCloud, FiFileText, FiCheckCircle, FiX, FiEye, FiImage } from "react-icons/fi";
 
 type Props = {
@@ -57,24 +57,7 @@ export default function DocumentUpload({
     }
   }, [file]);
 
-  const compressImage = async (file: File): Promise<File> => {
-    const options = {
-      maxSizeMB: 2,
-      maxWidthOrHeight: 1920,
-      useWebWorker: true
-    };
-    
-    try {
-      const compressedFile = await imageCompression(file, options);
-      // Create new File with original name
-      const renamedFile = new File([compressedFile], file.name, { type: compressedFile.type });
-      toast.success(`File compressed from ${(file.size / 1024 / 1024).toFixed(2)}MB to ${(renamedFile.size / 1024 / 1024).toFixed(2)}MB`);
-      return renamedFile;
-    } catch (error) {
-      toast.error("Compression failed, using original file");
-      return file;
-    }
-  };
+// Replaced by shared utility in @/utils/imageCompression
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] || null;
@@ -91,11 +74,16 @@ export default function DocumentUpload({
       return;
     }
 
-    // Auto-compress if file is larger than 2MB and is an image
+    // Auto-compress all images to ensure the total payload for multiple files remains small
     let finalFile = selected;
-    if (isImage && selected.size > 2 * 1024 * 1024) {
-      toast.info("Compressing large image...");
-      finalFile = await compressImage(selected);
+    if (isImage) {
+      if (selected.size > 0.5 * 1024 * 1024) {
+        toast.info("Optimizing large image...");
+        finalFile = await compressImage(selected, 0.8);
+        // if (finalFile.size < selected.size) {
+        //     toast.success(`Image optimized: ${(selected.size / 1024 / 1024).toFixed(2)}MB → ${(finalFile.size / 1024 / 1024).toFixed(2)}MB`);
+        // }
+      }
     }
 
     // Check if PDF is too large (optional warning)
@@ -112,6 +100,14 @@ export default function DocumentUpload({
 
   const handleRemoveFile = () => {
     onChange(null);
+    
+    // Reset file input if it exists
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    
+    console.log('File removal onChange called with null'); // Debug log
   };
 
   return (
@@ -133,7 +129,7 @@ export default function DocumentUpload({
             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
               Drag & drop or <span className="text-indigo-600 dark:text-indigo-400">Browse</span>
             </p>
-            <p className="text-xs text-slate-400">Supports JPG, PNG or PDF (Max 10MB)</p>
+            <p className="text-xs text-slate-400">Supports JPG, PNG or PDF (Max 2MB recommended)</p>
           </div>
           <input 
             type="file" 
@@ -197,9 +193,15 @@ export default function DocumentUpload({
                 <FiEye className="text-sm" />
               </button>
               <button
-                onClick={handleRemoveFile}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Remove button clicked'); // Debug log
+                  handleRemoveFile();
+                }}
                 className="p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-xl hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 transition-all duration-200 shadow-sm"
                 title="Remove File"
+                type="button"
               >
                 <FiX className="text-sm" />
               </button>

@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { Editor } from "primereact/editor";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
+import { compressImage } from "@/utils/imageCompression";
 import { toast } from "react-toastify";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
 import { FiArrowLeft } from "react-icons/fi";
@@ -145,15 +146,17 @@ export default function AddServicePage() {
             data.append("location", formData.location);
             data.append("description", formData.description);
             if (mainImage) {
-                data.append("image", mainImage);
+                const compressedMain = await compressImage(mainImage, 0.8);
+                data.append("image", compressedMain);
             }
 
             // Handle Sub Images
             // 1. New files
             const subFiles = Object.values(subImages);
-            subFiles.forEach((file) => {
-                data.append("sub_images", file); // Reverted to sub_images to match backend
-            });
+            for (const file of subFiles) {
+                const compressedSub = await compressImage(file, 0.8);
+                data.append("sub_images", compressedSub); // Reverted to sub_images to match backend
+            }
 
             // 2. Existing images to keep 
             // We find images in subPreviews that are not temporary (i.e. existing ones)
