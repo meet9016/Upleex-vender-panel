@@ -19,12 +19,20 @@ export default function Documents({
   isServiceOnly,
 }: KYCFormProp) {
 
-  // Update function without calling clearError for file fields
+  // Update function with proper null handling
   const updateFile = (key: keyof KycFormDataType) => (file: File | null) => {
-    setKYCFormData((prev) => ({
-      ...prev,
-      [key]: file,
-    }));
+    setKYCFormData((prev) => {
+      const updated = {
+        ...prev,
+        [key]: file,
+      };
+      return updated;
+    });
+    
+    // Clear error when file is removed or added
+    if (file === null) {
+      clearError(key);
+    }
   };
 
   return (

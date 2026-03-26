@@ -112,6 +112,14 @@ export default function DocumentUpload({
 
   const handleRemoveFile = () => {
     onChange(null);
+    
+    // Reset file input if it exists
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    
+    console.log('File removal onChange called with null'); // Debug log
   };
 
   return (
@@ -197,9 +205,15 @@ export default function DocumentUpload({
                 <FiEye className="text-sm" />
               </button>
               <button
-                onClick={handleRemoveFile}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Remove button clicked'); // Debug log
+                  handleRemoveFile();
+                }}
                 className="p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-xl hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 transition-all duration-200 shadow-sm"
                 title="Remove File"
+                type="button"
               >
                 <FiX className="text-sm" />
               </button>
