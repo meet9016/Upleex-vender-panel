@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
+import { useFilter } from "../context/FilterContext";
 import { CalenderIcon, GridIcon, HorizontaLDots, BoxIcon, DocsIcon, ListIcon, DollarLineIcon, TaskIcon, WalletIcon } from "../icons/index";
 import { BsChatSquareQuote } from "react-icons/bs";
 import endPointApi from "@/utils/endPointApi";
@@ -35,6 +36,7 @@ const kycOnlyItems: NavItem[] = [
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { filters } = useFilter();
   const pathname = usePathname();
   const router = useRouter();
   const [kycApproved, setKycApproved] = useState<boolean | null>(null);
@@ -73,19 +75,26 @@ const AppSidebar: React.FC = () => {
       return kycOnlyItems; // Show only KYC if not approved
     }
     
-    // Filter out Service option if vendor type is selected
+    // Filter items based on selected type
     const filteredItems = navItems.filter(item => {
-      // Check if this is the Service item and if vendor type is selected
-      if (item.path === '/service') {
-        // Get vendor type from localStorage or context
-        const vendorType = localStorage.getItem('vendor_type') || 'both';
-        return vendorType !== 'vendor'; // Hide service if vendor type is selected
+      // If only vendor is selected, show Product but not Service
+      if (filters.vendor && !filters.service) {
+        if (item.path === '/service') return false; // Hide Service
+        return true; // Show Product and others
       }
+      
+      // If only service is selected, show Service but not Product
+      if (filters.service && !filters.vendor) {
+        if (item.path === '/product') return false; // Hide Product
+        return true; // Show Service and others
+      }
+      
+      // If both are selected or none selected, show both
       return true;
     });
     
     return filteredItems;
-  }, [kycApproved, isLoading]);
+  }, [kycApproved, isLoading, filters]);
 
   const isActive = useCallback(
     (path: string) => {
