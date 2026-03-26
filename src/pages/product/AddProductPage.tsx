@@ -13,6 +13,7 @@ import { Editor } from "primereact/editor";
 import { MdDelete } from "react-icons/md";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
+import { compressImage } from "@/utils/imageCompression";
 import Radio from "@/components/form/input/Radio";
 import { toast } from "react-toastify";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
@@ -884,12 +885,14 @@ export default function AddProductPage() {
 
             // ---------- IMAGES ----------
             if (mainImage) {
-                formdata.append("product_main_image", mainImage);
+                const compressedMain = await compressImage(mainImage, 0.8);
+                formdata.append("product_main_image", compressedMain);
             }
 
-            subImages.forEach((file) => {
-                formdata.append("image", file);
-            });
+            for (const file of subImages) {
+                const compressedSub = await compressImage(file, 0.8);
+                formdata.append("image", compressedSub);
+            }
 
             // ---------- API CALL ----------
             const url = isEditMode
