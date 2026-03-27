@@ -35,6 +35,7 @@ interface AgGridTableProps {
   autoHeight?: boolean;
   getRowStyle?: (params: any) => any;
   rowHeight?: number;
+  height?: string | number;
 }
 
 const AgGridTable: React.FC<AgGridTableProps> = ({
@@ -49,6 +50,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   autoHeight = false,
   getRowStyle,
   rowHeight = 60,
+  height,
 }) => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
@@ -163,7 +165,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
       <div className="relative">
         {loading && <Loader type="section" />}
         <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'}`}
-          style={{ width: "100%", height: autoHeight ? 'auto' : '80vh', minHeight: autoHeight ? 240 : 'auto' }}>
+          style={{ width: "100%", height: autoHeight ? 'auto' : (height || '80vh'), minHeight: autoHeight ? 240 : 'auto' }}>
           <AgGridReact
             rowHeight={rowHeight}
             ref={gridRef}
