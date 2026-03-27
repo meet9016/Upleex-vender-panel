@@ -119,6 +119,7 @@ export default function SearchableDropdown({
         break;
       case 'Enter':
         e.preventDefault();
+        e.stopPropagation(); // Prevent event bubbling to parent
         if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
           const opt = filteredOptions[highlightedIndex];
           if (!disabled) {

@@ -192,6 +192,18 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
             }
         };
 
+        // Handle Enter key press
+        const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+            if (e.key === 'Enter' && !multiline) {
+                e.stopPropagation(); // Prevent bubbling to parent components
+            }
+            
+            // Call original onKeyDown if provided
+            if ('onKeyDown' in restProps && restProps.onKeyDown) {
+                restProps.onKeyDown(e as any);
+            }
+        };
+
         // Determine which icons to show
         const hasLeftIcon = leftIcon || isSearch;
         const hasRightIcon = rightIcon || showPasswordToggle || isLoading || (isSearch && internalValue);
@@ -245,6 +257,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
                             type={actualType}
                             value={value ?? ""}
                             onChange={handleChange}
+                            onKeyDown={handleKeyDown}
                             disabled={disabled || isLoading}
                             aria-label={ariaLabel}
                             aria-invalid={error || variant === "error"}
