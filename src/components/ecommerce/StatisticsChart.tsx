@@ -38,62 +38,65 @@ export default function StatisticsChart() {
 
   const options: ApexOptions = {
     legend: {
-      show: false, // Hide legend
+      show: true,
       position: "top",
-      horizontalAlign: "left",
+      horizontalAlign: "right",
+      fontFamily: "Outfit",
     },
-    colors: ["#465FFF", "#9CB9FF"], // Define line colors
+    colors: ["#465FFF", "#9CB9FF"], // blue-600 and blue-300
     chart: {
       fontFamily: "Outfit, sans-serif",
       height: 310,
-      type: "line", // Set the chart type to 'line'
+      type: "area",
       toolbar: {
-        show: false, // Hide chart toolbar
+        show: false,
       },
     },
     stroke: {
-      curve: "straight", // Define the line style (straight, smooth, or step)
-      width: [2, 2], // Line width for each dataset
+      curve: "smooth",
+      width: [2, 2],
     },
 
     fill: {
       type: "gradient",
       gradient: {
-        opacityFrom: 0.55,
-        opacityTo: 0,
+        shadeIntensity: 1,
+        opacityFrom: 0.5,
+        opacityTo: 0.1,
+        stops: [0, 90, 100]
       },
     },
     markers: {
-      size: 0, // Size of the marker points
-      strokeColors: "#fff", // Marker border color
+      size: 0,
+      strokeColors: "#fff",
       strokeWidth: 2,
       hover: {
-        size: 6, // Marker size on hover
+        size: 6,
       },
     },
     grid: {
       xaxis: {
         lines: {
-          show: false, // Hide grid lines on x-axis
+          show: false,
         },
       },
       yaxis: {
         lines: {
-          show: true, // Show grid lines on y-axis
+          show: true,
         },
       },
     },
     dataLabels: {
-      enabled: false, // Disable data labels
+      enabled: false,
     },
     tooltip: {
-      enabled: true, // Enable tooltip
+      enabled: true,
       x: {
-        format: "dd MMM yyyy", // Format for x-axis tooltip
+        format: "dd MMM yyyy",
       },
     },
     xaxis: {
-      type: "category", // Category-based x-axis
+      type: "category",
       categories: [
         "Jan",
         "Feb",
@@ -109,24 +112,25 @@ export default function StatisticsChart() {
         "Dec",
       ],
       axisBorder: {
-        show: false, // Hide x-axis border
+        show: false,
       },
       axisTicks: {
-        show: false, // Hide x-axis ticks
+        show: false,
       },
       tooltip: {
-        enabled: false, // Disable tooltip for x-axis points
+        enabled: false,
       },
     },
     yaxis: {
       labels: {
+        formatter: (val) => `₹${val}`,
         style: {
-          fontSize: "12px", // Adjust font size for y-axis labels
-          colors: ["#6B7280"], // Color of the labels
+          fontSize: "12px",
+          colors: ["#6B7280"],
         },
       },
       title: {
-        text: "", // Remove y-axis title
+        text: "",
         style: {
           fontSize: "0px",
         },
@@ -136,12 +140,12 @@ export default function StatisticsChart() {
 
   const series = [
     {
-      name: "Sales",
-      data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235],
+      name: "Earnings",
+      data: [18000, 19500, 17000, 21000, 17500, 25000, 22000, 28000, 31000, 29000, 34000, 32000],
     },
     {
-      name: "Revenue",
-      data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
+      name: "Previous Period",
+      data: [14000, 13000, 15000, 14000, 15500, 18000, 17000, 20000, 21000, 22000, 25000, 24000],
     },
   ];
   return (
@@ -149,10 +153,10 @@ export default function StatisticsChart() {
       <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
         <div className="w-full">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Statistics
+            Earnings Graph
           </h3>
           <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-            Target you've set for each month
+            Weekly/Monthly earnings overview
           </p>
         </div>
         <div className="flex items-center gap-3 sm:justify-end">
