@@ -63,6 +63,7 @@ export interface EndPointApi {
     getWalletTransactions: string;
     verifyWalletPayment: string;
     getWalletSummary: string;
+    getPurchasedPlans: string;
     }
 
 // Define and export the API endpoint object
@@ -99,6 +100,7 @@ const endPointApi: EndPointApi = {
     getPlanOptions: 'listing-plans/options',
     postCreateListingPlan: 'listing-plans/create',
     postCustomPlanRequest: 'listing-plans/custom-request',
+    getPurchasedPlans: 'listing-plans/getall',
     toggleProductVisibility: 'products/toggle-visibility',
 
     // Quote
