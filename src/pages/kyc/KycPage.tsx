@@ -147,6 +147,52 @@ export default function KYCPage() {
     fetchKYCFormdata();
   }, []);
 
+  // Add Enter key functionality
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check if Enter key is pressed and not in a textarea or contenteditable
+      if (event.key === 'Enter' && 
+          !event.shiftKey && 
+          !event.ctrlKey && 
+          !event.altKey &&
+          !isSubmitting) {
+        
+        const target = event.target as HTMLElement;
+        
+        // Don't trigger if user is typing in textarea or contenteditable
+        if (target.tagName === 'TEXTAREA' || 
+            target.contentEditable === 'true' ||
+            target.closest('.ql-editor')) { // Quill editor check
+          return;
+        }
+        
+        // Don't trigger if user is in a dropdown or modal
+        if (target.closest('[role="listbox"]') ||
+            target.closest('[role="dialog"]') ||
+            target.closest('.dropdown-menu') ||
+            target.closest('.searchable-dropdown')) {
+          return;
+        }
+        
+        event.preventDefault();
+        
+        // Show quick feedback
+        const button = document.querySelector('.btn-primary') as HTMLButtonElement;
+        if (button) {
+          button.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+            button.style.transform = 'scale(1)';
+          }, 150);
+        }
+        
+        handleNext();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isSubmitting, currentStep, KYCformData]); // Add dependencies
+
   // Show modal logic moved to AppHeader in the form of an overlay tooltip
 
   const clearError = (field: string | number) => {
@@ -636,7 +682,8 @@ export default function KYCPage() {
           <button
             onClick={handleNext}
             disabled={isSubmitting}
-            className="btn-primary min-w-[120px]"
+            className="btn-primary min-w-[120px] relative"
+            title="Press Enter to save and continue"
           >
             {isSubmitting
               ? "Saving..."
