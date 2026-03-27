@@ -697,7 +697,7 @@ const OrderList = () => {
               <button
                 onClick={fetchOrders}
                 disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg btn-primary disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <FiRefreshCw className="h-4 w-4" />
                 {loading ? 'Refreshing...' : 'Refresh'}

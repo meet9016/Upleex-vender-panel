@@ -179,13 +179,13 @@ const ProductTable = () => {
         product_id: productId,
         is_visible: !currentVisibility
       });
-      
-      const message = !currentVisibility 
+
+      const message = !currentVisibility
         ? 'Product is now visible to users'
         : 'Product is now hidden from users';
-      
+
       toast.success(message);
-      
+
       // Refresh the product data
       getProductData(getCurrentParams(), undefined, true);
     } catch (error: any) {
@@ -309,9 +309,8 @@ const ProductTable = () => {
 
           return (
             <div className="flex items-center h-full">
-              <span className={`text-xs font-semibold ${
-                isOutOfStock ? 'text-red-500' : 'text-gray-700 dark:text-gray-200'
-              }`}>
+              <span className={`text-xs font-semibold ${isOutOfStock ? 'text-red-500' : 'text-gray-700 dark:text-gray-200'
+                }`}>
                 {available} {isOutOfStock && "(OOS)"}
               </span>
             </div>
@@ -376,7 +375,7 @@ const ProductTable = () => {
           const product = params.data;
           const isVisible = product.is_visible !== false;
           const isApproved = product.approval_status === 'approved';
-          
+
           return (
             <div className="flex items-center h-full">
               <div className="flex items-center gap-2">
@@ -389,9 +388,8 @@ const ProductTable = () => {
                   }}
                   disabled={!isApproved}
                   size="sm"
-                  className={`${
-                    !isApproved ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  className={`${!isApproved ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                 />
                 {/* <span className={`text-xs font-medium ${
                   !isApproved 
@@ -418,7 +416,7 @@ const ProductTable = () => {
         cellRenderer: (params: any) => {
           const product = params.data;
           const isApproved = product.approval_status === 'approved';
-          
+
           return (
             <ActionButtons
               onEdit={() => router.push(`/product/addProduct?id=${product._id || product.id}`)}
@@ -1117,7 +1115,7 @@ const ProductTable = () => {
           {/* Add Product Button */}
           <button
             onClick={() => router.push('/product/addProduct')}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+            className="px-4 py-2 btn-primary font-medium"
           >
             + Add Product
           </button>

@@ -54,6 +54,7 @@ export default function SignInForm() {
   };
 
   const signIn = async () => {
+    if (isLoading) return;
     let newErrors: { mobile?: string } = {};
 
     // Validation

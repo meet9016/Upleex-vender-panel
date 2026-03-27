@@ -30,7 +30,7 @@ export default function ActionButtons({
           <Edit className="w-[1.05rem] h-[1.05rem] group-hover:scale-110 transition-transform duration-300" />
         </button>
       )}
-      {showDelete && (
+      {showDelete && onDelete && (
         <button
           onClick={(e) => {
             e.stopPropagation();

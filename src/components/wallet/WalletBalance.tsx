@@ -48,7 +48,7 @@ const WalletBalance: React.FC<WalletBalanceProps> = ({
         <Button
           onClick={onAddMoney}
           startIcon={<PlusIcon />}
-          className="w-full"
+          className="w-full btn-primary"
           size="md"
         >
           Add Money

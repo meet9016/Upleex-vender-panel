@@ -303,7 +303,7 @@ const QuoteTable = () => {
         </div>
       ),
     },
-      {
+    {
       field: "delivery_date",
       headerName: "Delivery Date",
       minWidth: 150,
@@ -367,6 +367,7 @@ const QuoteTable = () => {
             </button>
             <ActionButtons
               onEdit={() => router.push(`/quote/edit/${params.data._id || params.data.id}`)}
+              showDelete={false}
             />
           </div>
         );
