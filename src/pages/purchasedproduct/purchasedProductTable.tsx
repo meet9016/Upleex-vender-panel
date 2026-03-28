@@ -25,7 +25,13 @@ export default function PurchasedProductsPage() {
     const fetchPurchasedProducts = async () => {
       try {
         setLoading(true);
-        const response = await api.get(endPointApi.getPurchasedPlans);
+        const userInfoStr = localStorage.getItem('user_info');
+        const vendor = userInfoStr ? JSON.parse(userInfoStr) : null;
+        const vendor_id = vendor?.id || vendor?._id;
+
+        const response = await api.get(endPointApi.getPurchasedPlans, {
+          params: { vendor_id }
+        });
         if (response.data.success && response.data.data) {
           const products = response.data.data.map((item: any) => {
             // Extract product names and categories from populated product_ids

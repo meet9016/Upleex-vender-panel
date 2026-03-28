@@ -72,7 +72,7 @@ const WalletPage: React.FC = () => {
   }
 
   return (
-    <div className="p-4 mx-auto max-w-screen-xl md:p-6">
+    <div className="p-4 mx-auto md:p-6">
       <PageBreadcrumb pageTitle="Wallet" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

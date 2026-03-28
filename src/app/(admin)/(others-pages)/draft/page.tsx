@@ -38,7 +38,7 @@ export default function DraftPage() {
   const [subCategoryOptions, setSubCategoryOptions] = useState<{ label: string; value: string }[]>([]);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>("");
   const [showPlanDialog, setShowPlanDialog] = useState(false);
-  
+
   const columns: ColDef[] = useMemo(() => [
     {
       headerName: "Product",
@@ -148,13 +148,13 @@ export default function DraftPage() {
         toast.info("Select draft products to activate");
         return;
       }
-      
+
       // Validate plan capacity for non-custom plans
       if (plan_type !== 'custom' && max_products && ids.length > max_products) {
         toast.error(`Selected plan can only accommodate ${max_products} product${max_products > 1 ? 's' : ''}, but you have selected ${ids.length} products. Please select a higher plan or reduce your selection.`);
         return;
       }
-      
+
       setLoading(true);
       const body: any = { plan_type: String(plan_type).toLowerCase(), product_ids: ids };
       if (plan_id) body.plan_id = plan_id;
@@ -162,16 +162,16 @@ export default function DraftPage() {
         body.months = months;
         body.max_products = max_products;
       }
-      
+
       await api.post(endPointApi.postCreateListingPlan, body);
-      
+
       // Show detailed success message
       const planName = plan_type.charAt(0).toUpperCase() + plan_type.slice(1);
       toast.success(
         `🎉 ${planName} plan applied successfully! ${ids.length} product${ids.length > 1 ? 's' : ''} activated and moved from draft to active status.`,
         { autoClose: 5000 }
       );
-      
+
       // Refresh the data and clear selection
       await fetchDrafts();
       setSelected([]);
@@ -191,20 +191,20 @@ export default function DraftPage() {
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Manage and activate your draft listings ({rows.length} drafts)
         </p>
-<Button
-onClick={fetchDrafts}
-disabled={loading}
-className="px-4 py-2 text-sm font-medium flex items-center justify-center gap-2"
->
-  {loading ? (
-    <Loader type="button" text="Refreshing..." iconClassName="text-white h-4 w-4" />
-  ) : (
-    <>
-      <HiOutlineRefresh className="text-lg" />
-      Refresh
-    </>
-  )}
-  </Button>
+        <Button
+          onClick={fetchDrafts}
+          disabled={loading}
+          className="px-4 py-2 text-sm font-medium flex items-center justify-center gap-2 btn-primary"
+        >
+          {loading ? (
+            <Loader type="button" text="Refreshing..." iconClassName="text-white h-4 w-4" />
+          ) : (
+            <>
+              <HiOutlineRefresh className="text-lg" />
+              Refresh
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Filters */}
@@ -316,19 +316,19 @@ className="px-4 py-2 text-sm font-medium flex items-center justify-center gap-2"
           </p>
           <Button
             onClick={() => window.location.href = '/product/addProduct'}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white"
+            className="px-4 py-2 btn-primary"
           >
             Create New Product
           </Button>
         </div>
       ) : (
-      <AgGridTable
-        columns={columns}
-        rowData={rows}
-        tableName="Draft Products"
-        onSelectionChange={setSelected}
-        loading={loading}
-      />
+        <AgGridTable
+          columns={columns}
+          rowData={rows}
+          tableName="Draft Products"
+          onSelectionChange={setSelected}
+          loading={loading}
+        />
       )}
 
       {/* Plan Selection Dialog - Using the new component */}

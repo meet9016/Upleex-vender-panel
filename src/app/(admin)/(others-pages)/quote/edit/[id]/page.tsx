@@ -5,7 +5,7 @@ import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { FiCalendar, FiImage, FiVideo, FiArrowLeft, FiX, FiLoader } from "react-icons/fi";
 import { toast } from "react-toastify";
-import SearchableDropdown from "@/components/common/SearchableDropdown"; 
+import SearchableDropdown from "@/components/common/SearchableDropdown";
 import Loader from "@/components/common/Loader";
 import DatePicker from "@/components/common/DatePicker"; // Import your DatePicker component
 
@@ -18,6 +18,8 @@ const QuoteEditPage = () => {
   const [formData, setFormData] = useState({
     start_date: "",
     end_date: "",
+    start_time: "",
+    end_time: "",
     status: "",
     image: null as File | null,
     video: null as File | null,
@@ -142,6 +144,8 @@ const QuoteEditPage = () => {
         setFormData({
           start_date: toInputDate(quote?.start_date),
           end_date: toInputDate(quote?.end_date),
+          start_time: quote?.start_time || '',
+          end_time: quote?.end_time || '',
           status: quote?.status || "",
           image: null,
           video: null,
@@ -162,7 +166,9 @@ const QuoteEditPage = () => {
     if (n.includes('reject')) return 'reject';
     if (n.includes('active')) return 'active';
     if (n.includes('complete')) return 'complete';
-    return 'pending';
+    if (n.includes('success')) return 'successful';
+    if (n.includes('delivery')) return 'delivery';
+    return n; // Return the name itself if no match, instead of always defaulting to pending
   };
 
   // Check if user can access date/image/video upload based on status
@@ -170,6 +176,10 @@ const QuoteEditPage = () => {
     const currentStatus = formData.status || quoteData?.status;
     return currentStatus === 'approval';
   }, [formData.status, quoteData?.status]);
+
+  const isHourly = useMemo(() => {
+    return quoteData?.product_listing_type_name?.toLowerCase() === 'hourly';
+  }, [quoteData]);
 
   // Check if all features should be disabled (when status is complete)
   const isCompleteStatus = useMemo(() => {
@@ -184,15 +194,17 @@ const QuoteEditPage = () => {
     if (!params?.id) {
       return;
     }
-      if (submitting) return;
+    if (submitting) return;
 
     try {
-       setSubmitting(true); 
+      setSubmitting(true);
       // Use multipart for optional files and dates
       const fd = new FormData();
       if (formData.status) fd.append('status', formData.status);
       if (formData.start_date) fd.append('start_date', formData.start_date);
       if (formData.end_date) fd.append('end_date', formData.end_date);
+      if (formData.start_time) fd.append('start_time', formData.start_time);
+      if (formData.end_time) fd.append('end_time', formData.end_time);
       if (formData.image) fd.append('image', formData.image);
       if (formData.video) fd.append('video', formData.video);
       if (formData.return_image) fd.append('return_image', formData.return_image);
@@ -209,8 +221,8 @@ const QuoteEditPage = () => {
       console.error('Update quote error', err);
       toast.error("Failed to update quote");
     } finally {
-    setSubmitting(false); // Set loading false after API call completes
-  }
+      setSubmitting(false); // Set loading false after API call completes
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -382,10 +394,10 @@ const QuoteEditPage = () => {
             </div>
 
             {/* Delivery Date */}
-            <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Delivery Date</p>
-              <p className="text-base font-semibold text-gray-800 dark:text-white">{quoteData.delivery_date}</p>
-            </div>
+            {/* <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Delivery Date</p>
+                <p className="text-base font-semibold text-gray-800 dark:text-white">{quoteData.delivery_date}</p>
+              </div> */}
 
             {/* Month */}
             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
@@ -413,7 +425,7 @@ const QuoteEditPage = () => {
         {/* Form Card */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 border border-gray-200 dark:border-gray-700">
           <h2 className="text-base font-semibold text-gray-800 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Update Quote Details</h2>
-          
+
           {/* Access Control Warning */}
           {!canAccessUploadFeatures && (
             <div className="mb-6 p-4 rounded-lg border-l-4 border-red-500 bg-red-50 dark:bg-red-900/20">
@@ -425,8 +437,8 @@ const QuoteEditPage = () => {
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-red-700 dark:text-red-400 font-medium">
-                    {isCompleteStatus 
-                      ? 'Upload features are disabled because the quote status is Complete.' 
+                    {isCompleteStatus
+                      ? 'Upload features are disabled because the quote status is Complete.'
                       : 'Upload features (dates, images, videos) are only available when the quote status is Approved.'}
                   </p>
                 </div>
@@ -445,7 +457,7 @@ const QuoteEditPage = () => {
                 <DatePicker
                   value={formData.start_date}
                   onChange={(date) => setFormData({ ...formData, start_date: date })}
-                  min={new Date().toISOString().split('T')[0]} // Optional: Set min date to today
+                  min={new Date().toISOString().split('T')[0]}
                   className={!canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed' : ''}
                 />
               </div>
@@ -458,11 +470,46 @@ const QuoteEditPage = () => {
                 <DatePicker
                   value={formData.end_date}
                   onChange={(date) => setFormData({ ...formData, end_date: date })}
-                  min={formData.start_date || new Date().toISOString().split('T')[0]} // Set min date to start date if available
+                  min={formData.start_date || new Date().toISOString().split('T')[0]}
                   className={!canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed' : ''}
                 />
               </div>
             </div>
+
+            {/* Time Fields */}
+            {isHourly && (
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    <FiCalendar className="text-orange-600" />
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.start_time}
+                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                    disabled={!canAccessUploadFeatures}
+                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white transition-all ${!canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+                      }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    <FiCalendar className="text-pink-600" />
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.end_time}
+                    onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                    disabled={!canAccessUploadFeatures}
+                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 dark:bg-gray-700 dark:text-white transition-all ${!canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+                      }`}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Image Upload */}
             <div className="grid md:grid-cols-2 gap-4">
@@ -478,9 +525,8 @@ const QuoteEditPage = () => {
                     accept="image/*"
                     onChange={handleImageChange}
                     disabled={!canAccessUploadFeatures}
-                    className={`w-full px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 dark:file:bg-green-900 dark:file:text-green-300 transition-all ${
-                      !canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
-                    }`}
+                    className={`w-full px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 dark:file:bg-green-900 dark:file:text-green-300 transition-all ${!canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+                      }`}
                   />
                   {imagePreview && (
                     <div className="mt-2 relative inline-block">
@@ -512,9 +558,8 @@ const QuoteEditPage = () => {
                     accept="video/*"
                     onChange={handleVideoChange}
                     disabled={!canAccessUploadFeatures}
-                    className={`w-full px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-700 dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 dark:file:bg-red-900 dark:file:text-red-300 transition-all ${
-                      !canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
-                    }`}
+                    className={`w-full px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-700 dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 dark:file:bg-red-900 dark:file:text-red-300 transition-all ${!canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+                      }`}
                   />
                   {videoPreview && (
                     <div className="mt-2 relative inline-block">
@@ -548,9 +593,8 @@ const QuoteEditPage = () => {
                     accept="image/*"
                     onChange={handleReturnImageChange}
                     disabled={!canAccessUploadFeatures}
-                    className={`w-full px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300 transition-all ${
-                      !canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
-                    }`}
+                    className={`w-full px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300 transition-all ${!canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+                      }`}
                   />
                   {returnImagePreview && (
                     <div className="mt-2 relative inline-block">
@@ -582,9 +626,8 @@ const QuoteEditPage = () => {
                     accept="video/*"
                     onChange={handleReturnVideoChange}
                     disabled={!canAccessUploadFeatures}
-                    className={`w-full px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 dark:file:bg-purple-900 dark:file:text-purple-300 transition-all ${
-                      !canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
-                    }`}
+                    className={`w-full px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 dark:file:bg-purple-900 dark:file:text-purple-300 transition-all ${!canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+                      }`}
                   />
                   {returnVideoPreview && (
                     <div className="mt-2 relative inline-block">
@@ -607,10 +650,9 @@ const QuoteEditPage = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={submitting || !canAccessUploadFeatures}
-              className={`w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 ${
-                (submitting || !canAccessUploadFeatures) ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              disabled={submitting}
+              className={`w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 ${submitting ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
             >
               {submitting ? (
                 <Loader type="button" text="Submitting..." iconClassName="text-white" />

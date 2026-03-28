@@ -92,6 +92,7 @@ export default function AddProductPage() {
         keyFeatures: { key: string; value: string; specification_id?: string }[];
         isNew: boolean;
         depositAmount: string;
+        availableQuantity: string;
     }>({
         category: null,
         subCategory: null,
@@ -111,6 +112,7 @@ export default function AddProductPage() {
         keyFeatures: [{ key: "", value: "" }],
         isNew: false,
         depositAmount: "",
+        availableQuantity: "",
     });
 
     const [mainPreview, setMainPreview] = useState<mainImg[]>([]);
@@ -123,7 +125,7 @@ export default function AddProductPage() {
     const [listingTypeIdMap, setListingTypeIdMap] = useState<Record<string, string>>({});
     const [monthOptions, setMonthOptions] = useState<Option[]>([]);
     const [billingType, setBillingType] = useState<"day" | "month" | "hourly" | "">("");
-    const [pricingType, setPricingType] = useState<"free" | "paid">("paid");
+    const [pricingType, setPricingType] = useState<"free" | "paid">("free");
     const [mainImage, setMainImage] = useState<File | null>(null);
     const [subImages, setSubImages] = useState<File[]>([]);
 
@@ -132,6 +134,8 @@ export default function AddProductPage() {
     const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
     const [vendorBusinessName, setVendorBusinessName] = useState<string>("");
     const [skuCounter, setSkuCounter] = useState<number>(1);
+    const [hasGst, setHasGst] = useState<boolean>(false);
+    const [freeProductCount, setFreeProductCount] = useState<number>(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [validationErrors, setValidationErrors] = useState<{
         category?: string;
@@ -193,9 +197,11 @@ export default function AddProductPage() {
             // Fallback to API call if localStorage doesn't have business_name
             const res = await api.get(endPointApi.postFetchVendorKYCFormData || 'vendor-single-details');
             if (res?.data?.status === 200 && res?.data?.data) {
-                const businessName = res.data.data.business_name || res.data.data.businessName;
-                console.log("Fetched vendor business name from API:", businessName);
-                setVendorBusinessName(businessName || "Vendor"); // Fallback to "Vendor"
+                const data = res.data.data;
+                const businessName = data.business_name || data.businessName || data.Identity?.business_name;
+                console.log("Fetched vendor profile from API:", data);
+                setVendorBusinessName(businessName || "Vendor");
+                setHasGst(!!(data.Identity?.gst_number || data.gst_number));
             } else {
                 setVendorBusinessName("Vendor"); // Fallback
             }
@@ -242,6 +248,18 @@ export default function AddProductPage() {
                 });
 
                 setSkuCounter(maxCounter + 1);
+
+                // Count active free products for current month (aligning with backend monthly limit)
+                const startOfMonth = new Date();
+                startOfMonth.setHours(0, 0, 0, 0);
+                startOfMonth.setDate(1);
+
+                const freeCount = products.filter((p: any) =>
+                    p.pricing_type === 'free' &&
+                    p.status === 'active' &&
+                    new Date(p.createdAt || p.updatedAt) >= startOfMonth
+                ).length;
+                setFreeProductCount(freeCount);
             }
         } catch (error) {
             console.error("Error fetching SKU counter:", error);
@@ -525,7 +543,8 @@ export default function AddProductPage() {
                             }))
                             : [{ key: "", value: "" }],
                         isNew: data.is_new || false,
-                        depositAmount: productTypeName === "sell" ? String(data.available_quantity || "1") : String(data.deposit_amount || ""),
+                        depositAmount: productTypeName === "rent" ? String(data.deposit_amount || "") : "",
+                        availableQuantity: String(data.available_quantity || ""),
                     });
 
                     setSelectedCategory(String(data.category_id || ""));
@@ -794,6 +813,20 @@ export default function AddProductPage() {
             return; // Stop if validation fails
         }
 
+        // Check wallet balance and free limit
+        if (pricingType === 'paid') {
+            if (balance <= 0) {
+                toast.error("Your wallet balance is 0. Please add money to your wallet to add paid products.");
+                return;
+            }
+        } else if (pricingType === 'free') {
+            const limit = hasGst ? 3 : 1;
+            if (freeProductCount >= limit) {
+                toast.error(`Free listing limit reached (${freeProductCount}/${limit}). Please select 'Base (Paid listing)' or add money to your wallet.`);
+                return;
+            }
+        }
+
         setIsSubmitting(true);
         try {
             const formdata = new FormData();
@@ -830,9 +863,14 @@ export default function AddProductPage() {
                 formdata.append("deposit_amount", formData.depositAmount.trim());
             }
 
+            // Add available quantity for rent products
+            if (isRent && formData.availableQuantity.trim()) {
+                formdata.append("available_quantity", formData.availableQuantity.trim());
+            }
+
             // Add available quantity for sell products
-            if (isSell && formData.depositAmount.trim()) {
-                formdata.append("available_quantity", formData.depositAmount.trim());
+            if (isSell && formData.availableQuantity.trim()) {
+                formdata.append("available_quantity", formData.availableQuantity.trim());
             }
 
             // ---------- SELL FLOW ----------
@@ -948,7 +986,7 @@ export default function AddProductPage() {
 
                         {/* Blue Line + Title */}
                         <div className="flex items-center gap-3">
-                            <div className="h-12 w-1 bg-blue-600 rounded-full"></div>
+                            <div className="h-12 w-1 bg-brand-500 rounded-full"></div>
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
                                     {isEditMode ? "Edit Product" : "Add Product"}
@@ -1221,6 +1259,25 @@ export default function AddProductPage() {
                         </div>
                     )}
 
+                    {/* Available Quantity - Only for Rent products */}
+                    {selectedListingType === "Rent" && (
+                        <div>
+                            <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Available Quantity</Label>
+                            <div className="flex flex-col">
+                                <Input
+                                    placeholder="Enter Available Quantity"
+                                    type="text"
+                                    value={formData.availableQuantity}
+                                    onChange={(e) => handleNumberInput("availableQuantity", e.target.value, 6)}
+                                    className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                                />
+                                <span className="text-xs text-gray-500 mt-1">
+                                    Number of items available for rent
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Quantity - Only for Sell products */}
                     {selectedListingType === "Sell" && (
                         <div>
@@ -1229,8 +1286,8 @@ export default function AddProductPage() {
                                 <Input
                                     placeholder="Enter Available Quantity"
                                     type="text"
-                                    value={formData.depositAmount}
-                                    onChange={(e) => handleNumberInput("depositAmount", e.target.value, 6)}
+                                    value={formData.availableQuantity}
+                                    onChange={(e) => handleNumberInput("availableQuantity", e.target.value, 6)}
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
                                 <span className="text-xs text-gray-500 mt-1">
