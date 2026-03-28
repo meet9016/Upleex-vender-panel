@@ -1496,7 +1496,7 @@ export default function AddProductPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => removeMonth(index)}
-                                                className="h-8 w-8 flex items-center justify-center rounded-md text-gray-500 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition mb-7"
+                                                className="h-8 w-8 flex items-center justify-center rounded-md text-red-600 hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition mb-7"
                                                 title="Remove Month"
                                             >
                                                 <MdDelete size={20} />
@@ -1644,7 +1644,7 @@ export default function AddProductPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => removeFeature(index)}
-                                                className="h-9 w-10 flex items-center justify-center rounded-md text-gray-500 hover:text-[rgb(53,66,237)] transition"
+                                                className="h-9 w-10 flex items-center justify-center rounded-md text-red-600 hover:text-red-500 transition"
                                                 title="Remove feature"
                                             >
                                                 <MdDelete size={20} />

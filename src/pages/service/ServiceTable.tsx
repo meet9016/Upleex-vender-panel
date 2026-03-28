@@ -35,6 +35,15 @@ const ServiceTable = () => {
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchText]);
+
   const [hoveredImage, setHoveredImage] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
@@ -155,10 +164,12 @@ const ServiceTable = () => {
     },
   ];
 
-  const getServiceData = async () => {
+  const getServiceData = async (search = '') => {
     try {
       setLoading(true);
-      const res = await api.get(endPointApi.postAllVendorServiceList);
+      const res = await api.get(endPointApi.postAllVendorServiceList, {
+        params: { search }
+      });
       setServiceData(res?.data?.data || []);
     } catch (error) {
       console.log("fetch error", error);
@@ -169,8 +180,8 @@ const ServiceTable = () => {
   };
 
   useEffect(() => {
-    getServiceData();
-  }, []);
+    getServiceData(debouncedSearch);
+  }, [debouncedSearch]);
 
   const openDeletePopup = (id: string) => {
     setDeleteId(id);
