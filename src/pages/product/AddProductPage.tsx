@@ -92,6 +92,7 @@ export default function AddProductPage() {
         keyFeatures: { key: string; value: string; specification_id?: string }[];
         isNew: boolean;
         depositAmount: string;
+        availableQuantity: string;
     }>({
         category: null,
         subCategory: null,
@@ -111,6 +112,7 @@ export default function AddProductPage() {
         keyFeatures: [{ key: "", value: "" }],
         isNew: false,
         depositAmount: "",
+        availableQuantity: "",
     });
 
     const [mainPreview, setMainPreview] = useState<mainImg[]>([]);
@@ -541,7 +543,8 @@ export default function AddProductPage() {
                             }))
                             : [{ key: "", value: "" }],
                         isNew: data.is_new || false,
-                        depositAmount: productTypeName === "sell" ? String(data.available_quantity || "1") : String(data.deposit_amount || ""),
+                        depositAmount: productTypeName === "rent" ? String(data.deposit_amount || "") : "",
+                        availableQuantity: String(data.available_quantity || ""),
                     });
 
                     setSelectedCategory(String(data.category_id || ""));
@@ -860,9 +863,14 @@ export default function AddProductPage() {
                 formdata.append("deposit_amount", formData.depositAmount.trim());
             }
 
+            // Add available quantity for rent products
+            if (isRent && formData.availableQuantity.trim()) {
+                formdata.append("available_quantity", formData.availableQuantity.trim());
+            }
+
             // Add available quantity for sell products
-            if (isSell && formData.depositAmount.trim()) {
-                formdata.append("available_quantity", formData.depositAmount.trim());
+            if (isSell && formData.availableQuantity.trim()) {
+                formdata.append("available_quantity", formData.availableQuantity.trim());
             }
 
             // ---------- SELL FLOW ----------
@@ -1251,6 +1259,25 @@ export default function AddProductPage() {
                         </div>
                     )}
 
+                    {/* Available Quantity - Only for Rent products */}
+                    {selectedListingType === "Rent" && (
+                        <div>
+                            <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Available Quantity</Label>
+                            <div className="flex flex-col">
+                                <Input
+                                    placeholder="Enter Available Quantity"
+                                    type="text"
+                                    value={formData.availableQuantity}
+                                    onChange={(e) => handleNumberInput("availableQuantity", e.target.value, 6)}
+                                    className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                                />
+                                <span className="text-xs text-gray-500 mt-1">
+                                    Number of items available for rent
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Quantity - Only for Sell products */}
                     {selectedListingType === "Sell" && (
                         <div>
@@ -1259,8 +1286,8 @@ export default function AddProductPage() {
                                 <Input
                                     placeholder="Enter Available Quantity"
                                     type="text"
-                                    value={formData.depositAmount}
-                                    onChange={(e) => handleNumberInput("depositAmount", e.target.value, 6)}
+                                    value={formData.availableQuantity}
+                                    onChange={(e) => handleNumberInput("availableQuantity", e.target.value, 6)}
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
                                 <span className="text-xs text-gray-500 mt-1">

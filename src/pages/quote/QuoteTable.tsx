@@ -39,7 +39,6 @@ type Quote = {
     sub_category_name: string;
     description: string;
   };
-  delivery_date: string;
   number_of_days: number;
   months_id: string;
   qty: number;
@@ -47,7 +46,10 @@ type Quote = {
   status: string;
   createdAt: string;
   updatedAt: string;
-  // Computed fields for display
+  start_date?: string;
+  end_date?: string;
+  start_time?: string;
+  end_time?: string;
   product_name?: string;
   product_type_name?: string;
   product_listing_type_name?: string;
@@ -179,7 +181,6 @@ const QuoteTable = () => {
 
       return {
         ...quote,
-        // Flatten product fields for easy access in table
         product_name: product.product_name || '-',
         product_type_name: product.product_type_name || '-',
         product_listing_type_name: product.product_listing_type_name || '-',
@@ -187,9 +188,10 @@ const QuoteTable = () => {
         product_main_image: product.product_main_image || '',
         total_price: totalPrice,
         month_name: monthName,
-        delivery_date: fmt(quote.delivery_date),
-        start_date: fmt(quote.start_date),
-        end_date: fmt(quote.end_date),
+        start_date: fmt(quote.start_date) || '-',
+        end_date: fmt(quote.end_date) || '-',
+        start_time: quote.start_time || '-',
+        end_time: quote.end_time || '-',
       };
     });
   };
@@ -316,9 +318,21 @@ const QuoteTable = () => {
       cellStyle: { textAlign: "center" }
     },
     {
+      field: "start_time",
+      headerName: "Start Time",
+      minWidth: 130,
+      cellStyle: { textAlign: "center" }
+    },
+    {
       field: "end_date",
       headerName: "End Date",
       minWidth: 150,
+      cellStyle: { textAlign: "center" }
+    },
+    {
+      field: "end_time",
+      headerName: "End Time",
+      minWidth: 130,
       cellStyle: { textAlign: "center" }
     },
 
@@ -333,8 +347,9 @@ const QuoteTable = () => {
         const status = params.data?.status?.toLowerCase();
         const isApproved = status === 'approval' || status === 'approved';
         const isRejected = status === 'reject' || status === 'rejected';
-        const isCompleted = status === 'complete' || status === 'completed';
-        const isDisabled = isApproved || isRejected || isCompleted;
+        const isCompleted = status === 'complete' || status === 'completed' || status === 'successful' || status === 'success';
+        const isDelivery = status === 'delivery';
+        const isDisabled = isApproved || isRejected || isCompleted || isDelivery;
 
         return (
           <div className="flex items-center justify-center gap-2 h-full">

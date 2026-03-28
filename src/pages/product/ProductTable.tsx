@@ -276,13 +276,34 @@ const ProductTable = () => {
 
     // Add conditional columns based on activeTab
     if (activeTab === 'rent') {
-      // Add Listing Type and Deposit for Rent products
+      // Add Listing Type, Stock, and Deposit for Rent products
       baseColumns.push(
         {
           field: "product_listing_type_name",
           headerName: "Listing Type",
           minWidth: 120,
           cellStyle: { textAlign: "left" }
+        },
+        {
+          field: "available_quantity",
+          headerName: "Stock",
+          minWidth: 100,
+          cellRenderer: (params: any) => {
+            const product = params.data;
+            const available = product.available_quantity || 0;
+            const isOutOfStock = product.is_out_of_stock || available <= 0;
+
+            return (
+              <div className="flex items-center h-full">
+                <span className={`text-xs font-semibold ${
+                  isOutOfStock ? 'text-red-500' : 'text-gray-700 dark:text-gray-200'
+                }`}>
+                  {available} {isOutOfStock && "(OOS)"}
+                </span>
+              </div>
+            );
+          },
+          cellStyle: { justifyContent: "left" }
         },
         {
           field: "deposit_amount",
