@@ -15,6 +15,7 @@ import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { compressImage } from "@/utils/imageCompression";
 import Radio from "@/components/form/input/Radio";
+import Checkbox from "@/components/form/input/Checkbox";
 import { toast } from "react-toastify";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
 import { useWallet } from "@/context/WalletContext";
@@ -1201,43 +1202,12 @@ export default function AddProductPage() {
                     </div>
 
                     {/* New Product Checkbox */}
-                    <div className="flex items-center gap-3 mt-7">
-                        <label className="flex items-center gap-3 cursor-pointer group">
-                            <div className="relative inline-flex items-center">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.isNew}
-                                    onChange={(e) => handleChange("isNew", e.target.checked)}
-                                    className="sr-only peer"
-                                />
-                                <div className={`
-                                    w-6 h-6 rounded-md border-2 transition-all duration-200 ease-in-out
-                                    flex items-center justify-center
-                                    ${formData.isNew
-                                        ? "bg-green-600 border-green-600 shadow-sm"
-                                        : "bg-white border-gray-400 group-hover:border-green-400"}
-                                `}>
-                                    {formData.isNew && (
-                                        <svg
-                                            className="w-4 h-4 text-white stroke-2"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    )}
-                                </div>
-                            </div>
-                            <span className={`
-                                text-base font-medium transition-colors duration-200
-                                ${formData.isNew
-                                    ? "text-green-700 dark:text-green-400"
-                                    : "text-gray-600 dark:text-gray-300"}
-                            `}>
-                                New Product
-                            </span>
-                        </label>
+                    <div className="flex items-center gap-3 mt-7 h-[40px]">
+                        <Checkbox
+                            label="New Product"
+                            checked={formData.isNew}
+                            onChange={(checked) => handleChange("isNew", checked)}
+                        />
                     </div>
 
                     {/* Deposit Amount - Only for Rent products */}
