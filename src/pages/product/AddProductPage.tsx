@@ -367,7 +367,6 @@ export default function AddProductPage() {
             if (!prev.featureFields) return prev;
             const ff = [...prev.featureFields];
             ff[index] = { ...(ff[index] || {}) };
-            // @ts-expect-error narrow
             ff[index][field] = undefined;
             return { ...prev, featureFields: ff };
         });

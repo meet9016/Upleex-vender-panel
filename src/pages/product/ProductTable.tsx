@@ -402,7 +402,7 @@ const ProductTable = () => {
               <div className="flex items-center gap-2">
                 <Switch
                   checked={isVisible}
-                  onChange={(checked) => {
+                  onChange={() => {
                     if (isApproved) {
                       toggleProductVisibility(product._id || product.id, isVisible);
                     }
