@@ -105,7 +105,7 @@ export default function SignUpForm() {
       if (!formData.businessName.trim()) e.businessName = "Business name is required";
       // const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
           const emailPattern = /^[^\s@]+@[^\s@]+\.(com|in|org)$/;
-      if (!emailPattern.test(formData.email.trim())) e.email = "Enter a valid email (example@domain.com/in/org)";
+      if (!emailPattern.test(formData.email.trim())) e.email = "Enter a valid email";
       // if (!emailPattern.test(formData.email.trim())) e.email = "Enter a valid email address";
       if (!/^[6-9]\d{9}$/.test(formData.mobile)) e.mobile = "Enter valid 10-digit Indian mobile number";
       if (!formData.city.trim()) e.city = "City is required";

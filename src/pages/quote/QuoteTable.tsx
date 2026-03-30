@@ -250,7 +250,7 @@ const QuoteTable = () => {
     {
       field: "product_type_name",
       headerName: "Product Type",
-      minWidth: 180,
+      minWidth: 120,
       cellStyle: { textAlign: "center" }
     },
     {
@@ -338,8 +338,8 @@ const QuoteTable = () => {
 
     {
       headerName: "Action",
-      width: 130,
-      minWidth: 130,
+      width: 150,
+      minWidth: 150,
       pinned: 'right',
       suppressHeaderMenuButton: true,
 
@@ -626,7 +626,7 @@ const QuoteTable = () => {
   };
 
   useEffect(() => {
-    const params: any = {};
+    const params: any = { ...filters };
     if (debouncedSearch) params.search = debouncedSearch;
     getQuoteData(params);
   }, [debouncedSearch]);
@@ -646,9 +646,7 @@ const QuoteTable = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-
   useEffect(() => {
-    getQuoteData();
     getStatusList();
     getDropdownData();
   }, []);
