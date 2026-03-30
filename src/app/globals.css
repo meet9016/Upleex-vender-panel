@@ -261,6 +261,18 @@
   scrollbar-width: none; /* Firefox */
 }
 
+@utility z-99 {
+  z-index: 99;
+}
+
+@utility z-999 {
+  z-index: 999;
+}
+
+@utility z-9999 {
+  z-index: 9999;
+}
+
 @utility custom-scrollbar {
   &::-webkit-scrollbar {
     @apply size-1.5;
