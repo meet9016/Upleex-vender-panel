@@ -21,7 +21,6 @@ export default function DocumentUpload({
   onChange,
   error,
   clearError,
-  required = false,
 }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);

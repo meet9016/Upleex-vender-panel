@@ -35,12 +35,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <FilterProvider>
       <WalletProvider>
-      <div className="min-h-screen xl:flex">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <AppSidebar />
         <Backdrop />
-        <div className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}>
+        <div className={`flex flex-col min-h-screen transition-all duration-300 ease-in-out ${mainContentMargin}`}>
           <AppHeader />
-          <main className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">{children}</main>
+          <main className="flex-1 p-4 mx-auto w-full max-w-(--breakpoint-2xl) md:p-6 mb-20 lg:mb-0">
+            {children}
+          </main>
         </div>
       </div>
       </WalletProvider>
