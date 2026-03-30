@@ -153,18 +153,18 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   }, [router, addButtonLink]);
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4 dark:text-gray-200">
+    <div className="w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 dark:text-gray-200">
         {buttonName && (
-          <button onClick={handleAddClick} className="btn-primary" aria-label={`Add ${buttonName}`}>
+          <button onClick={handleAddClick} className="btn-primary w-full sm:w-auto" aria-label={`Add ${buttonName}`}>
             + Add {buttonName}
           </button>
         )}
       </div>
 
-      <div className="relative">
+      <div className="relative w-full">
         {loading && <Loader type="section" />}
-        <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'}`}
+        <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'} w-full`}
           style={{ width: "100%", height: autoHeight ? 'auto' : (height || '80vh'), minHeight: autoHeight ? 240 : 'auto' }}>
           <AgGridReact
             rowHeight={rowHeight}
