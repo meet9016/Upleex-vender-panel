@@ -652,17 +652,17 @@ const QuoteTable = () => {
   }, []);
 
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-5">
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Quotes</h2>
-        <div className="flex items-center gap-3">
-          <div className="relative">
+    <div className="w-full p-2 sm:p-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-5">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Quotes</h2>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+          <div className="relative w-full sm:w-auto">
             <input
               type="text"
               placeholder="Search quotes..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           </div>
@@ -671,10 +671,10 @@ const QuoteTable = () => {
             <button
               ref={filterButtonRef}
               onClick={() => setShowFilterModal(!showFilterModal)}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2 relative"
+              className="w-full sm:w-auto px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2 relative"
             >
               <CiFilter size={20} />
-              Filter
+              <span className="hidden sm:inline">Filter</span>
               {activeFilterCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
                   {activeFilterCount}
@@ -683,7 +683,7 @@ const QuoteTable = () => {
             </button>
 
             {showFilterModal && (
-              <div ref={dropdownRef} className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-[300px] z-50 border border-gray-200 dark:border-gray-700">
+              <div ref={dropdownRef} className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-full mt-2 bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-auto sm:w-[300px] z-50 border border-gray-200 dark:border-gray-700 max-h-[calc(100vh-120px)] overflow-y-auto">
                 <div className="p-4">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Filter Quotes</h3>
@@ -779,14 +779,14 @@ const QuoteTable = () => {
           <div className="relative" ref={actionsMenuRef}>
             <button
               onClick={() => setShowActionsMenu((v) => !v)}
-              className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
+              className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
               title="Export options"
             >
               <FiMoreVertical className="text-xl" />
             </button>
 
             {showActionsMenu && (
-              <div className="absolute right-0 mt-3 w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+              <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-auto mt-3 w-auto sm:w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
                 {/* Export Section */}
                 <div className="px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100/30 dark:border-gray-800/30">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Export Options</span>
@@ -821,13 +821,17 @@ const QuoteTable = () => {
         </div>
       </div>
 
-      <AgGridTable
-        columns={columns}
-        rowData={quoteData}
-        filter={true}
-        tableName="Quotes"
-        rowHeight={52}
-      />
+      <div className="overflow-x-auto -mx-2 sm:mx-0">
+        <div className="inline-block min-w-full align-middle">
+          <AgGridTable
+            columns={columns}
+            rowData={quoteData}
+            filter={true}
+            tableName="Quotes"
+            rowHeight={52}
+          />
+        </div>
+      </div>
       {/* Floating Image Preview */}
       {hoveredImage && (
         <div
