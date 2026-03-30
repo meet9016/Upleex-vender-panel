@@ -152,6 +152,7 @@ export default function AddProductPage() {
         monthCancelPrice?: string;
         // monthsGeneral?: string;
         monthsFields?: { month?: string; price?: string; cancelPrice?: string }[];
+        featureFields?: { key?: string; value?: string }[];
         description?: string;
         mainImage?: string;
         billingType?: string;
@@ -360,6 +361,16 @@ export default function AddProductPage() {
             ...prev,
             keyFeatures: updated,
         }));
+
+        // Clear feature error when user types
+        setValidationErrors(prev => {
+            if (!prev.featureFields) return prev;
+            const ff = [...prev.featureFields];
+            ff[index] = { ...(ff[index] || {}) };
+            // @ts-expect-error narrow
+            ff[index][field] = undefined;
+            return { ...prev, featureFields: ff };
+        });
     };
 
     /* <!-- ============================================ handle add, update, remove Month ============================================ --> */
@@ -797,6 +808,26 @@ export default function AddProductPage() {
 
         // Set validation errors
         setValidationErrors(errors);
+
+        // Feature Validation: If a feature title is present but description is missing
+        const featureRows = formData.keyFeatures;
+        const featureRowErrors: { key?: string; value?: string }[] = featureRows.map(() => ({}));
+        let hasFeatureErrors = false;
+
+        featureRows.forEach((item, idx) => {
+            if (item.key?.trim() && !item.value?.trim()) {
+                featureRowErrors[idx].value = "Description is required";
+                hasFeatureErrors = true;
+            }
+        });
+
+        if (hasFeatureErrors) {
+            setValidationErrors(prev => ({
+                ...prev,
+                featureFields: featureRowErrors
+            }));
+            return false;
+        }
 
         // Return true if no errors
         return Object.keys(errors).length === 0;
@@ -1582,47 +1613,62 @@ export default function AddProductPage() {
                         {/* BORDERED CONTAINER */}
                         <div className="flex-1 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/70 dark:bg-gray-900/70 backdrop-blur p-2 dark:border-white">
                             <div className="h-[300px] overflow-y-auto space-y-2">
-                                {formData?.keyFeatures?.map((item, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center gap-2 pt-1 px-1"
-                                    >
-                                        {/* FEATURE */}
-                                        <Input
-                                            type="text"
-                                            placeholder="Feature"
-                                            value={item.key}
-                                            className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
-                                            onChange={(e) =>
-                                                UpdateFeatureField(index, "key", e.target.value)
-                                            }
-                                        />
+                {formData?.keyFeatures?.map((item, index) => (
+            <div
+            key={index}
+            className="flex items-start gap-2 pt-1 px-1"
+            >
+            {/* FEATURE */}
+            <div className="w-1/2">
+                <Input
+                type="text"
+                placeholder="Feature"
+                value={item.key}
+                className="h-9 text-sm w-full rounded-lg px-3 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                onChange={(e) =>
+                    UpdateFeatureField(index, "key", e.target.value)
+                }
+                />
+            </div>
 
-                                        {/* DESCRIPTION */}
-                                        <Input
-                                            type="text"
-                                            placeholder="Description"
-                                            value={item.value}
-                                            className="h-9 text-sm flex-1 focus:ring-1 focus:ring-[rgb(53,66,237)]"
-                                            onChange={(e) =>
-                                                UpdateFeatureField(index, "value", e.target.value)
-                                            }
-                                        />
+            {/* DESCRIPTION */}
+            <div className="w-1/2">
+                <Input
+                type="text"
+                placeholder="Description"
+                value={item.value}
+                className={`h-9 text-sm w-full border ${
+                    validationErrors.featureFields?.[index]?.value
+                    ? "border-red-500"
+                    : "border-gray-300"
+                } focus:ring-1 focus:ring-[rgb(53,66,237)]`}
+                onChange={(e) =>
+                    UpdateFeatureField(index, "value", e.target.value)
+                }
+                />
 
-                                        {/* DELETE */}
-                                        {formData.keyFeatures.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => removeFeature(index)}
-                                                className="h-9 w-10 flex items-center justify-center rounded-md text-red-600 hover:text-red-500 transition"
-                                                title="Remove feature"
-                                            >
-                                                <MdDelete size={20} />
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
+                {/* VALIDATION MESSAGE */}
+                {validationErrors.featureFields?.[index]?.value && (
+                <p className="!text-[13px] text-red-500 mt-1 ml-1">
+                    {validationErrors.featureFields[index].value}
+                </p>
+                )}
+            </div>
+
+            {/* DELETE */}
+            {formData.keyFeatures.length > 1 && (
+                <button
+                type="button"
+                onClick={() => removeFeature(index)}
+                className="h-9 w-10 flex items-center justify-center rounded-md text-red-600 hover:text-red-500 transition mt-0.5"
+                title="Remove feature"
+                >
+                <MdDelete size={20} />
+                </button>
+            )}
+            </div>
+        ))}
+        </div>              
                         </div>
                     </div>
                 </div>
