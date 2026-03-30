@@ -3,8 +3,11 @@ import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 import { MoreDotIcon } from "@/icons";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
+import { api } from "@/utils/axiosInstance";
+import endPointApi from "@/utils/endPointApi";
+import { useSearchParams } from "next/navigation";
 
 // Dynamically import the ReactApexChart component
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
@@ -12,6 +15,42 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
 });
 
 export default function MonthlySalesChart() {
+  const searchParams = useSearchParams();
+  const range = (searchParams?.get("range") as string | null) ?? null;
+  
+  const [loading, setLoading] = useState(true);
+  const [series, setSeries] = useState<any>([
+    {
+      name: "Orders",
+      data: new Array(12).fill(0),
+    },
+  ]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const query = range ? `?range=${encodeURIComponent(range as string)}` : '';
+        const response = await api.get(`${endPointApi.getVendorDashboardMetrics}${query}`);
+        if (response.data.success) {
+          const { orders } = response.data.data.graphs;
+          setSeries([
+            {
+              name: "Orders",
+              data: orders,
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error fetching orders graph data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [range]);
+
   const options: ApexOptions = {
     colors: ["#f97316"], // orange-500 to match Orders metric
     chart: {
@@ -70,6 +109,13 @@ export default function MonthlySalesChart() {
       title: {
         text: undefined,
       },
+      min: 0,
+      stepSize: 10,
+      labels: {
+        formatter: (val: number) => {
+          return val === null ? "0" : val.toFixed(0);
+        }
+      }
     },
     grid: {
       yaxis: {
@@ -87,16 +133,11 @@ export default function MonthlySalesChart() {
         show: false,
       },
       y: {
-        formatter: (val: number) => `${val}`,
+        formatter: (val: number) => val ? `${val}` : '0',
       },
     },
   };
-  const series = [
-    {
-      name: "Orders",
-      data: [85, 120, 95, 140, 110, 130, 160, 105, 125, 180, 150, 90],
-    },
-  ];
+
   const [isOpen, setIsOpen] = useState(false);
 
   function toggleDropdown() {

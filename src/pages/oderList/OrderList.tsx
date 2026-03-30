@@ -321,11 +321,22 @@ const OrderList = () => {
       cellStyle: { textAlign: "center" }
     },
     {
-      headerName: "Payment",
+      headerName: "Customer Payment",
       field: "payment_status",
       minWidth: 120,
       flex: 1,
       cellRenderer: (params: any) => <StatusBadge status={params.value} />,
+      cellStyle: { textAlign: "center" }
+    },
+    {
+      headerName: "Admin Payment",
+      field: "payment_status_info.payment_status",
+      minWidth: 140,
+      flex: 1,
+      cellRenderer: (params: any) => {
+        const paymentStatus = params.data.payment_status_info?.payment_status || '-';
+        return <StatusBadge status={paymentStatus} />;
+      },
       cellStyle: { textAlign: "center" }
     },
     {
