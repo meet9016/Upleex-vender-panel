@@ -136,7 +136,12 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   );
 
   const rowSelection = useMemo<RowSelectionOptions>(
-    () => ({ mode: "multiRow" }),
+    () => ({
+      mode: "multiRow",
+      checkboxes: true,
+      enableSelectAll: true,
+      enableSelectionWithoutKeys: true,
+    }),
     []
   );
 
@@ -164,9 +169,10 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
 
       <div className="relative">
         {loading && <Loader type="section" />}
-        <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'}`}
+        <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine cute-ag-grid'}`}
           style={{ width: "100%", height: autoHeight ? 'auto' : (height || '80vh'), minHeight: autoHeight ? 240 : 'auto' }}>
           <AgGridReact
+            headerHeight={48}
             rowHeight={rowHeight}
             ref={gridRef}
             domLayout={autoHeight ? 'autoHeight' : undefined}
@@ -185,7 +191,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             }}
             paginationPageSizeSelector={[10, 20, 50, 100]}
             columnMenu="new"
-            suppressRowClickSelection
+            suppressRowClickSelection={true}
             alwaysShowHorizontalScroll={true}
             getRowStyle={getRowStyle}
           />
