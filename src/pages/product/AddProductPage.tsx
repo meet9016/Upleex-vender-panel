@@ -424,8 +424,8 @@ export default function AddProductPage() {
         });
     };
 
-    const handlePricingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const isChecked = e.target.checked;
+    const handlePricingChange = (checked: boolean) => {
+        const isChecked = checked;
 
         // Check wallet balance before allowing paid listing
         if (isChecked && balance < 10) {
@@ -1029,46 +1029,14 @@ export default function AddProductPage() {
                         </div>
 
                     </div>
-                    <label className="flex items-center gap-3 cursor-pointer group bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-                        <div className="relative inline-flex items-center">
-                            <input
-                                type="checkbox"
-                                checked={pricingType === "paid"}
-                                onChange={handlePricingChange}
-                                className="sr-only peer"
-                            />
-                            {/* Checkbox background & border */}
-                            <div className={`
-                            w-6 h-6 rounded-md border-2 transition-all duration-200 ease-in-out
-                            flex items-center justify-center
-                            ${pricingType === "paid"
-                                    ? "bg-blue-600 border-blue-600 shadow-sm"
-                                    : "bg-white border-gray-400 group-hover:border-blue-400"}
-                        `}>
-                                {/* Checkmark when checked */}
-                                {pricingType === "paid" && (
-                                    <svg
-                                        className="w-4 h-4 text-white stroke-2"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Label */}
-                        <span className={`
-                        text-base font-medium transition-colors duration-200
-                        ${pricingType === "paid"
-                                ? "text-blue-700 dark:text-blue-400"
-                                : "text-gray-600 dark:text-gray-300"}
-                    `}>
-                            Base (Paid listing)
-                        </span>
-                    </label>
+                    <div className="bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex items-center">
+                        <Checkbox
+                            label="Base (Paid listing)"
+                            checked={pricingType === "paid"}
+                            onChange={handlePricingChange}
+                            className={pricingType === "paid" ? "text-blue-700 dark:text-blue-400" : ""}
+                        />
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
