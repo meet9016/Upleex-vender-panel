@@ -70,6 +70,7 @@ export default function Documents({
         onChange={updateFile("gst_certificate_image")}
         error={errors?.gst_certificate_image}
         clearError={() => clearError('gst_certificate_image')}
+        disabled={KYCformData?.no_gst}
       />
 
       <DocumentUpload

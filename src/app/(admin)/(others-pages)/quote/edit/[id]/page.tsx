@@ -407,6 +407,12 @@ const QuoteEditPage = () => {
               </p>
             </div>
 
+            
+             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Note</p>
+              <p className="text-2xl font-bold text-gray-800 dark:text-white">{quoteData.note}</p>
+            </div>
+
             {/* Status */}
             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Status</p>

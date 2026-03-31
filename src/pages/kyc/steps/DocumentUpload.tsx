@@ -13,6 +13,7 @@ type Props = {
   error?: string;
   clearError?: () => void; 
   required?: boolean;
+  disabled?: boolean;
 };
 
 export default function DocumentUpload({
@@ -21,6 +22,7 @@ export default function DocumentUpload({
   onChange,
   error,
   clearError,
+  disabled,
   // required = false,
 }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
@@ -117,7 +119,9 @@ export default function DocumentUpload({
       </label>
 
       {!file ? (
-        <label className={`relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 text-center overflow-hidden ${
+        <label className={`relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all duration-300 text-center overflow-hidden ${
+          disabled ? 'opacity-50 cursor-not-allowed pointer-events-none ' : 'cursor-pointer '
+        }${
           error 
             ? "border-rose-300 bg-rose-50/30 dark:bg-rose-900/10" 
             : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 hover:bg-white dark:hover:bg-slate-800/40 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-xl hover:shadow-indigo-500/5"
@@ -136,6 +140,7 @@ export default function DocumentUpload({
             className="hidden" 
             onChange={handleFileChange}
             accept="image/*,application/pdf"
+            disabled={disabled}
           />
         </label>
       ) : (

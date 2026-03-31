@@ -191,7 +191,7 @@ export default function SignUpForm() {
           <div className="mb-6 flex flex-col items-center text-center">
             <Image
                            className="dark:hidden"
-                           src="/images/logo/upleex-logo-dark.png"
+                           src="/images/logo/logo.webp"
                            alt="Upleex Logo"
                            width={150}
                            height={40}

@@ -429,12 +429,14 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               const selected = filteredCities.find((c) => c.value === value);
               if (selected) {
                 clearError("city_id");
-                setSelectedCity(selected);
 
                 // Auto-select state and country from metadata
                 const cityData = selected.extra;
                 const newState = cityData?.state_id ? { value: String(cityData.state_id), label: cityData.state_name } : null;
                 const newCountry = cityData?.country_id ? { value: String(cityData.country_id), label: cityData.country_name } : null;
+
+                if (newState) clearError("state_id");
+                if (newCountry) clearError("country_id");
 
                 setKYCFormData((prevData) => ({
                   ...prevData,
@@ -484,6 +486,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                 // Auto-select country from metadata
                 const stateData = selected.extra;
                 const newCountry = stateData?.country_id ? { value: String(stateData.country_id), label: stateData.country_name } : null;
+                if (newCountry) clearError("country_id");
 
                 // Clear dependent cities
                 setCities([]);

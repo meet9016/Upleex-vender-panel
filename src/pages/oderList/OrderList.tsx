@@ -153,12 +153,12 @@ const OrderList = () => {
       minWidth: 200,
       flex: 1.5,
       cellRenderer: (params: any) => (
-        <div className="flex flex-col">
-          <span className="font-medium text-gray-800 dark:text-white">
-            {params.data.customer_name || '-'}
+        <div className="flex flex-col justify-center h-full leading-tight py-0.5">
+          <span className="text-[13px] font-medium text-gray-800 dark:text-white truncate block">
+            {params.data?.customer_name || '-'}
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {params.data.customer_email || '-'}
+          <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate block mt-0.5">
+            {params.data?.customer_email || '-'}
           </span>
         </div>
       ),
@@ -246,11 +246,11 @@ const OrderList = () => {
       minWidth: 200,
       flex: 1.5,
       cellRenderer: (params: any) => (
-        <div className="flex flex-col">
-          <span className="font-medium text-gray-800 dark:text-white">
+        <div className="flex flex-col justify-center h-full leading-tight py-0.5">
+          <span className="text-[13px] font-medium text-gray-800 dark:text-white truncate block">
             {params.value?.name || '-'}
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate block mt-0.5">
             {params.value?.email || '-'}
           </span>
         </div>
