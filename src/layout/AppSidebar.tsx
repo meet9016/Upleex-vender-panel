@@ -35,7 +35,7 @@ const kycOnlyItems: NavItem[] = [
 ];
 
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered, toggleMobileSidebar } = useSidebar();
   const { filters } = useFilter();
   const pathname = usePathname();
   const router = useRouter();
@@ -64,6 +64,14 @@ const AppSidebar: React.FC = () => {
       mounted = false;
     };
   }, []);
+
+  // Close mobile sidebar when route changes
+  useEffect(() => {
+    if (isMobileOpen) {
+      toggleMobileSidebar();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
 
 
@@ -125,12 +133,16 @@ const AppSidebar: React.FC = () => {
       aria-label="Main navigation"
     >
       <div className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
-        <Link href="/" aria-label="Home">
+        <Link href="/" aria-label="Home" onClick={() => {
+          if (isMobileOpen) {
+            toggleMobileSidebar();
+          }
+        }}>
           {showExpanded ? (
             <>
               <Image
                 className="dark:hidden"
-                src="/images/logo/upleex-logo-dark.png"
+                src="/images/logo/upleex-logo-dark.jpg"
                 alt="Upleex Logo"
                 width={150}
                 height={40}
@@ -138,7 +150,7 @@ const AppSidebar: React.FC = () => {
               />
               <Image
                 className="hidden dark:block"
-                src="/images/logo/upleex-logo.png"
+                src="/images/logo/dark-logo.jpg"
                 alt="Upleex Logo"
                 width={150}
                 height={40}

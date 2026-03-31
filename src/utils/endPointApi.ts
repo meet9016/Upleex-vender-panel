@@ -64,6 +64,7 @@ export interface EndPointApi {
     verifyWalletPayment: string;
     getWalletSummary: string;
     getPurchasedPlans: string;
+    getVendorDashboardMetrics: string;
     }
 
 // Define and export the API endpoint object
@@ -136,6 +137,7 @@ const endPointApi: EndPointApi = {
     getWalletTransactions: 'wallet/transactions',
     verifyWalletPayment: 'wallet/verify-payment',
     getWalletSummary: 'wallet/summary',
+    getVendorDashboardMetrics: 'vendor/dashboard/metrics',
 };
 
 export default endPointApi;

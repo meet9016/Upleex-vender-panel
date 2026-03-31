@@ -321,11 +321,22 @@ const OrderList = () => {
       cellStyle: { textAlign: "center" }
     },
     {
-      headerName: "Payment",
+      headerName: "Customer Payment",
       field: "payment_status",
       minWidth: 120,
       flex: 1,
       cellRenderer: (params: any) => <StatusBadge status={params.value} />,
+      cellStyle: { textAlign: "center" }
+    },
+    {
+      headerName: "Admin Payment",
+      field: "payment_status_info.payment_status",
+      minWidth: 140,
+      flex: 1,
+      cellRenderer: (params: any) => {
+        const paymentStatus = params.data.payment_status_info?.payment_status || '-';
+        return <StatusBadge status={paymentStatus} />;
+      },
       cellStyle: { textAlign: "center" }
     },
     {
@@ -580,29 +591,27 @@ const OrderList = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">
             Orders Management
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
             Manage your orders and track payment history
           </p>
         </div>
-        {/* </div> */}
 
-        {/* Tab Navigation with Right Alignment */}
-        {/* <div className="flex justify-end"> */}
-        <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
+        {/* Tab Navigation */}
+        <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-full sm:w-fit">
           <button
             onClick={() => {
               setActiveTab('orders');
               setPage(1);
               setStatusFilter('');
             }}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'orders'
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'orders'
               ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
@@ -615,7 +624,7 @@ const OrderList = () => {
               setPage(1);
               setStatusFilter('');
             }}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'payments'
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'payments'
               ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
@@ -656,13 +665,13 @@ const OrderList = () => {
       {/* Main Table Section */}
       <div className="">
         {/* Header with Filters */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white">
             {activeTab === 'orders' ? 'Orders' : 'Payment History'}
           </h2>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
             {activeTab === 'orders' && (
-              <div className="w-52">
+              <div className="w-full sm:w-52">
                 <SearchableDropdown
                   value={statusFilter || ''}
                   options={[{ value: '', label: 'All Status' }, ...statusOptions]}
@@ -678,23 +687,28 @@ const OrderList = () => {
             <button
               onClick={fetchOrders}
               disabled={loading}
-              className="px-4 py-2 btn-primary flex items-center justify-center gap-2 transition-colors"
+              className="w-full sm:w-auto px-4 py-2 btn-primary flex items-center justify-center gap-2 transition-colors"
             >
               <FiRefreshCw className="h-4 w-4" />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
+              <span className="sm:hidden">Refresh</span>
             </button>
           </div>
         </div>
 
         {/* Table */}
-        <AgGridTable
-          columns={activeTab === 'orders' ? vendorColumns : paymentColumns}
-          rowData={activeTab === 'orders' ? vendorOrders : paymentOrders}
-          loading={loading}
-          height="550px"
-          tableName={activeTab === 'orders' ? 'Orders' : 'Payments'}
-          filter={false}
-        />
+        <div className="overflow-x-auto -mx-2 sm:mx-0">
+          <div className="inline-block min-w-full align-middle">
+            <AgGridTable
+              columns={activeTab === 'orders' ? vendorColumns : paymentColumns}
+              rowData={activeTab === 'orders' ? vendorOrders : paymentOrders}
+              loading={loading}
+              height="550px"
+              tableName={activeTab === 'orders' ? 'Orders' : 'Payments'}
+              filter={false}
+            />
+          </div>
+        </div>
 
         {/* Pagination */}
         {totalPages > 1 && (

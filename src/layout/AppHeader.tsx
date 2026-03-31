@@ -11,6 +11,8 @@ import Link from "next/link";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { MobileMenuSheet } from "@/components/header/MobileMenuSheet";
+import Checkbox from "@/components/form/input/Checkbox";
+
 
 const AppHeader = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
@@ -195,36 +197,26 @@ const AppHeader = () => {
 
                   <div className="p-2">
                     {/* Service Checkbox */}
-                    <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors duration-200">
-                      <input
-                        type="checkbox"
+                    <div className="px-1 py-1">
+                      <Checkbox
+                        label="Service"
                         checked={filters.service}
                         onChange={() => handleCheckboxChange('service')}
                         disabled={!canFilter}
-                        className={`w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 ${!canFilter ? 'cursor-not-allowed opacity-70' : ''}`}
+                        className={!canFilter ? 'cursor-not-allowed' : ''}
                       />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Service</span>
-                        </div>
-                      </div>
-                    </label>
+                    </div>
 
                     {/* Vendor Checkbox */}
-                    <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors duration-200 mt-1">
-                      <input
-                        type="checkbox"
+                    <div className="px-1 py-1 mt-1">
+                      <Checkbox
+                        label="Vendor"
                         checked={filters.vendor}
                         onChange={() => handleCheckboxChange('vendor')}
                         disabled={!canFilter}
-                        className={`w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 ${!canFilter ? 'cursor-not-allowed opacity-70' : ''}`}
+                        className={!canFilter ? 'cursor-not-allowed' : ''}
                       />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Vendor</span>
-                        </div>
-                      </div>
-                    </label>
+                    </div>
                   </div>
 
                   {/* Locked status message */}
@@ -277,26 +269,22 @@ const AppHeader = () => {
             <div className={`p-4 bg-white dark:bg-gray-800/50 rounded-xl ${!isLoadingFilter && canFilter && !filters.service && !filters.vendor ? 'z-[999995] relative' : ''}`}>
               <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-3">Select Business Type</h3>
               <div className="grid grid-cols-2 gap-3">
-                <label className={`flex items-center gap-3 p-3 rounded-lg transition-all ${filters.service ? 'bg-blue-50 dark:bg-blue-900/30 ring-1 ring-blue-200 dark:ring-blue-700' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                  <input
-                    type="checkbox"
+                <div className={`p-1 rounded-lg transition-all ${filters.service ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                  <Checkbox
+                    label="Service"
                     checked={filters.service}
                     onChange={() => handleCheckboxChange('service')}
                     disabled={!canFilter}
-                    className="hidden"
                   />
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Service</span>
-                </label>
-                <label className={`flex items-center gap-3 p-3 rounded-lg transition-all ${filters.vendor ? 'bg-blue-50 dark:bg-blue-900/30 ring-1 ring-blue-200 dark:ring-blue-700' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                  <input
-                    type="checkbox"
+                </div>
+                <div className={`p-1 rounded-lg transition-all ${filters.vendor ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                  <Checkbox
+                    label="Vendor"
                     checked={filters.vendor}
                     onChange={() => handleCheckboxChange('vendor')}
                     disabled={!canFilter}
-                    className="hidden"
                   />
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Vendor</span>
-                </label>
+                </div>
               </div>
               {!canFilter && (
                 <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-2">

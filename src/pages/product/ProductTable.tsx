@@ -23,6 +23,8 @@ import { FiMoreVertical, FiSlash, FiTrash2, FiFileText, FiPauseCircle, FiEye, Fi
 import PlanSelectionDialog from '@/components/common/PlanSelectionDialog';
 import Button from '@/components/ui/button/Button';
 import Switch from '@/components/form/switch/Switch';
+import Checkbox from '@/components/form/input/Checkbox';
+
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -957,18 +959,18 @@ const ProductTable = () => {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Products</h2>
-        <div className="flex items-center gap-3">
+    <div className="w-full">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Products</h2>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           {/* Search Input */}
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <input
               type="text"
               placeholder="Search products..."
               value={searchText}
               onChange={handleSearchChange}
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           </div>
@@ -985,10 +987,10 @@ const ProductTable = () => {
                 setPendingSubCategoryOptions(subCategoryOptions);
                 setShowFilterModal(!showFilterModal);
               }}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2 relative"
+              className="w-full sm:w-auto px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2 relative"
             >
               <CiFilter size={20} />
-              Filter
+              <span className="hidden sm:inline">Filter</span>
               {activeFilterCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                   {activeFilterCount}
@@ -1000,7 +1002,7 @@ const ProductTable = () => {
             {showFilterModal && (
               <div
                 ref={filterModalRef}
-                className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl w-96 z-50 border border-gray-200 dark:border-gray-700"
+                className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl w-auto sm:w-96 z-50 border border-gray-200 dark:border-gray-700 max-h-[calc(100vh-120px)] overflow-y-auto"
               >
                 <div className="p-5">
                   <div className="flex justify-between items-center mb-4">
@@ -1136,22 +1138,23 @@ const ProductTable = () => {
           {/* Add Product Button */}
           <button
             onClick={() => router.push('/product/addProduct')}
-            className="px-4 py-2 btn-primary font-medium"
+            className="w-full sm:w-auto px-4 py-2 btn-primary font-medium whitespace-nowrap"
           >
-            + Add Product
+            <span className="hidden sm:inline">+ Add Product</span>
+            <span className="sm:hidden">+ Add</span>
           </button>
           {/* Actions Menu (3-dots) - Ultra Sophisticated Design */}
           <div className="relative" ref={actionsMenuRef}>
             <button
               onClick={() => setShowActionsMenu((v) => !v)}
-              className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
+              className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
               title="More actions"
             >
               <FiMoreVertical className="text-xl" />
             </button>
 
             {showActionsMenu && (
-              <div className="absolute right-0 mt-3 w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+              <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-auto mt-3 w-auto sm:w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
                 {/* Bulk Actions Section */}
                 <div className="px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100/30 dark:border-gray-800/30">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Bulk Operations</span>
@@ -1243,12 +1246,12 @@ const ProductTable = () => {
         </div>
       </div>
 
-      <div className="flex justify-start mb-6">
-        <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 shadow-sm">
+      <div className="flex justify-start mb-6 overflow-x-auto">
+        <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 shadow-sm min-w-max">
 
           <button
             onClick={() => setActiveTab('rent')}
-            className={`group flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 ${activeTab === 'rent'
+            className={`group flex items-center gap-2 px-4 sm:px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap ${activeTab === 'rent'
               ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-md ring-1 ring-black/[0.04]'
               : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
@@ -1256,12 +1259,13 @@ const ProductTable = () => {
             <svg className={`w-3.5 h-3.5 ${activeTab === 'rent' ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            RENT
+            <span className="hidden sm:inline">RENT</span>
+            <span className="sm:hidden">R</span>
           </button>
 
           <button
             onClick={() => setActiveTab('sell')}
-            className={`group flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 ${activeTab === 'sell'
+            className={`group flex items-center gap-2 px-4 sm:px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap ${activeTab === 'sell'
               ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-md ring-1 ring-black/[0.04]'
               : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
@@ -1269,22 +1273,27 @@ const ProductTable = () => {
             <svg className={`w-3.5 h-3.5 ${activeTab === 'sell' ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-            SELL
+            <span className="hidden sm:inline">SELL</span>
+            <span className="sm:hidden">S</span>
           </button>
         </div>
       </div>
 
       {/* Products Table */}
-      <AgGridTable
-        columns={columns}
-        rowData={productData}
-        filter={false}
-        tableName="Products"
-        onSelectionChange={setSelectedRows}
-        loading={loading}
-        getRowStyle={getRowStyle}
-        rowHeight={52}
-      />
+      <div className="overflow-x-auto -mx-4 sm:mx-0">
+        <div className="inline-block min-w-full align-middle">
+          <AgGridTable
+            columns={columns}
+            rowData={productData}
+            filter={false}
+            tableName="Products"
+            onSelectionChange={setSelectedRows}
+            loading={loading}
+            getRowStyle={getRowStyle}
+            rowHeight={52}
+          />
+        </div>
+      </div>
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
         open={openDeleteModal}
@@ -1365,12 +1374,10 @@ const ProductTable = () => {
                       onClick={() => toggleExpiringProduct(productId)}
                     >
                       <div className="flex items-center gap-3 flex-1">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={isSelected}
                           onChange={() => toggleExpiringProduct(productId)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          className="w-4 h-4"
                         />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-800 dark:text-white">
@@ -1405,16 +1412,12 @@ const ProductTable = () => {
 
             {/* Snooze Option */}
             <div className="flex items-center gap-2 px-1 py-3 border-t border-gray-200 dark:border-gray-700">
-              <input
-                type="checkbox"
+              <Checkbox
                 id="snoozeToday"
                 checked={snoozeToday}
-                onChange={(e) => setSnoozeToday(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                onChange={(checked) => setSnoozeToday(checked)}
+                label="Don’t show again today"
               />
-              <label htmlFor="snoozeToday" className="text-sm text-gray-600 dark:text-gray-400">
-                Don’t show again today
-              </label>
             </div>
           </div>
 

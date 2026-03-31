@@ -136,7 +136,12 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   );
 
   const rowSelection = useMemo<RowSelectionOptions>(
-    () => ({ mode: "multiRow" }),
+    () => ({
+      mode: "multiRow",
+      checkboxes: true,
+      enableSelectAll: true,
+      enableSelectionWithoutKeys: true,
+    }),
     []
   );
 
@@ -153,20 +158,21 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   }, [router, addButtonLink]);
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4 dark:text-gray-200">
+    <div className="w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 dark:text-gray-200">
         {buttonName && (
-          <button onClick={handleAddClick} className="btn-primary" aria-label={`Add ${buttonName}`}>
+          <button onClick={handleAddClick} className="btn-primary w-full sm:w-auto" aria-label={`Add ${buttonName}`}>
             + Add {buttonName}
           </button>
         )}
       </div>
 
-      <div className="relative">
+      <div className="relative w-full">
         {loading && <Loader type="section" />}
-        <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'}`}
+        <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine cute-ag-grid'}`}
           style={{ width: "100%", height: autoHeight ? 'auto' : (height || '80vh'), minHeight: autoHeight ? 240 : 'auto' }}>
           <AgGridReact
+            headerHeight={48}
             rowHeight={rowHeight}
             ref={gridRef}
             domLayout={autoHeight ? 'autoHeight' : undefined}
@@ -185,7 +191,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             }}
             paginationPageSizeSelector={[10, 20, 50, 100]}
             columnMenu="new"
-            suppressRowClickSelection
+            suppressRowClickSelection={true}
             alwaysShowHorizontalScroll={true}
             getRowStyle={getRowStyle}
           />
