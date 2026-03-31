@@ -297,19 +297,21 @@ export default function SignUpForm() {
                   <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
                     +91
                   </span>
-                  <Input
-                    type="tel"
-                    name="mobile"
-                    value={formData.mobile}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "");
-                      if (val.length <= 10) setFormData(prev => ({ ...prev, mobile: val }));
-                      if (val.length === 10) setErrors(prev => ({ ...prev, mobile: '' }));
-                    }}
-                    placeholder="9876543210"
-                    className="rounded-l-none"
-                    error={!!errors.mobile}
-                  />
+                  <div className="flex-1 min-w-0">
+                    <Input
+                      type="tel"
+                      name="mobile"
+                      value={formData.mobile}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        if (val.length <= 10) setFormData(prev => ({ ...prev, mobile: val }));
+                        if (val.length === 10) setErrors(prev => ({ ...prev, mobile: '' }));
+                      }}
+                      placeholder="9876543210"
+                      className="rounded-l-none"
+                      error={!!errors.mobile}
+                    />
+                  </div>
                 </div>
                 {errors.mobile && <p className="error-message">{errors.mobile}</p>}
               </div>
@@ -320,17 +322,19 @@ export default function SignUpForm() {
                   <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
                     +91
                   </span>
-                  <Input
-                    type="tel"
-                    name="altMobile"
-                    value={formData.altMobile}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "");
-                      if (val.length <= 10) setFormData(prev => ({ ...prev, altMobile: val }));
-                    }}
-                    placeholder="Optional"
-                    className="rounded-l-none"
-                  />
+                  <div className="flex-1 min-w-0">
+                    <Input
+                      type="tel"
+                      name="altMobile"
+                      value={formData.altMobile}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        if (val.length <= 10) setFormData(prev => ({ ...prev, altMobile: val }));
+                      }}
+                      placeholder="Optional"
+                      className="rounded-l-none"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

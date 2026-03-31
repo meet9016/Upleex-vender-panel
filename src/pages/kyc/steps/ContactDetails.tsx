@@ -61,7 +61,12 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   /* <!-- ================================== fetch country, state, city from API ================================== --> */
-  const fetchOptions = useCallback(async (type: string, search: string, page: number) => {
+  const fetchOptions = useCallback(async (
+    type: string,
+    search: string,
+    page: number,
+    parentId?: string // explicit parent ID to avoid stale closure
+  ) => {
     let isLoading: boolean;
     let setLoading: (value: boolean) => void;
 
@@ -90,16 +95,20 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         if (!endPointApi.postVendorStateList) {
           throw new Error("State endpoint not configured");
         }
-        if (selectedCountry?.value) {
-          payload.country_id = selectedCountry.value;
+        // Use explicit parentId first, then fall back to selectedCountry
+        const countryId = parentId || selectedCountry?.value;
+        if (countryId) {
+          payload.country_id = countryId;
         }
         res = await api.post(endPointApi.postVendorStateList as string, payload);
       } else if (type === "city") {
         if (!endPointApi.postVendorCityList) {
           throw new Error("City endpoint not configured");
         }
-        if (selectedState?.value && search === "") {
-          payload.state_id = selectedState.value;
+        // Use explicit parentId first, then fall back to selectedState
+        const stateId = parentId || selectedState?.value;
+        if (stateId && search === "") {
+          payload.state_id = stateId;
         }
         res = await api.post(endPointApi.postVendorCityList as string, payload);
       }
@@ -180,25 +189,26 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
     fetchOptions("city", searchCity, 1);
   }, [searchCity]);
 
-  // Auto-fetch states when country is selected, search is empty, and page is 1
+  // Auto-fetch states when country is selected, search is empty, and states list is empty
   useEffect(() => {
-    if (selectedCountry && states.length === 0 && searchState === "") {
-      fetchOptions("state", "", pageRefState.current);
+    if (selectedCountry?.value && states.length === 0 && searchState === "") {
+      pageRefState.current = 1;
+      fetchOptions("state", "", 1, selectedCountry.value);
     }
   }, [selectedCountry?.value, states.length, searchState]);
 
-  // Auto-fetch cities when state is selected and cities are empty
+  // Auto-fetch cities when state is selected, search is empty, and cities list is empty
   useEffect(() => {
-    if (selectedState && cities.length === 0 && searchCity === "") {
-      fetchOptions("city", "", pageRefCity.current);
+    if (selectedState?.value && cities.length === 0 && searchCity === "") {
+      pageRefCity.current = 1;
+      fetchOptions("city", "", 1, selectedState.value);
     }
   }, [selectedState?.value, cities.length, searchCity]);
 
-  // Load initial lists on mount
+  // Load initial country list on mount (states and cities will load reactively
+  // after selectedCountry/selectedState are synced from KYCformData)
   useEffect(() => {
     if (!countries.length) fetchOptions("country", "", 1);
-    if (!states.length) fetchOptions("state", "", 1);
-    if (!cities.length) fetchOptions("city", "", 1);
   }, []);
 
   // Removed the buggy useEffects that tried to clear states/cities.
@@ -242,6 +252,15 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
     }
   }, [KYCformData?.state_id?.value, KYCformData?.state_id?.label]);
 
+  // When states list updates later (e.g. page=1 fetch replaces list), re-insert selected if missing
+  useEffect(() => {
+    if (!selectedState?.value) return;
+    setStates(prev => {
+      const exists = prev.some(s => s.value === selectedState.value);
+      return exists ? prev : [selectedState, ...prev];
+    });
+  }, [selectedState?.value, states.length]);
+
   useEffect(() => {
     if (KYCformData?.city_id?.value && KYCformData?.city_id?.label) {
       const cityOption: Option = {
@@ -256,6 +275,15 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
       });
     }
   }, [KYCformData?.city_id?.value, KYCformData?.city_id?.label]);
+
+  // When cities list updates later, re-insert selected if missing
+  useEffect(() => {
+    if (!selectedCity?.value) return;
+    setCities(prev => {
+      const exists = prev.some(c => c.value === selectedCity.value);
+      return exists ? prev : [selectedCity, ...prev];
+    });
+  }, [selectedCity?.value, cities.length]);
 
   /* <!-- ================================================ Scroll handle ================================================ --> */
 
