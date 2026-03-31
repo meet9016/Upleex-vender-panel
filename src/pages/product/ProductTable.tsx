@@ -23,6 +23,8 @@ import { FiMoreVertical, FiSlash, FiTrash2, FiFileText, FiPauseCircle, FiEye, Fi
 import PlanSelectionDialog from '@/components/common/PlanSelectionDialog';
 import Button from '@/components/ui/button/Button';
 import Switch from '@/components/form/switch/Switch';
+import Checkbox from '@/components/form/input/Checkbox';
+
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -1365,12 +1367,10 @@ const ProductTable = () => {
                       onClick={() => toggleExpiringProduct(productId)}
                     >
                       <div className="flex items-center gap-3 flex-1">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={isSelected}
                           onChange={() => toggleExpiringProduct(productId)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          className="w-4 h-4"
                         />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-800 dark:text-white">
@@ -1405,16 +1405,12 @@ const ProductTable = () => {
 
             {/* Snooze Option */}
             <div className="flex items-center gap-2 px-1 py-3 border-t border-gray-200 dark:border-gray-700">
-              <input
-                type="checkbox"
+              <Checkbox
                 id="snoozeToday"
                 checked={snoozeToday}
-                onChange={(e) => setSnoozeToday(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                onChange={(checked) => setSnoozeToday(checked)}
+                label="Don’t show again today"
               />
-              <label htmlFor="snoozeToday" className="text-sm text-gray-600 dark:text-gray-400">
-                Don’t show again today
-              </label>
             </div>
           </div>
 
