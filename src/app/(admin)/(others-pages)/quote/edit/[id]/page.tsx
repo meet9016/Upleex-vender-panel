@@ -7,6 +7,7 @@ import { FiCalendar, FiImage, FiVideo, FiArrowLeft, FiX, FiLoader } from "react-
 import { toast } from "react-toastify";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
 import Loader from "@/components/common/Loader";
+import PageLoader from "@/components/common/PageLoader";
 import DatePicker from "@/components/common/DatePicker"; // Import your DatePicker component
 
 const QuoteEditPage = () => {
@@ -293,7 +294,11 @@ const QuoteEditPage = () => {
   }, [params?.id]);
 
   if (loading) {
-    return <Loader type="page" />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <PageLoader fullScreen={false} />
+      </div>
+    );
   }
 
   if (!quoteData) {

@@ -16,6 +16,7 @@ import { exportQuotesToExcel, exportQuotesToPDF } from '@/utils/exportUtils';
 import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
 import { FiEdit3, FiCheck, FiX, FiMoreVertical } from 'react-icons/fi';
 import ActionButtons from "@/components/common/ActionButtons";
+import PageLoader from "@/components/common/PageLoader";
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -77,9 +78,9 @@ const QuoteTable = () => {
   const [exportLoading, setExportLoading] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const actionsMenuRef = useRef<HTMLDivElement>(null);
-
   const [hoveredImage, setHoveredImage] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [loading, setLoading] = useState(false);
 
   // Robustly clear hover when mouse is NOT over a trigger
   useEffect(() => {
@@ -392,6 +393,7 @@ const QuoteTable = () => {
 
   const getQuoteData = async (filterParams: any = {}) => {
     try {
+      setLoading(true);
       // Build query params
       const params: any = {};
 
@@ -422,6 +424,8 @@ const QuoteTable = () => {
     } catch (error) {
       console.log("fetch quotes error:", error);
       toast.error("Failed to fetch quotes");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -572,6 +576,8 @@ const QuoteTable = () => {
     setShowFilterModal(false);
   };
 
+  const showInitialLoader = loading && quoteData.length === 0;
+
   // Export functions
   const handleExportExcel = async () => {
     try {
@@ -653,6 +659,11 @@ const QuoteTable = () => {
 
   return (
     <div className="w-full p-2 sm:p-4">
+      {showInitialLoader && (
+        <div className="min-h-[400px] flex items-center justify-center">
+          <PageLoader fullScreen={false} />
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-5">
         <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Quotes</h2>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">

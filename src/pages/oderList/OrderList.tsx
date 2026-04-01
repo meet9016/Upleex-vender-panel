@@ -14,6 +14,7 @@ import { HiOutlineEye } from 'react-icons/hi';
 import ActionButtons from '@/components/common/ActionButtons';
 import { useRouter } from 'next/navigation';
 import StatusBadge from '../../components/common/StatusBadge';
+import PageLoader from '@/components/common/PageLoader';
 
 interface PaymentOrder {
   order_id: string;
@@ -589,6 +590,14 @@ const OrderList = () => {
       bgColor: 'bg-orange-50',
     },
   ];
+
+  if (loading && activeTab === 'orders' && vendorOrders.length === 0 && paymentOrders.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <PageLoader fullScreen={false} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">

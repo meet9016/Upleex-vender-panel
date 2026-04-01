@@ -7,6 +7,7 @@ import TransactionHistory from "@/components/wallet/TransactionHistory";
 import { useWallet } from "@/context/WalletContext";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
+import PageLoader from "@/components/common/PageLoader";
 
 interface WalletData {
   balance: number;
@@ -63,10 +64,7 @@ const WalletPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading wallet...</p>
-        </div>
+        <PageLoader fullScreen={false} />
       </div>
     );
   }
