@@ -409,9 +409,13 @@ const OrderList = () => {
       setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '20',
-        ...(statusFilter && { status: statusFilter })
+        limit: '20'
       });
+
+      // Add status filter if selected
+      if (statusFilter && statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
 
       const response = await api.get(`${endPointApi.getVendorOrders}?${params}`);
 
@@ -674,7 +678,7 @@ const OrderList = () => {
       {/* Main Table Section */}
       <div className="">
         {/* Header with Filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
           <h2 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white">
             {activeTab === 'orders' ? 'Orders' : 'Payment History'}
           </h2>
@@ -715,6 +719,8 @@ const OrderList = () => {
               height="550px"
               tableName={activeTab === 'orders' ? 'Orders' : 'Payments'}
               filter={false}
+              showCheckboxes={false}
+              rowHeight={45}
             />
           </div>
         </div>

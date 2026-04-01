@@ -299,7 +299,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
                                 <button
                                     type="button"
                                     onClick={handleClear}
-                                    className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none transition-colors"
                                     aria-label="Clear search"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

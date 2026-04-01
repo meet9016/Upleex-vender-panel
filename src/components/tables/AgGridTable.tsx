@@ -34,8 +34,9 @@ interface AgGridTableProps {
   loading?: boolean;
   autoHeight?: boolean;
   getRowStyle?: (params: any) => any;
-  rowHeight?: number;
+  rowHeight?: number | ((params: any) => number);
   height?: string | number;
+  showCheckboxes?: boolean;
 }
 
 const AgGridTable: React.FC<AgGridTableProps> = ({
@@ -51,6 +52,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   getRowStyle,
   rowHeight = 60,
   height,
+  showCheckboxes = true,
 }) => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
@@ -94,8 +96,8 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
       {
         field: "planName",
         headerName: "Plan Name",
-        checkboxSelection: true,
-        headerCheckboxSelection: true,
+        checkboxSelection: showCheckboxes,
+        headerCheckboxSelection: showCheckboxes,
         width: 200,
       },
       { field: "price", headerName: "Price", width: 100 },
@@ -132,7 +134,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
         },
       },
     ],
-    [onEdit, onDelete, router]
+    [onEdit, onDelete, router, showCheckboxes]
   );
 
   const rowSelection = useMemo<RowSelectionOptions>(
@@ -173,7 +175,8 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
           style={{ width: "100%", height: autoHeight ? 'auto' : (height || '80vh'), minHeight: autoHeight ? 240 : 'auto' }}>
           <AgGridReact
             headerHeight={48}
-            rowHeight={rowHeight}
+            rowHeight={typeof rowHeight === 'function' ? undefined : rowHeight}
+            getRowHeight={typeof rowHeight === 'function' ? rowHeight : undefined}
             ref={gridRef}
             domLayout={autoHeight ? 'autoHeight' : undefined}
             onGridReady={onGridReady}
@@ -182,11 +185,13 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             defaultColDef={defaultColDef}
             pagination
             paginationPageSize={20}
-            rowSelection={rowSelection}
+            rowSelection={showCheckboxes ? rowSelection : undefined}
             onSelectionChanged={() => {
-              const rows = gridRef.current?.api?.getSelectedRows() || [];
-              if (typeof onSelectionChange === 'function') {
-                onSelectionChange(rows);
+              if (showCheckboxes) {
+                const rows = gridRef.current?.api?.getSelectedRows() || [];
+                if (typeof onSelectionChange === 'function') {
+                  onSelectionChange(rows);
+                }
               }
             }}
             paginationPageSizeSelector={[10, 20, 50, 100]}

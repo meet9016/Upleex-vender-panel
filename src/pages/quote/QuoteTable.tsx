@@ -12,6 +12,7 @@ import DatePicker from "@/components/common/DatePicker";
 import { CiFilter } from "react-icons/ci";
 import { toast } from "react-toastify";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
+import MultiSelectDropdown from "@/components/common/MultiSelectDropdown";
 import { exportQuotesToExcel, exportQuotesToPDF } from '@/utils/exportUtils';
 import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
 import { FiEdit3, FiCheck, FiX, FiMoreVertical } from 'react-icons/fi';
@@ -64,6 +65,7 @@ const QuoteTable = () => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
   const [quoteData, setQuoteData] = useState<Quote[]>([]);
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [statusList, setStatusList] = useState<any[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -95,18 +97,22 @@ const QuoteTable = () => {
     return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
   }, [hoveredImage]);
 
-  // Filter state
+  // Filter state - Updated to support multiple selections
   const [filters, setFilters] = useState({
-    product_type: '',
-    listing_type: '',
+    product_type: [] as string[],
+    listing_type: [] as string[],
     delivery_start_date: '',
     delivery_end_date: '',
-    month: '',
-    status: '',
+    month: [] as string[],
+    status: [] as string[],
   });
+  
+  // Categories data - removed since not needed
   console.log("🚀 ~ QuoteTable ~ filters:", filters)
 
-  const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
+  const activeFilterCount = Object.values(filters).filter(v => 
+    Array.isArray(v) ? v.length > 0 : v !== ''
+  ).length;
 
   // Transform API data to match table columns
   const transformQuoteData = (quotes: any[]): Quote[] => {
@@ -416,10 +422,6 @@ const QuoteTable = () => {
         const transformedData = transformQuoteData(res.data.data);
         console.log("🚀 ~ Transformed Data:", transformedData);
         setQuoteData(transformedData);
-
-        // You might want to store pagination info in state
-        // setTotalPages(res.data.totalPages);
-        // setCurrentPage(res.data.page);
       }
     } catch (error) {
       console.log("fetch quotes error:", error);
@@ -428,6 +430,8 @@ const QuoteTable = () => {
       setLoading(false);
     }
   };
+
+  // Remove unused getCategoriesData function
 
   const getDropdownData = async () => {
     try {
@@ -513,36 +517,40 @@ const QuoteTable = () => {
     }
   };
 
-  const handleFilterChange = (key: string, value: string) => {
+  const handleFilterChange = (key: string, value: string | string[]) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setOpenDropdown(null);
   };
 
   const getSelectedLabel = (key: string) => {
     const value = filters[key as keyof typeof filters];
-    if (!value) return null;
+    if (!value || (Array.isArray(value) && value.length === 0)) return null;
 
-    switch (key) {
-      case 'product_type':
-        return productTypes.find(t => t.id === value)?.product_type;
-      case 'listing_type':
-        return listingTypes.find(l => l.id === value)?.name;
-      case 'month':
-        return months.find(m => m.id === value)?.month_name;
-      case 'status':
-        return statusList.find(s => s.id === value)?.name;
-      default:
-        return value;
+    if (Array.isArray(value)) {
+      switch (key) {
+        case 'product_type':
+          return value.map(v => productTypes.find(t => t.id === v)?.product_type).filter(Boolean).join(', ');
+        case 'listing_type':
+          return value.map(v => listingTypes.find(l => l.id === v)?.name).filter(Boolean).join(', ');
+        case 'month':
+          return value.map(v => months.find(m => m.id === v)?.month_name).filter(Boolean).join(', ');
+        case 'status':
+          return value.map(v => statusList.find(s => s.id === v)?.name).filter(Boolean).join(', ');
+        default:
+          return value.join(', ');
+      }
+    } else {
+      return value;
     }
   };
   const applyFilters = () => {
     const params: any = {};
 
-    // Add all filter parameters
-    if (filters.status) params.status = filters.status;
-    if (filters.product_type) params.product_type = filters.product_type;
-    if (filters.listing_type) params.listing_type = filters.listing_type;
-    if (filters.month) params.month = filters.month;
+    // Add all filter parameters - handle arrays
+    if (filters.status.length > 0) params.status = filters.status.join(',');
+    if (filters.product_type.length > 0) params.product_type = filters.product_type.join(',');
+    if (filters.listing_type.length > 0) params.listing_type = filters.listing_type.join(',');
+    if (filters.month.length > 0) params.month = filters.month.join(',');
     if (filters.delivery_start_date) params.delivery_start_date = filters.delivery_start_date;
     if (filters.delivery_end_date) params.delivery_end_date = filters.delivery_end_date;
     if (searchText) params.search = searchText;
@@ -552,27 +560,26 @@ const QuoteTable = () => {
     params.limit = 10;
 
     console.log("🚀 ~ Applying filters:", params);
+    console.log("🚀 ~ Current filter state:", filters);
+    
     getQuoteData(params);
     setShowFilterModal(false);
   };
 
   const clearFilters = () => {
-    const hasActiveFilters = Object.values(filters).some(val => val !== '');
-    const hadSearch = searchText !== '';
-
-    if (hasActiveFilters || hadSearch) {
-      setFilters({
-        product_type: '',
-        listing_type: '',
-        delivery_start_date: '',
-        delivery_end_date: '',
-        month: '',
-        status: ''
-      });
-      setSearchText('');
-      getQuoteData();
-    }
-
+    // Reset all filter states
+    setFilters({
+      product_type: [],
+      listing_type: [],
+      delivery_start_date: '',
+      delivery_end_date: '',
+      month: [],
+      status: [],
+    });
+    setSearchText('');
+    
+    // Immediately fetch data with no filters
+    getQuoteData({});
     setShowFilterModal(false);
   };
 
@@ -588,10 +595,10 @@ const QuoteTable = () => {
       if (debouncedSearch && debouncedSearch.trim() !== '') {
         params.search = debouncedSearch.trim();
       }
-      if (filters.status) params.status = filters.status;
-      if (filters.product_type) params.product_type = filters.product_type;
-      if (filters.listing_type) params.listing_type = filters.listing_type;
-      if (filters.month) params.month = filters.month;
+      if (filters.status.length > 0) params.status = filters.status.join(',');
+      if (filters.product_type.length > 0) params.product_type = filters.product_type.join(',');
+      if (filters.listing_type.length > 0) params.listing_type = filters.listing_type.join(',');
+      if (filters.month.length > 0) params.month = filters.month.join(',');
       if (filters.delivery_start_date) params.delivery_start_date = filters.delivery_start_date;
       if (filters.delivery_end_date) params.delivery_end_date = filters.delivery_end_date;
 
@@ -614,10 +621,10 @@ const QuoteTable = () => {
       if (debouncedSearch && debouncedSearch.trim() !== '') {
         params.search = debouncedSearch.trim();
       }
-      if (filters.status) params.status = filters.status;
-      if (filters.product_type) params.product_type = filters.product_type;
-      if (filters.listing_type) params.listing_type = filters.listing_type;
-      if (filters.month) params.month = filters.month;
+      if (filters.status.length > 0) params.status = filters.status.join(',');
+      if (filters.product_type.length > 0) params.product_type = filters.product_type.join(',');
+      if (filters.listing_type.length > 0) params.listing_type = filters.listing_type.join(',');
+      if (filters.month.length > 0) params.month = filters.month.join(',');
       if (filters.delivery_start_date) params.delivery_start_date = filters.delivery_start_date;
       if (filters.delivery_end_date) params.delivery_end_date = filters.delivery_end_date;
 
@@ -632,9 +639,23 @@ const QuoteTable = () => {
   };
 
   useEffect(() => {
-    const params: any = { ...filters };
-    if (debouncedSearch) params.search = debouncedSearch;
-    getQuoteData(params);
+    // Only apply search filter automatically, not other filters
+    if (debouncedSearch.trim() !== '') {
+      const params: any = { search: debouncedSearch };
+      console.log('🔍 Applying search only:', params);
+      getQuoteData(params);
+    } else if (debouncedSearch.trim() === '' && searchText === '') {
+      // If search is cleared, check if we have other active filters
+      const hasOtherFilters = Object.entries(filters).some(([key, val]) => 
+        key !== 'search' && (Array.isArray(val) ? val.length > 0 : val !== '')
+      );
+      
+      if (!hasOtherFilters) {
+        // No filters at all, get all data
+        console.log('📤 No filters, getting all data');
+        getQuoteData({});
+      }
+    }
   }, [debouncedSearch]);
 
   useEffect(() => {
@@ -655,6 +676,8 @@ const QuoteTable = () => {
   useEffect(() => {
     getStatusList();
     getDropdownData();
+    // Load initial data without filters
+    getQuoteData({});
   }, []);
 
   return (
@@ -673,9 +696,18 @@ const QuoteTable = () => {
               placeholder="Search quotes..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
+              className="pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            {searchText && (
+              <button
+                onClick={() => setSearchText('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                title="Clear search"
+              >
+                <MdClose size={18} />
+              </button>
+            )}
           </div>
 
           <div className="relative">
@@ -707,24 +739,22 @@ const QuoteTable = () => {
                     {/* Product Type */}
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Product Type</label>
-                      <SearchableDropdown
-                        searchable
+                      <MultiSelectDropdown
                         options={productTypes.map((t: any) => ({ label: t.product_type, value: String(t.id) }))}
-                        value={filters.product_type}
-                        placeholder="Select Product Type"
-                        onChange={(val) => handleFilterChange('product_type', val)}
+                        selectedValues={filters.product_type}
+                        onChange={(values) => handleFilterChange('product_type', values)}
+                        placeholder="Select Product Types"
                       />
                     </div>
 
                     {/* Listing Type */}
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Listing Type</label>
-                      <SearchableDropdown
-                        searchable
+                      <MultiSelectDropdown
                         options={listingTypes.map((lt: any) => ({ label: lt.name, value: String(lt.id) }))}
-                        value={filters.listing_type}
-                        placeholder="Select Listing Type"
-                        onChange={(val) => handleFilterChange('listing_type', val)}
+                        selectedValues={filters.listing_type}
+                        onChange={(values) => handleFilterChange('listing_type', values)}
+                        placeholder="Select Listing Types"
                       />
                     </div>
 
@@ -750,24 +780,22 @@ const QuoteTable = () => {
                     {/* Month */}
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Month</label>
-                      <SearchableDropdown
-                        searchable
+                      <MultiSelectDropdown
                         options={months.map((m: any) => ({ label: m.month_name, value: String(m.id) }))}
-                        value={filters.month}
-                        placeholder="Select Month"
-                        onChange={(val) => handleFilterChange('month', val)}
+                        selectedValues={filters.month}
+                        onChange={(values) => handleFilterChange('month', values)}
+                        placeholder="Select Months"
                       />
                     </div>
 
                     {/* Status */}
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                      <SearchableDropdown
-                        searchable
+                      <MultiSelectDropdown
                         options={statusList.map((s: any) => ({ label: s.name, value: String(s.id) }))}
-                        value={filters.status}
+                        selectedValues={filters.status}
+                        onChange={(values) => handleFilterChange('status', values)}
                         placeholder="Select Status"
-                        onChange={(val) => handleFilterChange('status', val)}
                       />
                     </div>
                   </div>
@@ -837,9 +865,11 @@ const QuoteTable = () => {
           <AgGridTable
             columns={columns}
             rowData={quoteData}
-            filter={true}
+            filter={false}
             tableName="Quotes"
-            rowHeight={52}
+            onSelectionChange={setSelectedRows}
+            rowHeight={60}
+            showCheckboxes={false} 
           />
         </div>
       </div>
