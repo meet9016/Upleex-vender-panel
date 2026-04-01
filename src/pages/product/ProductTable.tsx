@@ -17,6 +17,7 @@ import Label from '@/components/form/Label';
 import { HiOutlineDocumentText } from "react-icons/hi";
 import { Modal } from '@/components/ui/modal';
 import Loader from '@/components/common/Loader';
+import PageLoader from '@/components/common/PageLoader';
 import { exportProductsToExcel, exportProductsToPDF } from '@/utils/exportUtils';
 import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
 import { FiMoreVertical, FiSlash, FiTrash2, FiFileText, FiPauseCircle, FiEye, FiEyeOff } from 'react-icons/fi';
@@ -116,9 +117,6 @@ const ProductTable = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [hoveredImage, setHoveredImage] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-
-
-
   // Robustly clear hover when mouse is NOT over a trigger
   useEffect(() => {
     if (!hoveredImage) return;
@@ -173,6 +171,14 @@ const ProductTable = () => {
 
   // Count active filters (excluding empty strings)
   const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
+
+  if (loading && productData.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <PageLoader fullScreen={false} />
+      </div>
+    );
+  }
 
   // Toggle product visibility
   const toggleProductVisibility = async (productId: string, currentVisibility: boolean) => {

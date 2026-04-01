@@ -12,6 +12,7 @@ import endPointApi from "@/utils/endPointApi";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import OtpInput from "react-otp-input";
+import { saveToken } from "@/utils/tokenManager";
 
 export default function SignUpForm() {
   const router = useRouter();
@@ -151,8 +152,7 @@ export default function SignUpForm() {
           console.log('Vendor data:', vendor);
           
           if (authToken) {
-            localStorage.setItem('auth_token', authToken);
-            console.log('Auth token stored successfully');
+            saveToken(authToken);
           }
           
           if (vendor) {
