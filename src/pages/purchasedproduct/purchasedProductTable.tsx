@@ -5,6 +5,7 @@ import { ColDef } from "ag-grid-community";
 import AgGridTable from "@/components/tables/AgGridTable";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
+import StatusBadge from "@/components/common/StatusBadge";
 
 type PurchasedRow = {
   id: string;
@@ -92,7 +93,11 @@ export default function PurchasedProductsPage() {
         minWidth: 140,
         valueFormatter: (p) => (p.value ? new Date(p.value).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : "-"),
       },
-      { field: "status", headerName: "Status", minWidth: 120 },
+      { field: "status", headerName: "Status", minWidth: 120, cellRenderer: (params: any) => (
+              <div className="flex items-center h-full">
+                <StatusBadge status={params.value || 'pending'} />
+              </div>
+            ), },
     ],
     []
   );
@@ -117,7 +122,7 @@ export default function PurchasedProductsPage() {
         <h1 className="text-2xl font-bold">Purchased Plans</h1>
         <p className="text-slate-500">{rows.length} plan(s) purchased</p>
       </div>
-      <AgGridTable rowData={rows} columns={columns} tableName="Purchased Plans" />
+      <AgGridTable rowData={rows} columns={columns} tableName="Purchased Plans" showCheckboxes={false} />
     </div>
   );
 }

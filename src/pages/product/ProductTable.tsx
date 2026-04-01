@@ -13,6 +13,7 @@ import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import { CiFilter, CiWarning } from "react-icons/ci";
 import { toast } from 'react-toastify';
 import SearchableDropdown from '@/components/common/SearchableDropdown';
+import MultiSelectDropdown from '@/components/common/MultiSelectDropdown';
 import Label from '@/components/form/Label';
 import { HiOutlineDocumentText } from "react-icons/hi";
 import { Modal } from '@/components/ui/modal';
@@ -146,33 +147,35 @@ const ProductTable = () => {
     return isValidImageUrl(imageUrl) ? imageUrl : DEFAULT_PLACEHOLDER;
   };
 
-  // Applied filters (used for actual API calls)
+  // Applied filters (used for actual API calls) - Updated to support multiple selections
   const [filters, setFilters] = useState({
-    category_id: '',
-    sub_category_id: '',
-    filter_rent_sell: '',
-    filter_tenure: '',
-    status: '',
+    category_id: [] as string[],
+    sub_category_id: [] as string[],
+    filter_rent_sell: [] as string[],
+    filter_tenure: [] as string[],
+    status: [] as string[],
   });
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string[]>([]);
 
   // Pending filters (shown in modal, applied only on Apply click)
   const [pendingFilters, setPendingFilters] = useState({
-    category_id: '',
-    sub_category_id: '',
-    filter_rent_sell: '',
-    filter_tenure: '',
-    status: '',
+    category_id: [] as string[],
+    sub_category_id: [] as string[],
+    filter_rent_sell: [] as string[],
+    filter_tenure: [] as string[],
+    status: [] as string[],
   });
-  const [pendingCategory, setPendingCategory] = useState<string>('');
-  const [pendingSubCategory, setPendingSubCategory] = useState<string>('');
+  const [pendingCategory, setPendingCategory] = useState<string[]>([]);
+  const [pendingSubCategory, setPendingSubCategory] = useState<string[]>([]);
   const [pendingSubCategoryOptions, setPendingSubCategoryOptions] = useState<Option[]>([]);
 
   const debouncedSearch = useDebounce(searchText, 600);
 
-  // Count active filters (excluding empty strings)
-  const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
+  // Count active filters (excluding empty arrays)
+  const activeFilterCount = Object.values(filters).filter(v => 
+    Array.isArray(v) ? v.length > 0 : v !== ''
+  ).length;
 
   // Toggle product visibility
   const toggleProductVisibility = async (productId: string, currentVisibility: boolean) => {
@@ -473,11 +476,21 @@ const ProductTable = () => {
     if (debouncedSearch && debouncedSearch.trim() !== '') {
       params.search = debouncedSearch.trim();
     }
-    if (filters.category_id) params.category_id = filters.category_id;
-    if (filters.sub_category_id) params.sub_category_id = filters.sub_category_id;
-    if (filters.filter_rent_sell) params.filter_rent_sell = filters.filter_rent_sell;
-    if (filters.filter_tenure) params.filter_tenure = filters.filter_tenure;
-    if (filters.status) params.status = filters.status;
+    if (Array.isArray(filters.category_id) && filters.category_id.length > 0) {
+      params.category_id = filters.category_id.join(',');
+    }
+    if (Array.isArray(filters.sub_category_id) && filters.sub_category_id.length > 0) {
+      params.sub_category_id = filters.sub_category_id.join(',');
+    }
+    if (Array.isArray(filters.filter_rent_sell) && filters.filter_rent_sell.length > 0) {
+      params.filter_rent_sell = filters.filter_rent_sell.join(',');
+    }
+    if (Array.isArray(filters.filter_tenure) && filters.filter_tenure.length > 0) {
+      params.filter_tenure = filters.filter_tenure.join(',');
+    }
+    if (Array.isArray(filters.status) && filters.status.length > 0) {
+      params.status = filters.status.join(',');
+    }
     return params;
   };
 
@@ -690,34 +703,50 @@ const ProductTable = () => {
 
   // Update pending subcategories when pending category changes
   useEffect(() => {
-    if (!pendingCategory) {
+    // Ensure pendingCategory is always an array
+    const categoryArray = Array.isArray(pendingCategory) ? pendingCategory : [];
+    
+    if (categoryArray.length === 0) {
       setPendingSubCategoryOptions([]);
-      setPendingSubCategory('');
-      setPendingFilters(prev => ({ ...prev, category_id: '', sub_category_id: '' }));
+      setPendingSubCategory([]);
+      setPendingFilters(prev => ({ ...prev, category_id: [], sub_category_id: [] }));
       return;
     }
-    const cat = categoriesData.find((c: any) =>
-      String(c.categories_id || c.id || c._id) === String(pendingCategory)
-    );
-    const subcats = (cat?.subcategories || []).map((item: any) => ({
-      value: String(item.subcategory_id || item.id),
-      label: item.subcategory_name || item.name,
-    }));
+    
+    // Get subcategories for selected categories
+    const subcats: Option[] = [];
+    categoryArray.forEach(catId => {
+      const cat = categoriesData.find((c: any) =>
+        String(c.categories_id || c.id || c._id) === String(catId)
+      );
+      if (cat?.subcategories) {
+        cat.subcategories.forEach((item: any) => {
+          subcats.push({
+            value: String(item.subcategory_id || item.id),
+            label: `${item.subcategory_name || item.name} (${cat.categories_name || cat.name})`,
+          });
+        });
+      }
+    });
+    
     setPendingSubCategoryOptions(subcats);
-    setPendingSubCategory('');
-    setPendingFilters(prev => ({ ...prev, category_id: pendingCategory, sub_category_id: '' }));
+    // Clear subcategories if multiple categories selected or no categories
+    if (categoryArray.length !== 1) {
+      setPendingSubCategory([]);
+      setPendingFilters(prev => ({ ...prev, category_id: categoryArray, sub_category_id: [] }));
+    } else {
+      setPendingFilters(prev => ({ ...prev, category_id: categoryArray }));
+    }
   }, [pendingCategory, categoriesData]);
 
   // Handle product type change (Rent/Sell)
-  const handleProductTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { value } = e.target;
-    setFilters(prev => ({ ...prev, filter_rent_sell: value }));
+  const handleProductTypeChange = (values: string[]) => {
+    setFilters(prev => ({ ...prev, filter_rent_sell: values }));
   };
 
   // Handle listing type change
-  const handleListingTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { value } = e.target;
-    setFilters(prev => ({ ...prev, filter_tenure: value }));
+  const handleListingTypeChange = (values: string[]) => {
+    setFilters(prev => ({ ...prev, filter_tenure: values }));
   };
 
   // Handle search input change
@@ -732,19 +761,24 @@ const ProductTable = () => {
 
   // Apply filters when search/filters/page/pageSize change
   useEffect(() => {
-    const params: any = {};
-
+    // Only apply search filter automatically
     if (debouncedSearch && debouncedSearch.trim() !== '') {
-      params.search = debouncedSearch.trim();
+      const params: any = { search: debouncedSearch.trim() };
+      console.log('Applying search only:', params);
+      getProductData(params);
+    } else if (debouncedSearch.trim() === '' && searchText === '') {
+      // If search is cleared, check if we have other active filters
+      const hasOtherFilters = Object.entries(filters).some(([key, val]) => 
+        Array.isArray(val) ? val.length > 0 : false
+      );
+      
+      if (!hasOtherFilters) {
+        // No filters at all, get all data
+        console.log('No filters, getting all data');
+        getProductData({});
+      }
     }
-    if (filters.category_id) params.category_id = filters.category_id;
-    if (filters.sub_category_id) params.sub_category_id = filters.sub_category_id;
-    if (filters.filter_rent_sell) params.filter_rent_sell = filters.filter_rent_sell;
-    if (filters.filter_tenure) params.filter_tenure = filters.filter_tenure;
-    if (filters.status) params.status = filters.status;
-
-    getProductData(params);
-  }, [debouncedSearch, filters, page, pageSize, activeTab]);
+  }, [debouncedSearch, page, pageSize, activeTab]);
 
   // Handle click outside to close modal
   useEffect(() => {
@@ -796,14 +830,14 @@ const ProductTable = () => {
 
   // Clear all filters
   const clearFilters = () => {
-    setSelectedCategory('');
-    setSelectedSubCategory('');
+    setSelectedCategory([]);
+    setSelectedSubCategory([]);
     setFilters({
-      category_id: '',
-      sub_category_id: '',
-      filter_rent_sell: '',
-      filter_tenure: '',
-      status: ''
+      category_id: [],
+      sub_category_id: [],
+      filter_rent_sell: [],
+      filter_tenure: [],
+      status: []
     });
     setSubCategoryOptions([]);
     setSearchText('');
@@ -862,11 +896,21 @@ const ProductTable = () => {
       if (debouncedSearch && debouncedSearch.trim() !== '') {
         params.search = debouncedSearch.trim();
       }
-      if (filters.category_id) params.category_id = filters.category_id;
-      if (filters.sub_category_id) params.sub_category_id = filters.sub_category_id;
-      if (filters.filter_rent_sell) params.filter_rent_sell = filters.filter_rent_sell;
-      if (filters.filter_tenure) params.filter_tenure = filters.filter_tenure;
-      if (filters.status) params.status = filters.status;
+      if (Array.isArray(filters.category_id) && filters.category_id.length > 0) {
+        params.category_id = filters.category_id.join(',');
+      }
+      if (Array.isArray(filters.sub_category_id) && filters.sub_category_id.length > 0) {
+        params.sub_category_id = filters.sub_category_id.join(',');
+      }
+      if (Array.isArray(filters.filter_rent_sell) && filters.filter_rent_sell.length > 0) {
+        params.filter_rent_sell = filters.filter_rent_sell.join(',');
+      }
+      if (Array.isArray(filters.filter_tenure) && filters.filter_tenure.length > 0) {
+        params.filter_tenure = filters.filter_tenure.join(',');
+      }
+      if (Array.isArray(filters.status) && filters.status.length > 0) {
+        params.status = filters.status.join(',');
+      }
 
       await exportProductsToExcel(params);
       toast.success('Products exported to Excel successfully!');
@@ -887,11 +931,21 @@ const ProductTable = () => {
       if (debouncedSearch && debouncedSearch.trim() !== '') {
         params.search = debouncedSearch.trim();
       }
-      if (filters.category_id) params.category_id = filters.category_id;
-      if (filters.sub_category_id) params.sub_category_id = filters.sub_category_id;
-      if (filters.filter_rent_sell) params.filter_rent_sell = filters.filter_rent_sell;
-      if (filters.filter_tenure) params.filter_tenure = filters.filter_tenure;
-      if (filters.status) params.status = filters.status;
+      if (Array.isArray(filters.category_id) && filters.category_id.length > 0) {
+        params.category_id = filters.category_id.join(',');
+      }
+      if (Array.isArray(filters.sub_category_id) && filters.sub_category_id.length > 0) {
+        params.sub_category_id = filters.sub_category_id.join(',');
+      }
+      if (Array.isArray(filters.filter_rent_sell) && filters.filter_rent_sell.length > 0) {
+        params.filter_rent_sell = filters.filter_rent_sell.join(',');
+      }
+      if (Array.isArray(filters.filter_tenure) && filters.filter_tenure.length > 0) {
+        params.filter_tenure = filters.filter_tenure.join(',');
+      }
+      if (Array.isArray(filters.status) && filters.status.length > 0) {
+        params.status = filters.status.join(',');
+      }
 
       await exportProductsToPDF(params);
       toast.success('Products exported to PDF successfully!');
@@ -970,9 +1024,18 @@ const ProductTable = () => {
               placeholder="Search products..."
               value={searchText}
               onChange={handleSearchChange}
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
+              className="pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            {searchText && (
+              <button
+                onClick={() => setSearchText('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                title="Clear search"
+              >
+                <MdClose size={18} />
+              </button>
+            )}
           </div>
 
           {/* Filter Button */}
@@ -1000,11 +1063,11 @@ const ProductTable = () => {
 
             {/* Filter Modal */}
             {showFilterModal && (
-              <div
-                ref={filterModalRef}
-                className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl w-auto sm:w-96 z-50 border border-gray-200 dark:border-gray-700 max-h-[calc(100vh-120px)] overflow-y-auto"
-              >
-                <div className="p-5">
+             <div
+  ref={filterModalRef}
+  className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl w-auto sm:w-[300px] z-50 border border-gray-200 dark:border-gray-700 max-h-[calc(100vh-120px)] overflow-y-auto"
+>
+  <div className="p-5">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="font-semibold text-gray-900 dark:text-white">Filter Products</h3>
                     <button
@@ -1019,13 +1082,18 @@ const ProductTable = () => {
                     {/* Category Filter */}
                     <div>
                       <Label className="font-semibold mb-2">Category</Label>
-                      <SearchableDropdown
-                        searchable
+                      <MultiSelectDropdown
                         options={categoryOptions}
-                        value={pendingCategory}
-                        placeholder="Select category"
-                        onChange={(value) => setPendingCategory(value)}
+                        selectedValues={pendingCategory}
+                        onChange={(values) => setPendingCategory(values)}
+                        placeholder="Select Categories"
+                        maxSelections={pendingSubCategory.length > 0 ? 1 : undefined}
                       />
+                      {pendingSubCategory.length > 0 && pendingCategory.length > 1 && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                          Clear subcategories to select multiple categories
+                        </p>
+                      )}
                     </div>
 
                     {/* Sub Category Filter */}
@@ -1033,84 +1101,71 @@ const ProductTable = () => {
                       <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
                         Sub Category
                       </Label>
-                      <SearchableDropdown
-                        searchable
+                      <MultiSelectDropdown
                         options={pendingSubCategoryOptions}
-                        value={pendingSubCategory}
-                        placeholder={pendingCategory ? "Search sub category..." : "Select category first"}
-                        onChange={(value) => {
-                          setPendingSubCategory(value);
-                          setPendingFilters(prev => ({ ...prev, sub_category_id: value }));
+                        selectedValues={pendingSubCategory}
+                        onChange={(values) => {
+                          setPendingSubCategory(values);
+                          setPendingFilters(prev => ({ ...prev, sub_category_id: values }));
                         }}
-                        disabled={!pendingCategory}
+                        placeholder={pendingCategory.length === 1 ? "Select Sub Categories" : pendingCategory.length > 1 ? "Select single category first" : "Select category first"}
+                        disabled={pendingCategory.length !== 1}
                       />
+                      {pendingCategory.length > 1 && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                          Select only one category to filter by subcategory
+                        </p>
+                      )}
                     </div>
-
-                    {/* Product Type Filter (Rent/Sell) */}
-                    {/* <div>
-                      <Label className="font-semibold mb-2">Product Type</Label>
-                      <SearchableDropdown
-                        searchable
-                        options={[
-                          { label: 'Rent', value: '1' },
-                          { label: 'Sell', value: '2' },
-                        ]}
-                        value={pendingFilters.filter_rent_sell}
-                        placeholder="All Types"
-                        onChange={(value) => setPendingFilters(prev => ({ ...prev, filter_rent_sell: value }))}
-                      />
-                    </div> */}
 
                     {/* Listing Type Filter (Tenure) */}
                     <div>
                       <Label className="font-semibold mb-2">Listing Type</Label>
-                      <SearchableDropdown
-                        searchable
+                      <MultiSelectDropdown
                         options={listingTypes.map((type: any) => ({
                           label: type.name,
                           value: String(type.id || type._id),
                         }))}
-                        value={pendingFilters.filter_tenure}
-                        placeholder="All Listing Types"
-                        onChange={(value) => setPendingFilters(prev => ({ ...prev, filter_tenure: value }))}
+                        selectedValues={pendingFilters.filter_tenure}
+                        onChange={(values) => setPendingFilters(prev => ({ ...prev, filter_tenure: values }))}
+                        placeholder="Select Listing Types"
                       />
                     </div>
-                    <div>
+                    
+                    {/* <div>
                       <Label className="font-semibold mb-2">Status</Label>
-                      <SearchableDropdown
-                        searchable
+                      <MultiSelectDropdown
                         options={[
                           { label: 'Active', value: 'active' },
                           { label: 'Draft', value: 'draft' },
                           { label: 'Inactive', value: 'inactive' },
                         ]}
-                        value={pendingFilters.status}
-                        placeholder="Status"
-                        onChange={(value) => setPendingFilters(prev => ({ ...prev, status: value }))}
+                        selectedValues={pendingFilters.status}
+                        onChange={(values) => setPendingFilters(prev => ({ ...prev, status: values }))}
+                        placeholder="Select Status"
                       />
-                    </div>
+                    </div> */}
                   </div>
 
                   {/* Action Buttons */}
                   <div className="flex gap-2 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
                       onClick={() => {
-                        const hasActiveFilters = Object.values(filters).some(val => val !== '');
-                        const hadSearch = searchText !== '';
-
-                        setPendingCategory('');
-                        setPendingSubCategory('');
+                        // Clear all pending filters
+                        setPendingCategory([]);
+                        setPendingSubCategory([]);
                         setPendingSubCategoryOptions([]);
-                        setPendingFilters({ category_id: '', sub_category_id: '', filter_rent_sell: '', filter_tenure: '', status: '' });
+                        setPendingFilters({ category_id: [], sub_category_id: [], filter_rent_sell: [], filter_tenure: [], status: [] });
 
-                        if (hasActiveFilters || hadSearch) {
-                          setSelectedCategory('');
-                          setSelectedSubCategory('');
-                          setSubCategoryOptions([]);
-                          setFilters({ category_id: '', sub_category_id: '', filter_rent_sell: '', filter_tenure: '', status: '' });
-                          setSearchText('');
-                        }
-
+                        // Clear actual filters
+                        setSelectedCategory([]);
+                        setSelectedSubCategory([]);
+                        setSubCategoryOptions([]);
+                        setFilters({ category_id: [], sub_category_id: [], filter_rent_sell: [], filter_tenure: [], status: [] });
+                        setSearchText('');
+                        
+                        // Immediately fetch data without filters
+                        getProductData({}, undefined, true);
                         setShowFilterModal(false);
                       }}
                       className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -1119,10 +1174,35 @@ const ProductTable = () => {
                     </button>
                     <button
                       onClick={() => {
+                        // Apply pending filters to actual filters
                         setSelectedCategory(pendingCategory);
                         setSelectedSubCategory(pendingSubCategory);
                         setSubCategoryOptions(pendingSubCategoryOptions);
                         setFilters(pendingFilters);
+                        
+                        // Build params and apply filters
+                        const params: any = {};
+                        if (debouncedSearch && debouncedSearch.trim() !== '') {
+                          params.search = debouncedSearch.trim();
+                        }
+                        if (Array.isArray(pendingFilters.category_id) && pendingFilters.category_id.length > 0) {
+                          params.category_id = pendingFilters.category_id.join(',');
+                        }
+                        if (Array.isArray(pendingFilters.sub_category_id) && pendingFilters.sub_category_id.length > 0) {
+                          params.sub_category_id = pendingFilters.sub_category_id.join(',');
+                        }
+                        if (Array.isArray(pendingFilters.filter_rent_sell) && pendingFilters.filter_rent_sell.length > 0) {
+                          params.filter_rent_sell = pendingFilters.filter_rent_sell.join(',');
+                        }
+                        if (Array.isArray(pendingFilters.filter_tenure) && pendingFilters.filter_tenure.length > 0) {
+                          params.filter_tenure = pendingFilters.filter_tenure.join(',');
+                        }
+                        if (Array.isArray(pendingFilters.status) && pendingFilters.status.length > 0) {
+                          params.status = pendingFilters.status.join(',');
+                        }
+                        
+                        console.log('Applying filters with params:', params);
+                        getProductData(params, undefined, true);
                         setShowFilterModal(false);
                       }}
                       className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
@@ -1291,6 +1371,7 @@ const ProductTable = () => {
             loading={loading}
             getRowStyle={getRowStyle}
             rowHeight={52}
+            showCheckboxes={false}
           />
         </div>
       </div>

@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation';
 import AgGridTable from '@/components/tables/AgGridTable';
 import { ColDef } from 'ag-grid-community';
-import { MdDelete, MdModeEdit, MdSearch, MdMoreVert, MdBlock } from "react-icons/md";
+import { MdDelete, MdModeEdit, MdSearch, MdMoreVert, MdBlock, MdClose } from "react-icons/md";
 import ActionButtons from "@/components/common/ActionButtons";
 import StatusBadge from "@/components/common/StatusBadge";
 import { api } from '@/utils/axiosInstance';
@@ -213,9 +213,18 @@ const ServiceTable = () => {
               placeholder="Search services..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
+              className="pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            {searchText && (
+              <button
+                onClick={() => setSearchText('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                title="Clear search"
+              >
+                <MdClose size={18} />
+              </button>
+            )}
           </div>
           <button
             onClick={() => router.push('/service/addService')}
@@ -236,6 +245,7 @@ const ServiceTable = () => {
             tableName="Services"
             loading={loading}
             rowHeight={52}
+            showCheckboxes={false}
           />
         </div>
       </div>
