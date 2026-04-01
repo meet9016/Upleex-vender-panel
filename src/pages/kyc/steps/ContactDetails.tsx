@@ -304,6 +304,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         <div>
           <Label>Full Name <span className="text-required">*</span></Label>
           <Input
+          disabled
             placeholder="Enter your full name"
             className="py-3"
   error={!!errors?.full_name}
@@ -331,6 +332,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         <div>
           <Label>Mobile Number <span className="text-required">*</span></Label>
           <Input placeholder="Enter your mobile number" type="text"
+          disabled
             value={KYCformData?.mobile}
             onChange={(e) => {
               const value = e.target.value;
@@ -356,6 +358,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         <div>
           <Label>Email <span className="text-required">*</span></Label>
           <Input
+          disabled
             className="py-3"
   error={!!errors?.email}
             placeholder="Enter your email address"

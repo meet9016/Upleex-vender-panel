@@ -363,7 +363,7 @@ const OrderList = () => {
       flex: 1.5,
       cellRenderer: (params: any) => {
         return (
-          <div className="flex items-center justify-center gap-2 h-full">
+          <div className="flex items-center justify-left gap-2 h-full">
             <button
               onClick={() => {
                 console.log('View order:', params.data);

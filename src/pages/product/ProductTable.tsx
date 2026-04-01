@@ -372,17 +372,17 @@ const ProductTable = () => {
         ),
         cellStyle: { justifyContent: "left" }
       },
-      {
-        field: "status",
-        headerName: "Status",
-        minWidth: 100,
-        cellRenderer: (params: any) => (
-          <div className="flex items-center h-full">
-            <StatusBadge status={params.value || 'active'} />
-          </div>
-        ),
-        cellStyle: { justifyContent: "left" }
-      },
+      // {
+      //   field: "status",
+      //   headerName: "Status",
+      //   minWidth: 100,
+      //   cellRenderer: (params: any) => (
+      //     <div className="flex items-center h-full">
+      //       <StatusBadge status={params.value || 'active'} />
+      //     </div>
+      //   ),
+      //   cellStyle: { justifyContent: "left" }
+      // },
       {
         field: "expires_at",
         headerName: "Exp Date",
@@ -431,8 +431,8 @@ const ProductTable = () => {
       },
       {
         headerName: "Action",
-        width: 100,
-        minWidth: 100,
+        width: 150,
+        minWidth: 150,
         pinned: 'right',
         suppressHeaderMenuButton: true,
         cellStyle: { textAlign: "center" },
