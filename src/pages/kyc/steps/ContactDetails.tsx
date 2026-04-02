@@ -302,7 +302,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== Full name =========================================================== --> */}
 
         <div>
-          <Label>Full Name <span className="text-required">*</span></Label>
+          <Label required>Full Name</Label>
           <Input
           disabled
             placeholder="Enter your full name"
@@ -330,7 +330,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== Mobile name =========================================================== --> */}
 
         <div>
-          <Label>Mobile Number <span className="text-required">*</span></Label>
+          <Label required>Mobile Number</Label>
           <Input placeholder="Enter your mobile number" type="text"
           disabled
             value={KYCformData?.mobile}
@@ -356,7 +356,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== Email =========================================================== --> */}
 
         <div>
-          <Label>Email <span className="text-required">*</span></Label>
+          <Label required>Email</Label>
           <Input
           disabled
             className="py-3"
@@ -402,7 +402,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== Address =========================================================== --> */}
 
         <div>
-          <Label>Address <span className="text-required">*</span></Label>
+          <Label required>Address</Label>
           <Input placeholder="Enter your Address" type="text"
             className="py-3"
             value={KYCformData?.address}
@@ -423,7 +423,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== City =========================================================== --> */}
 
         <div>
-          <Label>Select City <span className="text-required">*</span></Label>
+          <Label required>Select City</Label>
           <SearchableDropdown
             options={filteredCities}
             value={KYCformData?.city_id?.value || null}
@@ -476,7 +476,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== State =========================================================== --> */}
 
         <div>
-          <Label>Select State <span className="text-required">*</span></Label>
+          <Label required>Select State</Label>
           <SearchableDropdown
             options={filteredStates}
             value={KYCformData?.state_id?.value || null}
@@ -528,7 +528,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         {/* <!-- =========================================================== Country =========================================================== --> */}
 
         <div>
-          <Label>Select Country <span className="text-required">*</span></Label>
+          <Label required>Select Country</Label>
           <SearchableDropdown
             options={filteredCountries}
             value={KYCformData?.country_id?.value || null}
@@ -576,7 +576,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
 
 
         <div>
-          <Label>Pincode <span className="text-required">*</span></Label>
+          <Label required>Pincode</Label>
           <Input
             placeholder="Enter your Pincode"
             type="text"

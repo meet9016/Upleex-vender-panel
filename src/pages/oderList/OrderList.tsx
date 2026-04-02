@@ -14,6 +14,7 @@ import { HiOutlineEye } from 'react-icons/hi';
 import ActionButtons from '@/components/common/ActionButtons';
 import { useRouter } from 'next/navigation';
 import StatusBadge from '../../components/common/StatusBadge';
+import PageLoader from '@/components/common/PageLoader';
 
 interface PaymentOrder {
   order_id: string;
@@ -356,11 +357,11 @@ const OrderList = () => {
     {
       headerName: "Actions",
       field: "actions",
-      minWidth: 90,
+      width: 80,
+      maxWidth: 80,
       suppressSizeToFit: true,
       pinned: "right",
       suppressHeaderMenuButton: true,
-      flex: 1.5,
       cellRenderer: (params: any) => {
         return (
           <div className="flex items-center justify-left gap-2 h-full">
@@ -408,9 +409,13 @@ const OrderList = () => {
       setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '20',
-        ...(statusFilter && { status: statusFilter })
+        limit: '20'
       });
+
+      // Add status filter if selected
+      if (statusFilter && statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
 
       const response = await api.get(`${endPointApi.getVendorOrders}?${params}`);
 
@@ -590,6 +595,14 @@ const OrderList = () => {
     },
   ];
 
+  if (loading && activeTab === 'orders' && vendorOrders.length === 0 && paymentOrders.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <PageLoader fullScreen={false} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
       {/* Header */}
@@ -665,7 +678,7 @@ const OrderList = () => {
       {/* Main Table Section */}
       <div className="">
         {/* Header with Filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
           <h2 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white">
             {activeTab === 'orders' ? 'Orders' : 'Payment History'}
           </h2>
@@ -706,6 +719,8 @@ const OrderList = () => {
               height="550px"
               tableName={activeTab === 'orders' ? 'Orders' : 'Payments'}
               filter={false}
+              showCheckboxes={false}
+              rowHeight={45}
             />
           </div>
         </div>

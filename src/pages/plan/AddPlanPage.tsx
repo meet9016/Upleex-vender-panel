@@ -33,17 +33,17 @@ export default function AddPlanPage() {
     const router = useRouter();
     const [items, setItems] = useState([{ key: "", value: "" }]);
 
-        const addItem = () => {
+    const addItem = () => {
         setItems([...items, { key: "", value: "" }]);
     };
 
-      const updateItem = (index: number, field: "key" | "value", value: string) => {
+    const updateItem = (index: number, field: "key" | "value", value: string) => {
         const updated = [...items];
         updated[index][field] = value;
         setItems(updated);
     };
 
-        const removeItem = (index: number) => {
+    const removeItem = (index: number) => {
         const updated = [...items];
         updated.splice(index, 1);
         setItems(updated);
@@ -62,7 +62,7 @@ export default function AddPlanPage() {
                             />
                         </div>
                     </div>
-                   
+
                     <div>
                         <Label>Type</Label>
                         <div className="relative">
@@ -77,7 +77,7 @@ export default function AddPlanPage() {
                             </span>
                         </div>
                     </div>
-                   
+
                     <div>
                         <Label>Price</Label>
                         <div className="relative">
@@ -88,7 +88,7 @@ export default function AddPlanPage() {
                             />
                         </div>
                     </div>
-                   <div>
+                    <div>
                         <Label>Duration</Label>
                         <div className="relative">
                             <Select
@@ -103,7 +103,7 @@ export default function AddPlanPage() {
                         </div>
                     </div>
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     {/* LEFT → DESCRIPTION */}
                     <div className="">

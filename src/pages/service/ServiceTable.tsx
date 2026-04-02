@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation';
 import AgGridTable from '@/components/tables/AgGridTable';
 import { ColDef } from 'ag-grid-community';
-import { MdDelete, MdModeEdit, MdSearch, MdMoreVert, MdBlock } from "react-icons/md";
+import { MdDelete, MdModeEdit, MdSearch, MdMoreVert, MdBlock, MdClose } from "react-icons/md";
 import ActionButtons from "@/components/common/ActionButtons";
 import StatusBadge from "@/components/common/StatusBadge";
 import { api } from '@/utils/axiosInstance';
@@ -14,6 +14,7 @@ import { CiFilter } from "react-icons/ci";
 import { toast } from 'react-toastify';
 import { Modal } from '@/components/ui/modal';
 import Loader from '@/components/common/Loader';
+import PageLoader from '@/components/common/PageLoader';
 
 const DEFAULT_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Crect width=\'48\' height=\'48\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'24\' y=\'24\' font-family=\'Arial\' font-size=\'10\' fill=\'%23999\' text-anchor=\'middle\' dominant-baseline=\'middle\'%3ENo Image%3C/text%3E%3C/svg%3E';
 
@@ -183,6 +184,14 @@ const ServiceTable = () => {
     getServiceData(debouncedSearch);
   }, [debouncedSearch]);
 
+  if (loading && serviceData.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <PageLoader fullScreen={false} />
+      </div>
+    );
+  }
+
   const openDeletePopup = (id: string) => {
     setDeleteId(id);
     setOpenDeleteModal(true);
@@ -213,9 +222,18 @@ const ServiceTable = () => {
               placeholder="Search services..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
+              className="pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            {searchText && (
+              <button
+                onClick={() => setSearchText('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                title="Clear search"
+              >
+                <MdClose size={18} />
+              </button>
+            )}
           </div>
           <button
             onClick={() => router.push('/service/addService')}
@@ -236,6 +254,7 @@ const ServiceTable = () => {
             tableName="Services"
             loading={loading}
             rowHeight={52}
+            showCheckboxes={false}
           />
         </div>
       </div>

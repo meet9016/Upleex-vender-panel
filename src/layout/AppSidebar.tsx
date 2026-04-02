@@ -158,7 +158,7 @@ const AppSidebar: React.FC = () => {
               />
             </>
           ) : (
-            <Image src="/images/logo/logo-icon.svg" alt="Upleex" width={32} height={32} priority />
+            <Image src="/images/logo/small-logo.webp" alt="Upleex" width={32} height={32} priority />
           )}
         </Link>
       </div>

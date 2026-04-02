@@ -9,6 +9,7 @@ import Documents from "./steps/Documents";
 import StepDeclaration from "./steps/StepDeclaration";
 import ComponentCard from "@/components/common/ComponentCard";
 import { toast } from "react-toastify";
+import Loader from "@/components/common/Loader";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
@@ -339,8 +340,13 @@ export default function KYCPage() {
         newErrors.aadharcard_back_image = "Aadhaar back image is required";
       }
 
-      // GST, Vendor image, and Business logo are now optional (no validation)
-      
+      // GST Certificate is required if GST number was provided
+      if (!KYCformData.no_gst && KYCformData.gst_number?.trim()) {
+        if (!isValidFile(KYCformData.gst_certificate_image)) {
+          newErrors.gst_certificate_image = "GST Certificate is required when GST number is provided";
+        }
+      }
+
       if (!isServiceOnly) {
         if (!isValidFile(KYCformData.qr_code_image)) {
           newErrors.qr_code_image = "QR code image is required";
@@ -619,7 +625,7 @@ export default function KYCPage() {
       {/* Vendor Type Selection is now handled globally via AppHeader and FilterContext */}
 
       <ComponentCard title="KYC Verification">
-        <Stepper steps={steps} currentStep={currentStep} completedPages={KYCformData.completed_pages} onStepChange={handleStepChange} />
+        <Stepper steps={steps} currentStep={currentStep} completedPages={KYCformData.completed_pages} onStepChange={handleStepChange} isLoading={isSubmitting} />
 
         <div className="min-h-[400px] md:min-h-[520px]">
           {/* Contact Details is always step 0 in both modes */}
@@ -682,14 +688,16 @@ export default function KYCPage() {
           <button
             onClick={handleNext}
             disabled={isSubmitting}
-            className="btn-primary min-w-[120px] relative"
+            className="btn-primary min-w-[140px] relative flex items-center justify-center"
             title="Press Enter to save and continue"
           >
-            {isSubmitting
-              ? "Saving..."
-              : currentStep === steps.length - 1
-                ? "Submit KYC"
-                : "Save & Next"}
+            {isSubmitting ? (
+              <Loader type="button" text={currentStep === steps.length - 1 ? "Submitting..." : "Saving..."} />
+            ) : currentStep === steps.length - 1 ? (
+              "Submit KYC"
+            ) : (
+              "Save & Next"
+            )}
           </button>
         </div>
       </ComponentCard>

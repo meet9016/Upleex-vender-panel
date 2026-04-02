@@ -417,7 +417,7 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
       className="max-w-md mx-4"
       showCloseButton={currentStep !== "payment"}
     >
-      <div className="p-6">{renderCurrentStep()}</div>
+      <div className="m-10">{renderCurrentStep()}</div>
     </Modal>
   );
 };

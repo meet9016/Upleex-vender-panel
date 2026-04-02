@@ -60,7 +60,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
       <div className="w-full">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div>
-            <Label>Bank Account Holder Name</Label>
+            <Label required>Bank Account Holder Name</Label>
             <div className="relative">
               <Input
                 placeholder="Enter Bank Account Holder Name"
@@ -85,7 +85,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
           </div>
 
           <div>
-            <Label>Account Number</Label>
+            <Label required>Account Number</Label>
             <div className="relative">
               <Input
                 placeholder="Enter Account Number"
@@ -110,7 +110,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
           </div>
 
           <div>
-            <Label>Confirm Account Number</Label>
+            <Label required>Confirm Account Number</Label>
             <div className="relative">
               <Input
                 placeholder="Re-enter Account Number"
@@ -135,7 +135,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
           </div>
 
           <div>
-            <Label>IFSC Code</Label>
+            <Label required>IFSC Code</Label>
             <div className="relative">
               <Input
                 placeholder="Enter your IFSC Code"
@@ -160,7 +160,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
           </div>
 
           <div>
-            <Label>Account Type</Label>
+            <Label required>Account Type</Label>
             <div className="relative flex gap-2">
               <div className="flex-1">
                 <SearchableDropdown

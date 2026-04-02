@@ -5,6 +5,7 @@ import { ColDef } from "ag-grid-community";
 import AgGridTable from "@/components/tables/AgGridTable";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
+import StatusBadge from "@/components/common/StatusBadge";
 
 type PurchasedRow = {
   id: string;
@@ -38,7 +39,7 @@ export default function PurchasedProductsPage() {
             const productNames = item.product_ids && Array.isArray(item.product_ids)
               ? item.product_ids.map((p: any) => p.product_name || p.name || "-").join(", ")
               : "-";
-            
+
             const categories = item.product_ids && Array.isArray(item.product_ids)
               ? item.product_ids.map((p: any) => p.category_name || p.category || "-").join(", ")
               : "-";
@@ -92,24 +93,18 @@ export default function PurchasedProductsPage() {
         minWidth: 140,
         valueFormatter: (p) => (p.value ? new Date(p.value).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : "-"),
       },
-      { field: "status", headerName: "Status", minWidth: 120 },
+      {
+        field: "status", headerName: "Status", minWidth: 120, cellRenderer: (params: any) => (
+          <div className="flex items-center h-full">
+            <StatusBadge status={params.value || 'pending'} />
+          </div>
+        ),
+      },
     ],
     []
   );
 
-  if (loading) {
-    return (
-      <div className="p-4">
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold">Purchased Plans</h1>
-          <p className="text-slate-500">Loading...</p>
-        </div>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500" />
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="p-4">
@@ -117,7 +112,7 @@ export default function PurchasedProductsPage() {
         <h1 className="text-2xl font-bold">Purchased Plans</h1>
         <p className="text-slate-500">{rows.length} plan(s) purchased</p>
       </div>
-      <AgGridTable rowData={rows} columns={columns} tableName="Purchased Plans" />
+      <AgGridTable rowData={rows} columns={columns} tableName="Purchased Plans" showCheckboxes={false} loading={loading} />
     </div>
   );
 }

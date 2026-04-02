@@ -214,7 +214,7 @@ export default function AddServicePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                        <Label className="font-semibold mb-2">Service Name *</Label>
+                        <Label required className="font-semibold mb-2">Service Name</Label>
                         <Input
                             value={formData.name}
                             onChange={(e) => handleChange("name", e.target.value)}
@@ -228,7 +228,7 @@ export default function AddServicePage() {
                     </div>
 
                     <div>
-                        <Label className="font-semibold mb-2">Category *</Label>
+                        <Label required className="font-semibold mb-2">Category</Label>
                         <SearchableDropdown
                             options={categoryList}
                             value={formData.category}
@@ -243,7 +243,7 @@ export default function AddServicePage() {
                     </div>
 
                     <div>
-                        <Label className="font-semibold mb-2">Price (₹) *</Label>
+                        <Label required className="font-semibold mb-2">Price (₹)</Label>
                         <Input
                             type="number"
                             value={formData.price}
@@ -258,7 +258,7 @@ export default function AddServicePage() {
                     </div>
 
                     <div>
-                        <Label className="font-semibold mb-2">Billing Type *</Label>
+                        <Label required className="font-semibold mb-2">Billing Type</Label>
                         <SearchableDropdown
                             options={[
                                 { label: "Per Day", value: "day" },
@@ -277,7 +277,7 @@ export default function AddServicePage() {
                     </div>
 
                     <div >
-                        <Label className="font-semibold mb-2">Providing City *</Label>
+                        <Label required className="font-semibold mb-2">Providing City</Label>
                         <Input
                             value={formData.location}
                             onChange={(e) => handleChange("location", e.target.value)}
@@ -294,7 +294,7 @@ export default function AddServicePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                     <div>
-                        <Label className="font-semibold mb-2">Description *</Label>
+                        <Label required className="font-semibold mb-2">Description</Label>
                         <div
                             className={`rounded-xl overflow-hidden transition-all duration-200 border ${validationErrors.description
                                 ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
@@ -330,7 +330,7 @@ export default function AddServicePage() {
                     </div>
 
                     <div>
-                        <Label>Service Image *</Label>
+                        <Label required>Service Image</Label>
                         <div
                             className={`h-[300px] rounded-lg border transition-all duration-200 flex items-center justify-center overflow-hidden ${validationErrors.mainImage
                                 ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
