@@ -339,8 +339,13 @@ export default function KYCPage() {
         newErrors.aadharcard_back_image = "Aadhaar back image is required";
       }
 
-      // GST, Vendor image, and Business logo are now optional (no validation)
-      
+      // GST Certificate is required if GST number was provided
+      if (!KYCformData.no_gst && KYCformData.gst_number?.trim()) {
+        if (!isValidFile(KYCformData.gst_certificate_image)) {
+          newErrors.gst_certificate_image = "GST Certificate is required when GST number is provided";
+        }
+      }
+
       if (!isServiceOnly) {
         if (!isValidFile(KYCformData.qr_code_image)) {
           newErrors.qr_code_image = "QR code image is required";

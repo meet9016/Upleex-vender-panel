@@ -216,11 +216,12 @@ export default function DocumentUpload({
       )}
 
       {error && (
-        <div className="mt-2 flex items-center gap-2 text-red-500 text-xs font-semibold animate-in fade-in slide-in-from-top-1">
-          <span className="w-1 h-1 rounded-full bg-red-500" />
+        <div className="mt-2 flex items-center gap-2 text-red-500 text-xs font-normal animate-in fade-in slide-in-from-top-1">
+          <span className="w-1 h-1 rounded-full bg-red-500 flex-shrink-0" />
           {error}
         </div>
       )}
+
 
       {showModal && preview && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-center justify-center z-[99999] p-4 sm:p-8 animate-in fade-in duration-300">
