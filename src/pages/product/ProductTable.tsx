@@ -85,7 +85,6 @@ const ProductTable = () => {
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [bulkAction, setBulkAction] = useState<{ type: 'deactivate' | 'delete' | null; open: boolean }>({ type: null, open: false });
   const [loading, setLoading] = useState(false);
-  const [tabLoading, setTabLoading] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'rent' | 'sell'>('rent');
   const [dataCache, setDataCache] = useState<{
@@ -174,14 +173,6 @@ const ProductTable = () => {
   const activeFilterCount = Object.values(filters).filter(v => 
     Array.isArray(v) ? v.length > 0 : v !== ''
   ).length;
-
-  if (loading && productData.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <PageLoader fullScreen={false} />
-      </div>
-    );
-  }
 
   // Toggle product visibility
   const toggleProductVisibility = async (productId: string, currentVisibility: boolean) => {
@@ -504,7 +495,7 @@ const ProductTable = () => {
   const getProductData = async (filterParams = {}, tabType?: 'rent' | 'sell', skipCache = false) => {
     try {
       const targetTab = tabType || activeTab;
-      setTabLoading(true);
+      setLoading(true);
 
       // Check if we have cached data for this tab and no filters are applied
       const hasFilters = Object.values(filterParams).some(v => v !== undefined && v !== '');
@@ -516,7 +507,7 @@ const ProductTable = () => {
         setTotal(cachedData.total);
         setTotalPages(cachedData.totalPages);
         setPage(cachedData.page);
-        setTabLoading(false);
+        setLoading(false);
         return;
       }
 
@@ -617,7 +608,6 @@ const ProductTable = () => {
       toast.error("Failed to fetch products");
     } finally {
       setLoading(false);
-      setTabLoading(false);
     }
   };
 
@@ -1017,6 +1007,14 @@ const ProductTable = () => {
     setExpiryModalOpen(false);
     setShowPlanDialog(true);
   };
+
+  if (loading && productData.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <PageLoader fullScreen={false} />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
