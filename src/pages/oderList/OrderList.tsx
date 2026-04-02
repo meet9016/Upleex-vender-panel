@@ -357,11 +357,11 @@ const OrderList = () => {
     {
       headerName: "Actions",
       field: "actions",
-      minWidth: 90,
+      width: 80,
+      maxWidth: 80,
       suppressSizeToFit: true,
       pinned: "right",
       suppressHeaderMenuButton: true,
-      flex: 1.5,
       cellRenderer: (params: any) => {
         return (
           <div className="flex items-center justify-left gap-2 h-full">

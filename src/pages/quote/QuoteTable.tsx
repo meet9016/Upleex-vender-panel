@@ -522,6 +522,30 @@ const QuoteTable = () => {
     setOpenDropdown(null);
   };
 
+  // Convert a display status name to the internal enum stored in MongoDB
+  // Backend stores: 'pending', 'approval', 'reject', 'complete', 'successful', 'delivery', 'active'
+  const getInternalStatus = (name: string): string => {
+    const s = (name || '').toLowerCase();
+    if (s.includes('active')) return 'active';
+    if (s.includes('approv')) return 'approval';
+    if (s.includes('reject')) return 'reject';
+    if (s.includes('complet')) return 'complete';
+    if (s.includes('success')) return 'successful';
+    if (s.includes('deliver')) return 'delivery';
+    return 'pending';
+  };
+
+  // Convert selected status IDs → internal status strings for the API
+  const resolveStatusValues = (selectedIds: string[]): string => {
+    return selectedIds
+      .map(id => {
+        const found = statusList.find((s: any) => s.id === id);
+        return found ? getInternalStatus(found.name) : null;
+      })
+      .filter(Boolean)
+      .join(',');
+  };
+
   const getSelectedLabel = (key: string) => {
     const value = filters[key as keyof typeof filters];
     if (!value || (Array.isArray(value) && value.length === 0)) return null;
@@ -546,8 +570,11 @@ const QuoteTable = () => {
   const applyFilters = () => {
     const params: any = {};
 
-    // Add all filter parameters - handle arrays
-    if (filters.status.length > 0) params.status = filters.status.join(',');
+    // Convert status IDs → internal enum strings that MongoDB stores
+    if (filters.status.length > 0) {
+      const internalStatuses = resolveStatusValues(filters.status);
+      if (internalStatuses) params.status = internalStatuses;
+    }
     if (filters.product_type.length > 0) params.product_type = filters.product_type.join(',');
     if (filters.listing_type.length > 0) params.listing_type = filters.listing_type.join(',');
     if (filters.month.length > 0) params.month = filters.month.join(',');
@@ -555,13 +582,12 @@ const QuoteTable = () => {
     if (filters.delivery_end_date) params.delivery_end_date = filters.delivery_end_date;
     if (searchText) params.search = searchText;
 
-    // Add pagination params (optional)
-    params.page = 1; // Reset to first page when applying filters
+    params.page = 1;
     params.limit = 10;
 
     console.log("🚀 ~ Applying filters:", params);
     console.log("🚀 ~ Current filter state:", filters);
-    
+
     getQuoteData(params);
     setShowFilterModal(false);
   };
