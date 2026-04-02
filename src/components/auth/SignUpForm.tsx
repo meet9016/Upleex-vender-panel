@@ -217,7 +217,7 @@ export default function SignUpForm() {
             {/* First & Last Name */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <Label>First Name *</Label>
+                <Label>First Name <span className="text-red-500">*</span></Label>
                 <Input
                   type="text"
                   name="fname"
@@ -235,7 +235,7 @@ export default function SignUpForm() {
               </div>
 
               <div>
-                <Label>Last Name *</Label>
+                <Label>Last Name <span className="text-red-500">*</span></Label>
                 <Input
                   type="text"
                   name="lname"
@@ -255,7 +255,7 @@ export default function SignUpForm() {
 
             {/* Business Name */}
             <div>
-              <Label>Business Name *</Label>
+              <Label>Business Name <span className="text-red-500">*</span></Label>
               <Input
                 type="text"
                 name="businessName"
@@ -273,7 +273,7 @@ export default function SignUpForm() {
 
             {/* Email */}
             <div>
-              <Label>Email *</Label>
+              <Label>Email <span className="text-red-500">*</span></Label>
               <Input
                 type="text"
                 name="email"
@@ -292,7 +292,7 @@ export default function SignUpForm() {
             {/* Mobile Numbers */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <Label>Mobile Number *</Label>
+                <Label>Mobile Number <span className="text-red-500">*</span></Label>
                 <div className="flex mt-1">
                   <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
                     +91
@@ -341,7 +341,7 @@ export default function SignUpForm() {
 
             {/* City */}
             <div>
-              <Label>City *</Label>
+              <Label>City <span className="text-red-500">*</span></Label>
               <Input
                 type="text"
                 name="city"
@@ -385,7 +385,7 @@ export default function SignUpForm() {
             {otpSent && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <Label>OTP Verification *</Label>
+                  <Label>OTP Verification <span className="text-red-500">*</span></Label>
                   {timer > 0 ? (
                     <span className="text-xs text-blue-600 font-medium">Resend in {timer}s</span>
                   ) : (

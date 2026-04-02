@@ -3,6 +3,7 @@ type Props = {
   currentStep: number;
   completedPages?: string[];
   onStepChange?: (index: number) => void;
+  isLoading?: boolean;
 };
 
 export default function Stepper({
@@ -10,6 +11,7 @@ export default function Stepper({
   currentStep,
   completedPages = [],
   onStepChange,
+  isLoading = false,
 }: Props) {
   return (
     <div className="w-full px-2 md:px-0">
@@ -44,6 +46,9 @@ export default function Stepper({
                   }`}
                 onClick={() => onStepChange?.(index)}
               >
+                {isActive && isLoading ? (
+                  <div className="absolute inset-[-4px] md:inset-[-6px] rounded-full border-2 border-indigo-600 border-t-transparent animate-spin"></div>
+                ) : null}
                 {index + 1}
               </div>
 
