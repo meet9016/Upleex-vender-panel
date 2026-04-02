@@ -1043,7 +1043,7 @@ export default function AddProductPage() {
 
                     {/* ================= Row 1: Category & Sub Category ================= */}
                     <div>
-                        <Label className="font-semibold mb-2">Category</Label>
+                        <Label required className="font-semibold mb-2">Category</Label>
                         <SearchableDropdown
                             searchable
                             options={categoryList}
@@ -1063,7 +1063,7 @@ export default function AddProductPage() {
                     </div>
 
                     <div>
-                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                        <Label required className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
                             Sub Category
                         </Label>
                         <SearchableDropdown
@@ -1085,7 +1085,7 @@ export default function AddProductPage() {
                     </div>
 
                     <div>
-                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                        <Label required className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
                             Listing Type
                         </Label>
 
@@ -1156,7 +1156,7 @@ export default function AddProductPage() {
                     </div>
 
                     <div >
-                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Item / Property Name</Label>
+                        <Label required className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Item / Property Name</Label>
                         <div className="flex flex-col">
                             <Input
                                 placeholder="Enter Item / Property Name"
@@ -1175,7 +1175,7 @@ export default function AddProductPage() {
                     </div>
 
                     <div>
-                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">SKU (Stock Keeping Unit)</Label>
+                        <Label required className="font-semibold text-gray-700 dark:text-gray-200 mb-2">SKU (Stock Keeping Unit)</Label>
                         <div className="flex flex-col">
                             <Input
                                 placeholder="Auto-generated SKU"
@@ -1268,7 +1268,7 @@ export default function AddProductPage() {
                     {/* ================= Row 3: Rent Type ================= */}
                     {selectedListingType === "Rent" && (
                         <div className="col-span-2 p-4 bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                            <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Billing Type</Label>
+                            <Label required className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Billing Type</Label>
                             <div className="flex items-center gap-6">
                                 <Radio
                                     id="radio-day"
@@ -1308,7 +1308,7 @@ export default function AddProductPage() {
                     {selectedListingType === "Rent" && billingType === "day" && (
                         <>
                             <div className="rounded-2xl">
-                                <Label>Day Price</Label>
+                                <Label required>Day Price</Label>
                                 <Input
                                     placeholder="Enter Day Price"
                                     type="text"
@@ -1325,7 +1325,7 @@ export default function AddProductPage() {
                             </div>
 
                             <div className="rounded-2xl">
-                                <Label>Day Cancel Price</Label>
+                                <Label required>Day Cancel Price</Label>
                                 <Input
                                     placeholder="Enter Day Cancel Price"
                                     type="text"
@@ -1347,7 +1347,7 @@ export default function AddProductPage() {
                     {selectedListingType === "Rent" && billingType === "hourly" && (
                         <>
                             <div className="rounded-2xl">
-                                <Label>Hourly Price</Label>
+                                <Label required>Hourly Price</Label>
                                 <Input
                                     placeholder="Enter Hourly Price"
                                     type="text"
@@ -1364,7 +1364,7 @@ export default function AddProductPage() {
                             </div>
 
                             <div className="rounded-2xl">
-                                <Label>Hourly Cancel Price</Label>
+                                <Label required>Hourly Cancel Price</Label>
                                 <Input
                                     placeholder="Enter Hourly Cancel Price"
                                     type="text"
@@ -1393,7 +1393,7 @@ export default function AddProductPage() {
 
                             {/* HEADER */}
                             <div className="flex items-center justify-between p-3 md:p-3">
-                                <Label className="text-lg font-bold text-gray-800 dark:text-gray-100">
+                                <Label required className="text-lg font-bold text-gray-800 dark:text-gray-100">
                                     Monthly Pricing
                                 </Label>
 
@@ -1479,7 +1479,7 @@ export default function AddProductPage() {
                     {selectedListingType === "Sell" && (
                         <>
                             <div className="rounded-2xl">
-                                <Label>Price</Label>
+                                <Label required>Price</Label>
                                 <Input
                                     placeholder="Enter Sell Price"
                                     type="text"
@@ -1496,7 +1496,7 @@ export default function AddProductPage() {
                             </div>
 
                             <div className="rounded-2xl">
-                                <Label>Cancel Price</Label>
+                                <Label required>Cancel Price</Label>
                                 <Input
                                     placeholder="Enter Sell Cancel Price"
                                     type="text"
@@ -1519,7 +1519,7 @@ export default function AddProductPage() {
 
                     {/* ================= LEFT – DESCRIPTION EDITOR (FIXED) ================= */}
                     <div className="">
-                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2 ">
+                        <Label required className="font-semibold text-gray-700 dark:text-gray-200 mb-2 ">
                             Description
                         </Label>
 
@@ -1644,7 +1644,7 @@ export default function AddProductPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <Label>Main Image</Label>
+                        <Label required>Main Image</Label>
                         <div
                             className={`h-[300px] rounded-lg border transition-all duration-200 
                                 flex items-center justify-center overflow-hidden

@@ -23,7 +23,7 @@ export default function DocumentUpload({
   error,
   clearError,
   disabled,
-  // required = false,
+  required = false,
 }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -114,8 +114,8 @@ export default function DocumentUpload({
 
   return (
     <div className="w-full relative group/upload">
-      <label className="block mb-2 text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-        {label}
+      <label className="block mb-2 text-[13px] font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+        {label}{required && !disabled && <span className="text-red-500 ml-0.5">*</span>}
       </label>
 
       {!file ? (
