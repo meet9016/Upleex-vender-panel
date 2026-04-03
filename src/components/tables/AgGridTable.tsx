@@ -17,7 +17,6 @@ import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ColDef, ModuleRegistry, RowSelectionOptions } from "ag-grid-community";
 import { MdDelete, MdModeEdit } from "react-icons/md";
 import { ColumnMenuModule, ContextMenuModule } from "ag-grid-enterprise";
-import Loader from "@/components/common/Loader";
 import PageLoader from "@/components/common/PageLoader";
 
 ModuleRegistry.registerModules([AllCommunityModule, ColumnMenuModule, ContextMenuModule]);
@@ -161,22 +160,22 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   }, [router, addButtonLink]);
 
   return (
-    <div className="w-full">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 dark:text-gray-200">
+    <div>
+      <div className="flex justify-between items-center mb-4 dark:text-gray-200">
         {buttonName && (
-          <button onClick={handleAddClick} className="btn-primary w-full sm:w-auto" aria-label={`Add ${buttonName}`}>
+          <button onClick={handleAddClick} className="btn-primary" aria-label={`Add ${buttonName}`}>
             + Add {buttonName}
           </button>
         )}
       </div>
 
-      <div className="relative w-full">
+      <div className="relative">
         {loading && (
-          <div className="absolute inset-0 z-[100] flex items-center justify-center bg-white/60 dark:bg-gray-900/60 backdrop-blur-[2px] rounded-xl">
+          <div className="absolute inset-0 z-[100] flex items-center justify-center rounded-xl bg-transparent">
             <PageLoader fullScreen={false} />
           </div>
         )}
-        <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine cute-ag-grid'}`}
+        <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'}`}
           style={{ width: "100%", height: autoHeight ? 'auto' : (height || '80vh'), minHeight: autoHeight ? 240 : 'auto' }}>
           <AgGridReact
             headerHeight={48}

@@ -15,7 +15,7 @@ const WalletBalance: React.FC<WalletBalanceProps> = ({
   onAddMoney,
 }) => {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
+    <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden mt-2">
       {/* Gradient top bar */}
       <div className="h-2 bg-gradient-to-r from-brand-500 to-brand-700" />
 

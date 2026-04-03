@@ -1,13 +1,14 @@
 'use client';
 
 import ComponentCard from "@/components/common/ComponentCard";
+import { useBreadcrumb } from "@/context/BreadcrumbContext";
 import Input from "@/components/common/Input";
 import Label from "@/components/form/Label";
 import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 import { ChevronDownIcon } from "@/icons";
 import { useRouter } from "next/navigation";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Editor, EditorTextChangeEvent } from "primereact/editor";
 
 export interface SelectOption {
@@ -32,6 +33,15 @@ const typeOptions: SelectOption[] = [
 export default function AddPlanPage() {
     const router = useRouter();
     const [items, setItems] = useState([{ key: "", value: "" }]);
+    const { setBreadcrumbs } = useBreadcrumb();
+
+    useEffect(() => {
+        setBreadcrumbs([
+            { label: "Plan", path: "/plan" },
+            { label: "Add Plan" }
+        ]);
+        return () => setBreadcrumbs(null);
+    }, [setBreadcrumbs]);
 
     const addItem = () => {
         setItems([...items, { key: "", value: "" }]);
@@ -50,7 +60,7 @@ export default function AddPlanPage() {
     };
     return (
         <>
-            <ComponentCard title="Add Plan">
+            <ComponentCard>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <Label>Price</Label>

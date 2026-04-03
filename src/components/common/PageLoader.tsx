@@ -40,7 +40,7 @@ export const PageLoader = ({ fullScreen = true }: PageLoaderProps) => {
             className="w-10 h-10 rounded-xl shadow-lg shadow-indigo-500/20 flex items-center justify-center bg-white"
           >
             <Image
-              src="/favicon.png"
+              src="/images/logo/small-logo.webp"
               alt="Upleex"
               width={28}
               height={28}

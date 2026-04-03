@@ -1,13 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import WalletBalance from "@/components/wallet/WalletBalance";
 import AddMoneyModal from "@/components/wallet/AddMoneyModal";
 import TransactionHistory from "@/components/wallet/TransactionHistory";
 import { useWallet } from "@/context/WalletContext";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
-import PageLoader from "@/components/common/PageLoader";
 
 interface WalletData {
   balance: number;
@@ -61,17 +59,8 @@ const WalletPage: React.FC = () => {
   }, []);
 
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <PageLoader fullScreen={false} />
-      </div>
-    );
-  }
-
   return (
-    <div className="p-4 mx-auto md:p-6">
-      <PageBreadcrumb pageTitle="Wallet" />
+    <div className="mx-auto">
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left: Balance Card */}
@@ -85,7 +74,7 @@ const WalletPage: React.FC = () => {
 
         {/* Right: Transaction History */}
         <div className="lg:col-span-2">
-          <TransactionHistory transactions={transactions} />
+          <TransactionHistory transactions={transactions} loading={isLoading} />
         </div>
       </div>
 

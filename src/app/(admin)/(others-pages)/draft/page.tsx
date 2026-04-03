@@ -15,7 +15,6 @@ import { CiWarning } from "react-icons/ci";
 import { HiOutlineRefresh } from "react-icons/hi";
 import { IoMdStar, IoMdTrendingUp } from "react-icons/io";
 import Loader from "@/components/common/Loader";
-import PageLoader from "@/components/common/PageLoader";
 import PlanSelectionDialog from "@/components/common/PlanSelectionDialog";
 
 const DEFAULT_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23f0f0f0'/%3E%3Ctext x='24' y='24' font-family='Arial' font-size='10' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
@@ -55,11 +54,11 @@ export default function DraftPage() {
             <img
               src={imageUrl}
               alt={name}
-              className="w-12 h-12 object-cover rounded border"
+            className="w-9 h-9 object-cover rounded border"
               onError={(e: any) => { if (e.target.src !== DEFAULT_PLACEHOLDER) e.target.src = DEFAULT_PLACEHOLDER; }}
               loading="lazy"
             />
-            <div className="flex flex-col">
+            <div className="flex flex-col justify-center h-full leading-tight py-0.5">
               <span className="font-medium text-gray-800 dark:text-white">{name}</span>
               {cat && <span className="text-xs text-gray-500 dark:text-gray-400">{cat}</span>}
             </div>
@@ -186,20 +185,14 @@ export default function DraftPage() {
     }
   };
 
-  if (loading && rows.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <PageLoader fullScreen={false} />
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+      <div className="flex items-center justify-end mt-4">
+
+          {/* <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Drafts</h2> */}
+        {/* <p className="text-sm text-gray-500 dark:text-gray-400">
           Manage and activate your draft listings ({rows.length} drafts)
-        </p>
+        </p> */}
         <Button
           onClick={fetchDrafts}
           disabled={loading}
@@ -337,6 +330,8 @@ export default function DraftPage() {
           tableName="Draft Products"
           onSelectionChange={setSelected}
           loading={loading}
+          rowHeight={50}
+          height={"670px"}
         />
       )}
 
