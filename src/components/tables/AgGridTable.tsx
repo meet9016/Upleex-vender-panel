@@ -203,6 +203,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             suppressRowClickSelection={true}
             alwaysShowHorizontalScroll={true}
             getRowStyle={getRowStyle}
+            overlayNoRowsTemplate="<span></span>"
           />
         </div>
       </div>

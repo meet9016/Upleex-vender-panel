@@ -1009,9 +1009,9 @@ const ProductTable = () => {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0 mb-1 mt-5">
+      <div className="flex flex-col lg:flex-row justify-between items-center gap-4 mb-6 mt-2">
         {/* <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Products</h2> */}
-            <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 shadow-sm min-w-max !justify-start">
+            <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 shadow-sm min-w-max">
 
           <button
             onClick={() => setActiveTab('rent')}
