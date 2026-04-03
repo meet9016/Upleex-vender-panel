@@ -65,6 +65,9 @@ export interface EndPointApi {
     getWalletSummary: string;
     getPurchasedPlans: string;
     getVendorDashboardMetrics: string;
+    getAllPriorityPlans: string;
+    purchasePriorityPlan: string;
+    getVendorPriorityPurchases: string;
     }
 
 // Define and export the API endpoint object
@@ -103,6 +106,11 @@ const endPointApi: EndPointApi = {
     postCustomPlanRequest: 'listing-plans/custom-request',
     getPurchasedPlans: 'listing-plans/getall',
     toggleProductVisibility: 'products/toggle-visibility',
+
+    // Priority Plans
+    getAllPriorityPlans: 'priority-plans/getall',
+    purchasePriorityPlan: 'priority-plans/purchase',
+    getVendorPriorityPurchases: 'priority-plans/vendor/purchases',
 
     // Quote
     postGetQuote: 'quote/getall',
