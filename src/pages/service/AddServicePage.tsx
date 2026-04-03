@@ -1,6 +1,7 @@
 "use client";
 
 import ComponentCard from "@/components/common/ComponentCard";
+import { useBreadcrumb } from "@/context/BreadcrumbContext";
 import Input from "@/components/common/Input";
 import DropzoneComponent from "@/components/form/form-elements/DropZone";
 import Label from "@/components/form/Label";
@@ -41,6 +42,15 @@ export default function AddServicePage() {
     const [subPreviews, setSubPreviews] = useState<any[]>([]);
     const [categoryList, setCategoryList] = useState<Option[]>([]);
     const [loading, setLoading] = useState(false);
+    const { setBreadcrumbs } = useBreadcrumb();
+
+    useEffect(() => {
+        setBreadcrumbs([
+            { label: "Service", path: "/service" },
+            { label: isEditMode ? "Edit Service" : "Add Service" }
+        ]);
+        return () => setBreadcrumbs(null);
+    }, [isEditMode, setBreadcrumbs]);
     const [validationErrors, setValidationErrors] = useState<{
         name?: string;
         category?: string;
@@ -201,9 +211,6 @@ export default function AddServicePage() {
                         <div className="flex items-center gap-3">
                             <div className="h-12 w-1 bg-blue-600 rounded-full"></div>
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-                                    {isEditMode ? "Edit Service" : "Add Service"}
-                                </h1>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
                                     {isEditMode ? "Update service details" : "Fill details to create a new service"}
                                 </p>

@@ -22,7 +22,7 @@ const navItems: NavItem[] = [
   { icon: <CalenderIcon />, name: "Product", path: "/product" },
   { icon: <TaskIcon />, name: "Service", path: "/service" },
   { icon: <BsChatSquareQuote className="w-5 h-5" />, name: "Quote", path: "/quote" },
-  { icon: <DollarLineIcon />, name: "Purchased", path: "/purchasedproduct" },
+  { icon: <DollarLineIcon />, name: "Purchased", path: "/purchasedplan" },
   { icon: <ListIcon />, name: "Orders", path: "/order" },
   { icon: <WalletIcon />, name: "Wallet", path: "/wallet" },
   { icon: <DocsIcon />, name: "Drafts", path: "/draft" },

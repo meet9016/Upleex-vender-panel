@@ -706,10 +706,10 @@ const QuoteTable = () => {
   }, []);
 
   return (
-    <div className="w-full p-2 sm:p-4">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-5">
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Quotes</h2>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+    <div className="">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-2 mt-5 !justify-end">
+        {/* <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Quotes</h2> */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 ">
           <div className="relative w-full sm:w-auto">
             <input
               type="text"
@@ -734,10 +734,10 @@ const QuoteTable = () => {
             <button
               ref={filterButtonRef}
               onClick={() => setShowFilterModal(!showFilterModal)}
-              className="w-full sm:w-auto px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2 relative"
+              className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md border-gray-300 border-1 hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
             >
               <CiFilter size={20} />
-              <span className="hidden sm:inline">Filter</span>
+              {/* <span className="hidden sm:inline">Filter </span> */}
               {activeFilterCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
                   {activeFilterCount}
@@ -838,7 +838,7 @@ const QuoteTable = () => {
           <div className="relative" ref={actionsMenuRef}>
             <button
               onClick={() => setShowActionsMenu((v) => !v)}
-              className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
+              className="w-full sm:w-10 h-10 flex items-center justify-center  bg-white dark:bg-gray-800  border-gray-300 border-1 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
               title="Export options"
             >
               <FiMoreVertical className="text-xl" />
@@ -891,6 +891,7 @@ const QuoteTable = () => {
             rowHeight={60}
             showCheckboxes={false} 
             loading={loading}
+            height={"650px"}
           />
         </div>
       </div>

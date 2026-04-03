@@ -14,7 +14,6 @@ import { HiOutlineEye } from 'react-icons/hi';
 import ActionButtons from '@/components/common/ActionButtons';
 import { useRouter } from 'next/navigation';
 import StatusBadge from '../../components/common/StatusBadge';
-import PageLoader from '@/components/common/PageLoader';
 
 interface PaymentOrder {
   order_id: string;
@@ -595,57 +594,20 @@ const OrderList = () => {
     },
   ];
 
-  if (loading && activeTab === 'orders' && vendorOrders.length === 0 && paymentOrders.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <PageLoader fullScreen={false} />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
+    <div className=" sm:space-y-4  sm:p-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      {/* <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">
             Orders Management
           </h1>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
             Manage your orders and track payment history
-          </p>
+          </p> 
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-full sm:w-fit">
-          <button
-            onClick={() => {
-              setActiveTab('orders');
-              setPage(1);
-              setStatusFilter('');
-            }}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'orders'
-              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-              }`}
-          >
-            Orders
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('payments');
-              setPage(1);
-              setStatusFilter('');
-            }}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'payments'
-              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-              }`}
-          >
-            Payments
-          </button>
-        </div>
-      </div>
+      </div> */}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -678,10 +640,36 @@ const OrderList = () => {
       {/* Main Table Section */}
       <div className="">
         {/* Header with Filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white">
-            {activeTab === 'orders' ? 'Orders' : 'Payment History'}
-          </h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-1">
+             {/* Tab Navigation */}
+        <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-full sm:w-fit">
+          <button
+            onClick={() => {
+              setActiveTab('orders');
+              setPage(1);
+              setStatusFilter('');
+            }}
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'orders'
+              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
+          >
+            Orders
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('payments');
+              setPage(1);
+              setStatusFilter('');
+            }}
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'payments'
+              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
+          >
+            Payments
+          </button>
+        </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
             {activeTab === 'orders' && (
               <div className="w-full sm:w-52">
@@ -720,7 +708,7 @@ const OrderList = () => {
               tableName={activeTab === 'orders' ? 'Orders' : 'Payments'}
               filter={false}
               showCheckboxes={false}
-              rowHeight={45}
+              rowHeight={50}
             />
           </div>
         </div>

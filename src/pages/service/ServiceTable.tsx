@@ -14,7 +14,6 @@ import { CiFilter } from "react-icons/ci";
 import { toast } from 'react-toastify';
 import { Modal } from '@/components/ui/modal';
 import Loader from '@/components/common/Loader';
-import PageLoader from '@/components/common/PageLoader';
 
 const DEFAULT_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Crect width=\'48\' height=\'48\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'24\' y=\'24\' font-family=\'Arial\' font-size=\'10\' fill=\'%23999\' text-anchor=\'middle\' dominant-baseline=\'middle\'%3ENo Image%3C/text%3E%3C/svg%3E';
 
@@ -184,14 +183,6 @@ const ServiceTable = () => {
     getServiceData(debouncedSearch);
   }, [debouncedSearch]);
 
-  if (loading && serviceData.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <PageLoader fullScreen={false} />
-      </div>
-    );
-  }
-
   const openDeletePopup = (id: string) => {
     setDeleteId(id);
     setOpenDeleteModal(true);
@@ -212,17 +203,17 @@ const ServiceTable = () => {
   };
 
   return (
-    <div className="w-full">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-6">
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Services</h2>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-          <div className="relative w-full sm:w-auto">
+    <div>
+      <div className="flex justify-between items-center mb-2 mt-5 justify-end">
+        {/* <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Services</h2> */}
+        <div className="flex items-center gap-3 justify-between">
+          <div className="relative">
             <input
               type="text"
               placeholder="Search services..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-64"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             {searchText && (
@@ -237,27 +228,21 @@ const ServiceTable = () => {
           </div>
           <button
             onClick={() => router.push('/service/addService')}
-            className="w-full sm:w-auto px-4 py-2 btn-primary font-medium whitespace-nowrap"
+            className="px-4 py-2 btn-primary font-medium"
           >
-            <span className="hidden sm:inline">+ Add Service</span>
-            <span className="sm:hidden">+ Add</span>
+            + Add Service
           </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto -mx-4 sm:mx-0">
-        <div className="inline-block min-w-full align-middle">
-          <AgGridTable
-            columns={columns}
-            rowData={serviceData}
-            filter={false}
-            tableName="Services"
-            loading={loading}
-            rowHeight={52}
-            showCheckboxes={false}
-          />
-        </div>
-      </div>
+      <AgGridTable
+        columns={columns}
+        rowData={serviceData}
+        filter={false}
+        tableName="Services"
+        loading={loading}
+        rowHeight={52}
+      />
 
       <ConfirmDeleteModal
         open={openDeleteModal}

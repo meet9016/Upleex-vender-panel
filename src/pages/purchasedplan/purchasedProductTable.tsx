@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useEffect, useState } from "react";
+import { useBreadcrumb } from "@/context/BreadcrumbContext";
 import { ColDef } from "ag-grid-community";
 import AgGridTable from "@/components/tables/AgGridTable";
 import { api } from "@/utils/axiosInstance";
@@ -21,6 +22,12 @@ type PurchasedRow = {
 export default function PurchasedProductsPage() {
   const [rows, setRows] = useState<PurchasedRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const { setBreadcrumbs } = useBreadcrumb();
+
+  useEffect(() => {
+    setBreadcrumbs([{ label: "Purchased Plans" }]);
+    return () => setBreadcrumbs(null);
+  }, [setBreadcrumbs]);
 
   useEffect(() => {
     const fetchPurchasedProducts = async () => {
@@ -107,12 +114,8 @@ export default function PurchasedProductsPage() {
 
 
   return (
-    <div className="p-4">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold">Purchased Plans</h1>
-        <p className="text-slate-500">{rows.length} plan(s) purchased</p>
-      </div>
-      <AgGridTable rowData={rows} columns={columns} tableName="Purchased Plans" showCheckboxes={false} loading={loading} />
+    <div className="p-0 ">
+      <AgGridTable rowData={rows} columns={columns} tableName="Purchased Plans" showCheckboxes={false} loading={loading} rowHeight={40} />
     </div>
   );
 }

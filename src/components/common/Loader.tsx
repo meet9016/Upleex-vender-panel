@@ -14,13 +14,13 @@ interface LoaderProps {
   iconClassName?: string;
 }
 
-export default function Loader({ 
-  type = 'icon', 
-  text, 
+export default function Loader({
+  type = 'icon',
+  text,
   className,
-  iconClassName 
+  iconClassName
 }: LoaderProps) {
-  
+
   if (type === 'page') {
     return (
       <div className={cn("flex items-center justify-center min-h-screen bg-slate-50/80 backdrop-blur-sm z-50", className)}>
