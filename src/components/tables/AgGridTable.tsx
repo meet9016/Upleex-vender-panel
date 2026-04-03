@@ -37,6 +37,7 @@ interface AgGridTableProps {
   rowHeight?: number | ((params: any) => number);
   height?: string | number;
   showCheckboxes?: boolean;
+  isRowSelectable?: (params: any) => boolean;
 }
 
 const AgGridTable: React.FC<AgGridTableProps> = ({
@@ -53,6 +54,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   rowHeight = 60,
   height,
   showCheckboxes = true,
+  isRowSelectable,
 }) => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
@@ -203,6 +205,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             suppressRowClickSelection={true}
             alwaysShowHorizontalScroll={true}
             getRowStyle={getRowStyle}
+            isRowSelectable={isRowSelectable}
           />
         </div>
       </div>

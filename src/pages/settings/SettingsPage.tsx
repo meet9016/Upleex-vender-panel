@@ -13,6 +13,7 @@ import { Modal } from "@/components/ui/modal";
 import { useWallet } from "@/context/WalletContext";
 import AgGridTable from "@/components/tables/AgGridTable";
 import { ColDef } from "ag-grid-community";
+import StatusBadge from "@/components/common/StatusBadge";
 
 interface PriorityPlan {
   id: string;
@@ -153,7 +154,7 @@ const SettingsPage: React.FC = () => {
     const totalSlots = Number(activePurchase?.total_slots || selectedPlan.product_slots || 0);
     const usedSlots = Number(activePurchase?.product_ids?.length || 0);
     const remainingSlotsCalculated = totalSlots - usedSlots;
-    
+
     // If we are within existing slots, price should effectively be 0 for frontend logic
     const finalPrice = selectedProductIds.length <= remainingSlotsCalculated && activePurchase ? 0 : selectedPlan.monthly_price;
 
@@ -186,16 +187,6 @@ const SettingsPage: React.FC = () => {
 
   const getColumns = (): ColDef[] => [
     {
-      headerCheckboxSelection: true,
-      checkboxSelection: (params) => {
-        const p = params.data as Product;
-        const isCurrentlyPriority = p.is_priority && p.priority_expiry && new Date(p.priority_expiry) > new Date();
-        return !isCurrentlyPriority;
-      },
-      width: 50,
-      pinned: 'left'
-    },
-    {
       headerName: "Product",
       field: "product_name",
       minWidth: 200,
@@ -205,10 +196,10 @@ const SettingsPage: React.FC = () => {
         const imageUrl = product.product_main_image || product.image || DEFAULT_PLACEHOLDER;
         return (
           <div className="flex items-center gap-3">
-            <img 
-              src={imageUrl} 
-              className="w-8 h-8 rounded object-cover border" 
-              onError={(e:any) => e.target.src = DEFAULT_PLACEHOLDER}
+            <img
+              src={imageUrl}
+              className="w-8 h-8 rounded object-cover border"
+              onError={(e: any) => e.target.src = DEFAULT_PLACEHOLDER}
             />
             <span className="font-medium truncate">{product.product_name}</span>
           </div>
@@ -229,11 +220,16 @@ const SettingsPage: React.FC = () => {
       width: 120,
       cellRenderer: (params: any) => (
         params.value ? (
-          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-bold uppercase tracking-tight">
-            {params.value}
-          </span>
-        ) : <span className="text-gray-400">-</span>
+          <StatusBadge status={params.value} />
+        ) : <span className="text-gray-400 font-medium">-</span>
       )
+    },
+
+    {
+      headerName: "Price",
+      field: "price",
+      width: 100,
+      valueFormatter: (params) => `${currency}${params.value?.toLocaleString()}`
     },
     {
       headerName: "Expiry Date",
@@ -244,17 +240,11 @@ const SettingsPage: React.FC = () => {
         return new Date(params.value).toLocaleDateString('en-GB');
       }
     },
-    {
-      headerName: "Price",
-      field: "price",
-      width: 100,
-      valueFormatter: (params) => `${currency}${params.value?.toLocaleString()}`
-    }
   ];
 
   const currentTabProducts = activeTab === "Rent" ? rentProducts : sellProducts;
   const filteredProducts = useMemo(() => {
-    return currentTabProducts.filter(p => 
+    return currentTabProducts.filter(p =>
       p.product_name.toLowerCase().includes(gridSearch.toLowerCase()) ||
       p.category_name?.toLowerCase().includes(gridSearch.toLowerCase())
     );
@@ -282,7 +272,7 @@ const SettingsPage: React.FC = () => {
         <div className="md:col-span-3">
           <div className="mb-6">
             <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Zap className="text-yellow-500 fill-yellow-500" /> Priority Visibility Plans
+              Priority Visibility Plans
             </h3>
           </div>
 
@@ -291,22 +281,21 @@ const SettingsPage: React.FC = () => {
               const planId = plan.id || (plan as any)._id;
               const myActive = vendorPurchases.find(p => String(p.plan_id) === String(planId));
               const isSubscribed = !!myActive;
-              
+
               return (
-                <div 
-                  key={plan.id} 
-                  className={`relative p-8 rounded-3xl border transition-all duration-500 flex flex-col h-full bg-white group ${
-                    plan.is_popular 
-                    ? 'border-brand-500 shadow-2xl shadow-brand-100 scale-[1.02] z-10' 
+                <div
+                  key={plan.id}
+                  className={`relative p-8 rounded-3xl border transition-all duration-500 flex flex-col h-full bg-white group ${plan.is_popular
+                    ? 'border-brand-500 shadow-2xl shadow-brand-100 scale-[1.02] z-10'
                     : 'border-gray-200 hover:border-brand-300 hover:shadow-xl shadow-sm'
-                  }`}
+                    }`}
                 >
                   {plan.is_popular && (
                     <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-5 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg">
                       Recommended
                     </span>
                   )}
-                  
+
                   <div className="mb-6">
                     <h4 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h4>
                     <p className="text-gray-500 text-sm">{plan.description}</p>
@@ -328,7 +317,7 @@ const SettingsPage: React.FC = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="space-y-4 mb-8 flex-grow">
                     <div className="flex items-start gap-4">
                       <div className="mt-1 bg-green-100 p-1.5 rounded-full"><Check className="text-green-600" size={14} /></div>
@@ -345,8 +334,8 @@ const SettingsPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
-                  <Button 
+
+                  <Button
                     onClick={() => handleSelectPlan(plan)}
                     variant={plan.is_popular ? 'primary' : 'outline'}
                     className="w-full py-3.5 rounded-xl font-bold"
@@ -360,63 +349,83 @@ const SettingsPage: React.FC = () => {
         </div>
       </div>
 
-      <Modal 
-        isOpen={isModalOpen} 
+      <Modal
+        isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        className="max-w-4xl w-full"
+        className="max-w-6xl w-full"
       >
         <div className="p-0 flex flex-col max-h-[90vh]">
-          <div className="p-6 border-b bg-white">
-            <div className="flex items-center justify-between mb-4">
+          <div className="p-8 border-b bg-white dark:bg-gray-900">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between">
               <div>
-                <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <Zap size={24} className="text-brand-500 fill-brand-500" />
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                   {selectedPlan?.name} Products
                 </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  Available Slots: <span className="font-bold text-brand-600">{remainingSlots} products left</span>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Remaining Slots: <span className="font-bold text-brand-600">{remainingSlots} products left</span>
                 </p>
               </div>
-              <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Search products..."
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-                  value={gridSearch}
-                  onChange={(e) => setGridSearch(e.target.value)}
-                />
-              </div>
-            </div>
 
-            <div className="flex border-b">
-              <button 
-                onClick={() => setActiveTab("Rent")}
-                className={`px-8 py-3 text-sm font-bold transition-all border-b-2 ${activeTab === "Rent" ? "border-brand-500 text-brand-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}
-              >
-                Rent ({rentProducts.length})
-              </button>
-              <button 
-                onClick={() => setActiveTab("Sell")}
-                className={`px-8 py-3 text-sm font-bold transition-all border-b-2 ${activeTab === "Sell" ? "border-brand-500 text-brand-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}
-              >
-                Sell ({sellProducts.length})
-              </button>
+              <div className="flex flex-wrap items-center gap-4">
+                {/* Search Bar */}
+                <div className="relative w-64 order-first lg:order-none">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all shadow-sm"
+                    value={gridSearch}
+                    onChange={(e) => setGridSearch(e.target.value)}
+                  />
+                </div>
+
+                {/* Rent/Sell Filter */}
+                <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 shadow-sm min-w-max">
+                  <button
+                    onClick={() => setActiveTab('Rent')}
+                    className={`group flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap ${activeTab === 'Rent'
+                      ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-black/[0.04]'
+                      : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+                      }`}
+                  >
+                    <svg className={`w-3.5 h-3.5 ${activeTab === 'Rent' ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>RENT ({rentProducts.length})</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('Sell')}
+                    className={`group flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap ${activeTab === 'Sell'
+                      ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-sm ring-1 ring-black/[0.04]'
+                      : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+                      }`}
+                  >
+                    <svg className={`w-3.5 h-3.5 ${activeTab === 'Sell' ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    <span>SELL ({sellProducts.length})</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex-1 min-h-[400px] bg-white p-4">
+          <div className="flex-1 min-h-[400px] bg-white dark:bg-gray-900 p-4">
             <AgGridTable
               columns={getColumns()}
               rowData={filteredProducts}
               onSelectionChange={handleSelectionChange}
               showCheckboxes={true}
               height={400}
+              rowHeight={48}
+              isRowSelectable={(params) => !params.data.active_plan_name}
+              getRowStyle={(params) => params.data.active_plan_name ? { opacity: 0.6, pointerEvents: 'none', background: 'rgba(0,0,0,0.02)' } : undefined}
             />
           </div>
 
-          <div className="p-6 border-t bg-gray-50 flex items-center justify-between gap-4">
-            <div>
+          <div className="p-6 border-t bg-gray-50 flex items-center justify-end gap-4">
+            {/* <div>
               <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest leading-tight">Selection Charge</p>
               <p className="text-2xl font-black text-gray-900">
                 {selectedProductIds.length <= remainingSlots && activePurchaseForCurrentPlan ? "FREE" : `${currency}${(selectedPlan?.monthly_price || 0).toLocaleString()}`}
@@ -424,11 +433,11 @@ const SettingsPage: React.FC = () => {
               <p className="text-[10px] text-gray-500 font-medium">
                 {selectedProductIds.length} products selected
               </p>
-            </div>
+            </div> */}
             <div className="flex items-center gap-3">
               <Button variant="outline" onClick={() => setIsModalOpen(false)} className="px-8 py-2.5 rounded-xl font-bold">Cancel</Button>
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 onClick={handlePurchase}
                 disabled={isPurchasing || selectedProductIds.length === 0 || (selectedProductIds.length > remainingSlots && !activePurchaseForCurrentPlan && selectedProductIds.length > (selectedPlan?.product_slots || 0))}
                 className="px-8 py-2.5 rounded-xl font-bold shadow-lg shadow-brand-100"
