@@ -14,6 +14,7 @@ import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useFilter } from "@/context/FilterContext";
+import { useBreadcrumb } from "@/context/BreadcrumbContext";
 
 const ALL_STEPS = [
   "Contact Details",
@@ -66,6 +67,12 @@ export default function KYCPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const { setBreadcrumbs } = useBreadcrumb();
+
+  useEffect(() => {
+    setBreadcrumbs([{ label: "KYC Verification" }]);
+    return () => setBreadcrumbs(null);
+  }, [setBreadcrumbs]);
 
   // Initialize currentStep from URL search params if present
   const [currentStep, setCurrentStep] = useState(() => {
@@ -621,10 +628,10 @@ export default function KYCPage() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative mt-5">
       {/* Vendor Type Selection is now handled globally via AppHeader and FilterContext */}
 
-      <ComponentCard title="KYC Verification">
+      <ComponentCard>
         <Stepper steps={steps} currentStep={currentStep} completedPages={KYCformData.completed_pages} onStepChange={handleStepChange} isLoading={isSubmitting} />
 
         <div className="min-h-[400px] md:min-h-[520px]">

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { ArrowUpIcon, ArrowDownIcon } from "@/icons";
+import PageLoader from "@/components/common/PageLoader";
 
 interface Transaction {
   id: string;
@@ -14,10 +15,12 @@ interface Transaction {
 
 interface TransactionHistoryProps {
   transactions?: Transaction[];
+  loading?: boolean;
 }
 
 const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   transactions = [],
+  loading = false,
 }) => {
   const [filter, setFilter] = useState<"all" | "credit" | "debit">("all");
 
@@ -58,7 +61,12 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     .reduce((sum, t) => sum + t.amount, 0);
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden">
+    <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden flex mt-2 flex-col h-[700px] relative">
+      {loading && (
+        <div className="absolute inset-0 z-[100] flex items-center justify-center rounded-xl bg-transparent">
+          <PageLoader fullScreen={false} />
+        </div>
+      )}
       {/* Card Header */}
       <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -93,7 +101,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="flex items-center gap-2.5 p-3 rounded-lg bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30">
-                <ArrowDownIcon className="w-4 h-4 text-green-600 dark:text-green-400 rotate-180" />
+                <ArrowDownIcon className="w-4 h-4 text-green-600 dark:text-green-400 ml-1 mt-1" />
               </div>
               <div>
                 <p className="text-xs text-green-700 dark:text-green-400 font-medium">Total Added</p>
@@ -104,7 +112,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             </div>
             <div className="flex items-center gap-2.5 p-3 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30">
-                <ArrowUpIcon className="w-4 h-4 text-red-600 dark:text-red-400" />
+                <ArrowUpIcon className="w-4 h-4 text-red-600 dark:text-red-400 ml-1 mt-1" />
               </div>
               <div>
                 <p className="text-xs text-red-700 dark:text-red-400 font-medium">Total Spent</p>
@@ -118,9 +126,9 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       </div>
 
       {/* Body */}
-      <div className="p-4 sm:p-6">
+      <div className="p-4 sm:p-6 overflow-y-auto">
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex flex-col items-center justify-center w-full text-center">
             <div className="flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-gray-100 dark:bg-gray-800">
               <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -149,9 +157,9 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                     }`}
                   >
                     {transaction.type === "credit" ? (
-                      <ArrowDownIcon className="w-4 h-4 text-green-600 dark:text-green-400 rotate-180" />
+                      <ArrowDownIcon className="w-4 h-4 text-green-600 dark:text-green-400 ml-1 mt-1" />
                     ) : (
-                      <ArrowUpIcon className="w-4 h-4 text-red-600 dark:text-red-400" />
+                      <ArrowUpIcon className="w-4 h-4 text-red-600 dark:text-red-400 ml-1 mt-1" />
                     )}
                   </div>
                   <div className="min-w-0">
