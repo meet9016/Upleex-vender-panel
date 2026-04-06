@@ -1,5 +1,6 @@
 "use client";
 
+import ComponentCard from "@/components/common/ComponentCard";
 import DocumentUpload from "./DocumentUpload";
 import type { ErrorType, KycFormDataType } from "@/pages/kyc/KycPage";
 
@@ -36,7 +37,8 @@ export default function Documents({
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <ComponentCard title="Documents">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <DocumentUpload
         label="PAN Card (Front)"
         file={KYCformData?.pancard_front_image}
@@ -111,6 +113,7 @@ export default function Documents({
           />
         </>
       )}
-    </div>
+      </div>
+    </ComponentCard>
   );
 }

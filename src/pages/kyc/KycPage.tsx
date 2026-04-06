@@ -628,13 +628,13 @@ export default function KYCPage() {
   };
 
   return (
-    <div className="relative mt-5">
+    <div className="relative mt-2">
       {/* Vendor Type Selection is now handled globally via AppHeader and FilterContext */}
 
-      <ComponentCard>
+      <div className="py-10 px-5 bg-white">
         <Stepper steps={steps} currentStep={currentStep} completedPages={KYCformData.completed_pages} onStepChange={handleStepChange} isLoading={isSubmitting} />
 
-        <div className="min-h-[400px] md:min-h-[520px]">
+        <div className="min-h-[400px] md:min-h-[450px] mt-10">
           {/* Contact Details is always step 0 in both modes */}
           {actualStep === 0 && (
             <ContactDetails
@@ -707,7 +707,7 @@ export default function KYCPage() {
             )}
           </button>
         </div>
-      </ComponentCard>
+      </div>
     </div>
   );
 }

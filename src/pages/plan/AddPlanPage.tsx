@@ -60,7 +60,7 @@ export default function AddPlanPage() {
     };
     return (
         <>
-            <ComponentCard>
+            <ComponentCard title="Add Plan">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <Label>Price</Label>

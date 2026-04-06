@@ -64,7 +64,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
     };
 
     checkDarkMode();
- 
+
     const observer = new MutationObserver(checkDarkMode);
     observer.observe(document.documentElement, {
       attributes: true,

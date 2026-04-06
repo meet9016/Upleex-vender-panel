@@ -82,7 +82,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           )}
 
           <div className="animate-in fade-in duration-700 delay-200">
-            {children}
+            <BreadcrumbProvider>
+      {children}
+    </BreadcrumbProvider>
           </div>
         </main>
       </div>

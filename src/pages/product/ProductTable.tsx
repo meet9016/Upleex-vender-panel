@@ -763,7 +763,7 @@ const ProductTable = () => {
       getProductData(params);
     } else if (debouncedSearch.trim() === '' && searchText === '') {
       // If search is cleared, check if we have other active filters
-      const hasOtherFilters = Object.entries(filters).some(([key, val]) => 
+      const hasOtherFilters = Object.entries(filters).some(([val]) => 
         Array.isArray(val) ? val.length > 0 : false
       );
       
@@ -1009,9 +1009,9 @@ const ProductTable = () => {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col lg:flex-row justify-between items-center gap-4 mb-6 mt-2">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0 mb-1 mt-5">
         {/* <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Products</h2> */}
-            <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 shadow-sm min-w-max">
+        <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 shadow-sm min-w-max !justify-start">
 
           <button
             onClick={() => setActiveTab('rent')}
@@ -1043,7 +1043,7 @@ const ProductTable = () => {
         </div>
 
 
-         <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 w-full sm:w-auto">
           {/* Add Product Button */}
           <button
             onClick={() => router.push('/product/addProduct')}
@@ -1052,7 +1052,7 @@ const ProductTable = () => {
             <span className="hidden sm:inline">+ Add Product</span>
             <span className="sm:hidden">+ Add</span>
           </button>
-           {/* Search Input */}
+          {/* Search Input */}
           <div className="relative w-full sm:w-auto">
             <input
               type="text"
@@ -1085,7 +1085,7 @@ const ProductTable = () => {
                 setPendingSubCategoryOptions(subCategoryOptions);
                 setShowFilterModal(!showFilterModal);
               }}
-                className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md border-gray-300 border-1 hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
+              className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md border-gray-300 border-1 hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
             >
               <CiFilter size={20} />
               {/* <span className="hidden sm:inline">Filter</span> */}
@@ -1098,11 +1098,11 @@ const ProductTable = () => {
 
             {/* Filter Modal */}
             {showFilterModal && (
-             <div
-  ref={filterModalRef}
-  className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl w-auto sm:w-[300px] z-50 border border-gray-200 dark:border-gray-700 max-h-[calc(100vh-120px)] overflow-y-auto"
->
-  <div className="p-5">
+              <div
+                ref={filterModalRef}
+                className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl w-auto sm:w-[300px] z-50 border border-gray-200 dark:border-gray-700 max-h-[calc(100vh-120px)] overflow-y-auto"
+              >
+                <div className="p-5">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="font-semibold text-gray-900 dark:text-white">Filter Products</h3>
                     <button
@@ -1166,7 +1166,7 @@ const ProductTable = () => {
                         placeholder="Select Listing Types"
                       />
                     </div>
-                    
+
                     {/* <div>
                       <Label className="font-semibold mb-2">Status</Label>
                       <MultiSelectDropdown
@@ -1198,7 +1198,7 @@ const ProductTable = () => {
                         setSubCategoryOptions([]);
                         setFilters({ category_id: [], sub_category_id: [], filter_rent_sell: [], filter_tenure: [], status: [] });
                         setSearchText('');
-                        
+
                         // Immediately fetch data without filters
                         getProductData({}, undefined, true);
                         setShowFilterModal(false);
@@ -1214,7 +1214,7 @@ const ProductTable = () => {
                         setSelectedSubCategory(pendingSubCategory);
                         setSubCategoryOptions(pendingSubCategoryOptions);
                         setFilters(pendingFilters);
-                        
+
                         // Build params and apply filters
                         const params: any = {};
                         if (debouncedSearch && debouncedSearch.trim() !== '') {
@@ -1235,7 +1235,7 @@ const ProductTable = () => {
                         if (Array.isArray(pendingFilters.status) && pendingFilters.status.length > 0) {
                           params.status = pendingFilters.status.join(',');
                         }
-                        
+
                         console.log('Applying filters with params:', params);
                         getProductData(params, undefined, true);
                         setShowFilterModal(false);
@@ -1254,7 +1254,7 @@ const ProductTable = () => {
           <div className="relative" ref={actionsMenuRef}>
             <button
               onClick={() => setShowActionsMenu((v) => !v)}
-              className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
+              className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
               title="More actions"
             >
               <FiMoreVertical className="text-xl" />
@@ -1351,7 +1351,7 @@ const ProductTable = () => {
             )}
           </div>
         </div>
-        </div>
+      </div>
       {/* Products Table */}
       <div className="overflow-x-auto -mx-4 sm:mx-0">
         <div className="inline-block min-w-full align-middle">
