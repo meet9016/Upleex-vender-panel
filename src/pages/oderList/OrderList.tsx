@@ -6,14 +6,25 @@ import { api } from '@/utils/axiosInstance';
 import endPointApi from '@/utils/endPointApi';
 import { toast } from 'react-toastify';
 import { MdPayment, MdShoppingCart, MdDateRange, MdPending, MdCheckCircle, MdCancel } from 'react-icons/md';
-import { FaRupeeSign, FaUser, FaBox, FaEdit } from 'react-icons/fa';
-import { FiRefreshCw } from 'react-icons/fi';
+import { FaRupeeSign, FaUser, FaBox, FaEdit, FaFileExcel, FaFilePdf } from 'react-icons/fa';
+import { FiRefreshCw, FiMoreVertical } from 'react-icons/fi';
 import ComponentCard from '@/components/common/ComponentCard';
 import SearchableDropdown from '@/components/common/SearchableDropdown';
 import { HiOutlineEye } from 'react-icons/hi';
 import ActionButtons from '@/components/common/ActionButtons';
 import { useRouter } from 'next/navigation';
 import StatusBadge from '../../components/common/StatusBadge';
+import { exportOrdersToExcel, exportOrdersToPDF, exportPaymentsToExcel, exportPaymentsToPDF } from '@/utils/exportUtils';
+import Loader from '@/components/common/Loader';
+
+function useDebounce<T>(value: T, delay: number = 500): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 interface PaymentOrder {
   order_id: string;
@@ -106,6 +117,23 @@ const OrderList = () => {
   const [newStatus, setNewStatus] = useState('');
   const [statusNotes, setStatusNotes] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const debouncedSearch = useDebounce(searchText, 600);
+  const [excelLoading, setExcelLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const actionsMenuRef = React.useRef<HTMLDivElement>(null);
+
+  const getCurrentParams = () => {
+    const params: any = {};
+    if (statusFilter && statusFilter !== 'all') {
+      params.status = statusFilter;
+    }
+    if (debouncedSearch && debouncedSearch.trim() !== '') {
+      params.search = debouncedSearch.trim();
+    }
+    return params;
+  };
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -555,13 +583,61 @@ const OrderList = () => {
     }
   };
 
+  const handleExportExcel = async () => {
+    try {
+      setExcelLoading(true);
+      const params = getCurrentParams();
+      if (activeTab === 'orders') {
+        await exportOrdersToExcel(params);
+        toast.success('Orders exported to Excel successfully!');
+      } else {
+        await exportPaymentsToExcel(params);
+        toast.success('Payments exported to Excel successfully!');
+      }
+      setShowActionsMenu(false);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to export to Excel');
+    } finally {
+      setExcelLoading(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      setPdfLoading(true);
+      const params = getCurrentParams();
+      if (activeTab === 'orders') {
+        await exportOrdersToPDF(params);
+        toast.success('Orders exported to PDF successfully!');
+      } else {
+        await exportPaymentsToPDF(params);
+        toast.success('Payments exported to PDF successfully!');
+      }
+      setShowActionsMenu(false);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to export to PDF');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
     fetchStats();
     if (activeTab === 'orders') {
       fetchStatusOptions();
     }
-  }, [page, statusFilter, activeTab]);
+  }, [page, statusFilter, activeTab, debouncedSearch]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+        setShowActionsMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const statsCards = [
     {
@@ -671,6 +747,30 @@ const OrderList = () => {
           </button>
         </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-auto">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                className="pl-10 pr-10 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
+              />
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              {searchText && (
+                <button
+                  onClick={() => setSearchText('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
             {activeTab === 'orders' && (
               <div className="w-full sm:w-52">
                 <SearchableDropdown
@@ -688,12 +788,49 @@ const OrderList = () => {
             <button
               onClick={fetchOrders}
               disabled={loading}
-              className="w-full sm:w-auto px-4 py-2 btn-primary flex items-center justify-center gap-2 transition-colors"
+              className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md border-gray-300 border-1 hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
+              title="Refresh"
             >
-              <FiRefreshCw className="h-4 w-4" />
-              <span className="hidden sm:inline">Refresh</span>
-              <span className="sm:hidden">Refresh</span>
+              <FiRefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
+
+            {/* Actions Menu (3-dots) */}
+            <div className="relative" ref={actionsMenuRef}>
+              <button
+                onClick={() => setShowActionsMenu((v) => !v)}
+                className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
+                title="Export options"
+              >
+                <FiMoreVertical className="text-xl" />
+              </button>
+
+              {showActionsMenu && (
+                <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-auto mt-3 w-auto sm:w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+                
+                  <div className="py-1">
+                    <button
+                      onClick={handleExportExcel}
+                      disabled={excelLoading || pdfLoading}
+                      className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200 disabled:opacity-50"
+                    >
+                      <FaFileExcel className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
+                      <span>Export to Excel</span>
+                      {excelLoading && <Loader className="ml-auto text-emerald-600 w-3.5 h-3.5" />}
+                    </button>
+
+                    <button
+                      onClick={handleExportPDF}
+                      disabled={excelLoading || pdfLoading}
+                      className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-rose-500 hover:bg-rose-50/50 dark:hover:bg-rose-900/10 transition-all duration-200 disabled:opacity-50"
+                    >
+                      <FaFilePdf className="text-lg text-rose-600 group-hover:scale-110 transition-transform duration-200" />
+                      <span>Export to PDF</span>
+                      {pdfLoading && <Loader className="ml-auto text-rose-600 w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

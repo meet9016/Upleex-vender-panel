@@ -14,8 +14,20 @@ import { toast } from "react-toastify";
 import { CiWarning } from "react-icons/ci";
 import { HiOutlineRefresh } from "react-icons/hi";
 import { IoMdStar, IoMdTrendingUp } from "react-icons/io";
+import { FiMoreVertical } from "react-icons/fi";
+import { FaFileExcel, FaFilePdf } from "react-icons/fa";
 import Loader from "@/components/common/Loader";
 import PlanSelectionDialog from "@/components/common/PlanSelectionDialog";
+import { exportProductsToExcel, exportProductsToPDF } from "@/utils/exportUtils";
+
+function useDebounce<T>(value: T, delay: number = 500): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 const DEFAULT_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23f0f0f0'/%3E%3Ctext x='24' y='24' font-family='Arial' font-size='10' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
 const isValidImageUrl = (url?: string | null): boolean => {
@@ -32,12 +44,63 @@ export default function DraftPage() {
   const [selected, setSelected] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const debouncedSearch = useDebounce(searchText, 600);
+  const [excelLoading, setExcelLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const actionsMenuRef = useRef<HTMLDivElement>(null);
   const [categoriesData, setCategoriesData] = useState<any[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<{ label: string; value: string }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [subCategoryOptions, setSubCategoryOptions] = useState<{ label: string; value: string }[]>([]);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>("");
   const [showPlanDialog, setShowPlanDialog] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+        setShowActionsMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const getCurrentParams = () => {
+    const params: any = { status: "draft" };
+    if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+    if (selectedCategory) params.category_id = selectedCategory;
+    if (selectedSubCategory) params.sub_category_id = selectedSubCategory;
+    return params;
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      setExcelLoading(true);
+      const params = getCurrentParams();
+      await exportProductsToExcel(params);
+      toast.success("Draft products exported to Excel successfully!");
+      setShowActionsMenu(false);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to export to Excel");
+    } finally {
+      setExcelLoading(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      setPdfLoading(true);
+      const params = getCurrentParams();
+      await exportProductsToPDF(params);
+      toast.success("Draft products exported to PDF successfully!");
+      setShowActionsMenu(false);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to export to PDF");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const columns: ColDef[] = useMemo(() => [
     {
@@ -105,12 +168,11 @@ export default function DraftPage() {
   const fetchDrafts = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      params.append("status", "draft");
-      if (searchText.trim()) params.append("search", searchText.trim());
-      if (selectedCategory) params.append("category_id", selectedCategory);
-      if (selectedSubCategory) params.append("sub_category_id", selectedSubCategory);
-      const url = `${endPointApi.postAllVendorProductList}?${params.toString()}`;
+      const params = getCurrentParams();
+      const queryParams = new URLSearchParams();
+      Object.keys(params).forEach(key => queryParams.append(key, params[key]));
+      
+      const url = `${endPointApi.postAllVendorProductList}?${queryParams.toString()}`;
       const res = await api.get(url);
       const data = res?.data?.data || [];
       const normalized = data.map((p: any) => ({ ...p, id: p._id || p.id }));
@@ -124,7 +186,7 @@ export default function DraftPage() {
   };
 
   useEffect(() => { fetchCategories(); }, []);
-  useEffect(() => { fetchDrafts(); }, []);
+  useEffect(() => { fetchDrafts(); }, [debouncedSearch, selectedCategory, selectedSubCategory]);
 
   useEffect(() => {
     if (!selectedCategory) {
@@ -187,27 +249,67 @@ export default function DraftPage() {
 
   return (
     <>
-      <div className="flex items-center justify-end mt-4">
+        <div className="flex items-center justify-end mt-4 gap-3">
 
-          {/* <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Drafts</h2> */}
-        {/* <p className="text-sm text-gray-500 dark:text-gray-400">
-          Manage and activate your draft listings ({rows.length} drafts)
-        </p> */}
-        <Button
-          onClick={fetchDrafts}
-          disabled={loading}
-          className="px-4 py-2 text-sm font-medium flex items-center justify-center gap-2 btn-primary"
-        >
-          {loading ? (
-            <Loader type="button" text="Refreshing..." iconClassName="text-white h-4 w-4" />
-          ) : (
-            <>
-              <HiOutlineRefresh className="text-lg" />
-              Refresh
-            </>
-          )}
-        </Button>
-      </div>
+            {/* <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Drafts</h2> */}
+          {/* <p className="text-sm text-gray-500 dark:text-gray-400">
+            Manage and activate your draft listings ({rows.length} drafts)
+          </p> */}
+          <Button
+            onClick={fetchDrafts}
+            disabled={loading}
+            className="px-4 py-2 text-sm font-medium flex items-center justify-center gap-2 btn-primary"
+          >
+            {loading ? (
+              <Loader type="button" text="Refreshing..." iconClassName="text-white h-4 w-4" />
+            ) : (
+              <>
+                <HiOutlineRefresh className="text-lg" />
+                Refresh
+              </>
+            )}
+          </Button>
+          {/* Actions Menu (3-dots) */}
+            <div className="relative" ref={actionsMenuRef}>
+              <button
+                onClick={() => setShowActionsMenu((v) => !v)}
+                className="w-9 h-9 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300 shadow-sm"
+                title="Export options"
+              >
+                <FiMoreVertical className="text-xl" />
+              </button>
+
+              {showActionsMenu && (
+                <div className="absolute right-0 top-full mt-2 w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                  {/* <div className="px-5 py-3 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100/30 dark:border-gray-800/30">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Export Options</span>
+                  </div> */}
+
+                  <div className="py-1">
+                    <button
+                      onClick={handleExportExcel}
+                      disabled={excelLoading || pdfLoading}
+                      className="group w-full flex items-center gap-3 px-4 py-3.5 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200 disabled:opacity-50"
+                    >
+                      <FaFileExcel className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="group-hover:translate-x-0.5 transition-transform duration-200">Export to Excel</span>
+                      {excelLoading && <Loader className="ml-auto text-emerald-600 w-3.5 h-3.5" />}
+                    </button>
+
+                    <button
+                      onClick={handleExportPDF}
+                      disabled={excelLoading || pdfLoading}
+                      className="group w-full flex items-center gap-3 px-4 py-3.5 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-rose-500 hover:bg-rose-50/50 dark:hover:bg-rose-900/10 transition-all duration-200 disabled:opacity-50"
+                    >
+                      <FaFilePdf className="text-lg text-rose-600 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="group-hover:translate-x-0.5 transition-transform duration-200">Export to PDF</span>
+                      {pdfLoading && <Loader className="ml-auto text-rose-600 w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+        </div>
 
       {/* Filters */}
       {/* <div className="grid grid-cols-1 gap-6 mb-6">
@@ -258,9 +360,7 @@ export default function DraftPage() {
               >
                 Clear
               </Button>
-            </div>
-          </div>
-        </div>
+        {/* </div>
       </div> */}
 
       {/* Draft Selection Info */}
