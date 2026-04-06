@@ -134,3 +134,147 @@ export const exportQuotesToPDF = async (filters: any = {}) => {
     throw new Error(error.response?.data?.message || 'Failed to export quotes to PDF');
   }
 };
+
+// Export Orders to Excel
+export const exportOrdersToExcel = async (filters: any = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key] && filters[key] !== '') {
+        queryParams.append(key, filters[key]);
+      }
+    });
+
+    const response = await api.get(`${endPointApi.exportOrdersExcel}?${queryParams.toString()}`, {
+      responseType: 'blob'
+    });
+
+    const filename = `orders_${new Date().toISOString().split('T')[0]}.xlsx`;
+    downloadFile(response.data, filename);
+    
+    return { success: true, message: 'Orders exported to Excel successfully' };
+  } catch (error: any) {
+    console.error('Export orders to Excel error:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export orders to Excel');
+  }
+};
+
+// Export Orders to PDF
+export const exportOrdersToPDF = async (filters: any = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key] && filters[key] !== '') {
+        queryParams.append(key, filters[key]);
+      }
+    });
+
+    const response = await api.get(`${endPointApi.exportOrdersPDF}?${queryParams.toString()}`, {
+      responseType: 'blob'
+    });
+
+    const filename = `orders_${new Date().toISOString().split('T')[0]}.pdf`;
+    downloadFile(response.data, filename);
+    
+    return { success: true, message: 'Orders exported to PDF successfully' };
+  } catch (error: any) {
+    console.error('Export orders to PDF error:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export orders to PDF');
+  }
+};
+
+// Export Payments to Excel
+export const exportPaymentsToExcel = async (filters: any = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key] && filters[key] !== '') {
+        queryParams.append(key, filters[key]);
+      }
+    });
+
+    const response = await api.get(`${endPointApi.exportPaymentsExcel}?${queryParams.toString()}`, {
+      responseType: 'blob'
+    });
+
+    const filename = `payments_${new Date().toISOString().split('T')[0]}.xlsx`;
+    downloadFile(response.data, filename);
+    
+    return { success: true, message: 'Payments exported to Excel successfully' };
+  } catch (error: any) {
+    console.error('Export payments to Excel error:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export payments to Excel');
+  }
+};
+
+// Export Payments to PDF
+export const exportPaymentsToPDF = async (filters: any = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key] && filters[key] !== '') {
+        queryParams.append(key, filters[key]);
+      }
+    });
+
+    const response = await api.get(`${endPointApi.exportPaymentsPDF}?${queryParams.toString()}`, {
+      responseType: 'blob'
+    });
+
+    const filename = `payments_${new Date().toISOString().split('T')[0]}.pdf`;
+    downloadFile(response.data, filename);
+    
+    return { success: true, message: 'Payments exported to PDF successfully' };
+  } catch (error: any) {
+    console.error('Export payments to PDF error:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export payments to PDF');
+  }
+};
+
+// Export Wallet Transactions to Excel
+export const exportWalletTransactionsToExcel = async (filters: any = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key] && filters[key] !== '') {
+        queryParams.append(key, filters[key]);
+      }
+    });
+
+    const response = await api.get(`${endPointApi.exportWalletTransactionsExcel}?${queryParams.toString()}`, {
+      responseType: 'blob'
+    });
+
+    const filename = `wallet_transactions_${new Date().toISOString().split('T')[0]}.xlsx`;
+    downloadFile(response.data, filename);
+    
+    return { success: true, message: 'Transactions exported to Excel successfully' };
+  } catch (error: any) {
+    console.error('Export wallet transactions to Excel error:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export transactions to Excel');
+  }
+};
+
+// Export Wallet Transactions to PDF
+export const exportWalletTransactionsToPDF = async (filters: any = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key] && filters[key] !== '') {
+        queryParams.append(key, filters[key]);
+      }
+    });
+
+    const response = await api.get(`${endPointApi.exportWalletTransactionsPDF}?${queryParams.toString()}`, {
+      responseType: 'blob'
+    });
+
+    const filename = `wallet_transactions_${new Date().toISOString().split('T')[0]}.pdf`;
+    downloadFile(response.data, filename);
+    
+    return { success: true, message: 'Transactions exported to PDF successfully' };
+  } catch (error: any) {
+    console.error('Export wallet transactions to PDF error:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export transactions to PDF');
+  }
+};
