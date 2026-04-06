@@ -763,7 +763,7 @@ const ProductTable = () => {
       getProductData(params);
     } else if (debouncedSearch.trim() === '' && searchText === '') {
       // If search is cleared, check if we have other active filters
-      const hasOtherFilters = Object.entries(filters).some(([key, val]) => 
+      const hasOtherFilters = Object.entries(filters).some(([, val]: [string, any]) => 
         Array.isArray(val) ? val.length > 0 : false
       );
       
