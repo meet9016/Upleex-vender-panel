@@ -49,6 +49,12 @@ export interface EndPointApi {
     exportProductsPDF: string;
     exportQuotesExcel: string;
     exportQuotesPDF: string;
+    exportOrdersExcel: string;
+    exportOrdersPDF: string;
+    exportPaymentsExcel: string;
+    exportPaymentsPDF: string;
+    exportWalletTransactionsExcel: string;
+    exportWalletTransactionsPDF: string;
 
     // Service
     postVendorAddService: string;
@@ -131,6 +137,12 @@ const endPointApi: EndPointApi = {
     exportProductsPDF: 'export/products/pdf',
     exportQuotesExcel: 'export/quotes/excel',
     exportQuotesPDF: 'export/quotes/pdf',
+    exportOrdersExcel: 'export/orders/excel',
+    exportOrdersPDF: 'export/orders/pdf',
+    exportPaymentsExcel: 'export/payments/excel',
+    exportPaymentsPDF: 'export/payments/pdf',
+    exportWalletTransactionsExcel: 'export/wallet-transactions/excel',
+    exportWalletTransactionsPDF: 'export/wallet-transactions/pdf',
 
     // Service
     postVendorAddService: 'services/create-service',

@@ -1263,9 +1263,9 @@ const ProductTable = () => {
             {showActionsMenu && (
               <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-auto mt-3 w-auto sm:w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
                 {/* Bulk Actions Section */}
-                <div className="px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100/30 dark:border-gray-800/30">
+                {/* <div className="px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100/30 dark:border-gray-800/30">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Bulk Operations</span>
-                </div>
+                </div> */}
 
                 <div className="py-1">
                   {/* Deactivate */}
@@ -1304,9 +1304,9 @@ const ProductTable = () => {
                 </div>
 
                 {/* Management Section */}
-                <div className="px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border-y border-gray-100/30 dark:border-gray-800/30">
+                {/* <div className="px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border-y border-gray-100/30 dark:border-gray-800/30">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Management</span>
-                </div>
+                </div> */}
 
                 <div className="py-1">
                   <button
@@ -1322,9 +1322,9 @@ const ProductTable = () => {
                 </div>
 
                 {/* Export Section */}
-                <div className="px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border-y border-gray-100/30 dark:border-gray-800/30">
+                {/* <div className="px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border-y border-gray-100/30 dark:border-gray-800/30">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Export Options</span>
-                </div>
+                </div> */}
 
                 <div className="py-1">
                   <button
