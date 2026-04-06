@@ -17,6 +17,7 @@ import { exportQuotesToExcel, exportQuotesToPDF } from '@/utils/exportUtils';
 import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
 import { FiEdit3, FiCheck, FiX, FiMoreVertical } from 'react-icons/fi';
 import ActionButtons from "@/components/common/ActionButtons";
+import Loader from "@/components/common/Loader";
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -76,7 +77,8 @@ const QuoteTable = () => {
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const debouncedSearch = useDebounce(searchText, 600);
-  const [exportLoading, setExportLoading] = useState(false);
+  const [excelLoading, setExcelLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const actionsMenuRef = useRef<HTMLDivElement>(null);
   const [hoveredImage, setHoveredImage] = useState<string | null>(null);
@@ -105,6 +107,7 @@ const QuoteTable = () => {
     month: [] as string[],
     status: [] as string[],
   });
+  const [pendingFilters, setPendingFilters] = useState(filters);
   
   // Categories data - removed since not needed
   console.log("🚀 ~ QuoteTable ~ filters:", filters)
@@ -112,6 +115,28 @@ const QuoteTable = () => {
   const activeFilterCount = Object.values(filters).filter(v => 
     Array.isArray(v) ? v.length > 0 : v !== ''
   ).length;
+
+  const getCurrentParams = (customFilters?: typeof filters) => {
+    const targetFilters = customFilters || filters;
+    const params: any = {};
+
+    // Convert status IDs → internal enum strings that MongoDB stores
+    if (targetFilters.status.length > 0) {
+      const internalStatuses = resolveStatusValues(targetFilters.status);
+      if (internalStatuses) params.status = internalStatuses;
+    }
+    if (targetFilters.product_type.length > 0) params.product_type = targetFilters.product_type.join(',');
+    if (targetFilters.listing_type.length > 0) params.listing_type = targetFilters.listing_type.join(',');
+    if (targetFilters.month.length > 0) params.month = targetFilters.month.join(',');
+    if (targetFilters.delivery_start_date) params.delivery_start_date = targetFilters.delivery_start_date;
+    if (targetFilters.delivery_end_date) params.delivery_end_date = targetFilters.delivery_end_date;
+    
+    if (debouncedSearch && debouncedSearch.trim() !== '') {
+      params.search = debouncedSearch.trim();
+    }
+
+    return params;
+  };
 
   // Transform API data to match table columns
   const transformQuoteData = (quotes: any[]): Quote[] => {
@@ -400,17 +425,7 @@ const QuoteTable = () => {
     try {
       setLoading(true);
       // Build query params
-      const params: any = {};
-
-      if (filterParams.status) params.status = filterParams.status;
-      if (filterParams.search) params.search = filterParams.search;
-      if (filterParams.product_type) params.product_type = filterParams.product_type;
-      if (filterParams.listing_type) params.listing_type = filterParams.listing_type;
-      if (filterParams.month) params.month = filterParams.month;
-      if (filterParams.delivery_start_date) params.delivery_start_date = filterParams.delivery_start_date;
-      if (filterParams.delivery_end_date) params.delivery_end_date = filterParams.delivery_end_date;
-      if (filterParams.page) params.page = filterParams.page;
-      if (filterParams.limit) params.limit = filterParams.limit;
+      const params = { ...filterParams };
 
       console.log("🚀 ~ API Request Params:", params);
 
@@ -517,7 +532,7 @@ const QuoteTable = () => {
   };
 
   const handleFilterChange = (key: string, value: string | string[]) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setPendingFilters(prev => ({ ...prev, [key]: value }));
     setOpenDropdown(null);
   };
 
@@ -546,7 +561,7 @@ const QuoteTable = () => {
   };
 
   const getSelectedLabel = (key: string) => {
-    const value = filters[key as keyof typeof filters];
+    const value = pendingFilters[key as keyof typeof pendingFilters];
     if (!value || (Array.isArray(value) && value.length === 0)) return null;
 
     if (Array.isArray(value)) {
@@ -567,25 +582,13 @@ const QuoteTable = () => {
     }
   };
   const applyFilters = () => {
-    const params: any = {};
-
-    // Convert status IDs → internal enum strings that MongoDB stores
-    if (filters.status.length > 0) {
-      const internalStatuses = resolveStatusValues(filters.status);
-      if (internalStatuses) params.status = internalStatuses;
-    }
-    if (filters.product_type.length > 0) params.product_type = filters.product_type.join(',');
-    if (filters.listing_type.length > 0) params.listing_type = filters.listing_type.join(',');
-    if (filters.month.length > 0) params.month = filters.month.join(',');
-    if (filters.delivery_start_date) params.delivery_start_date = filters.delivery_start_date;
-    if (filters.delivery_end_date) params.delivery_end_date = filters.delivery_end_date;
-    if (searchText) params.search = searchText;
-
+    setFilters(pendingFilters);
+    const params = getCurrentParams(pendingFilters);
     params.page = 1;
     params.limit = 10;
 
     console.log("🚀 ~ Applying filters:", params);
-    console.log("🚀 ~ Current filter state:", filters);
+    console.log("🚀 ~ Current filter state:", pendingFilters);
 
     getQuoteData(params);
     setShowFilterModal(false);
@@ -593,14 +596,16 @@ const QuoteTable = () => {
 
   const clearFilters = () => {
     // Reset all filter states
-    setFilters({
+    const resetFilters = {
       product_type: [],
       listing_type: [],
       delivery_start_date: '',
       delivery_end_date: '',
       month: [],
       status: [],
-    });
+    };
+    setPendingFilters(resetFilters);
+    setFilters(resetFilters);
     setSearchText('');
     
     // Immediately fetch data with no filters
@@ -613,19 +618,8 @@ const QuoteTable = () => {
   // Export functions
   const handleExportExcel = async () => {
     try {
-      setExportLoading(true);
-      const params: any = {};
-
-      // Add current filters to export
-      if (debouncedSearch && debouncedSearch.trim() !== '') {
-        params.search = debouncedSearch.trim();
-      }
-      if (filters.status.length > 0) params.status = filters.status.join(',');
-      if (filters.product_type.length > 0) params.product_type = filters.product_type.join(',');
-      if (filters.listing_type.length > 0) params.listing_type = filters.listing_type.join(',');
-      if (filters.month.length > 0) params.month = filters.month.join(',');
-      if (filters.delivery_start_date) params.delivery_start_date = filters.delivery_start_date;
-      if (filters.delivery_end_date) params.delivery_end_date = filters.delivery_end_date;
+      setExcelLoading(true);
+      const params = getCurrentParams();
 
       await exportQuotesToExcel(params);
       toast.success('Quotes exported to Excel successfully!');
@@ -633,25 +627,14 @@ const QuoteTable = () => {
     } catch (error: any) {
       toast.error(error.message || 'Failed to export quotes to Excel');
     } finally {
-      setExportLoading(false);
+      setExcelLoading(false);
     }
   };
 
   const handleExportPDF = async () => {
     try {
-      setExportLoading(true);
-      const params: any = {};
-
-      // Add current filters to export
-      if (debouncedSearch && debouncedSearch.trim() !== '') {
-        params.search = debouncedSearch.trim();
-      }
-      if (filters.status.length > 0) params.status = filters.status.join(',');
-      if (filters.product_type.length > 0) params.product_type = filters.product_type.join(',');
-      if (filters.listing_type.length > 0) params.listing_type = filters.listing_type.join(',');
-      if (filters.month.length > 0) params.month = filters.month.join(',');
-      if (filters.delivery_start_date) params.delivery_start_date = filters.delivery_start_date;
-      if (filters.delivery_end_date) params.delivery_end_date = filters.delivery_end_date;
+      setPdfLoading(true);
+      const params = getCurrentParams();
 
       await exportQuotesToPDF(params);
       toast.success('Quotes exported to PDF successfully!');
@@ -659,28 +642,16 @@ const QuoteTable = () => {
     } catch (error: any) {
       toast.error(error.message || 'Failed to export quotes to PDF');
     } finally {
-      setExportLoading(false);
+      setPdfLoading(false);
     }
   };
 
   useEffect(() => {
-    // Only apply search filter automatically, not other filters
-    if (debouncedSearch.trim() !== '') {
-      const params: any = { search: debouncedSearch };
-      console.log('🔍 Applying search only:', params);
-      getQuoteData(params);
-    } else if (debouncedSearch.trim() === '' && searchText === '') {
-      // If search is cleared, check if we have other active filters
-      const hasOtherFilters = Object.entries(filters).some(([key, val]) => 
-        key !== 'search' && (Array.isArray(val) ? val.length > 0 : val !== '')
-      );
-      
-      if (!hasOtherFilters) {
-        // No filters at all, get all data
-        console.log('📤 No filters, getting all data');
-        getQuoteData({});
-      }
-    }
+    // Search automatically triggers a fetch with all current applied filters
+    const params = getCurrentParams();
+    params.page = 1;
+    params.limit = 10;
+    getQuoteData(params);
   }, [debouncedSearch]);
 
   useEffect(() => {
@@ -761,7 +732,7 @@ const QuoteTable = () => {
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Product Type</label>
                       <MultiSelectDropdown
                         options={productTypes.map((t: any) => ({ label: t.product_type, value: String(t.id) }))}
-                        selectedValues={filters.product_type}
+                        selectedValues={pendingFilters.product_type}
                         onChange={(values) => handleFilterChange('product_type', values)}
                         placeholder="Select Product Types"
                       />
@@ -772,7 +743,7 @@ const QuoteTable = () => {
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Listing Type</label>
                       <MultiSelectDropdown
                         options={listingTypes.map((lt: any) => ({ label: lt.name, value: String(lt.id) }))}
-                        selectedValues={filters.listing_type}
+                        selectedValues={pendingFilters.listing_type}
                         onChange={(values) => handleFilterChange('listing_type', values)}
                         placeholder="Select Listing Types"
                       />
@@ -782,7 +753,7 @@ const QuoteTable = () => {
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 ">Start Date</label>
                       <DatePicker
-                        value={filters.delivery_start_date}
+                        value={pendingFilters.delivery_start_date}
                         onChange={(date) => handleFilterChange("delivery_start_date", date)}
                       />
                     </div>
@@ -791,8 +762,8 @@ const QuoteTable = () => {
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">End Date</label>
                       <DatePicker
-                        value={filters.delivery_end_date}
-                        min={filters.delivery_start_date}
+                        value={pendingFilters.delivery_end_date}
+                        min={pendingFilters.delivery_start_date}
                         onChange={(date) => handleFilterChange("delivery_end_date", date)}
                       />
                     </div>
@@ -802,7 +773,7 @@ const QuoteTable = () => {
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Month</label>
                       <MultiSelectDropdown
                         options={months.map((m: any) => ({ label: m.month_name, value: String(m.id) }))}
-                        selectedValues={filters.month}
+                        selectedValues={pendingFilters.month}
                         onChange={(values) => handleFilterChange('month', values)}
                         placeholder="Select Months"
                       />
@@ -813,7 +784,7 @@ const QuoteTable = () => {
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Status</label>
                       <MultiSelectDropdown
                         options={statusList.map((s: any) => ({ label: s.name, value: String(s.id) }))}
-                        selectedValues={filters.status}
+                        selectedValues={pendingFilters.status}
                         onChange={(values) => handleFilterChange('status', values)}
                         placeholder="Select Status"
                       />
@@ -847,31 +818,29 @@ const QuoteTable = () => {
             {showActionsMenu && (
               <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-auto mt-3 w-auto sm:w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
                 {/* Export Section */}
-                <div className="px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100/30 dark:border-gray-800/30">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Export Options</span>
-                </div>
+           
 
                 <div className="py-1">
                   {/* Export to Excel */}
                   <button
                     onClick={handleExportExcel}
-                    disabled={exportLoading}
+                    disabled={excelLoading || pdfLoading}
                     className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200 disabled:opacity-50"
                   >
                     <FaFileExcel className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
                     <span className="group-hover:translate-x-0.5 transition-transform duration-200">Export to Excel</span>
-                    {exportLoading && <div className="ml-auto w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />}
+                    {excelLoading && <Loader className="ml-auto text-emerald-600 w-3.5 h-3.5" />}
                   </button>
 
                   {/* Export to PDF */}
                   <button
                     onClick={handleExportPDF}
-                    disabled={exportLoading}
+                    disabled={excelLoading || pdfLoading}
                     className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-rose-500 hover:bg-rose-50/50 dark:hover:bg-rose-900/10 transition-all duration-200 disabled:opacity-50"
                   >
                     <FaFilePdf className="text-lg text-rose-600 group-hover:scale-110 transition-transform duration-200" />
                     <span className="group-hover:translate-x-0.5 transition-transform duration-200">Export to PDF</span>
-                    {exportLoading && <div className="ml-auto w-3.5 h-3.5 border-2 border-rose-600 border-t-transparent rounded-full animate-spin" />}
+                    {pdfLoading && <Loader className="ml-auto text-rose-600 w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>

@@ -1,7 +1,21 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ArrowUpIcon, ArrowDownIcon } from "@/icons";
 import PageLoader from "@/components/common/PageLoader";
+import { FiMoreVertical } from "react-icons/fi";
+import { FaFileExcel, FaFilePdf } from "react-icons/fa";
+import { exportWalletTransactionsToExcel, exportWalletTransactionsToPDF } from "@/utils/exportUtils";
+import Loader from "@/components/common/Loader";
+import { toast } from "react-toastify";
+
+function useDebounce<T>(value: T, delay: number = 500): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 interface Transaction {
   id: string;
@@ -23,6 +37,56 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   loading = false,
 }) => {
   const [filter, setFilter] = useState<"all" | "credit" | "debit">("all");
+  const [searchText, setSearchText] = useState("");
+  const debouncedSearch = useDebounce(searchText, 600);
+  const [excelLoading, setExcelLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const actionsMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+        setShowActionsMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleExportExcel = async () => {
+    try {
+      setExcelLoading(true);
+      const params = {
+        type: filter === "all" ? undefined : filter,
+        search: debouncedSearch.trim() || undefined,
+      };
+      await exportWalletTransactionsToExcel(params);
+      toast.success("Transactions exported to Excel successfully!");
+      setShowActionsMenu(false);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to export to Excel");
+    } finally {
+      setExcelLoading(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      setPdfLoading(true);
+      const params = {
+        type: filter === "all" ? undefined : filter,
+        search: debouncedSearch.trim() || undefined,
+      };
+      await exportWalletTransactionsToPDF(params);
+      toast.success("Transactions exported to PDF successfully!");
+      setShowActionsMenu(false);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to export to PDF");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -47,10 +111,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     });
   };
 
-  const filtered =
-    filter === "all"
-      ? transactions || []
-      : (transactions || []).filter((t) => t.type === filter);
+  const filtered = (transactions || []).filter((t) => {
+    const matchesFilter = filter === "all" ? true : t.type === filter;
+    const matchesSearch = searchText.trim() === "" 
+      ? true 
+      : t.description.toLowerCase().includes(searchText.toLowerCase()) || 
+        t.id.toLowerCase().includes(searchText.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
 
   const totalCredit = (transactions || [])
     .filter((t) => t.type === "credit" && t.status === "completed")
@@ -69,7 +137,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       )}
       {/* Card Header */}
       <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">
               Transaction History
@@ -79,20 +147,86 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             </p>
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex items-center gap-1 p-1 rounded-lg bg-gray-100 dark:bg-gray-800">
-            {(["all", "credit", "debit"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md capitalize transition-all duration-150 ${filter === f
-                    ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                  }`}
-              >
-                {f}
-              </button>
-            ))}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-64">
+              <input
+                type="text"
+                placeholder="Search transactions..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:bg-gray-800 dark:text-white transition-all duration-200"
+              />
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              {searchText && (
+                <button
+                  onClick={() => setSearchText("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Filter Tabs */}
+              <div className="flex items-center gap-1 p-1 rounded-xl bg-gray-100 dark:bg-gray-800">
+                {(["all", "credit", "debit"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg capitalize transition-all duration-150 ${filter === f
+                        ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                      }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+
+              {/* Actions Menu */}
+              <div className="relative" ref={actionsMenuRef}>
+                <button
+                  onClick={() => setShowActionsMenu((v) => !v)}
+                  className="w-9 h-9 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300"
+                  title="Export options"
+                >
+                  <FiMoreVertical className="text-xl" />
+                </button>
+
+                {showActionsMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-56 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                 
+                    <div className="py-1">
+                      <button
+                        onClick={handleExportExcel}
+                        disabled={excelLoading || pdfLoading}
+                        className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200 disabled:opacity-50"
+                      >
+                        <FaFileExcel className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
+                        <span>Export to Excel</span>
+                        {excelLoading && <Loader className="ml-auto text-emerald-600 w-3.5 h-3.5" />}
+                      </button>
+
+                      <button
+                        onClick={handleExportPDF}
+                        disabled={excelLoading || pdfLoading}
+                        className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-rose-500 hover:bg-rose-50/50 dark:hover:bg-rose-900/10 transition-all duration-200 disabled:opacity-50"
+                      >
+                        <FaFilePdf className="text-lg text-rose-600 group-hover:scale-110 transition-transform duration-200" />
+                        <span>Export to PDF</span>
+                        {pdfLoading && <Loader className="ml-auto text-rose-600 w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

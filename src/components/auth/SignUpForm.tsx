@@ -64,14 +64,23 @@ export default function SignUpForm() {
   };
 
   const handleSendOtp = async () => {
-    const e: { mobile?: string } = {};
+    const e: { mobile?: string; businessName?: string } = {};
     const isMobileValid = (val: string) => /^[6-9]\d{9}$/.test(val);
+    
+    // Business name validation - minimum 3 characters
+    const businessNameTrimmed = formData.businessName.trim();
+    if (businessNameTrimmed.length < 3) {
+      e.businessName = "Business name must be at least 3 characters";
+    }
+    
     if (!isMobileValid(formData.mobile)) e.mobile = "Enter valid 10-digit Indian mobile number";
     if (Object.keys(e).length > 0) {
       setErrors(prev => ({ ...prev, ...e }));
       return;
     }
-    setErrors(prev => ({ ...prev, mobile: "" }));
+    
+    setErrors(prev => ({ ...prev, mobile: "", businessName: "" }));
+    
     try {
       const res = await api.post(endPointApi.businessRegister, {
         full_name: `${formData.fname} ${formData.lname}`.trim(),
@@ -103,9 +112,16 @@ export default function SignUpForm() {
       const e: { fname?: string; lname?: string; businessName?: string; email?: string; mobile?: string; city?: string; password?: string } = {};
       if (!formData.fname.trim()) e.fname = "First name is required";
       if (!formData.lname.trim()) e.lname = "Last name is required";
-      if (!formData.businessName.trim()) e.businessName = "Business name is required";
-      // const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-          const emailPattern = /^[^\s@]+@[^\s@]+\.(com|in|org)$/;
+      
+      // Business name validation - minimum 3 characters
+      const businessNameTrimmed = formData.businessName.trim();
+      if (!businessNameTrimmed) {
+        e.businessName = "Business name is required";
+      } else if (businessNameTrimmed.length < 3) {
+        e.businessName = "Business name must be at least 3 characters";
+      }
+      
+      const emailPattern = /^[^\s@]+@[^\s@]+\.(com|in|org)$/;
       if (!emailPattern.test(formData.email.trim())) e.email = "Enter a valid email";
       // if (!emailPattern.test(formData.email.trim())) e.email = "Enter a valid email address";
       if (!/^[6-9]\d{9}$/.test(formData.mobile)) e.mobile = "Enter valid 10-digit Indian mobile number";
@@ -261,14 +277,38 @@ export default function SignUpForm() {
                 name="businessName"
                 value={formData.businessName}
                 onChange={(e) => {
-                  handleChange(e);
-                  if (e.target.value.trim()) setErrors(prev => ({ ...prev, businessName: '' }));
+                  const value = e.target.value;
+                  setFormData(prev => ({ ...prev, businessName: value }));
+                  
+                  // Real-time validation
+                  const trimmed = value.trim();
+                  if (trimmed.length >= 3) {
+                    setErrors(prev => ({ ...prev, businessName: '' }));
+                  } else if (trimmed.length > 0 && trimmed.length < 3) {
+                    setErrors(prev => ({ ...prev, businessName: 'Business name must be at least 3 characters' }));
+                  } else if (!trimmed) {
+                    setErrors(prev => ({ ...prev, businessName: 'Business name is required' }));
+                  }
                 }}
-                placeholder="Enter your business name"
+                placeholder="Enter your business name (min. 3 characters)"
                 className="mt-1"
                 error={!!errors.businessName}
               />
-              {errors.businessName && <p className="error-message">{errors.businessName}</p>}
+              {errors.businessName && (
+                <p className="error-message" style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  {errors.businessName}
+                </p>
+              )}
+              {/* Character counter */}
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.businessName.trim().length}/3 characters minimum
+                {formData.businessName.trim().length >= 3 && formData.businessName.trim().length < 3 && (
+                  <span className="text-red-500"> (Need {3 - formData.businessName.trim().length} more)</span>
+                )}
+                {formData.businessName.trim().length >= 3 && (
+                  <span className="text-green-500"> ✓ Valid</span>
+                )}
+              </p>
             </div>
 
             {/* Email */}
