@@ -11,7 +11,7 @@ type Props = {
   file: File | string | null;
   onChange: (file: File | null) => void;
   error?: string;
-  clearError?: () => void; 
+  clearError?: () => void;
   required?: boolean;
   disabled?: boolean;
 };
@@ -48,7 +48,7 @@ export default function DocumentUpload({
     if (file instanceof File) {
       const isPDFFile = file.type === 'application/pdf';
       setIsPDF(isPDFFile);
-      
+
       if (isPDFFile) {
         setPreview(URL.createObjectURL(file));
       } else if (file.type?.startsWith("image/")) {
@@ -59,7 +59,7 @@ export default function DocumentUpload({
     }
   }, [file]);
 
-// Replaced by shared utility in @/utils/imageCompression
+  // Replaced by shared utility in @/utils/imageCompression
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] || null;
@@ -72,7 +72,7 @@ export default function DocumentUpload({
 
     if (!isImage && !isPDF) {
       toast.error("Please upload only image files or PDF");
-      e.target.value = ""; 
+      e.target.value = "";
       return;
     }
 
@@ -94,7 +94,7 @@ export default function DocumentUpload({
     }
 
     onChange(finalFile);
-    
+
     if (clearError) {
       clearError();
     }
@@ -102,13 +102,13 @@ export default function DocumentUpload({
 
   const handleRemoveFile = () => {
     onChange(null);
-    
+
     // Reset file input if it exists
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
     }
-    
+
     console.log('File removal onChange called with null'); // Debug log
   };
 
@@ -119,13 +119,11 @@ export default function DocumentUpload({
       </label>
 
       {!file ? (
-        <label className={`relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all duration-300 text-center overflow-hidden ${
-          disabled ? 'opacity-50 cursor-not-allowed pointer-events-none ' : 'cursor-pointer '
-        }${
-          error 
-            ? "border-rose-300 bg-rose-50/30 dark:bg-rose-900/10" 
+        <label className={`relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all duration-300 text-center overflow-hidden ${disabled ? 'opacity-50 cursor-not-allowed pointer-events-none ' : 'cursor-pointer '
+          }${error
+            ? "border-rose-300 bg-rose-50/30 dark:bg-rose-900/10"
             : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 hover:bg-white dark:hover:bg-slate-800/40 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-xl hover:shadow-indigo-500/5"
-        }`}>
+          }`}>
           <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 mb-4 group-hover/upload:scale-110 group-hover/upload:rotate-3 transition-transform duration-300">
             <FiUploadCloud className={`text-3xl ${error ? "text-red-500" : "text-indigo-500"}`} />
           </div>
@@ -135,20 +133,19 @@ export default function DocumentUpload({
             </p>
             <p className="text-xs text-slate-400">Supports JPG, PNG or PDF (Max 2MB recommended)</p>
           </div>
-          <input 
-            type="file" 
-            className="hidden" 
+          <input
+            type="file"
+            className="hidden"
             onChange={handleFileChange}
             accept="image/*,application/pdf"
             disabled={disabled}
           />
         </label>
       ) : (
-        <div className={`relative p-4 backdrop-blur-sm bg-white/60 dark:bg-slate-900/60 border rounded-2xl transition-all duration-300 group/card ${
-          error 
-            ? "border-rose-300 bg-rose-50/30 shadow-rose-500/5" 
+        <div className={`relative p-4 backdrop-blur-sm bg-white/60 dark:bg-slate-900/60 border rounded-2xl transition-all duration-300 group/card ${error
+            ? "border-rose-300 bg-rose-50/30 shadow-rose-500/5"
             : "border-slate-200/50 dark:border-slate-800/50 shadow-lg shadow-slate-200/50 dark:shadow-none hover:shadow-xl hover:shadow-slate-300/50"
-        }`}>
+          }`}>
           <div className="flex items-center gap-4">
             {/* File Preview Thumbnail */}
             <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0 border border-slate-200/50 dark:border-slate-700/50 shadow-inner">
@@ -234,7 +231,7 @@ export default function DocumentUpload({
               <FiX className="text-2xl group-hover:rotate-90 transition-transform duration-300" />
             </button>
           </div>
-          
+
           <div className="w-full h-full flex items-center justify-center animate-in zoom-in-95 duration-500">
             {isPDF ? (
               <iframe
@@ -243,10 +240,10 @@ export default function DocumentUpload({
                 title="PDF Preview"
               />
             ) : (
-              <img 
-                src={preview} 
-                className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border-4 border-white/10" 
-                alt="Document Full View" 
+              <img
+                src={preview}
+                className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border-4 border-white/10"
+                alt="Document Full View"
               />
             )}
           </div>
