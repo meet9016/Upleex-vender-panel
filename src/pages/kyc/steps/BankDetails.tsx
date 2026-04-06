@@ -9,6 +9,7 @@ import SearchableDropdown from "@/components/common/SearchableDropdown";
 import { PlusIcon } from "@/icons";
 import { toast } from "react-toastify";
 import { api } from "@/utils/axiosInstance";
+import ComponentCard from "@/components/common/ComponentCard";
 
 export type Option = {
   value: string;
@@ -57,7 +58,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
 
   return (
     <>
-      <div className="w-full">
+      <ComponentCard title="Bank Details">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div>
             <Label required>Bank Account Holder Name</Label>
@@ -191,7 +192,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
 
           <div className="hidden md:block"></div>
         </div>
-      </div>
+      </ComponentCard>
     </>
   );
 }

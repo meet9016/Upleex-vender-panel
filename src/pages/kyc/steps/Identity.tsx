@@ -1,5 +1,6 @@
 "use client";
 
+import ComponentCard from "@/components/common/ComponentCard";
 import Input from "@/components/common/Input";
 import Checkbox from "@/components/form/input/Checkbox";
 import Label from "@/components/form/Label";
@@ -26,7 +27,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
   };
 
   return (
-    <div className="w-full">
+    <ComponentCard title="Identity">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {/* PAN Number */}
         <div>
@@ -192,6 +193,6 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
 </div>
         </div>
       </div>
-    </div>
+    </ComponentCard>
   );
 }

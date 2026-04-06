@@ -64,7 +64,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
     };
 
     checkDarkMode();
- 
+
     const observer = new MutationObserver(checkDarkMode);
     observer.observe(document.documentElement, {
       attributes: true,
@@ -203,6 +203,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             suppressRowClickSelection={true}
             alwaysShowHorizontalScroll={true}
             getRowStyle={getRowStyle}
+            overlayNoRowsTemplate="<span></span>"
           />
         </div>
       </div>

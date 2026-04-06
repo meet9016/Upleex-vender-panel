@@ -10,12 +10,12 @@ import { MdDelete, MdModeEdit } from "react-icons/md";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 const PlanTable = () => {
-  const { setBreadcrumbs } = useBreadcrumb();
+  // const { setBreadcrumbs } = useBreadcrumb();
 
-  useEffect(() => {
-    setBreadcrumbs([{ label: "Plan" }]);
-    return () => setBreadcrumbs(null);
-  }, [setBreadcrumbs]);
+  // useEffect(() => {
+  //   setBreadcrumbs([{ label: "Plan" }]);
+  //   return () => setBreadcrumbs(null);
+  // }, [setBreadcrumbs]);
 
   return (
     <div>

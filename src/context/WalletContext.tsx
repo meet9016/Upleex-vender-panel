@@ -1,3 +1,4 @@
+// context/WalletContext.tsx
 "use client";
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { api } from "@/utils/axiosInstance";
@@ -11,14 +12,19 @@ interface WalletContextType {
   addMoney: (amount: number) => Promise<void>;
 }
 
-const WalletContext = createContext<WalletContextType | undefined>(undefined);
+// Default value for SSR
+const defaultWalletContext: WalletContextType = {
+  balance: 0,
+  currency: "₹",
+  isLoading: false,
+  refreshBalance: async () => {},
+  addMoney: async () => {},
+};
+
+const WalletContext = createContext<WalletContextType>(defaultWalletContext);
 
 export const useWallet = () => {
-  const context = useContext(WalletContext);
-  if (!context) {
-    throw new Error("useWallet must be used within a WalletProvider");
-  }
-  return context;
+  return useContext(WalletContext); // No error throwing now
 };
 
 interface WalletProviderProps {
@@ -29,11 +35,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [balance, setBalance] = useState<number>(0);
   const [currency] = useState<string>("₹");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [mounted, setMounted] = useState<boolean>(false);
 
   // Fetch balance from API
   const refreshBalance = useCallback(async () => {
+    if (!mounted) return; // Don't fetch during SSR
+    
     try {
-      // Add timestamp to prevent caching
       const timestamp = Date.now();
       const response = await api.get(`${endPointApi.getWalletBalance}?t=${timestamp}`);
       if (response.data.success) {
@@ -42,13 +50,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     } catch (error) {
       console.error("Error fetching wallet balance:", error);
     }
-  }, []);
+  }, [mounted]);
 
-  // Add money to wallet (calls backend API)
+  // Add money to wallet
   const addMoney = async (amount: number) => {
+    if (!mounted) throw new Error("Cannot add money during SSR");
+    
     try {
       const response = await api.post(endPointApi.addWalletMoney, { amount });
-      // Refresh balance immediately after adding money
       await refreshBalance();
       return response.data;
     } catch (error) {
@@ -57,34 +66,45 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   };
 
+  // Handle mounting
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Load balance on mount
   useEffect(() => {
-    const loadBalance = async () => {
-      setIsLoading(true);
-      await refreshBalance();
-      setIsLoading(false);
-    };
-    loadBalance();
-  }, [refreshBalance]);
+    if (mounted) {
+      const loadBalance = async () => {
+        setIsLoading(true);
+        await refreshBalance();
+        setIsLoading(false);
+      };
+      loadBalance();
+    }
+  }, [mounted, refreshBalance]);
 
   // Listen for wallet update events
   useEffect(() => {
+    if (!mounted) return;
+    
     const handleWalletUpdate = async () => {
       await refreshBalance();
     };
 
     window.addEventListener('walletUpdated', handleWalletUpdate);
     return () => window.removeEventListener('walletUpdated', handleWalletUpdate);
-  }, [refreshBalance]);
+  }, [mounted, refreshBalance]);
 
-  // Auto-refresh balance every 30 seconds (reduced from 10 to minimize API calls)
+  // Auto-refresh balance every 30 seconds
   useEffect(() => {
+    if (!mounted) return;
+    
     const interval = setInterval(() => {
       refreshBalance();
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [refreshBalance]);
+  }, [mounted, refreshBalance]);
 
   const value: WalletContextType = {
     balance,
@@ -93,6 +113,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     refreshBalance,
     addMoney,
   };
+
+  // During SSR or before mount, return default context
+  if (!mounted) {
+    return <>{children}</>;
+  }
 
   return (
     <WalletContext.Provider value={value}>

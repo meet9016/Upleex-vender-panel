@@ -276,7 +276,7 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <PageBreadcrumb pageTitle="Settings" />
+      <PageBreadcrumb breadcrumbs={[{ label: "Settings" }]} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-3">
