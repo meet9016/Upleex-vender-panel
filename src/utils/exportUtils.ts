@@ -278,3 +278,51 @@ export const exportWalletTransactionsToPDF = async (filters: any = {}) => {
     throw new Error(error.response?.data?.message || 'Failed to export transactions to PDF');
   }
 };
+
+// Export Services to Excel
+export const exportServicesToExcel = async (filters: any = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key] && filters[key] !== '') {
+        queryParams.append(key, filters[key]);
+      }
+    });
+
+    const response = await api.get(`${endPointApi.exportServicesExcel}?${queryParams.toString()}`, {
+      responseType: 'blob'
+    });
+
+    const filename = `services_${new Date().toISOString().split('T')[0]}.xlsx`;
+    downloadFile(response.data, filename);
+    
+    return { success: true, message: 'Services exported to Excel successfully' };
+  } catch (error: any) {
+    console.error('Export services to Excel error:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export services to Excel');
+  }
+};
+
+// Export Services to PDF
+export const exportServicesToPDF = async (filters: any = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key] && filters[key] !== '') {
+        queryParams.append(key, filters[key]);
+      }
+    });
+
+    const response = await api.get(`${endPointApi.exportServicesPDF}?${queryParams.toString()}`, {
+      responseType: 'blob'
+    });
+
+    const filename = `services_${new Date().toISOString().split('T')[0]}.pdf`;
+    downloadFile(response.data, filename);
+    
+    return { success: true, message: 'Services exported to PDF successfully' };
+  } catch (error: any) {
+    console.error('Export services to PDF error:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export services to PDF');
+  }
+};

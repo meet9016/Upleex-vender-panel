@@ -1143,3 +1143,6 @@ span.flatpickr-weekday,
     padding: 11px !important;
     position: absolute;
 }
+.ag-center-aligned-header{
+  margin-left: 6px !important;
+}

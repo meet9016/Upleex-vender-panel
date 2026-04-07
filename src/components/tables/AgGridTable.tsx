@@ -143,11 +143,25 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
     () => ({
       mode: "multiRow",
       checkboxes: true,
+      headerCheckbox: true,
       enableSelectAll: true,
       enableSelectionWithoutKeys: true,
     }),
     []
   );
+
+  const selectionColumnDef = useMemo<ColDef>(() => {
+    return {
+      width: 50,
+      maxWidth: 50,
+      suppressHeaderMenuButton: true,
+      suppressHeaderContextMenu: true,
+      pinned: 'left',
+      lockPosition: 'left',
+      cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 },
+      headerClass: 'ag-center-aligned-header',
+    };
+  }, []);
 
   const onGridReady = useCallback((params: any) => {
     try {
@@ -189,6 +203,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             rowData={rowData}
             columnDefs={columns || defaultColumns}
             defaultColDef={defaultColDef}
+            selectionColumnDef={showCheckboxes ? selectionColumnDef : undefined}
             pagination
             paginationPageSize={20}
             rowSelection={showCheckboxes ? rowSelection : undefined}

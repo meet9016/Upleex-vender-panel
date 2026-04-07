@@ -185,7 +185,7 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const getColumns = (): ColDef[] => [
+  const columns = useMemo((): ColDef[] => [
     {
       headerName: "Product",
       field: "product_name",
@@ -240,7 +240,7 @@ const SettingsPage: React.FC = () => {
         return new Date(params.value).toLocaleDateString('en-GB');
       }
     },
-  ];
+  ], [currency]);
 
   const currentTabProducts = activeTab === "Rent" ? rentProducts : sellProducts;
   const filteredProducts = useMemo(() => {
@@ -266,7 +266,6 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <PageBreadcrumb breadcrumbs={[{ label: "Settings" }]} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-3">
@@ -349,105 +348,139 @@ const SettingsPage: React.FC = () => {
         </div>
       </div>
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        className="max-w-6xl w-full"
-      >
-        <div className="p-0 flex flex-col max-h-[90vh]">
-          <div className="p-8 border-b bg-white dark:bg-gray-900">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  {selectedPlan?.name} Products
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Remaining Slots: <span className="font-bold text-brand-600">{remainingSlots} products left</span>
-                </p>
-              </div>
+   <Modal
+      isOpen={isModalOpen}
+      onClose={() => setIsModalOpen(false)}
+      className="max-w-6xl w-full"
+    >
+      <div className="flex flex-col h-[70vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
 
-              <div className="flex flex-wrap items-center gap-4">
-                {/* Search Bar */}
-                <div className="relative w-64 order-first lg:order-none">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input
-                    type="text"
-                    placeholder="Search products..."
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all shadow-sm"
-                    value={gridSearch}
-                    onChange={(e) => setGridSearch(e.target.value)}
-                  />
-                </div>
+        {/* 🔹 HEADER */}
+        {/* pr-14 IMPORTANT: close icon overlap fix */}
+        <div className="px-6 pr-14 py-4 border-b bg-white dark:bg-gray-900">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
-                {/* Rent/Sell Filter */}
-                <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 shadow-sm min-w-max">
-                  <button
-                    onClick={() => setActiveTab('Rent')}
-                    className={`group flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap ${activeTab === 'Rent'
-                      ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-black/[0.04]'
-                      : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
-                      }`}
-                  >
-                    <svg className={`w-3.5 h-3.5 ${activeTab === 'Rent' ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span>RENT ({rentProducts.length})</span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('Sell')}
-                    className={`group flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap ${activeTab === 'Sell'
-                      ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-sm ring-1 ring-black/[0.04]'
-                      : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
-                      }`}
-                  >
-                    <svg className={`w-3.5 h-3.5 ${activeTab === 'Sell' ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                    </svg>
-                    <span>SELL ({sellProducts.length})</span>
-                  </button>
-                </div>
-              </div>
+            {/* Left */}
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                {selectedPlan?.name} Products
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Remaining Slots:
+                <span className="ml-1 font-semibold text-brand-600">
+                  {remainingSlots} left
+                </span>
+              </p>
             </div>
-          </div>
 
-          <div className="flex-1 min-h-[400px] bg-white dark:bg-gray-900 p-4">
-            <AgGridTable
-              columns={getColumns()}
-              rowData={filteredProducts}
-              onSelectionChange={handleSelectionChange}
-              showCheckboxes={true}
-              height={400}
-              rowHeight={48}
-              isRowSelectable={(params) => !params.data.active_plan_name}
-              getRowStyle={(params) => params.data.active_plan_name ? { opacity: 0.6, pointerEvents: 'none', background: 'rgba(0,0,0,0.02)' } : undefined}
-            />
-          </div>
+            {/* Right */}
+            <div className="flex flex-wrap items-center gap-3">
 
-          <div className="p-6 border-t bg-gray-50 flex items-center justify-end gap-4">
-            {/* <div>
-              <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest leading-tight">Selection Charge</p>
-              <p className="text-2xl font-black text-gray-900">
-                {selectedProductIds.length <= remainingSlots && activePurchaseForCurrentPlan ? "FREE" : `${currency}${(selectedPlan?.monthly_price || 0).toLocaleString()}`}
-              </p>
-              <p className="text-[10px] text-gray-500 font-medium">
-                {selectedProductIds.length} products selected
-              </p>
-            </div> */}
-            <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={() => setIsModalOpen(false)} className="px-8 py-2.5 rounded-xl font-bold">Cancel</Button>
-              <Button
-                variant="primary"
-                onClick={handlePurchase}
-                disabled={isPurchasing || selectedProductIds.length === 0 || (selectedProductIds.length > remainingSlots && !activePurchaseForCurrentPlan && selectedProductIds.length > (selectedPlan?.product_slots || 0))}
-                className="px-8 py-2.5 rounded-xl font-bold shadow-lg shadow-brand-100"
-              >
-                {isPurchasing ? 'Processing...' : `Confirm & Activate`}
-              </Button>
+              {/* 🔍 Search */}
+              <div className="relative w-full sm:w-64">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={16}
+                />
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={gridSearch}
+                  onChange={(e) => setGridSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500/20 outline-none"
+                />
+              </div>
+
+              {/* 🔘 Tabs */}
+              <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700">
+
+                <button
+                  onClick={() => setActiveTab('Rent')}
+                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${
+                    activeTab === 'Rent'
+                      ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-800'
+                  }`}
+                >
+                  RENT ({rentProducts.length})
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('Sell')}
+                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${
+                    activeTab === 'Sell'
+                      ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-800'
+                  }`}
+                >
+                  SELL ({sellProducts.length})
+                </button>
+
+              </div>
             </div>
           </div>
         </div>
-      </Modal>
+
+        {/* 🔹 TABLE */}
+        <div className="flex-1 px-6  overflow-hidden">
+            <AgGridTable
+              columns={columns}
+              rowData={filteredProducts}
+              onSelectionChange={handleSelectionChange}
+              showCheckboxes={true}
+              height={480}
+              rowHeight={45}
+              isRowSelectable={(params) => !params.data.active_plan_name}
+              getRowStyle={(params) =>
+                params.data.active_plan_name
+                  ? {
+                      opacity: 0.5,
+                      pointerEvents: 'none',
+                      background: 'rgba(0,0,0,0.03)',
+                    }
+                  : undefined
+              }
+            />
+        </div>
+
+        {/* 🔹 FOOTER */}
+        <div className="px-6 py-2.5 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
+
+          {/* Left Info */}
+          <div className="text-sm text-gray-500">
+            {selectedProductIds.length} products selected
+          </div>
+
+          {/* Buttons */}
+          <div className="flex items-center gap-3">
+            <Button
+              // variant="ghost"
+              onClick={() => setIsModalOpen(false)}
+              className="px-4 py-1 rounded-lg font-medium border" 
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="primary"
+              onClick={handlePurchase}
+              disabled={
+                isPurchasing ||
+                selectedProductIds.length === 0 ||
+                (selectedProductIds.length > remainingSlots &&
+                  !activePurchaseForCurrentPlan &&
+                  selectedProductIds.length >
+                    (selectedPlan?.product_slots || 0))
+              }
+              className="px-6  rounded-lg font-semibold"
+            >
+              {isPurchasing ? 'Processing...' : 'Confirm & Activate'}
+            </Button>
+          </div>
+        </div>
+
+      </div>
+    </Modal>
     </div>
   );
 };
