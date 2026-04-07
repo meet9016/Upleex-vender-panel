@@ -74,6 +74,9 @@ export interface EndPointApi {
     getAllPriorityPlans: string;
     purchasePriorityPlan: string;
     getVendorPriorityPurchases: string;
+    getAllRentalBoostPlans: string;
+    purchaseRentalBoostPlan: string;
+    getVendorRentalBoostPurchases: string;
     }
 
 // Define and export the API endpoint object
@@ -158,6 +161,10 @@ const endPointApi: EndPointApi = {
     verifyWalletPayment: 'wallet/verify-payment',
     getWalletSummary: 'wallet/summary',
     getVendorDashboardMetrics: 'vendor/dashboard/metrics',
+    // Rental Boost Plans
+    getAllRentalBoostPlans: 'rental-boost-plans/getall',
+    purchaseRentalBoostPlan: 'rental-boost-plans/purchase-bulk',
+    getVendorRentalBoostPurchases: 'rental-boost-plans/vendor/purchases',
 };
 
 export default endPointApi;

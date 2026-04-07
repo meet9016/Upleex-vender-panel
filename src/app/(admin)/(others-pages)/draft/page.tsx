@@ -117,7 +117,7 @@ export default function DraftPage() {
             <img
               src={imageUrl}
               alt={name}
-            className="w-9 h-9 object-cover rounded border"
+              className="w-9 h-9 object-cover rounded border"
               onError={(e: any) => { if (e.target.src !== DEFAULT_PLACEHOLDER) e.target.src = DEFAULT_PLACEHOLDER; }}
               loading="lazy"
             />
@@ -171,7 +171,7 @@ export default function DraftPage() {
       const params = getCurrentParams();
       const queryParams = new URLSearchParams();
       Object.keys(params).forEach(key => queryParams.append(key, params[key]));
-      
+
       const url = `${endPointApi.postAllVendorProductList}?${queryParams.toString()}`;
       const res = await api.get(url);
       const data = res?.data?.data || [];
@@ -249,67 +249,67 @@ export default function DraftPage() {
 
   return (
     <>
-        <div className="flex items-center justify-end mt-4 gap-3">
+      <div className="flex items-center justify-end mt-4 gap-3">
 
-            {/* <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Drafts</h2> */}
-          {/* <p className="text-sm text-gray-500 dark:text-gray-400">
+        {/* <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Drafts</h2> */}
+        {/* <p className="text-sm text-gray-500 dark:text-gray-400">
             Manage and activate your draft listings ({rows.length} drafts)
           </p> */}
-          <Button
-            onClick={fetchDrafts}
-            disabled={loading}
-            className="px-4 py-2 text-sm font-medium flex items-center justify-center gap-2 btn-primary"
+        <Button
+          onClick={fetchDrafts}
+          disabled={loading}
+          className="px-4 py-2 text-sm font-medium flex items-center justify-center gap-2 btn-primary"
+        >
+          {loading ? (
+            <Loader type="button" text="Refreshing..." iconClassName="text-white h-4 w-4" />
+          ) : (
+            <>
+              <HiOutlineRefresh className="text-lg" />
+              Refresh
+            </>
+          )}
+        </Button>
+        {/* Actions Menu (3-dots) */}
+        <div className="relative" ref={actionsMenuRef}>
+          <button
+            onClick={() => setShowActionsMenu((v) => !v)}
+            className="w-9 h-9 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300 shadow-sm"
+            title="Export options"
           >
-            {loading ? (
-              <Loader type="button" text="Refreshing..." iconClassName="text-white h-4 w-4" />
-            ) : (
-              <>
-                <HiOutlineRefresh className="text-lg" />
-                Refresh
-              </>
-            )}
-          </Button>
-          {/* Actions Menu (3-dots) */}
-            <div className="relative" ref={actionsMenuRef}>
-              <button
-                onClick={() => setShowActionsMenu((v) => !v)}
-                className="w-9 h-9 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300 shadow-sm"
-                title="Export options"
-              >
-                <FiMoreVertical className="text-xl" />
-              </button>
+            <FiMoreVertical className="text-xl" />
+          </button>
 
-              {showActionsMenu && (
-                <div className="absolute right-0 top-full mt-2 w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                  {/* <div className="px-5 py-3 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100/30 dark:border-gray-800/30">
+          {showActionsMenu && (
+            <div className="absolute right-0 top-full mt-2 w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+              {/* <div className="px-5 py-3 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100/30 dark:border-gray-800/30">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Export Options</span>
                   </div> */}
 
-                  <div className="py-1">
-                    <button
-                      onClick={handleExportExcel}
-                      disabled={excelLoading || pdfLoading}
-                      className="group w-full flex items-center gap-3 px-4 py-3.5 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200 disabled:opacity-50"
-                    >
-                      <FaFileExcel className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="group-hover:translate-x-0.5 transition-transform duration-200">Export to Excel</span>
-                      {excelLoading && <Loader className="ml-auto text-emerald-600 w-3.5 h-3.5" />}
-                    </button>
+              <div className="py-1">
+                <button
+                  onClick={handleExportExcel}
+                  disabled={excelLoading || pdfLoading}
+                  className="group w-full flex items-center gap-3 px-4 py-3.5 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200 disabled:opacity-50"
+                >
+                  <FaFileExcel className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
+                  <span className="group-hover:translate-x-0.5 transition-transform duration-200">Export to Excel</span>
+                  {excelLoading && <Loader className="ml-auto text-emerald-600 w-3.5 h-3.5" />}
+                </button>
 
-                    <button
-                      onClick={handleExportPDF}
-                      disabled={excelLoading || pdfLoading}
-                      className="group w-full flex items-center gap-3 px-4 py-3.5 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-rose-500 hover:bg-rose-50/50 dark:hover:bg-rose-900/10 transition-all duration-200 disabled:opacity-50"
-                    >
-                      <FaFilePdf className="text-lg text-rose-600 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="group-hover:translate-x-0.5 transition-transform duration-200">Export to PDF</span>
-                      {pdfLoading && <Loader className="ml-auto text-rose-600 w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                </div>
-              )}
+                <button
+                  onClick={handleExportPDF}
+                  disabled={excelLoading || pdfLoading}
+                  className="group w-full flex items-center gap-3 px-4 py-3.5 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-rose-500 hover:bg-rose-50/50 dark:hover:bg-rose-900/10 transition-all duration-200 disabled:opacity-50"
+                >
+                  <FaFilePdf className="text-lg text-rose-600 group-hover:scale-110 transition-transform duration-200" />
+                  <span className="group-hover:translate-x-0.5 transition-transform duration-200">Export to PDF</span>
+                  {pdfLoading && <Loader className="ml-auto text-rose-600 w-3.5 h-3.5" />}
+                </button>
+              </div>
             </div>
+          )}
         </div>
+      </div>
 
       {/* Filters */}
       {/* <div className="grid grid-cols-1 gap-6 mb-6">
@@ -406,7 +406,7 @@ export default function DraftPage() {
 
       {/* Table or Empty State */}
       {rows.length === 0 && !loading ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="text-center py-12 mt-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="w-16 h-16 bg-gray-100 dark:bg-gray-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <CiWarning className="text-gray-400 text-2xl" />
           </div>
