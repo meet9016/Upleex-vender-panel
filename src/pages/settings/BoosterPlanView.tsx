@@ -316,7 +316,7 @@ const BoosterPlanView: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900">Booster Purchase History</h2>
         </div>
 
-        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl overflow-hidden">
+        {/* <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl overflow-hidden"> */}
           <AgGridTable
             rowData={purchases}
             columns={columns}
@@ -324,7 +324,7 @@ const BoosterPlanView: React.FC = () => {
             height={400}
             rowHeight={48}
           />
-        </div>
+        {/* </div> */}
       </div>
     </div>
   );
