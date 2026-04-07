@@ -2,18 +2,18 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import ComponentCard from "@/components/common/ComponentCard";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { toast } from "react-toastify";
 import PageLoader from "@/components/common/PageLoader";
 import Button from "@/components/ui/button/Button";
-import { Zap, Wallet, Package, ShoppingBag, Info, Search, Check } from "lucide-react";
+import { Wallet, Package, Search, Check, Rocket } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { useWallet } from "@/context/WalletContext";
 import AgGridTable from "@/components/tables/AgGridTable";
 import { ColDef } from "ag-grid-community";
 import StatusBadge from "@/components/common/StatusBadge";
+import BoosterPlanView from "./BoosterPlanView";
 
 interface PriorityPlan {
   id: string;
@@ -31,14 +31,13 @@ interface Product {
   _id?: string;
   product_name: string;
   category_name?: string;
-  product_type_name: string; // "Rent" or "Sell"
-  product_listing_type_name?: string; // "Hourly", "Daily", "Monthly"
+  product_type_name: string;
+  product_listing_type_name?: string;
   price: number;
   product_main_image?: string;
   image?: string;
   is_priority?: boolean;
   priority_expiry?: string;
-  // Plan details (injected from purchases)
   active_plan_name?: string;
 }
 
@@ -64,6 +63,7 @@ const SettingsPage: React.FC = () => {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
   const [gridSearch, setGridSearch] = useState("");
+  const [currentTab, setCurrentTab] = useState<"priority" | "booster">("priority");
   const { balance, currency, refreshBalance } = useWallet();
 
   const fetchData = async () => {
@@ -81,7 +81,6 @@ const SettingsPage: React.FC = () => {
 
       setVendorPurchases(activePurchases);
 
-      // Normalize product data
       const normalizedProducts = rawProducts.map((p: any) => {
         let price = p.price;
         if (
@@ -94,7 +93,6 @@ const SettingsPage: React.FC = () => {
         }
 
         const pid = p.id || p._id;
-        // Find if this product belongs to an active purchase
         const assocPurchase = activePurchases.find(purchase => purchase.product_ids.includes(pid));
 
         return {
@@ -123,17 +121,10 @@ const SettingsPage: React.FC = () => {
   const rentProducts = useMemo(() => products.filter(p => p.product_type_name === "Rent"), [products]);
   const sellProducts = useMemo(() => products.filter(p => p.product_type_name === "Sell"), [products]);
 
-  const existingSlotsUsed = useMemo(() => {
-    if (!selectedPlan) return 0;
-    const activePurchase = vendorPurchases.find(p => p.plan_id === selectedPlan.id);
-    return activePurchase ? activePurchase.product_ids.length : 0;
-  }, [selectedPlan, vendorPurchases]);
-
   const handleSelectPlan = (plan: PriorityPlan) => {
     setSelectedPlan(plan);
     setSelectedProductIds([]);
     setIsModalOpen(true);
-    // Explicitly check for case-insensitive matches if needed, but here we assume normalized
     if (rentProducts.length === 0 && sellProducts.length > 0) {
       setActiveTab("Sell");
     } else {
@@ -155,7 +146,6 @@ const SettingsPage: React.FC = () => {
     const usedSlots = Number(activePurchase?.product_ids?.length || 0);
     const remainingSlotsCalculated = totalSlots - usedSlots;
 
-    // If we are within existing slots, price should effectively be 0 for frontend logic
     const finalPrice = selectedProductIds.length <= remainingSlotsCalculated && activePurchase ? 0 : selectedPlan.monthly_price;
 
     if (finalPrice > balance) {
@@ -175,7 +165,7 @@ const SettingsPage: React.FC = () => {
         toast.success(res.data.message || "Priority plan updated successfully!");
         setIsModalOpen(false);
         refreshBalance();
-        fetchData(); // Refresh products and purchases
+        fetchData();
         setSelectedProductIds([]);
       }
     } catch (error: any) {
@@ -346,83 +336,89 @@ const SettingsPage: React.FC = () => {
             })}
           </div>
         </div>
+
+        {/* <div className="flex items-center gap-3 px-5 py-2.5 bg-brand-50 rounded-2xl border border-brand-100">
+          <Wallet className="text-brand-600" size={20} />
+          <div>
+            <p className="text-[10px] text-brand-500 uppercase font-black tracking-widest leading-none">Wallet Balance</p>
+            <p className="text-lg font-black text-brand-900 leading-tight">{currency}{balance.toLocaleString()}</p>
+          </div>
+        </div> */}
       </div>
 
-   <Modal
-      isOpen={isModalOpen}
-      onClose={() => setIsModalOpen(false)}
-      className="max-w-6xl w-full"
-    >
-      <div className="flex flex-col h-[70vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        className="max-w-6xl w-full"
+      >
+        <div className="flex flex-col h-[70vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
 
-        {/* 🔹 HEADER */}
-        {/* pr-14 IMPORTANT: close icon overlap fix */}
-        <div className="px-6 pr-14 py-4 border-b bg-white dark:bg-gray-900">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          {/* 🔹 HEADER */}
+          {/* pr-14 IMPORTANT: close icon overlap fix */}
+          <div className="px-6 pr-14 py-4 border-b bg-white dark:bg-gray-900">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
-            {/* Left */}
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                {selectedPlan?.name} Products
-              </h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Remaining Slots:
-                <span className="ml-1 font-semibold text-brand-600">
-                  {remainingSlots} left
-                </span>
-              </p>
-            </div>
-
-            {/* Right */}
-            <div className="flex flex-wrap items-center gap-3">
-
-              {/* 🔍 Search */}
-              <div className="relative w-full sm:w-64">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={16}
-                />
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={gridSearch}
-                  onChange={(e) => setGridSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500/20 outline-none"
-                />
+              {/* Left */}
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {selectedPlan?.name} Products
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Remaining Slots:
+                  <span className="ml-1 font-semibold text-brand-600">
+                    {remainingSlots} left
+                  </span>
+                </p>
               </div>
 
-              {/* 🔘 Tabs */}
-              <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700">
+              {/* Right */}
+              <div className="flex flex-wrap items-center gap-3">
 
-                <button
-                  onClick={() => setActiveTab('Rent')}
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${
-                    activeTab === 'Rent'
+                {/* 🔍 Search */}
+                <div className="relative w-full sm:w-64">
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    size={16}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={gridSearch}
+                    onChange={(e) => setGridSearch(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500/20 outline-none"
+                  />
+                </div>
+
+                {/* 🔘 Tabs */}
+                <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700">
+
+                  <button
+                    onClick={() => setActiveTab('Rent')}
+                    className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Rent'
                       ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm'
                       : 'text-gray-500 hover:text-gray-800'
-                  }`}
-                >
-                  RENT ({rentProducts.length})
-                </button>
+                      }`}
+                  >
+                    RENT ({rentProducts.length})
+                  </button>
 
-                <button
-                  onClick={() => setActiveTab('Sell')}
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${
-                    activeTab === 'Sell'
+                  <button
+                    onClick={() => setActiveTab('Sell')}
+                    className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Sell'
                       ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm'
                       : 'text-gray-500 hover:text-gray-800'
-                  }`}
-                >
-                  SELL ({sellProducts.length})
-                </button>
+                      }`}
+                  >
+                    SELL ({sellProducts.length})
+                  </button>
 
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* 🔹 TABLE */}
-        <div className="flex-1 px-6  overflow-hidden">
+          {/* 🔹 TABLE */}
+          <div className="flex-1 px-6  overflow-hidden">
             <AgGridTable
               columns={columns}
               rowData={filteredProducts}
@@ -434,56 +430,55 @@ const SettingsPage: React.FC = () => {
               getRowStyle={(params) =>
                 params.data.active_plan_name
                   ? {
-                      opacity: 0.5,
-                      pointerEvents: 'none',
-                      background: 'rgba(0,0,0,0.03)',
-                    }
+                    opacity: 0.5,
+                    pointerEvents: 'none',
+                    background: 'rgba(0,0,0,0.03)',
+                  }
                   : undefined
               }
             />
-        </div>
-
-        {/* 🔹 FOOTER */}
-        <div className="px-6 py-2.5 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
-
-          {/* Left Info */}
-          <div className="text-sm text-gray-500">
-            {selectedProductIds.length} products selected
           </div>
 
-          {/* Buttons */}
-          <div className="flex items-center gap-3">
-            <Button
-              // variant="ghost"
-              onClick={() => setIsModalOpen(false)}
-              className="px-4 py-1 rounded-lg font-medium border" 
-            >
-              Cancel
-            </Button>
+          {/* 🔹 FOOTER */}
+          <div className="px-6 py-2.5 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
 
-            <Button
-              variant="primary"
-              onClick={handlePurchase}
-              disabled={
-                isPurchasing ||
-                selectedProductIds.length === 0 ||
-                (selectedProductIds.length > remainingSlots &&
-                  !activePurchaseForCurrentPlan &&
-                  selectedProductIds.length >
+            {/* Left Info */}
+            <div className="text-sm text-gray-500">
+              {selectedProductIds.length} products selected
+            </div>
+
+            {/* Buttons */}
+            <div className="flex items-center gap-3">
+              <Button
+                // variant="ghost"
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-1 rounded-lg font-medium border"
+              >
+                Cancel
+              </Button>
+
+              <Button
+                variant="primary"
+                onClick={handlePurchase}
+                disabled={
+                  isPurchasing ||
+                  selectedProductIds.length === 0 ||
+                  (selectedProductIds.length > remainingSlots &&
+                    !activePurchaseForCurrentPlan &&
+                    selectedProductIds.length >
                     (selectedPlan?.product_slots || 0))
-              }
-              className="px-6  rounded-lg font-semibold"
-            >
-              {isPurchasing ? 'Processing...' : 'Confirm & Activate'}
-            </Button>
+                }
+                className="px-6  rounded-lg font-semibold"
+              >
+                {isPurchasing ? 'Processing...' : 'Confirm & Activate'}
+              </Button>
+            </div>
           </div>
-        </div>
 
-      </div>
-    </Modal>
+        </div>
+      </Modal>
     </div>
   );
 };
 
-// Remove manual Check component since it is now imported from lucide-react
 export default SettingsPage;
