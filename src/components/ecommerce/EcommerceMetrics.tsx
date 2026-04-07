@@ -185,7 +185,7 @@ export const EcommerceMetrics = () => {
             onClick={() => handleCardClick(index)}
           >
             <div className="flex items-center gap-4">
-              <div className={`flex items-center justify-center w-11 h-11 rounded-xl bg-${metric.color}-50 dark:bg-${metric.color}-500/10 flex-shrink-0`}>
+              <div className={`flex items-center justify-center w-11 h-11 dark:bg-[#0d111c] rounded-xl bg-${metric.color}-50  flex-shrink-0`}>
                 {metric.icon(`size-6 text-${metric.color}-600 dark:text-${metric.color}-400`)}
               </div>
 

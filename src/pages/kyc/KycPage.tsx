@@ -631,7 +631,7 @@ export default function KYCPage() {
     <div className="relative mt-2">
       {/* Vendor Type Selection is now handled globally via AppHeader and FilterContext */}
 
-      <div className="py-10 px-5 bg-white">
+      <div className="py-10 px-5 bg-white dark:bg-[#1f2637]">
         <Stepper steps={steps} currentStep={currentStep} completedPages={KYCformData.completed_pages} onStepChange={handleStepChange} isLoading={isSubmitting} />
 
         <div className="min-h-[400px] md:min-h-[450px] mt-10">
