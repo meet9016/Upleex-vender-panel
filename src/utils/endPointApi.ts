@@ -55,6 +55,8 @@ export interface EndPointApi {
     exportPaymentsPDF: string;
     exportWalletTransactionsExcel: string;
     exportWalletTransactionsPDF: string;
+    exportServicesExcel: string;
+    exportServicesPDF: string;
 
     // Service
     postVendorAddService: string;
@@ -146,6 +148,8 @@ const endPointApi: EndPointApi = {
     exportPaymentsPDF: 'export/payments/pdf',
     exportWalletTransactionsExcel: 'export/wallet-transactions/excel',
     exportWalletTransactionsPDF: 'export/wallet-transactions/pdf',
+    exportServicesExcel: 'export/services/excel',
+    exportServicesPDF: 'export/services/pdf',
 
     // Service
     postVendorAddService: 'services/create-service',
