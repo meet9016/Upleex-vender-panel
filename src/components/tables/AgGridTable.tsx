@@ -191,7 +191,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             <PageLoader fullScreen={false} />
           </div>
         )}
-        <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid' : 'ag-theme-alpine'}`}
+        <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid ' : 'ag-theme-alpine '}`}
           style={{ width: "100%", height: autoHeight ? 'auto' : (height || '80vh'), minHeight: autoHeight ? 240 : 'auto' }}>
           <AgGridReact
             headerHeight={48}

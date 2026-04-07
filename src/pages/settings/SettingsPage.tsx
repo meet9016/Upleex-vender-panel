@@ -270,7 +270,7 @@ const SettingsPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-3">
           <div className="mb-6">
-            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2 dark:text-gray-100">
               Priority Visibility Plans
             </h3>
           </div>
@@ -284,7 +284,7 @@ const SettingsPage: React.FC = () => {
               return (
                 <div
                   key={plan.id}
-                  className={`relative p-8 rounded-3xl border transition-all duration-500 flex flex-col h-full bg-white group ${plan.is_popular
+                  className={`relative p-8 rounded-3xl border transition-all duration-500 flex flex-col h-full bg-white dark:bg-[#0d111c] group ${plan.is_popular
                     ? 'border-brand-500 shadow-2xl shadow-brand-100 scale-[1.02] z-10'
                     : 'border-gray-200 hover:border-brand-300 hover:shadow-xl shadow-sm'
                     }`}
@@ -296,18 +296,18 @@ const SettingsPage: React.FC = () => {
                   )}
 
                   <div className="mb-6">
-                    <h4 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h4>
-                    <p className="text-gray-500 text-sm">{plan.description}</p>
+                    <h4 className="text-xl font-bold text-gray-900 mb-1 dark:text-gray-300">{plan.name}</h4>
+                    <p className="text-gray-500 text-sm dark:text-gray-300">{plan.description}</p>
                   </div>
 
-                  <div className="flex items-baseline gap-1 mb-8 p-4 bg-gray-50 rounded-2xl">
-                    <span className="text-4xl font-extrabold text-gray-900">{currency}{plan.monthly_price}</span>
-                    <span className="text-gray-500 font-medium">/ month</span>
+                  <div className="flex items-baseline gap-1 mb-8 p-4 bg-gray-50 rounded-2xl dark:bg-[#0d111c]">
+                    <span className="text-4xl font-extrabold text-gray-900 dark:text-gray-300">{currency}{plan.monthly_price}</span>
+                    <span className="text-gray-500 font-medium dark:text-gray-300">/ month</span>
                   </div>
 
                   {isSubscribed && plan.product_slots > 1 && (
-                    <div className="mb-6 p-3 bg-green-50 border border-green-100 rounded-xl">
-                      <p className="text-xs font-bold text-green-700 uppercase mb-1">Active Subscription</p>
+                    <div className="mb-6 p-3 bg-green-50 border border-green-100 rounded-xl dark:bg-[#0d111c]">
+                      <p className="text-xs font-bold text-green-700 uppercase mb-1 ">Active Subscription</p>
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-green-600 font-medium">Remaining Slots</span>
                         <span className="font-bold text-green-800">
@@ -321,14 +321,14 @@ const SettingsPage: React.FC = () => {
                     <div className="flex items-start gap-4">
                       <div className="mt-1 bg-green-100 p-1.5 rounded-full"><Check className="text-green-600" size={14} /></div>
                       <div>
-                        <p className="text-gray-900 font-bold text-sm">{plan.product_slots} Product Slots</p>
+                        <p className="text-gray-900 font-bold text-sm dark:text-gray-300">{plan.product_slots} Product Slots</p>
                         <p className="text-xs text-gray-500">Add up to {plan.product_slots} items</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
                       <div className="mt-1 bg-green-100 p-1.5 rounded-full"><Check className="text-green-600" size={14} /></div>
                       <div>
-                        <p className="text-gray-900 font-bold text-sm">Top Feed Priority</p>
+                        <p className="text-gray-900 font-bold text-sm dark:text-gray-300">Top Feed Priority</p>
                         <p className="text-xs text-gray-500">Show above standard listings</p>
                       </div>
                     </div>
