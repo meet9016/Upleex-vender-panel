@@ -480,13 +480,15 @@ const SettingsPage: React.FC = () => {
                 <div className="text-sm text-gray-500">
                   {selectedProductIds.length} products selected
                 </div>
+              </div>
+            </div>
 
-        </Modal>
-    </>
-  ) : (
-    <BoosterPlanView />
-  )
-}
+          </Modal>
+        </>
+      ) : (
+        <BoosterPlanView />
+      )
+      }
     </div >
   );
 };
