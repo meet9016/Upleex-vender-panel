@@ -1365,7 +1365,7 @@ const ProductTable = () => {
             getRowStyle={getRowStyle}
             rowHeight={52}
             showCheckboxes={false}
-            height={"600px"}
+            height={"650px"}
           />
         </div>
       </div>

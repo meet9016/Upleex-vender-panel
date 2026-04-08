@@ -329,6 +329,7 @@ const ServiceTable = () => {
         tableName="Services"
         loading={loading}
         rowHeight={52}
+        height={"650px"}
       />
 
       <ConfirmDeleteModal

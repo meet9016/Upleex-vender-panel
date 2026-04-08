@@ -494,7 +494,6 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
 
-          </div>
         </Modal>
     </>
   ) : (
