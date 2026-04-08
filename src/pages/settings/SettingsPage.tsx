@@ -474,13 +474,35 @@ const SettingsPage: React.FC = () => {
               </div>
 
               {/* 🔹 FOOTER */}
-              <div className="px-6 py-2.5 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
+              <div className="px-6 py-2.5 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end">
+  {/* Buttons */}
+                <div className="flex items-center gap-3">
+                  <Button
+                    // variant="ghost"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-4 py-1 rounded-lg font-medium border"
+                  >
+                    Cancel
+                  </Button>
 
-                {/* Left Info */}
-                <div className="text-sm text-gray-500">
-                  {selectedProductIds.length} products selected
+                  <Button
+                    variant="primary"
+                    onClick={handlePurchase}
+                    disabled={
+                      isPurchasing ||
+                      selectedProductIds.length === 0 ||
+                      (selectedProductIds.length > remainingSlots &&
+                        !activePurchaseForCurrentPlan &&
+                        selectedProductIds.length >
+                        (selectedPlan?.product_slots || 0))
+                    }
+                    className="px-6  rounded-lg font-semibold"
+                  >
+                    {isPurchasing ? 'Processing...' : 'Confirm & Activate'}
+                  </Button>
                 </div>
               </div>
+
             </div>
 
           </Modal>
