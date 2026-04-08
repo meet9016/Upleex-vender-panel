@@ -863,7 +863,7 @@ const OrderList = () => {
               columns={activeTab === 'orders' ? vendorColumns : paymentColumns}
               rowData={activeTab === 'orders' ? vendorOrders : paymentOrders}
               loading={loading}
-              height="550px"
+              height={"580px"}
               tableName={activeTab === 'orders' ? 'Orders' : 'Payments'}
               filter={false}
               showCheckboxes={false}

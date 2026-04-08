@@ -1,3 +1,4 @@
+
 import React from "react";
 import Link from "next/link";
 import { ChevronRight, LayoutGrid } from "lucide-react";
@@ -16,7 +17,7 @@ const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({ breadcrumbs }) => {
   const pageTitle = breadcrumbs[breadcrumbs.length - 1]?.label || "Dashboard";
 
   return (
-    <div className="relative  border border-gray-200 overflow-hidden bg-white dark:bg-gray-900 rounded-xl mb-3 flex flex-col justify-center min-h-[90px] px-6 py-4">
+    <div className="relative  border border-gray-200 overflow-hidden bg-white dark:bg-gray-900 rounded-xl mb-3 flex flex-col justify-center px-6 py-4">
       {/* Blue Left Accent Bar */}
      <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-indigo-500 to-sky-500 rounded-l-xl"></div>
 
@@ -27,7 +28,7 @@ const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({ breadcrumbs }) => {
         </h1>
 
         {/* BREADCRUMB TRAIL */}
-        <nav aria-label="Breadcrumb">
+        {/* <nav aria-label="Breadcrumb">
           <ol className="flex items-center gap-2 text-[13px] font-medium">
             <li className="flex items-center">
               <Link
@@ -35,7 +36,6 @@ const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({ breadcrumbs }) => {
                 className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5"
               >
                 <LayoutGrid size={14} className="opacity-70" />
-                {/* Dashboard */}
               </Link>
             </li>
 
@@ -64,7 +64,7 @@ const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({ breadcrumbs }) => {
               );
             })}
           </ol>
-        </nav>
+        </nav> */}
       </div>
     </div>
   );
