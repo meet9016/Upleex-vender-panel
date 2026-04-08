@@ -297,7 +297,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
     /* <!-- =========================================================== Form component =========================================================== --> */
 
     <ComponentCard title="Contact Details">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 dark:border-gray-800 dark:bg-[#1f2637] ">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 dark:border-gray-800 dark:bg-[#1f2637]  ">
 
         {/* <!-- =========================================================== Full name =========================================================== --> */}
 

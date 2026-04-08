@@ -26,6 +26,9 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
   delivered: { label: "Delivered", className: "text-green-700 bg-green-50 border-green-200" },
   cancelled: { label: "Cancelled", className: "text-rose-700 bg-rose-50 border-rose-200" },
   paid: { label: "Paid", className: "text-green-700 bg-green-50 border-green-200" },
+  hold: { label: "Payment Hold", className: "text-amber-700 bg-amber-50 border-amber-200" },
+  '30_percent': { label: "30% Advance", className: "text-purple-700 bg-purple-50 border-purple-200" },
+  full: { label: "Full Payment", className: "text-blue-700 bg-blue-50 border-blue-200" },
   failed: { label: "Failed", className: "text-rose-700 bg-rose-50 border-rose-200" },
   released: { label: "Released", className: "text-blue-700 bg-blue-50 border-blue-200" },
 };

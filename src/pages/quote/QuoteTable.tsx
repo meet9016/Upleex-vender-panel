@@ -59,6 +59,7 @@ type Quote = {
   total_price?: string;
   month_name?: string;
   product_main_image?: string;
+  razorpay_payment_link?: string;
 };
 
 const QuoteTable = () => {
@@ -108,11 +109,11 @@ const QuoteTable = () => {
     status: [] as string[],
   });
   const [pendingFilters, setPendingFilters] = useState(filters);
-  
+
   // Categories data - removed since not needed
   console.log("🚀 ~ QuoteTable ~ filters:", filters)
 
-  const activeFilterCount = Object.values(filters).filter(v => 
+  const activeFilterCount = Object.values(filters).filter(v =>
     Array.isArray(v) ? v.length > 0 : v !== ''
   ).length;
 
@@ -130,7 +131,7 @@ const QuoteTable = () => {
     if (targetFilters.month.length > 0) params.month = targetFilters.month.join(',');
     if (targetFilters.delivery_start_date) params.delivery_start_date = targetFilters.delivery_start_date;
     if (targetFilters.delivery_end_date) params.delivery_end_date = targetFilters.delivery_end_date;
-    
+
     if (debouncedSearch && debouncedSearch.trim() !== '') {
       params.search = debouncedSearch.trim();
     }
@@ -336,12 +337,12 @@ const QuoteTable = () => {
         </div>
       ),
     },
-    {
-      field: "delivery_date",
-      headerName: "Delivery Date",
-      minWidth: 150,
-      cellStyle: { textAlign: "center" }
-    },
+    // {
+    //   field: "delivery_date",
+    //   headerName: "Delivery Date",
+    //   minWidth: 150,
+    //   cellStyle: { textAlign: "center" }
+    // },
     {
       field: "start_date",
       headerName: "Start Date",
@@ -365,6 +366,28 @@ const QuoteTable = () => {
       headerName: "End Time",
       minWidth: 130,
       cellStyle: { textAlign: "center" }
+    },
+    {
+      field: "razorpay_payment_link",
+      headerName: "Payment Link",
+      minWidth: 160,
+      cellRenderer: (params: any) => {
+        const link = params.value;
+        if (!link) return <span className="text-gray-400">-</span>;
+        return (
+          <div className="flex items-center h-full">
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-200 hover:bg-blue-100 transition-colors inline-block font-medium truncate max-w-[140px]"
+              title={link}
+            >
+              Copy Link
+            </a>
+          </div>
+        );
+      }
     },
 
     {
@@ -607,7 +630,7 @@ const QuoteTable = () => {
     setPendingFilters(resetFilters);
     setFilters(resetFilters);
     setSearchText('');
-    
+
     // Immediately fetch data with no filters
     getQuoteData({});
     setShowFilterModal(false);
@@ -818,7 +841,7 @@ const QuoteTable = () => {
             {showActionsMenu && (
               <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-auto mt-3 w-auto sm:w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
                 {/* Export Section */}
-           
+
 
                 <div className="py-1">
                   {/* Export to Excel */}
@@ -858,7 +881,7 @@ const QuoteTable = () => {
             tableName="Quotes"
             onSelectionChange={setSelectedRows}
             rowHeight={60}
-            showCheckboxes={false} 
+            showCheckboxes={false}
             loading={loading}
             height={"650px"}
           />

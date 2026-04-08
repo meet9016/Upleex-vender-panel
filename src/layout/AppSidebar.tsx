@@ -82,7 +82,7 @@ const AppSidebar: React.FC = () => {
     if (kycApproved === false) {
       return kycOnlyItems; // Show only KYC if not approved
     }
-    
+
     // Filter items based on selected type
     const filteredItems = navItems.filter(item => {
       // If only vendor is selected, show Product but not Service
@@ -90,17 +90,17 @@ const AppSidebar: React.FC = () => {
         if (item.path === '/service') return false; // Hide Service
         return true; // Show Product and others
       }
-      
+
       // If only service is selected, show Service but not Product
       if (filters.service && !filters.vendor) {
         if (item.path === '/product') return false; // Hide Product
         return true; // Show Service and others
       }
-      
+
       // If both are selected or none selected, show both
       return true;
     });
-    
+
     return filteredItems;
   }, [kycApproved, isLoading, filters]);
 

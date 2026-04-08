@@ -55,6 +55,8 @@ export interface EndPointApi {
     exportPaymentsPDF: string;
     exportWalletTransactionsExcel: string;
     exportWalletTransactionsPDF: string;
+    exportServicesExcel: string;
+    exportServicesPDF: string;
 
     // Service
     postVendorAddService: string;
@@ -74,6 +76,9 @@ export interface EndPointApi {
     getAllPriorityPlans: string;
     purchasePriorityPlan: string;
     getVendorPriorityPurchases: string;
+    getAllRentalBoostPlans: string;
+    purchaseRentalBoostPlan: string;
+    getVendorRentalBoostPurchases: string;
     }
 
 // Define and export the API endpoint object
@@ -143,6 +148,8 @@ const endPointApi: EndPointApi = {
     exportPaymentsPDF: 'export/payments/pdf',
     exportWalletTransactionsExcel: 'export/wallet-transactions/excel',
     exportWalletTransactionsPDF: 'export/wallet-transactions/pdf',
+    exportServicesExcel: 'export/services/excel',
+    exportServicesPDF: 'export/services/pdf',
 
     // Service
     postVendorAddService: 'services/create-service',
@@ -158,6 +165,10 @@ const endPointApi: EndPointApi = {
     verifyWalletPayment: 'wallet/verify-payment',
     getWalletSummary: 'wallet/summary',
     getVendorDashboardMetrics: 'vendor/dashboard/metrics',
+    // Rental Boost Plans
+    getAllRentalBoostPlans: 'rental-boost-plans/getall',
+    purchaseRentalBoostPlan: 'rental-boost-plans/purchase-bulk',
+    getVendorRentalBoostPurchases: 'rental-boost-plans/vendor/purchases',
 };
 
 export default endPointApi;

@@ -33,6 +33,7 @@ interface PaymentOrder {
   customer_email: string;
   items_count: number;
   vendor_amount: number;
+  payment_type: string;
   payment_status: string;
   paid_at: string | null;
   order_status: string;
@@ -65,6 +66,7 @@ interface VendorOrder {
     product_price?: number;
   }>;
   total_amount: number;
+  payment_type?: string;
   vendor_status?: string;
   order_status?: string;
   payment_status: string;
@@ -226,6 +228,14 @@ const OrderList = () => {
       cellStyle: { textAlign: "center" }
     },
     {
+      headerName: "Type",
+      field: "payment_type",
+      minWidth: 120,
+      flex: 1,
+      cellRenderer: (params: any) => <StatusBadge status={params.value} />,
+      cellStyle: { textAlign: "center" }
+    },
+    {
       headerName: "Paid On",
       field: "paid_at",
       minWidth: 120,
@@ -353,7 +363,12 @@ const OrderList = () => {
       field: "payment_status",
       minWidth: 120,
       flex: 1,
-      cellRenderer: (params: any) => <StatusBadge status={params.value} />,
+      cellRenderer: (params: any) => (
+        <div className="flex flex-col gap-1 items-center">
+          <StatusBadge status={params.value} />
+          {params.data.payment_type && <StatusBadge status={params.data.payment_type} />}
+        </div>
+      ),
       cellStyle: { textAlign: "center" }
     },
     {
@@ -516,6 +531,13 @@ const OrderList = () => {
     if (!selectedOrder._id) {
       toast.error('Order ID is missing');
       console.error('Order object:', selectedOrder);
+      return;
+    }
+
+    // Restriction: Cannot update to delivery-related statuses if payment is on hold
+    const deliveryStatuses = ['picked_up', 'out_for_delivery', 'delivered'];
+    if (selectedOrder.payment_status === 'hold' && deliveryStatuses.includes(newStatus)) {
+      toast.error('Cannot proceed with delivery. Customer has only paid 30% advance. Remaining payment is pending.');
       return;
     }
 
@@ -841,7 +863,7 @@ const OrderList = () => {
               columns={activeTab === 'orders' ? vendorColumns : paymentColumns}
               rowData={activeTab === 'orders' ? vendorOrders : paymentOrders}
               loading={loading}
-              height="550px"
+              height={"580px"}
               tableName={activeTab === 'orders' ? 'Orders' : 'Payments'}
               filter={false}
               showCheckboxes={false}
@@ -941,9 +963,16 @@ const OrderList = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Payment Status</p>
-                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${selectedOrder.payment_status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
-                      {(selectedOrder.payment_status || 'pending').toUpperCase()}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${selectedOrder.payment_status === 'paid' ? 'bg-green-100 text-green-600' : (selectedOrder.payment_status === 'hold' ? 'bg-amber-100 text-amber-600' : 'bg-yellow-100 text-yellow-600')}`}>
+                        {(selectedOrder.payment_status || 'pending').toUpperCase()}
+                      </span>
+                      {selectedOrder.payment_status === 'hold' && (
+                        <p className="text-[10px] text-amber-600 font-bold leading-tight">
+                          Restricted: Advance Paid (30%). Complete payment required for delivery.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

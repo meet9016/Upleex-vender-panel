@@ -115,7 +115,7 @@ export default function PurchasedProductsPage() {
 
   return (
     <div className="p-0 ">
-      <AgGridTable rowData={rows} columns={columns} tableName="Purchased Plans" showCheckboxes={false} loading={loading} rowHeight={40} />
+      <AgGridTable rowData={rows} columns={columns} tableName="Purchased Plans" showCheckboxes={false} loading={loading} rowHeight={40} height={"700px"}/>
     </div>
   );
 }
