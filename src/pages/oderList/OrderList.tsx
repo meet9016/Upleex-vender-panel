@@ -909,7 +909,7 @@ const OrderList = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                Order Details #{selectedOrder.order_id}
+                Order Details : {selectedOrder.order_id}
               </h3>
               <button
                 onClick={() => setShowOrderModal(false)}
@@ -1021,7 +1021,7 @@ const OrderList = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowOrderModal(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-400"
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 border-1 rounded-xl "
               >
                 Close
               </button>
@@ -1030,7 +1030,7 @@ const OrderList = () => {
                   setShowOrderModal(false);
                   handleUpdateStatus(selectedOrder);
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 btn-primary"
               >
                 Update Status
               </button>
@@ -1100,14 +1100,14 @@ const OrderList = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowStatusModal(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 border-1 rounded-xl"
               >
                 Cancel
               </button>
               <button
                 onClick={updateOrderStatus}
                 disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 btn-primary disabled:opacity-50"
               >
                 {loading ? 'Updating...' : 'Update'}
               </button>

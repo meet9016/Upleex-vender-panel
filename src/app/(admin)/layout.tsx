@@ -15,6 +15,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
   const router = useRouter();
   const pathname = usePathname();
+
   const { breadcrumbs } = useBreadcrumb();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -23,36 +24,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     return isExpanded || isHovered ? "lg:ml-[290px]" : "lg:ml-[90px]";
   }, [isMobileOpen, isExpanded, isHovered]);
 
-  // Fallback Breadcrumb Trail detection based on pathname
-  const fallbackBreadcrumbs = useMemo(() => {
-    const safePathname = pathname || "";
-    const segments = safePathname.split("/").filter(Boolean);
-
-    if (segments.length === 0) {
-      return [{ label: "Dashboard" }];
-    }
-
-    const trail: { label: string; path: string }[] = [];
-    let currentPath = "";
-
-    segments.forEach((segment) => {
-      currentPath += `/${segment}`;
-
-      // Convert kebab-case or snake_case to Title Case
-      const label = segment
-        .replace(/[-_]/g, " ")
-        .replace(/([a-z])([A-Z])/g, "$1 $2") // Handle camelCase like addProduct
-        .split(" ")
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(" ");
-
-      trail.push({ label, path: currentPath });
-    });
-
-    return trail;
-  }, [pathname]);
-
-  const displayBreadcrumbs = breadcrumbs || fallbackBreadcrumbs;
+  const displayBreadcrumbs = breadcrumbs;
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -77,7 +49,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           {/* Common Top Row for Breadcrumbs (Hidden on Dashboard) */}
           {pathname !== "/" && pathname !== null && pathname !== "" && (
             <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-              <PageBreadcrumb breadcrumbs={displayBreadcrumbs} />
+              <PageBreadcrumb breadcrumbs={displayBreadcrumbs || undefined} />
             </div>
           )}
 

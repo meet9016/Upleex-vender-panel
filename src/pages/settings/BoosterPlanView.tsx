@@ -173,11 +173,11 @@ const BoosterPlanView: React.FC = () => {
       )} */}
 
       {/* Plans Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 ">
         {plans.map((plan) => (
           <div
             key={plan.id || plan._id}
-            className={`relative p-8 rounded-3xl border transition-all duration-500 flex flex-col h-full bg-white group ${plan.is_popular
+            className={`relative p-8 rounded-3xl border transition-all duration-500 flex flex-col h-full bg-white group dark:bg-black  ${plan.is_popular
               ? "border-indigo-500 shadow-2xl shadow-indigo-100 scale-[1.02] z-10"
               : "border-gray-200 hover:border-indigo-300 hover:shadow-xl shadow-sm"
               }`}
@@ -188,15 +188,15 @@ const BoosterPlanView: React.FC = () => {
               </span>
             )}
 
-            <div className="mb-6 text-center">
-              <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+            <div className="mb-6 text-center ">
+              <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform dark:text-gray-200 dark:bg-black">
                 <Rocket className="w-8 h-8 text-indigo-600" />
               </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h4>
-              <p className="text-gray-500 text-sm line-clamp-2">{plan.description}</p>
+              <h4 className="text-xl font-bold text-gray-900 mb-1 dark:text-gray-200">{plan.name}</h4>
+              <p className="text-gray-500 text-sm line-clamp-2 dark:text-gray-200">{plan.description}</p>
             </div>
 
-            <div className={`flex items-baseline justify-center gap-1 mb-8 p-4 rounded-2xl ${activeBooster ? 'bg-green-50' : 'bg-indigo-50'}`}>
+            <div className={`flex items-baseline justify-center gap-1 mb-8 p-4 rounded-2xl dark:text-gray-200 dark:bg-black ${activeBooster ? 'bg-green-50' : 'bg-indigo-50'}`}>
               <span className={`text-4xl font-extrabold ${activeBooster ? 'text-green-600' : 'text-indigo-900'}`}>
                 {activeBooster ? 'FREE' : `${currency}${plan.price}`}
               </span>
@@ -209,13 +209,13 @@ const BoosterPlanView: React.FC = () => {
                 <div className="w-5 h-5 bg-indigo-100 rounded-full flex items-center justify-center">
                   <Sparkles className="w-3 h-3 text-indigo-600" />
                 </div>
-                <span className="text-sm font-semibold text-gray-700">10x Visibility Boost</span>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">10x Visibility Boost</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-5 h-5 bg-indigo-100 rounded-full flex items-center justify-center">
                   <TrendingUp className="w-3 h-3 text-indigo-600" />
                 </div>
-                <span className="text-sm font-semibold text-gray-700">Priority Search Ranking</span>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Priority Search Ranking</span>
               </div>
             </div>
 
@@ -223,7 +223,7 @@ const BoosterPlanView: React.FC = () => {
               <Button
                 onClick={() => handleOpenConfirm(plan)}
                 disabled={isPurchasing}
-                className={`w-full py-4 rounded-xl font-bold shadow-lg ${activeBooster ? 'shadow-green-100' : 'shadow-indigo-100'}`}
+                className={`w-full py-4 rounded-xl font-bold  dark:bg-[#1c2938] ${activeBooster ? 'shadow-green-100' : 'shadow-indigo-100'}`}
                 variant={activeBooster ? "primary" : "primary"}
               >
                 {isPurchasing ? "Processing..." : (activeBooster ? "Sync New Products" : `Boost All Products`)}
@@ -313,7 +313,7 @@ const BoosterPlanView: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <History className="w-6 h-6 text-indigo-600" />
-          <h2 className="text-2xl font-bold text-gray-900">Booster Purchase History</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Booster Purchase History</h2>
         </div>
 
         {/* <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl overflow-hidden"> */}

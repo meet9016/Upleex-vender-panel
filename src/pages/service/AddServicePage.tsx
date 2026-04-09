@@ -1,7 +1,6 @@
 "use client";
 
 import ComponentCard from "@/components/common/ComponentCard";
-import { useBreadcrumb } from "@/context/BreadcrumbContext";
 import Input from "@/components/common/Input";
 import DropzoneComponent from "@/components/form/form-elements/DropZone";
 import Label from "@/components/form/Label";
@@ -42,15 +41,6 @@ export default function AddServicePage() {
     const [subPreviews, setSubPreviews] = useState<any[]>([]);
     const [categoryList, setCategoryList] = useState<Option[]>([]);
     const [loading, setLoading] = useState(false);
-    const { setBreadcrumbs } = useBreadcrumb();
-
-    useEffect(() => {
-        setBreadcrumbs([
-            { label: "Service", path: "/service" },
-            { label: isEditMode ? "Edit Service" : "Add Service" }
-        ]);
-        return () => setBreadcrumbs(null);
-    }, [isEditMode, setBreadcrumbs]);
     const [validationErrors, setValidationErrors] = useState<{
         name?: string;
         category?: string;
@@ -198,8 +188,8 @@ export default function AddServicePage() {
 
     return (
         <div className="pb-20">
-            <ComponentCard title="">
-                <div className="flex items-center justify-between mb-6">
+            <div className="bg-white p-6">
+                {/* <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => router.back()}
@@ -217,7 +207,7 @@ export default function AddServicePage() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> */}
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
@@ -400,7 +390,7 @@ export default function AddServicePage() {
                         </div>
                     </div>
                 </div>
-            </ComponentCard>
+            </div>
 
             <div className="mt-8 flex items-center justify-end gap-6 px-4">
                 <Button

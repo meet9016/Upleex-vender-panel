@@ -256,8 +256,8 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-gray-100 shadow-sm mb-6">
-        <div className="flex p-1.5 bg-gray-100/80 rounded-2xl w-full sm:w-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-gray-100 shadow-sm mb-6 dark:bg-black">
+        <div className="flex p-1.5 bg-gray-100/80 rounded-2xl w-full sm:w-aut dark:bg-[#1c2938]">
           <button
             onClick={() => setCurrentTab("priority")}
             className={`flex-1 sm:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${currentTab === "priority"
@@ -290,7 +290,7 @@ const SettingsPage: React.FC = () => {
       </div>
       {currentTab === "priority" ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-">
             <div className="md:col-span-3">
               <div className="mb-6">
                 <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2 dark:text-gray-100">
@@ -474,34 +474,32 @@ const SettingsPage: React.FC = () => {
               </div>
 
               {/* 🔹 FOOTER */}
-              <div className="px-6 py-2.5 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end">
-  {/* Buttons */}
-                <div className="flex items-center gap-3">
-                  <Button
-                    // variant="ghost"
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-1 rounded-lg font-medium border"
-                  >
-                    Cancel
-                  </Button>
-
-                  <Button
-                    variant="primary"
-                    onClick={handlePurchase}
-                    disabled={
-                      isPurchasing ||
-                      selectedProductIds.length === 0 ||
-                      (selectedProductIds.length > remainingSlots &&
-                        !activePurchaseForCurrentPlan &&
-                        selectedProductIds.length >
-                        (selectedPlan?.product_slots || 0))
-                    }
-                    className="px-6  rounded-lg font-semibold"
-                  >
-                    {isPurchasing ? 'Processing...' : 'Confirm & Activate'}
-                  </Button>
+                <div className="px-6 py-2.5 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end">
+    {/* Buttons */}
+                  <div className="flex items-center gap-3">
+           <Button
+  onClick={() => setIsModalOpen(false)}
+  className="px-4 !py-1.5 bg-white dark:bg-[#1c2938] !text-black dark:!text-white border border-gray-300 dark:border-gray-600 rounded-md font-medium hover:bg-gray-100 dark:hover:bg-gray-600"
+>
+  Cancel
+</Button>
+                    <Button
+                      variant="primary"
+                      onClick={handlePurchase}
+                      disabled={
+                        isPurchasing ||
+                        selectedProductIds.length === 0 ||
+                        (selectedProductIds.length > remainingSlots &&
+                          !activePurchaseForCurrentPlan &&
+                          selectedProductIds.length >
+                          (selectedPlan?.product_slots || 0))
+                      }
+                      className="px-6 btn-primary rounded-lg font-semibold"
+                    >
+                      {isPurchasing ? 'Processing...' : 'Confirm & Activate'}
+                    </Button>
+                  </div>
                 </div>
-              </div>
 
             </div>
 

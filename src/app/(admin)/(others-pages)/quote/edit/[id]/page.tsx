@@ -324,9 +324,8 @@ const QuoteEditPage = () => {
 
         {/* Quote Details Card */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 mb-5 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-4 mb-6">
+          {/* <div className="flex items-center gap-4 mb-6">
 
-            {/* Back Arrow */}
             <button
               onClick={() => router.back()}
               className="p-2 rounded-lg border border-gray-200 dark:border-gray-600
@@ -337,7 +336,6 @@ const QuoteEditPage = () => {
               <FiArrowLeft className="text-lg" />
             </button>
 
-            {/* Blue Line + Title */}
             <div className="flex items-center gap-3">
               <div className="h-12 w-1 bg-blue-600 rounded-full"></div>
               <div>
@@ -349,7 +347,7 @@ const QuoteEditPage = () => {
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Product Info with Image */}
@@ -662,7 +660,7 @@ const QuoteEditPage = () => {
             <button
               type="submit"
               disabled={submitting}
-              className={`w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 ${submitting ? 'opacity-50 cursor-not-allowed' : ''
+              className={`w-full px-4 py-2.5 btn-primary transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 ${submitting ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
             >
               {submitting ? (

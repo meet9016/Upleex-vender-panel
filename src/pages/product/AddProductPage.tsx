@@ -998,13 +998,12 @@ export default function AddProductPage() {
     return (
         <>
 
-            <ComponentCard title="">
-                <div className="flex items-center justify-between mb-6">
+            <div className="bg-white p-6">
+                <div className="flex items-center justify-end mb-2">
 
                     {/* Left Section */}
-                    <div className="flex items-center gap-4">
+                    {/* <div className="flex items-center gap-4">
 
-                        {/* Back Arrow */}
                         <button
                             onClick={() => router.back()}
                             className="p-2 rounded-lg border border-gray-200 dark:border-gray-600
@@ -1015,7 +1014,6 @@ export default function AddProductPage() {
                             <FiArrowLeft className="text-lg" />
                         </button>
 
-                        {/* Blue Line + Title */}
                         <div className="flex items-center gap-3">
                             <div className="h-12 w-1 bg-brand-500 rounded-full"></div>
                             <div>
@@ -1028,7 +1026,7 @@ export default function AddProductPage() {
                             </div>
                         </div>
 
-                    </div>
+                    </div> */}
                     <div className="bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex items-center">
                         <Checkbox
                             label="Base (Paid listing)"
@@ -1694,7 +1692,7 @@ export default function AddProductPage() {
                         </div>
                     </div>
                 </div>
-            </ComponentCard>
+            </div>
 
             <div className="mt-8 flex items-center justify-end gap-6 px-4">
                 {/* Custom Checkbox - Base (Paid) */}
