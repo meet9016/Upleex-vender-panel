@@ -114,7 +114,7 @@ export default function DocumentUpload({
 
   return (
     <div className="w-full relative group/upload">
-      <label className="block mb-2 text-[13px] font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+      <label className="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
         {label}{required && !disabled && <span className="text-red-500 ml-0.5">*</span>}
       </label>
 
@@ -170,7 +170,7 @@ export default function DocumentUpload({
             {/* File Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate pr-2">
+                <span className="text-sm text-slate-700 dark:text-slate-200 pr-2">
                   {file instanceof File ? file.name : 'Document Uploaded'}
                 </span>
                 <FiCheckCircle className="text-emerald-500 text-xs flex-shrink-0" />
@@ -179,7 +179,7 @@ export default function DocumentUpload({
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
                   {file instanceof File ? (file.size / 1024 / 1024).toFixed(2) + " MB" : (isPDF ? 'PDF' : 'Image')}
                 </span>
-                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase ">
                   Ready to Submit
                 </span>
               </div>

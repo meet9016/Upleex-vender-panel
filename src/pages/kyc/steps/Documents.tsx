@@ -40,7 +40,7 @@ export default function Documents({
     <ComponentCard title="Documents">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <DocumentUpload
-        label="PAN Card (Front)"
+        label="Pan Card (Front)"
         file={KYCformData?.pancard_front_image}
         onChange={updateFile("pancard_front_image")}
         error={errors?.pancard_front_image}
@@ -67,7 +67,7 @@ export default function Documents({
       />
 
       <DocumentUpload
-        label="GST Certificate"
+        label="Gst Certificate"
         file={KYCformData?.gst_certificate_image}
         onChange={updateFile("gst_certificate_image")}
         error={errors?.gst_certificate_image}

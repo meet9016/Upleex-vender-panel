@@ -143,7 +143,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                   />
                   { /* <!-- ======================================================  Overlay on Hover  ====================================================== -->*/}
 
-                  <div className="absolute bottom-2 right-2 bg-opacity-0 group-hover/image:bg-opacity-20 
+                  <div className="absolute top-2 right-2 bg-opacity-0 group-hover/image:bg-opacity-20 
                 transition-all duration-300 rounded-xl flex items-center justify-center">
                     <button
                       type="button"
@@ -194,10 +194,10 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                     {/* Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 
                 opacity-0 group-hover/image:opacity-100 transition-all duration-300">
-                      <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
-                        <span className="text-white text-xs font-medium bg-black/40 px-2 py-1 rounded">
+                      <div className="absolute top-2 left-2 right-2 flex justify-end items-center">
+                        {/* <span className="text-white text-xs font-medium bg-black/40 px-2 py-1 rounded">
                           #{index + 1}
-                        </span>
+                        </span> */}
                         <button
                           type="button"
                           onClick={(e) => {
