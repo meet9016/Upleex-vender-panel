@@ -6,7 +6,7 @@ import { WalletProvider } from "@/context/WalletContext";
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { BreadcrumbProvider, useBreadcrumb } from "@/context/BreadcrumbContext";
@@ -15,7 +15,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+
   const { breadcrumbs } = useBreadcrumb();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
