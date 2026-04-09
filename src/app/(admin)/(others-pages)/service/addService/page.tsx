@@ -1,9 +1,13 @@
 import AddServicePage from '@/pages/service/AddServicePage'
-import React from 'react'
+import React, { Suspense } from 'react'
 
 const page = () => {
   return (
-    <div><AddServicePage /></div>
+    <div>
+      <Suspense fallback={<div>Loading...</div>}>
+        <AddServicePage />
+      </Suspense>
+    </div>
   )
 }
 
