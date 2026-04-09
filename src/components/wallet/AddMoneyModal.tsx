@@ -283,7 +283,7 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
           </Button>
           <Button
             onClick={() => handleAmountSubmit(new Event('submit') as any)}
-            className="flex-1"
+            className=" btn-primary"
             disabled={!amount || parseFloat(amount) < 50}
           >
             Continue to Payment

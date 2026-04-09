@@ -116,6 +116,23 @@ const ProductTable = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [hoveredImage, setHoveredImage] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isDark, setIsDark] = useState(false);
+
+  // Track dark mode changes
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    };
+    checkDarkMode();
+
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
   // Robustly clear hover when mouse is NOT over a trigger
   useEffect(() => {
     if (!hoveredImage) return;
@@ -462,7 +479,9 @@ const ProductTable = () => {
 
   const getRowStyle = (params: any) => {
     if (params.data.status?.toLowerCase() === 'draft') {
-      return { backgroundColor: '#f3f4f6' }; // Light grey for Draft
+      return { 
+        backgroundColor: isDark ? '#272a33ff' : '#f3f4f6', // Red for dark mode, grey for light mode
+      };
     }
     return undefined;
   };

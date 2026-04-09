@@ -291,9 +291,9 @@ const ServiceTable = () => {
 
             {showActionsMenu && (
               <div className="absolute right-0 top-full mt-2 w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                <div className="px-5 py-3 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100/30 dark:border-gray-800/30">
+                {/* <div className="px-5 py-3 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100/30 dark:border-gray-800/30">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Export Options</span>
-                </div>
+                </div> */}
 
                 <div className="py-1">
                   <button
