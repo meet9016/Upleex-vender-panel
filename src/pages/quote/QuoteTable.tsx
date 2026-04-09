@@ -60,6 +60,7 @@ type Quote = {
   month_name?: string;
   product_main_image?: string;
   razorpay_payment_link?: string;
+  payment_status?: string;
 };
 
 const QuoteTable = () => {
@@ -336,6 +337,19 @@ const QuoteTable = () => {
           <StatusBadge status={params.value || 'pending'} />
         </div>
       ),
+    },
+    {
+      field: "payment_status",
+      headerName: "Payment Status",
+      minWidth: 140,
+      cellStyle: { textAlign: "center" },
+      cellRenderer: (params: any) => {
+        return (
+          <div className="flex items-center justify-center h-full">
+            <StatusBadge status={params.value || 'pending'} />
+          </div>
+        );
+      }
     },
     // {
     //   field: "delivery_date",
