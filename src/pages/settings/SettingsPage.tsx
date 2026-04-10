@@ -511,12 +511,12 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* <div className="flex items-center gap-3 px-5 py-2.5 bg-brand-50 rounded-2xl border border-brand-100">
-          <Wallet className="text-brand-600" size={20} />
-          <div>
-            <p className="text-[10px] text-brand-500 uppercase font-black tracking-widest leading-none">Wallet Balance</p>
-            <p className="text-lg font-black text-brand-900 leading-tight">{currency}{balance.toLocaleString()}</p>
-          </div>
+              {/* <div className="flex items-center gap-3 px-5 py-2.5 bg-brand-50 rounded-2xl border border-brand-100">
+            <Wallet className="text-brand-600" size={20} />
+            <div>
+              <p className="text-[10px] text-brand-500 uppercase font-black tracking-widest leading-none">Wallet Balance</p>
+              <p className="text-lg font-black text-brand-900 leading-tight">{currency}{balance.toLocaleString()}</p>
+            </div>
 
           {/* Priority Purchase History */}
             <div className="mt-12 space-y-6">
@@ -657,14 +657,15 @@ const SettingsPage: React.FC = () => {
               </div>
 
             </Modal>
-          </>
-          ) : currentTab === "booster" ? (
-          <BoosterPlanView />
-          ) : (
-          <ListingPlanView />
+          </div>
+        </>
+      ) : currentTab === "booster" ? (
+        <BoosterPlanView />
+      ) : (
+        <ListingPlanView />
       )}
-        </div >
-      );
+    </div>
+  )
 };
 
-      export default SettingsPage;
+export default SettingsPage;
