@@ -16,10 +16,16 @@ import { useRouter } from "next/navigation";
 import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ColDef, ModuleRegistry, RowSelectionOptions } from "ag-grid-community";
 import { MdDelete, MdModeEdit } from "react-icons/md";
-import { ColumnMenuModule, ContextMenuModule } from "ag-grid-enterprise";
+import { ColumnMenuModule, ContextMenuModule, RowGroupingModule, TreeDataModule } from "ag-grid-enterprise";
 import PageLoader from "@/components/common/PageLoader";
 
-ModuleRegistry.registerModules([AllCommunityModule, ColumnMenuModule, ContextMenuModule]);
+ModuleRegistry.registerModules([
+  AllCommunityModule,
+  ColumnMenuModule,
+  ContextMenuModule,
+  RowGroupingModule,
+  TreeDataModule
+]);
 
 interface AgGridTableProps {
   tableName?: string;
@@ -38,6 +44,11 @@ interface AgGridTableProps {
   height?: string | number;
   showCheckboxes?: boolean;
   isRowSelectable?: (params: any) => boolean;
+  treeData?: boolean;
+  getDataPath?: (data: any) => string[];
+  autoGroupColumnDef?: ColDef;
+  groupDefaultExpanded?: number;
+  getRowId?: (params: any) => string;
 }
 
 const AgGridTable: React.FC<AgGridTableProps> = ({
@@ -55,6 +66,11 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   height,
   showCheckboxes = true,
   isRowSelectable,
+  treeData,
+  getDataPath,
+  autoGroupColumnDef,
+  groupDefaultExpanded,
+  getRowId,
 }) => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
@@ -222,6 +238,12 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             getRowStyle={getRowStyle}
             overlayNoRowsTemplate="<span></span>"
             isRowSelectable={isRowSelectable}
+            treeData={treeData}
+            getDataPath={getDataPath}
+            autoGroupColumnDef={autoGroupColumnDef}
+            groupDefaultExpanded={groupDefaultExpanded}
+            getRowId={getRowId}
+            animateRows={true}
           />
         </div>
       </div>
