@@ -63,7 +63,7 @@ export const PageLoader = ({ fullScreen = true }: PageLoaderProps) => {
 
       {/* Text and Dots */}
       <div className="flex flex-col items-center">
-        <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+        <h3 className="text-lg font-bold text-slate-900 tracking-tight dark:text-white">
           Upleex<span className="text-sky-500">.</span>
         </h3>
         <div className="flex gap-1.5 mt-1.5">

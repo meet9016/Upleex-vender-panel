@@ -69,12 +69,7 @@ export default function StepDeclaration({
 
       {/* Error Notice */}
       {errors?.terms_conditions && (
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30 rounded-xl animate-in shake duration-300">
-          <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-          <p className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">
-            {errors.terms_conditions}
-          </p>
-        </div>
+        <p className="error-message">{errors.terms_conditions}</p>
       )}
     </div>
   );

@@ -14,6 +14,7 @@ import AgGridTable from "@/components/tables/AgGridTable";
 import { ColDef } from "ag-grid-community";
 import StatusBadge from "@/components/common/StatusBadge";
 import BoosterPlanView from "./BoosterPlanView";
+import ListingPlanView from "./ListingPlanView";
 
 interface PriorityPlan {
   id: string;
@@ -63,7 +64,7 @@ const SettingsPage: React.FC = () => {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
   const [gridSearch, setGridSearch] = useState("");
-  const [currentTab, setCurrentTab] = useState<"priority" | "booster">("priority");
+  const [currentTab, setCurrentTab] = useState<"priority" | "booster" | "listing">("priority");
   const { balance, currency, refreshBalance } = useWallet();
 
   const fetchData = async () => {
@@ -93,7 +94,9 @@ const SettingsPage: React.FC = () => {
         }
 
         const pid = p.id || p._id;
-        const assocPurchase = activePurchases.find(purchase => purchase.product_ids.includes(pid));
+        const assocPurchase = activePurchases.find(purchase =>
+          purchase.product_ids.some(id => String(id) === String(pid))
+        );
 
         return {
           ...p,
@@ -141,12 +144,27 @@ const SettingsPage: React.FC = () => {
       return;
     }
 
-    const activePurchase = vendorPurchases.find(p => (p.plan_id === targetPlanId || (p as any).plan_id === targetPlanId));
-    const totalSlots = Number(activePurchase?.total_slots || selectedPlan.product_slots || 0);
-    const usedSlots = Number(activePurchase?.product_ids?.length || 0);
-    const remainingSlotsCalculated = totalSlots - usedSlots;
+    const activePurchases = vendorPurchases.filter(p => String(p.plan_id) === String(targetPlanId));
 
-    const finalPrice = selectedProductIds.length <= remainingSlotsCalculated && activePurchase ? 0 : selectedPlan.monthly_price;
+    // Total capacity across all active plans of this type
+    const totalSlots = activePurchases.length > 0
+      ? activePurchases.reduce((acc, p) => acc + Number(p.total_slots), 0)
+      : Number(selectedPlan.product_slots || 0);
+
+    // Collect all unique products currently assigned across these plans
+    const currentProductIds = new Set(activePurchases.flatMap(p => p.product_ids.map(id => String(id))));
+    const trulyNewIds = selectedProductIds.filter(id => !currentProductIds.has(String(id)));
+
+    const usedSlots = currentProductIds.size;
+    const remainingSlotsCalculated = Math.max(0, totalSlots - usedSlots);
+
+    // If the new products fit into the total REMAINING space across active plans, price is 0
+    let finalPrice = selectedPlan.monthly_price;
+
+    if (activePurchases.length > 0 && trulyNewIds.length <= remainingSlotsCalculated) {
+      finalPrice = 0;
+    }
+
 
     if (finalPrice > balance) {
       toast.error("Insufficient wallet balance.");
@@ -179,23 +197,30 @@ const SettingsPage: React.FC = () => {
     {
       headerName: "Product",
       field: "product_name",
-      minWidth: 200,
+      minWidth: 240,
       flex: 1,
       cellRenderer: (params: any) => {
         const product = params.data;
         const imageUrl = product.product_main_image || product.image || DEFAULT_PLACEHOLDER;
         return (
-          <div className="flex items-center gap-3">
-            <img
-              src={imageUrl}
-              className="w-8 h-8 rounded object-cover border"
-              onError={(e: any) => e.target.src = DEFAULT_PLACEHOLDER}
-            />
-            <span className="font-medium truncate">{product.product_name}</span>
+          <div className="flex items-center gap-3 h-full">
+            <div className="flex-shrink-0 relative group">
+              <img
+                src={imageUrl}
+                className="w-9 h-9 rounded-lg object-cover border border-gray-100 group-hover:scale-105 transition-transform"
+                onError={(e: any) => e.target.src = DEFAULT_PLACEHOLDER}
+              />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="font-bold text-[13px] text-gray-800 dark:text-gray-100 truncate">
+                {product.product_name}
+              </span>
+            </div>
           </div>
         );
       }
     },
+
     {
       headerName: "Category",
       field: "category_name",
@@ -222,6 +247,22 @@ const SettingsPage: React.FC = () => {
       valueFormatter: (params) => `${currency}${params.value?.toLocaleString()}`
     },
     {
+      headerName: "Stock",
+      field: "available_quantity",
+      width: 100,
+      cellRenderer: (params: any) => {
+        const qty = params.value || 0;
+        return (
+          <div className="flex items-center h-full">
+            <span className={`text-xs font-bold ${qty <= 0 ? 'text-red-500' : 'text-gray-700 dark:text-gray-200'}`}>
+              {qty} {qty <= 0 && "(OOS)"}
+            </span>
+          </div>
+        );
+      }
+    },
+
+    {
       headerName: "Expiry Date",
       field: "priority_expiry",
       width: 130,
@@ -246,38 +287,59 @@ const SettingsPage: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-[400px]"><PageLoader fullScreen={false} /></div>;
+    return <PageLoader />;
   }
 
-  const activePurchaseForCurrentPlan = selectedPlan ? vendorPurchases.find(p => (p.plan_id === (selectedPlan.id || selectedPlan._id))) : null;
-  const currentTotal = Number(activePurchaseForCurrentPlan?.total_slots || selectedPlan?.product_slots || 0);
-  const currentUsed = Number(activePurchaseForCurrentPlan?.product_ids?.length || 0);
+
+  const activePurchasesForPlan = selectedPlan
+    ? vendorPurchases.filter(p => String(p.plan_id) === String(selectedPlan.id || selectedPlan._id))
+    : [];
+
+  const currentTotal = activePurchasesForPlan.length > 0
+    ? activePurchasesForPlan.reduce((acc, p) => acc + Number(p.total_slots), 0)
+    : Number(selectedPlan?.product_slots || 0);
+
+  const currentUsed = activePurchasesForPlan.reduce((acc, p) => acc + p.product_ids.length, 0);
   const remainingSlots = Math.max(0, currentTotal - currentUsed);
+
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-gray-100 shadow-sm mb-6 dark:bg-black">
-        <div className="flex p-1.5 bg-gray-100/80 rounded-2xl w-full sm:w-aut dark:bg-[#1c2938]">
-          <button
+        <div className="flex p-1.5 bg-gray-100/80 rounded-2xl w-full sm:w-auto dark:bg-[#1c2938] gap-1.5">
+          <Button
+            variant={currentTab === "priority" ? "secondary" : "ghost"}
             onClick={() => setCurrentTab("priority")}
-            className={`flex-1 sm:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${currentTab === "priority"
+            className={`flex-1 sm:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "priority"
               ? "bg-white text-brand-600 shadow-md ring-1 ring-black/[0.04]"
               : "text-gray-500 hover:text-gray-900"
               }`}
           >
             <Package size={18} className={currentTab === "priority" ? "text-brand-500" : "text-gray-400"} />
             Priority Plan
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={currentTab === "booster" ? "secondary" : "ghost"}
             onClick={() => setCurrentTab("booster")}
-            className={`flex-1 sm:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${currentTab === "booster"
+            className={`flex-1 sm:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "booster"
               ? "bg-white text-indigo-600 shadow-md ring-1 ring-black/[0.04]"
               : "text-gray-500 hover:text-gray-900"
               }`}
           >
             <Rocket size={18} className={currentTab === "booster" ? "text-indigo-500" : "text-gray-400"} />
             Booster Plan
-          </button>
+          </Button>
+          <Button
+            variant={currentTab === "listing" ? "secondary" : "ghost"}
+            onClick={() => setCurrentTab("listing")}
+            className={`flex-1 sm:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "listing"
+              ? "bg-white text-emerald-600 shadow-md ring-1 ring-black/[0.04]"
+              : "text-gray-500 hover:text-gray-900"
+              }`}
+          >
+            <Package size={18} className={currentTab === "listing" ? "text-emerald-500" : "text-gray-400"} />
+            Listing Plan
+          </Button>
         </div>
 
         {/* <div className="flex items-center gap-3 px-5 py-2.5 bg-brand-50 rounded-2xl border border-brand-100">
@@ -290,6 +352,7 @@ const SettingsPage: React.FC = () => {
       </div>
       {currentTab === "priority" ? (
         <>
+          {/* Priority Plan Content (Original code remains here) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-">
             <div className="md:col-span-3">
               <div className="mb-6">
@@ -301,8 +364,10 @@ const SettingsPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {plans.map((plan) => {
                   const planId = plan.id || (plan as any)._id;
-                  const myActive = vendorPurchases.find(p => String(p.plan_id) === String(planId));
-                  const isSubscribed = !!myActive;
+                  const matchPurchases = vendorPurchases.filter(p => String(p.plan_id) === String(planId));
+                  const isSubscribed = matchPurchases.length > 0;
+                  const totalCapacity = matchPurchases.reduce((acc, p) => acc + Number(p.total_slots), 0);
+                  const totalUsedCount = matchPurchases.reduce((acc, p) => acc + p.product_ids.length, 0);
 
                   return (
                     <div
@@ -330,11 +395,10 @@ const SettingsPage: React.FC = () => {
 
                       {isSubscribed && plan.product_slots > 1 && (
                         <div className="mb-6 p-3 bg-green-50 border border-green-100 rounded-xl dark:bg-[#0d111c]">
-                          <p className="text-xs font-bold text-green-700 uppercase mb-1 ">Active Subscription</p>
                           <div className="flex justify-between items-center text-sm">
                             <span className="text-green-600 font-medium">Remaining Slots</span>
-                            <span className="font-bold text-green-800">
-                              {Math.max(0, Number(myActive.total_slots || 0) - (myActive.product_ids?.length || 0))} / {Number(myActive.total_slots || 0)}
+                            <span className="font-bold text-green-800 dark:text-green-200 text-lg">
+                              {Math.max(0, totalCapacity - totalUsedCount)}
                             </span>
                           </div>
                         </div>
@@ -473,42 +537,41 @@ const SettingsPage: React.FC = () => {
                 />
               </div>
 
-              {/* 🔹 FOOTER */}
-                <div className="px-6 py-2.5 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end">
-    {/* Buttons */}
-                  <div className="flex items-center gap-3">
-           <Button
-  onClick={() => setIsModalOpen(false)}
-  className="px-4 !py-1.5 bg-white dark:bg-[#1c2938] !text-black dark:!text-white border border-gray-300 dark:border-gray-600 rounded-md font-medium hover:bg-gray-100 dark:hover:bg-gray-600"
->
-  Cancel
-</Button>
-                    <Button
-                      variant="primary"
-                      onClick={handlePurchase}
-                      disabled={
-                        isPurchasing ||
-                        selectedProductIds.length === 0 ||
-                        (selectedProductIds.length > remainingSlots &&
-                          !activePurchaseForCurrentPlan &&
-                          selectedProductIds.length >
-                          (selectedPlan?.product_slots || 0))
-                      }
-                      className="px-6 btn-primary rounded-lg font-semibold"
-                    >
-                      {isPurchasing ? 'Processing...' : 'Confirm & Activate'}
-                    </Button>
-                  </div>
-                </div>
+              <div className="px-6 py-4 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-6 py-2.5 rounded-xl font-bold"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handlePurchase}
+                  disabled={
+                    isPurchasing ||
+                    selectedProductIds.length === 0 ||
+                    (selectedProductIds.length > remainingSlots &&
+                      activePurchasesForPlan.length === 0 &&
+                      selectedProductIds.length >
+                      (selectedPlan?.product_slots || 0))
+                  }
+
+                  className="px-8 py-2.5 rounded-xl font-bold transition-all shadow-lg"
+                >
+                  {isPurchasing ? 'Processing...' : 'Confirm & Activate'}
+                </Button>
+              </div>
 
             </div>
 
           </Modal>
         </>
-      ) : (
+      ) : currentTab === "booster" ? (
         <BoosterPlanView />
-      )
-      }
+      ) : (
+        <ListingPlanView />
+      )}
     </div >
   );
 };

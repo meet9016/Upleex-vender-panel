@@ -41,7 +41,7 @@ export default function AddServicePage() {
     const [subImages, setSubImages] = useState<Record<string, File>>({});
     const [subPreviews, setSubPreviews] = useState<any[]>([]);
     const [categoryList, setCategoryList] = useState<Option[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [pageLoading, setPageLoading] = useState(true);
     const [validationErrors, setValidationErrors] = useState<{
         name?: string;
@@ -141,7 +141,7 @@ export default function AddServicePage() {
         }
 
         try {
-            setLoading(true);
+            setSubmitting(true);
             const data = new FormData();
             data.append("service_name", formData.name);
             data.append("category_id", formData.category);
@@ -186,13 +186,13 @@ export default function AddServicePage() {
             console.error("Save service error", error);
             toast.error("Failed to save service");
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
     return (
         <>
-            {pageLoading ? (
+            {pageLoading || submitting ? (
                 <PageLoader fullScreen={true} />
             ) : (
                 <div className="pb-20 ">
@@ -406,9 +406,8 @@ export default function AddServicePage() {
                             variant="primary"
                             className="btn-primary px-6 py-2.5 min-w-[100px]"
                             onClick={handleSubmit}
-                            disabled={loading}
                         >
-                            {loading ? "Saving..." : isEditMode ? "Update" : "Save"}
+                            {isEditMode ? "Update" : "Save"}
                         </Button>
                         <Button
                             size="sm"

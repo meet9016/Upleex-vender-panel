@@ -341,7 +341,7 @@ const OrderList = () => {
     {
       headerName: "Amount",
       field: "total_amount",
-      minWidth: 120,
+      minWidth: 100,
       flex: 1,
       cellRenderer: (params: any) => (
         <div className="font-semibold text-green-600 text-center">
@@ -353,7 +353,7 @@ const OrderList = () => {
     {
       headerName: "Order Status",
       field: "vendor_status",
-      minWidth: 150,
+      minWidth: 120,
       flex: 1.2,
       cellRenderer: (params: any) => <StatusBadge status={params.value} />,
       cellStyle: { textAlign: "center" }
@@ -361,7 +361,7 @@ const OrderList = () => {
     {
       headerName: "Customer Payment",
       field: "payment_status",
-      minWidth: 120,
+      minWidth: 150,
       flex: 1,
       cellRenderer: (params: any) => (
         <div className="flex flex-col gap-1 items-center">
@@ -374,7 +374,7 @@ const OrderList = () => {
     {
       headerName: "Admin Payment",
       field: "payment_status_info.payment_status",
-      minWidth: 140,
+      minWidth: 120,
       flex: 1,
       cellRenderer: (params: any) => {
         const paymentStatus = params.data.payment_status_info?.payment_status || '-';
@@ -399,8 +399,8 @@ const OrderList = () => {
     {
       headerName: "Actions",
       field: "actions",
-      width: 80,
-      maxWidth: 80,
+      width: 90,
+      maxWidth: 90,
       suppressSizeToFit: true,
       pinned: "right",
       suppressHeaderMenuButton: true,
@@ -867,7 +867,7 @@ const OrderList = () => {
               tableName={activeTab === 'orders' ? 'Orders' : 'Payments'}
               filter={false}
               showCheckboxes={false}
-              rowHeight={50}
+              rowHeight={55 }
             />
           </div>
         </div>

@@ -186,7 +186,7 @@ const ProductTable = () => {
   const debouncedSearch = useDebounce(searchText, 600);
 
   // Count active filters (excluding empty arrays)
-  const activeFilterCount = Object.values(filters).filter(v => 
+  const activeFilterCount = Object.values(filters).filter(v =>
     Array.isArray(v) ? v.length > 0 : v !== ''
   ).length;
 
@@ -313,9 +313,8 @@ const ProductTable = () => {
 
             return (
               <div className="flex items-center h-full">
-                <span className={`text-xs font-semibold ${
-                  isOutOfStock ? 'text-red-500' : 'text-gray-700 dark:text-gray-200'
-                }`}>
+                <span className={`text-xs font-semibold ${isOutOfStock ? 'text-red-500' : 'text-gray-700 dark:text-gray-200'
+                  }`}>
                   {available} {isOutOfStock && "(OOS)"}
                 </span>
               </div>
@@ -479,7 +478,7 @@ const ProductTable = () => {
 
   const getRowStyle = (params: any) => {
     if (params.data.status?.toLowerCase() === 'draft') {
-      return { 
+      return {
         backgroundColor: isDark ? '#272a33ff' : '#f3f4f6', // Red for dark mode, grey for light mode
       };
     }
@@ -719,14 +718,14 @@ const ProductTable = () => {
   useEffect(() => {
     // Ensure pendingCategory is always an array
     const categoryArray = Array.isArray(pendingCategory) ? pendingCategory : [];
-    
+
     if (categoryArray.length === 0) {
       setPendingSubCategoryOptions([]);
       setPendingSubCategory([]);
       setPendingFilters(prev => ({ ...prev, category_id: [], sub_category_id: [] }));
       return;
     }
-    
+
     // Get subcategories for selected categories
     const subcats: Option[] = [];
     categoryArray.forEach(catId => {
@@ -742,7 +741,7 @@ const ProductTable = () => {
         });
       }
     });
-    
+
     setPendingSubCategoryOptions(subcats);
     // Clear subcategories if multiple categories selected or no categories
     if (categoryArray.length !== 1) {
@@ -782,10 +781,10 @@ const ProductTable = () => {
       getProductData(params);
     } else if (debouncedSearch.trim() === '' && searchText === '') {
       // If search is cleared, check if we have other active filters
-      const hasOtherFilters = Object.entries(filters).some(([, val]: [string, any]) => 
+      const hasOtherFilters = Object.entries(filters).some(([, val]: [string, any]) =>
         Array.isArray(val) ? val.length > 0 : false
       );
-      
+
       if (!hasOtherFilters) {
         // No filters at all, get all data
         console.log('No filters, getting all data');

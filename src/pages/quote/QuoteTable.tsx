@@ -15,7 +15,7 @@ import SearchableDropdown from "@/components/common/SearchableDropdown";
 import MultiSelectDropdown from "@/components/common/MultiSelectDropdown";
 import { exportQuotesToExcel, exportQuotesToPDF } from '@/utils/exportUtils';
 import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
-import { FiEdit3, FiCheck, FiX, FiMoreVertical } from 'react-icons/fi';
+import { FiEdit3, FiCheck, FiX, FiMoreVertical, FiTruck } from 'react-icons/fi';
 import ActionButtons from "@/components/common/ActionButtons";
 import Loader from "@/components/common/Loader";
 
@@ -448,6 +448,28 @@ const QuoteTable = () => {
             >
               <FiX className="text-base" />
             </button>
+
+            {/* Move to Delivery - Only show if approved and payment is paid */}
+            {/* {isApproved && (
+              <button
+                onClick={() => {
+                  if (params.data?.payment_status?.toLowerCase() !== 'paid') {
+                    toast.warning("Delivery available only after payment is PAID");
+                    return;
+                  }
+                  handleDelivery(params.data._id);
+                }}
+                className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200
+                ${params.data?.payment_status?.toLowerCase() !== 'paid'
+                    ? "bg-amber-50 text-amber-600 hover:bg-amber-100 opacity-60"
+                    : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 shadow-sm hover:shadow"
+                  }`}
+                title={params.data?.payment_status?.toLowerCase() !== 'paid' ? "Payment Pending" : "Mark as Delivery"}
+              >
+                <FiTruck className="text-base" />
+              </button>
+            )} */}
+
             <ActionButtons
               onEdit={() => router.push(`/quote/edit/${params.data._id || params.data.id}`)}
               showDelete={false}
@@ -565,6 +587,29 @@ const QuoteTable = () => {
     } catch (error) {
       console.log('Rejection error:', error);
       toast.error("Failed to reject quote");
+    }
+  };
+
+  const handleDelivery = async (quoteId: string) => {
+    try {
+      const deliveryStatus = statusList.find((s: any) =>
+        String(s.name || '').toLowerCase().includes('deliver')
+      );
+      if (!deliveryStatus) return toast.error("Delivery status not found");
+
+      const formData = new FormData();
+      formData.append('quote_id', quoteId);
+      formData.append('status', deliveryStatus.id);
+
+      const res = await api.post(endPointApi.changeStatus, formData);
+
+      if (res?.data?.status === 200) {
+        toast.success("Status changed to DELIVERY");
+        await getQuoteData(filters);
+      }
+    } catch (error) {
+      console.log('Delivery error:', error);
+      toast.error("Failed to update status");
     }
   };
 
@@ -754,7 +799,7 @@ const QuoteTable = () => {
             </button>
 
             {showFilterModal && (
-              <div ref={dropdownRef} className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-full mt-2 bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-auto sm:w-[300px] z-50 border border-gray-200 dark:border-gray-700 max-h-[calc(100vh-120px)] overflow-y-auto">
+              <div ref={dropdownRef} className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-full mt-2 bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-[calc(100vw-32px)] sm:w-[320px] z-50 border border-gray-200 dark:border-gray-700 max-h-[calc(100vh-120px)] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full dark:[&::-webkit-scrollbar-track]:bg-gray-800 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600">
                 <div className="p-4">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Filter Quotes</h3>
@@ -767,11 +812,11 @@ const QuoteTable = () => {
                     {/* Product Type */}
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Product Type</label>
-                      <MultiSelectDropdown
+                      <SearchableDropdown
                         options={productTypes.map((t: any) => ({ label: t.product_type, value: String(t.id) }))}
-                        selectedValues={pendingFilters.product_type}
-                        onChange={(values) => handleFilterChange('product_type', values)}
-                        placeholder="Select Product Types"
+                        value={pendingFilters.product_type[0] || null}
+                        onChange={(value) => handleFilterChange('product_type', value ? [value] : [])}
+                        placeholder="Select Product Type"
                       />
                     </div>
 
@@ -792,6 +837,7 @@ const QuoteTable = () => {
                       <DatePicker
                         value={pendingFilters.delivery_start_date}
                         onChange={(date) => handleFilterChange("delivery_start_date", date)}
+                        width="100%"
                       />
                     </div>
 
@@ -802,6 +848,7 @@ const QuoteTable = () => {
                         value={pendingFilters.delivery_end_date}
                         min={pendingFilters.delivery_start_date}
                         onChange={(date) => handleFilterChange("delivery_end_date", date)}
+                        width="100%"
                       />
                     </div>
 
@@ -831,7 +878,7 @@ const QuoteTable = () => {
                   {/* Actions */}
                   <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
                     <button onClick={clearFilters} className="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium">
-                      Clear
+                      Clear All
                     </button>
                     <button onClick={applyFilters} className="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
                       Apply

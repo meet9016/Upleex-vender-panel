@@ -36,14 +36,14 @@ export interface EndPointApi {
     updateQuote: string;
     getStatus: string;
     changeStatus: string;
-    
+
     // Payment & Orders
     getVendorOrders: string;
     getVendorPaymentHistory: string;
     getVendorOrderStatusOptions: string;
     updateVendorOrderStatus: string;
     getVendorOrderDetails: string;
-    
+
     // Export endpoints
     exportProductsExcel: string;
     exportProductsPDF: string;
@@ -64,7 +64,7 @@ export interface EndPointApi {
     updateVendorServiceDetails: string;
     postAllVendorServiceList: string;
     postDeleteVendorServiceList: string;
-    
+
     // Wallet
     getWalletBalance: string;
     addWalletMoney: string;
@@ -79,7 +79,7 @@ export interface EndPointApi {
     getAllRentalBoostPlans: string;
     purchaseRentalBoostPlan: string;
     getVendorRentalBoostPurchases: string;
-    }
+}
 
 // Define and export the API endpoint object
 const endPointApi: EndPointApi = {
@@ -129,14 +129,14 @@ const endPointApi: EndPointApi = {
     updateQuote: 'quote/update',
     changeStatus: 'quote/change-status',
     getStatus: 'quote/status-dropdown',
-    
+
     // Payment & Orders
     getVendorOrders: 'vendor/orders',
     getVendorPaymentHistory: 'payment/vendor-payment-history',
     getVendorOrderStatusOptions: 'vendor/orders/status-options',
     updateVendorOrderStatus: 'vendor/orders',
     getVendorOrderDetails: 'vendor/orders',
-    
+
     // Export endpoints
     exportProductsExcel: 'export/products/excel',
     exportProductsPDF: 'export/products/pdf',
@@ -157,7 +157,7 @@ const endPointApi: EndPointApi = {
     updateVendorServiceDetails: 'services/update',
     postAllVendorServiceList: 'services/getall',
     postDeleteVendorServiceList: 'services/delete',
-    
+
     // Wallet
     getWalletBalance: 'wallet/balance',
     addWalletMoney: 'wallet/add-money',

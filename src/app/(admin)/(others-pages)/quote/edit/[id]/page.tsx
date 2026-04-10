@@ -195,10 +195,16 @@ const QuoteEditPage = () => {
     if (!params?.id) {
       return;
     }
-    if (submitting) return;
-
     try {
       setSubmitting(true);
+
+      // Validation: Prevent delivery status if payment is not paid
+      if (formData.status === 'delivery' && quoteData?.payment_status?.toLowerCase() !== 'paid') {
+        toast.error("Cannot move to delivery. User payment is still pending.");
+        setSubmitting(false);
+        return;
+      }
+
       // Use multipart for optional files and dates
       const fd = new FormData();
       if (formData.status) fd.append('status', formData.status);

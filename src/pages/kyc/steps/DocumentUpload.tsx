@@ -213,10 +213,7 @@ export default function DocumentUpload({
       )}
 
       {error && (
-        <div className="mt-2 flex items-center gap-2 text-red-500 text-xs font-normal animate-in fade-in slide-in-from-top-1">
-          <span className="w-1 h-1 rounded-full bg-red-500 flex-shrink-0" />
-          {error}
-        </div>
+        <p className="error-message">{error}</p>
       )}
 
 
