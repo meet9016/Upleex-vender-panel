@@ -21,6 +21,7 @@ const BoosterPlanView: React.FC = () => {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedPlanForBoost, setSelectedPlanForBoost] = useState<any>(null);
+  const [priorityProducts, setPriorityProducts] = useState<any[]>([]);
 
   const fetchData = async () => {
     try {
@@ -33,7 +34,7 @@ const BoosterPlanView: React.FC = () => {
         api.get(endPointApi.getAllRentalBoostPlans, { params: { status: "active" } }),
         api.get(endPointApi.getVendorRentalBoostPurchases),
         api.get(endPointApi.postAllVendorProductList, {
-          params: { vendor_id, is_priority: true, approval_status: "approved" }
+          params: { vendor_id, is_priority: true, approval_status: "approved", limit: 1000 }
         })
       ]);
 
@@ -41,6 +42,7 @@ const BoosterPlanView: React.FC = () => {
       if (purchasesRes?.data?.success) setPurchases(purchasesRes.data.data);
 
       const products = productsRes?.data?.data || [];
+      setPriorityProducts(products);
       const nonBoostedPriority = products.filter((p: any) => p.is_priority === true && !p.is_boosted);
       setPriorityCount(nonBoostedPriority.length);
 
@@ -99,41 +101,82 @@ const BoosterPlanView: React.FC = () => {
     }
   };
 
+  const flattenedBoosterHistory = useMemo(() => {
+    const rows: any[] = [];
+    purchases.forEach(purchase => {
+      // Booster plans usually apply to all priority products
+      // We use the priorityProducts list to create product-specific rows
+      priorityProducts.forEach(product => {
+        rows.push({
+          ...purchase,
+          product_name: product.product_name,
+          category_name: product.category_name || "-",
+          sub_category_name: product.sub_category_name || "-",
+        });
+      });
+
+      // If no priority products found but we have a purchase, show a generic row
+      if (priorityProducts.length === 0) {
+        rows.push({
+          ...purchase,
+          product_name: "All Priority Products",
+          category_name: "-",
+          sub_category_name: "-",
+        });
+      }
+    });
+    return rows.sort((a, b) => new Date(b.expiry_date).getTime() - new Date(a.expiry_date).getTime());
+  }, [purchases, priorityProducts]);
+
   const columns: ColDef[] = [
     {
       headerName: "Product",
       field: "product_name",
       minWidth: 200,
       flex: 1,
-      cellStyle: { textAlign: 'center' }
+      cellRenderer: (params: any) => (
+        <span className="font-bold text-gray-900 dark:text-gray-100">{params.value}</span>
+      )
+    },
+    {
+      headerName: "Category",
+      field: "category_name",
+      width: 140,
+    },
+    {
+      headerName: "Subcategory",
+      field: "sub_category_name",
+      width: 140,
     },
     {
       headerName: "Plan",
       field: "plan_name",
-      minWidth: 150,
-      cellStyle: { textAlign: 'center' }
+      width: 150,
+      cellRenderer: (params: any) => (
+        <span className="uppercase text-xs font-semibold">{params.value}</span>
+      )
     },
     {
-      headerName: "Boost Period",
-      minWidth: 200,
-      cellStyle: { textAlign: 'center' },
+      headerName: "Expiry Date",
+      field: "expiry_date",
+      width: 130,
       cellRenderer: (params: any) => {
-        const start = params.data.start_date ? new Date(params.data.start_date).toLocaleDateString() : "-";
-        const end = params.data.expiry_date ? new Date(params.data.expiry_date).toLocaleDateString() : "-";
-        return <span className="text-xs">{start} to {end}</span>;
+        if (!params.value) return "-";
+        const date = new Date(params.value);
+        return (
+          <span>{date.toLocaleDateString('en-GB')}</span>
+        );
       }
     },
     {
       headerName: "Status",
-      field: "payment_status",
-      minWidth: 120,
-      cellStyle: { textAlign: 'center' },
-      cellRenderer: (params: any) => (
-        <div className="flex items-center justify-center h-full">
-          <StatusBadge status={params.value || "completed"} />
-        </div>
-      ),
-    },
+      field: "expiry_date",
+      width: 120,
+      cellRenderer: (params: any) => {
+        const isExpired = new Date(params.value) < new Date();
+        return <StatusBadge status={isExpired ? "expired" : "active"} />;
+      }
+    }
   ];
 
   if (loading) {
@@ -318,11 +361,11 @@ const BoosterPlanView: React.FC = () => {
 
         {/* <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl overflow-hidden"> */}
           <AgGridTable
-            rowData={purchases}
+            rowData={flattenedBoosterHistory}
             columns={columns}
             showCheckboxes={false}
             height={400}
-            rowHeight={48}
+            rowHeight={52}
           />
         {/* </div> */}
       </div>
