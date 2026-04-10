@@ -1633,6 +1633,13 @@ export default function AddProductPage() {
                                                         UpdateFeatureField(index, "value", e.target.value)
                                                     }
                                                 />
+                                                
+                                                {/* Validation message for individual field */}
+                                                {validationErrors.featureFields?.[index]?.value && (
+                                                    <p className="!text-[14px] text-red-500 mt-0.5 ml-1">
+                                                        {validationErrors.featureFields[index].value}
+                                                    </p>
+                                                )}
                                             </div>
 
                                             {/* DELETE */}

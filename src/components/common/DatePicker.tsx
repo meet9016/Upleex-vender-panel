@@ -11,6 +11,7 @@ interface DatePickerProps {
   min?: string;
   label?: string;
   className?: string;
+  width?: string;
 }
 
 export default function DatePicker({
@@ -19,6 +20,7 @@ export default function DatePicker({
   min,
 //   label = "Select Date",
   className,
+  width,
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date()); // For navigation
@@ -195,9 +197,10 @@ export default function DatePicker({
       <div 
         onClick={() => setIsOpen(!isOpen)}
         className={clsx(
-          "flex items-center justify-between w-full h-9 pl-4 pr-4 border rounded-lg  bg-gray-50 transition-colors cursor-pointer  dark:bg-[#0d111c] dark:border-gray-600 dark:text-gray-300",
+          "flex items-center justify-between h-9 pl-4 pr-4 border rounded-lg bg-gray-50 transition-colors cursor-pointer dark:bg-[#0d111c] dark:border-gray-600 dark:text-gray-300",
           isOpen ? "border-blue-500 ring-1 ring-blue-200" : "border-gray-200 hover:border-blue-400"
         )}
+        style={{ width: width || "100%" }}
       >
         <div className="flex flex-col justify-center">
           {/* <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider leading-tight">
