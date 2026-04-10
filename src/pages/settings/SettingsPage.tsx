@@ -72,7 +72,7 @@ const SettingsPage: React.FC = () => {
     try {
       const [plansRes, productsRes, purchasesRes] = await Promise.all([
         api.get(endPointApi.getAllPriorityPlans),
-        api.get(endPointApi.postAllVendorProductList),
+        api.get(endPointApi.postAllVendorProductList, { params: { limit: 1000 } }),
         api.get(endPointApi.getVendorPriorityPurchases)
       ]);
 
@@ -121,8 +121,8 @@ const SettingsPage: React.FC = () => {
     fetchData();
   }, []);
 
-  const rentProducts = useMemo(() => products.filter(p => p.product_type_name === "Rent"), [products]);
-  const sellProducts = useMemo(() => products.filter(p => p.product_type_name === "Sell"), [products]);
+  const rentProducts = useMemo(() => products.filter(p => p.product_type_name?.toLowerCase() === "rent"), [products]);
+  const sellProducts = useMemo(() => products.filter(p => p.product_type_name?.toLowerCase() === "sell"), [products]);
 
   const handleSelectPlan = (plan: PriorityPlan) => {
     setSelectedPlan(plan);
@@ -273,6 +273,83 @@ const SettingsPage: React.FC = () => {
     },
   ], [currency]);
 
+  const flattenedPriorityHistory = useMemo(() => {
+    const rows: any[] = [];
+    vendorPurchases.forEach(purchase => {
+      // If no product_ids, show the purchase itself as one row (optional, but per user request we focus on products)
+      if (!purchase.product_ids || purchase.product_ids.length === 0) {
+        rows.push({
+          ...purchase,
+          product_name: "-",
+          category_name: "-",
+          sub_category_name: "-",
+          is_placeholder: true
+        });
+        return;
+      }
+
+      purchase.product_ids.forEach(pId => {
+        const product = products.find(p => String(p.id) === String(pId));
+        rows.push({
+          ...purchase,
+          product_name: product?.product_name || `Product ID: ${pId}`,
+          category_name: product?.category_name || "-",
+          sub_category_name: (product as any)?.sub_category_name || "-",
+        });
+      });
+    });
+    // Sort by expiry date (latest first)
+    return rows.sort((a, b) => new Date(b.expire_at).getTime() - new Date(a.expire_at).getTime());
+  }, [vendorPurchases, products]);
+
+  const priorityHistoryColumns = useMemo((): ColDef[] => [
+    {
+      headerName: "Product",
+      field: "product_name",
+      minWidth: 200,
+      flex: 1,
+      cellRenderer: (params: any) => (
+        <span className="font-bold text-gray-900 dark:text-gray-100">{params.value}</span>
+      )
+    },
+    {
+      headerName: "Category",
+      field: "category_name",
+      width: 150,
+    },
+    {
+      headerName: "Subcategory",
+      field: "sub_category_name",
+      width: 150,
+    },
+    {
+      headerName: "Plan Name",
+      field: "plan_name",
+      width: 150,
+    },
+    {
+      headerName: "Expiry Date",
+      field: "expire_at",
+      width: 130,
+      cellRenderer: (params: any) => {
+        if (!params.value) return "-";
+        const date = new Date(params.value);
+        return (
+          <span>{date.toLocaleDateString('en-GB')}</span>
+        );
+      }
+    },
+    {
+      headerName: "Status",
+      field: "expire_at",
+      width: 120,
+      cellRenderer: (params: any) => {
+        const isExpired = new Date(params.value) < new Date();
+        return <StatusBadge status={isExpired ? "expired" : "active"} />;
+      }
+    }
+  ], []);
+
   const currentTabProducts = activeTab === "Rent" ? rentProducts : sellProducts;
   const filteredProducts = useMemo(() => {
     return currentTabProducts.filter(p =>
@@ -353,7 +430,7 @@ const SettingsPage: React.FC = () => {
       {currentTab === "priority" ? (
         <>
           {/* Priority Plan Content (Original code remains here) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-3">
               <div className="mb-6">
                 <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2 dark:text-gray-100">
@@ -440,140 +517,154 @@ const SettingsPage: React.FC = () => {
             <p className="text-[10px] text-brand-500 uppercase font-black tracking-widest leading-none">Wallet Balance</p>
             <p className="text-lg font-black text-brand-900 leading-tight">{currency}{balance.toLocaleString()}</p>
           </div>
-        </div> */}
-          </div>
+
+          {/* Priority Purchase History */}
+            <div className="mt-12 space-y-6">
+              <div className="flex items-center gap-3">
+                <Package className="w-6 h-6 text-brand-600" />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Plan History</h2>
+              </div>
+
+              <AgGridTable
+                rowData={flattenedPriorityHistory}
+                columns={priorityHistoryColumns}
+                showCheckboxes={false}
+                height={400}
+                rowHeight={52}
+              />
+            </div>
 
 
-          <Modal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            className="max-w-6xl w-full"
-          >
-            <div className="flex flex-col h-[70vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
+            <Modal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              className="max-w-6xl w-full"
+            >
+              <div className="flex flex-col h-[70vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
 
-              {/* 🔹 HEADER */}
-              {/* pr-14 IMPORTANT: close icon overlap fix */}
-              <div className="px-6 pr-14 py-4 border-b bg-white dark:bg-gray-900">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                {/* 🔹 HEADER */}
+                {/* pr-14 IMPORTANT: close icon overlap fix */}
+                <div className="px-6 pr-14 py-4 border-b bg-white dark:bg-gray-900">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
-                  {/* Left */}
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                      {selectedPlan?.name} Products
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Remaining Slots:
-                      <span className="ml-1 font-semibold text-brand-600">
-                        {remainingSlots} left
-                      </span>
-                    </p>
-                  </div>
-
-                  {/* Right */}
-                  <div className="flex flex-wrap items-center gap-3">
-
-                    {/* 🔍 Search */}
-                    <div className="relative w-full sm:w-64">
-                      <Search
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                        size={16}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Search products..."
-                        value={gridSearch}
-                        onChange={(e) => setGridSearch(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500/20 outline-none"
-                      />
+                    {/* Left */}
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                        {selectedPlan?.name} Products
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Remaining Slots:
+                        <span className="ml-1 font-semibold text-brand-600">
+                          {remainingSlots} left
+                        </span>
+                      </p>
                     </div>
 
-                    {/* 🔘 Tabs */}
-                    <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700">
+                    {/* Right */}
+                    <div className="flex flex-wrap items-center gap-3">
 
-                      <button
-                        onClick={() => setActiveTab('Rent')}
-                        className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Rent'
-                          ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm'
-                          : 'text-gray-500 hover:text-gray-800'
-                          }`}
-                      >
-                        RENT ({rentProducts.length})
-                      </button>
+                      {/* 🔍 Search */}
+                      <div className="relative w-full sm:w-64">
+                        <Search
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={16}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Search products..."
+                          value={gridSearch}
+                          onChange={(e) => setGridSearch(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500/20 outline-none"
+                        />
+                      </div>
 
-                      <button
-                        onClick={() => setActiveTab('Sell')}
-                        className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Sell'
-                          ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm'
-                          : 'text-gray-500 hover:text-gray-800'
-                          }`}
-                      >
-                        SELL ({sellProducts.length})
-                      </button>
+                      {/* 🔘 Tabs */}
+                      <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700">
 
+                        <button
+                          onClick={() => setActiveTab('Rent')}
+                          className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Rent'
+                            ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-800'
+                            }`}
+                        >
+                          RENT ({rentProducts.length})
+                        </button>
+
+                        <button
+                          onClick={() => setActiveTab('Sell')}
+                          className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Sell'
+                            ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-800'
+                            }`}
+                        >
+                          SELL ({sellProducts.length})
+                        </button>
+
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                {/* 🔹 TABLE */}
+                <div className="flex-1 px-6  overflow-hidden">
+                  <AgGridTable
+                    columns={columns}
+                    rowData={filteredProducts}
+                    onSelectionChange={handleSelectionChange}
+                    showCheckboxes={true}
+                    height={480}
+                    rowHeight={45}
+                    isRowSelectable={(params) => !params.data.active_plan_name}
+                    getRowStyle={(params) =>
+                      params.data.active_plan_name
+                        ? {
+                          opacity: 0.5,
+                          pointerEvents: 'none',
+                          background: 'rgba(0,0,0,0.03)',
+                        }
+                        : undefined
+                    }
+                  />
+                </div>
+
+                <div className="px-6 py-4 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-6 py-2.5 rounded-xl font-bold"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={handlePurchase}
+                    disabled={
+                      isPurchasing ||
+                      selectedProductIds.length === 0 ||
+                      (selectedProductIds.length > remainingSlots &&
+                        activePurchasesForPlan.length === 0 &&
+                        selectedProductIds.length >
+                        (selectedPlan?.product_slots || 0))
+                    }
+
+                    className="px-8 py-2.5 rounded-xl font-bold transition-all shadow-lg"
+                  >
+                    {isPurchasing ? 'Processing...' : 'Confirm & Activate'}
+                  </Button>
+                </div>
+
               </div>
 
-              {/* 🔹 TABLE */}
-              <div className="flex-1 px-6  overflow-hidden">
-                <AgGridTable
-                  columns={columns}
-                  rowData={filteredProducts}
-                  onSelectionChange={handleSelectionChange}
-                  showCheckboxes={true}
-                  height={480}
-                  rowHeight={45}
-                  isRowSelectable={(params) => !params.data.active_plan_name}
-                  getRowStyle={(params) =>
-                    params.data.active_plan_name
-                      ? {
-                        opacity: 0.5,
-                        pointerEvents: 'none',
-                        background: 'rgba(0,0,0,0.03)',
-                      }
-                      : undefined
-                  }
-                />
-              </div>
-
-              <div className="px-6 py-4 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-6 py-2.5 rounded-xl font-bold"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={handlePurchase}
-                  disabled={
-                    isPurchasing ||
-                    selectedProductIds.length === 0 ||
-                    (selectedProductIds.length > remainingSlots &&
-                      activePurchasesForPlan.length === 0 &&
-                      selectedProductIds.length >
-                      (selectedPlan?.product_slots || 0))
-                  }
-
-                  className="px-8 py-2.5 rounded-xl font-bold transition-all shadow-lg"
-                >
-                  {isPurchasing ? 'Processing...' : 'Confirm & Activate'}
-                </Button>
-              </div>
-
-            </div>
-
-          </Modal>
-        </>
-      ) : currentTab === "booster" ? (
-        <BoosterPlanView />
-      ) : (
-        <ListingPlanView />
+            </Modal>
+          </>
+          ) : currentTab === "booster" ? (
+          <BoosterPlanView />
+          ) : (
+          <ListingPlanView />
       )}
-    </div >
-  );
+        </div >
+      );
 };
 
-export default SettingsPage;
+      export default SettingsPage;

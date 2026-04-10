@@ -51,12 +51,44 @@ const ListingPlanView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
   const [gridSearch, setGridSearch] = useState("");
 
+  const planAggregates = useMemo(() => {
+    const aggregates: Record<string, { total: number; used: number; productIds: Set<string> }> = {};
+    const now = new Date();
+
+    const activePurchases = purchasedPlans.filter(p => {
+      const isNotExpired = new Date(p.expire_at) > now;
+      return isNotExpired;
+    });
+
+    activePurchases.forEach(p => {
+      const type = p.plan_type;
+      if (!aggregates[type]) {
+        aggregates[type] = { total: 0, used: 0, productIds: new Set() };
+      }
+      aggregates[type].total += Number(p.max_products || 0);
+
+      const pIds = p.product_ids || [];
+      pIds.forEach((prod: any) => {
+        const id = typeof prod === 'string' ? prod : (prod.id || prod._id || prod.product_id);
+        if (id) {
+          aggregates[type].productIds.add(String(id));
+        }
+      });
+    });
+
+    Object.keys(aggregates).forEach(type => {
+      aggregates[type].used = aggregates[type].productIds.size;
+    });
+
+    return aggregates;
+  }, [purchasedPlans]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
       const [plansRes, productsRes, purchasesRes] = await Promise.all([
         api.get(endPointApi.getPlanOptions),
-        api.get(endPointApi.postAllVendorProductList),
+        api.get(endPointApi.postAllVendorProductList, { params: { limit: 1000 } }),
         api.get(endPointApi.getPurchasedPlans)
       ]);
 
@@ -117,13 +149,24 @@ const ListingPlanView: React.FC = () => {
       return;
     }
 
-    if (selectedProductIds.length > selectedPlan.product_limit) {
-      toast.error(`This plan only allows up to ${selectedPlan.product_limit} products.`);
+    const agg = planAggregates[selectedPlan.key] || { total: 0, used: 0, productIds: new Set() };
+    const remainingSlots = Math.max(0, agg.total - agg.used);
+
+    // Identify truly new products (not already in THIS plan type)
+    const trulyNewIds = selectedProductIds.filter(id => !agg.productIds.has(String(id)));
+
+    // Deduction is only needed if new products exceed current remaining slots
+    // Actually, following the backend logic, if trulyNewIds fit in remainingSlots, cost is 0.
+    const isNewPurchaseNeeded = trulyNewIds.length > remainingSlots || agg.total === 0;
+    const priceToPay = isNewPurchaseNeeded ? selectedPlan.price : 0;
+
+    if (priceToPay > balance) {
+      toast.error("Insufficient wallet balance.");
       return;
     }
 
-    if (selectedPlan.price > balance) {
-      toast.error("Insufficient wallet balance.");
+    if (trulyNewIds.length > (isNewPurchaseNeeded ? selectedPlan.product_limit : remainingSlots)) {
+      toast.error(`Exceeds available capacity. You can add up to ${isNewPurchaseNeeded ? selectedPlan.product_limit : remainingSlots} products.`);
       return;
     }
 
@@ -234,10 +277,24 @@ const ListingPlanView: React.FC = () => {
         return new Date(params.value).toLocaleDateString('en-GB');
       }
     },
-  ], [currency]);
+    {
+      headerName: "Active Plan",
+      field: "assigned_plan",
+      width: 120,
+      valueGetter: (p) => {
+        for (const [type, agg] of Object.entries(planAggregates)) {
+          if (agg.productIds.has(String(p.data.id))) {
+            return type.charAt(0).toUpperCase() + type.slice(1);
+          }
+        }
+        return "";
+      },
+      cellRenderer: (p: any) => p.value ? <StatusBadge status={p.value} /> : <span className="text-gray-400">-</span>
+    }
+  ], [currency, planAggregates]);
 
-  const rentProducts = useMemo(() => products.filter(p => p.product_type_name === "Rent"), [products]);
-  const sellProducts = useMemo(() => products.filter(p => p.product_type_name === "Sell"), [products]);
+  const rentProducts = useMemo(() => products.filter(p => p.product_type_name?.toLowerCase() === "rent"), [products]);
+  const sellProducts = useMemo(() => products.filter(p => p.product_type_name?.toLowerCase() === "sell"), [products]);
 
   const currentTabProducts = activeTab === "Rent" ? rentProducts : sellProducts;
   const filteredProducts = useMemo(() => {
@@ -252,93 +309,80 @@ const ListingPlanView: React.FC = () => {
     setSelectedProductIds(ids);
   };
 
+  const flattenedPurchaseHistory = useMemo(() => {
+    const rows: any[] = [];
+    purchasedPlans.forEach(purchase => {
+      const productList = purchase.product_ids || [];
+      if (productList.length === 0) {
+        rows.push({
+          ...purchase,
+          product_name: "-",
+          category_name: "-",
+          sub_category_name: "-",
+          is_placeholder: true
+        });
+        return;
+      }
+      productList.forEach((prod: any) => {
+        rows.push({
+          ...purchase,
+          product_name: prod.product_name || "-",
+          category_name: prod.category_name || "-",
+          sub_category_name: prod.sub_category_name || "-",
+        });
+      });
+    });
+    return rows.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [purchasedPlans]);
+
   const purchaseHistoryColumns: ColDef[] = [
     {
-      headerName: "Plan Details",
-      field: "plan_type",
-      flex: 1,
+      headerName: "Product",
+      field: "product_name",
       minWidth: 200,
+      flex: 1,
       cellRenderer: (params: any) => (
-        <div className="flex flex-col py-1">
-          <span className="font-bold text-gray-900 dark:text-gray-100 uppercase text-xs">{params.value} Plan</span>
-          <span className="text-[10px] text-gray-500">Duration: {params.data.months} Months</span>
-        </div>
+        <span className="font-bold text-gray-900 dark:text-gray-100">{params.value}</span>
       )
     },
     {
-      headerName: "Products & Categories",
-      field: "product_ids",
-      flex: 1.5,
-      minWidth: 250,
-      cellRenderer: (params: any) => {
-        const productList = params.value || [];
-        if (productList.length === 0) return <span className="text-gray-400">-</span>;
-
-        // Show the first product or a summary
-        const firstProd = productList[0];
-        const categories = [...new Set(productList.map((p: any) => p.category_name).filter(Boolean))];
-        const subCategories = [...new Set(productList.map((p: any) => p.sub_category_name).filter(Boolean))];
-
-        return (
-          <div className="flex flex-col py-1 overflow-hidden">
-            <span className="text-xs font-medium truncate text-gray-800 dark:text-gray-200">
-              {productList.length} Product(s): {productList.map((p: any) => p.product_name).join(", ")}
-            </span>
-            <div className="flex gap-2 flex-wrap mt-1">
-              {categories.map((c: any, i) => (
-                <span key={i} className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300">
-                  {c}
-                </span>
-              ))}
-              {subCategories.map((sc: any, i) => (
-                <span key={i} className="text-[10px] bg-gray-50 text-gray-600 px-1.5 py-0.5 rounded border border-gray-100 dark:bg-gray-800 dark:text-gray-400">
-                  {sc}
-                </span>
-              ))}
-            </div>
-          </div>
-        );
-      }
+      headerName: "Category",
+      field: "category_name",
+      width: 140,
     },
     {
-      headerName: "Amount Paid",
-      field: "amount",
+      headerName: "Subcategory",
+      field: "sub_category_name",
+      width: 140,
+    },
+    {
+      headerName: "Plan Name",
+      field: "plan_type",
       width: 120,
       cellRenderer: (params: any) => (
-        <span className="font-bold text-emerald-600">{currency}{params.value?.toLocaleString() || 0}</span>
+        <span className="uppercase text-xs font-semibold">{params.value} Plan</span>
       )
     },
     {
-      headerName: "Purchase Date",
-      field: "created_at",
-      width: 130,
-      valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString('en-GB') : "-"
-    },
-    {
-      headerName: "Plan Expiry",
+      headerName: "Expiry Date",
       field: "expire_at",
       width: 130,
       cellRenderer: (params: any) => {
-        const val = params.value;
-        if (!val) return "-";
-        const date = new Date(val);
-        const isExpired = date < new Date();
+        if (!params.value) return "-";
+        const date = new Date(params.value);
         return (
-          <span className={`font-medium ${isExpired ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
-            {date.toLocaleDateString('en-GB')}
-          </span>
+          <span>{date.toLocaleDateString('en-GB')}</span>
         );
       }
     },
     {
-      headerName: "Payment Status",
-      field: "payment_status",
-      width: 130,
-      cellRenderer: (params: any) => (
-        <div className="flex items-center h-full">
-          <StatusBadge status={params.value || "paid"} />
-        </div>
-      )
+      headerName: "Status",
+      field: "expire_at",
+      width: 120,
+      cellRenderer: (params: any) => {
+        const isExpired = new Date(params.value) < new Date();
+        return <StatusBadge status={isExpired ? "expired" : "active"} />;
+      }
     }
   ];
 
@@ -379,7 +423,7 @@ const ListingPlanView: React.FC = () => {
                   const remaining = Math.max(0, total - used);
                   return (
                     <div className="mb-6 p-3 bg-emerald-50 border border-emerald-100 rounded-xl dark:bg-[#1c2938]">
-                      <p className="text-xs font-bold text-emerald-700 uppercase mb-1">Active Subscription</p>
+                      {/* <p className="text-xs font-bold text-emerald-700 uppercase mb-1">Active Subscription</p> */}
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-emerald-600 font-medium">Remaining Slots</span>
                         <span className="font-bold text-emerald-800 dark:text-emerald-200">
@@ -408,30 +452,29 @@ const ListingPlanView: React.FC = () => {
             <Button
               onClick={() => handleSelectPlan(plan)}
               className="w-full py-4 rounded-xl font-bold shadow-lg shadow-emerald-50"
-              variant="primary"
-            // style={{ backgroundColor: '#10b981' }}
+              variant={planAggregates[plan.key] ? "outline" : "primary"}
             >
-              Select Plan
+              {planAggregates[plan.key] ? 'Add More Products' : 'Select Plan'}
             </Button>
           </div>
         ))}
       </div>
 
       {/* History Section */}
-      {/* <div className="space-y-6">
+      <div className="space-y-6">
         <div className="flex items-center gap-3">
           <History className="w-6 h-6 text-emerald-600" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Listing Plan History</h2>
         </div>
 
         <AgGridTable
-          rowData={purchasedPlans}
+          rowData={flattenedPurchaseHistory}
           columns={purchaseHistoryColumns}
           showCheckboxes={false}
           height={400}
-          rowHeight={48}
+          rowHeight={52}
         />
-      </div> */}
+      </div>
 
       <Modal
         isOpen={isModalOpen}
@@ -446,7 +489,14 @@ const ListingPlanView: React.FC = () => {
                   Select Products for {selectedPlan?.name} Plan
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">
-                  Selected: <span className="font-semibold text-emerald-600">{selectedProductIds.length} / {selectedPlan?.product_limit}</span>
+                  Available Slots: <span className="font-semibold text-emerald-600">
+                    {(() => {
+                      const agg = selectedPlan ? planAggregates[selectedPlan.key] : null;
+                      if (!agg || agg.total === 0) return selectedPlan?.product_limit || 0;
+                      const remaining = Math.max(0, agg.total - agg.used);
+                      return remaining > 0 ? remaining : selectedPlan?.product_limit;
+                    })()}
+                  </span>
                 </p>
               </div>
 
@@ -492,6 +542,28 @@ const ListingPlanView: React.FC = () => {
               showCheckboxes={true}
               height={500}
               rowHeight={50}
+              isRowSelectable={(params) => {
+                // Disable if product is already in ANY active listing plan
+                for (const agg of Object.values(planAggregates)) {
+                  if (agg.productIds.has(String(params.data.id))) return false;
+                }
+                return true;
+              }}
+              getRowStyle={(params) => {
+                // Visual feedback for products already in a plan
+                let hasPlan = false;
+                for (const agg of Object.values(planAggregates)) {
+                  if (agg.productIds.has(String(params.data.id))) {
+                    hasPlan = true;
+                    break;
+                  }
+                }
+                
+                if (hasPlan) {
+                  return { opacity: 0.6, pointerEvents: 'none', background: 'rgba(0,0,0,0.03)' };
+                }
+                return undefined;
+              }}
             />
           </div>
 
@@ -506,10 +578,16 @@ const ListingPlanView: React.FC = () => {
             <Button
               variant="primary"
               onClick={handlePurchase}
-              disabled={isPurchasing || selectedProductIds.length === 0 || selectedProductIds.length > (selectedPlan?.product_limit || 0)}
+              disabled={isPurchasing || selectedProductIds.length === 0}
               className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-100/50"
             >
-              {isPurchasing ? 'Processing...' : 'Activate Plan'}
+              {isPurchasing ? 'Processing...' : (
+                (() => {
+                  const agg = selectedPlan ? planAggregates[selectedPlan.key] : null;
+                  const remaining = agg ? Math.max(0, agg.total - agg.used) : 0;
+                  return (remaining > 0 && selectedProductIds.length <= remaining) ? 'Add to Plan (Free)' : 'Activate Plan';
+                })()
+              )}
             </Button>
           </div>
         </div>
