@@ -1536,40 +1536,45 @@ export default function AddProductPage() {
                             Description
                         </Label>
 
-                        <div
-                            className={`flex-1 rounded-xl overflow-hidden transition-all duration-200 border ${validationErrors.description
-                                ? "border-red-400 focus-within:ring-red-400 focus-within:ring-2"
-                                : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
-                                }`}
-                        >
-                            <Editor
-                                className="dark:text-white"
-                                value={formData.description}
-                                onTextChange={(e) => handleChange("description", e.htmlValue)}
-                                style={{ height: "100%" }}
-                                pt={{
-                                    toolbar: {
-                                        style: {
-                                            borderTopLeftRadius: "0.75rem",
-                                            borderTopRightRadius: "0.75rem",
-                                            border: "none",
-                                            borderBottom: "1px solid #e5e7eb",
+                        <div className="flex-1 flex flex-col overflow-hidden">
+                            <div
+                                className={`flex-1 rounded-xl overflow-hidden transition-all duration-200 border ${validationErrors.description
+                                    ? "border-red-400 focus-within:ring-red-400 focus-within:ring-2"
+                                    : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
+                                    }`}
+                            >
+                                <Editor
+                                    className="dark:text-white"
+                                    value={formData.description}
+                                    onTextChange={(e) => handleChange("description", e.htmlValue)}
+                                    style={{ height: "100%" }}
+                                    pt={{
+                                        toolbar: {
+                                            style: {
+                                                borderTopLeftRadius: "0.75rem",
+                                                borderTopRightRadius: "0.75rem",
+                                                border: "none",
+                                                borderBottom: "1px solid #e5e7eb",
+                                            },
                                         },
-                                    },
-                                    content: {
-                                        style: {
-                                            borderBottomLeftRadius: "0.5rem",
-                                            borderBottomRightRadius: "0.5rem",
-                                            border: "none",
+                                        content: {
+                                            style: {
+                                                borderBottomLeftRadius: "0.5rem",
+                                                borderBottomRightRadius: "0.5rem",
+                                                border: "none",
+                                            },
                                         },
-                                    },
-                                }}
-                            />
-                        </div>
+                                    }}
+                                />
+                            </div>
 
-                        {validationErrors.description && (
-                            <p className="error-message">{validationErrors.description}</p>
-                        )}
+                            {/* Validation message with fixed height space */}
+                            <div className="min-h-[20px] mt-1">
+                                {validationErrors.description && (
+                                    <p className="error-message">{validationErrors.description}</p>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     {/* <!-- ======================================================== Features  ======================================================== -->*/}
@@ -1578,76 +1583,79 @@ export default function AddProductPage() {
                         <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
                             Key Features
                         </Label>
-                        {/* BORDERED CONTAINER */}
-                        <div className="flex-1 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/70 dark:bg-gray-900/70 backdrop-blur p-2 dark:border-white overflow-hidden flex flex-col">
-                            {/* HEADER WITH ADD BUTTON */}
-                            <div className="flex items-center justify-end pb-2 mb-2 border-b border-gray-200 dark:border-gray-700">
-                                {/* <span className="text-xs text-gray-500 dark:text-gray-400">Add product specifications</span> */}
-                                <button
-                                    type="button"
-                                    onClick={addFeatureField}
-                                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-white btn-primary font-semibold shadow-sm transition hover:scale-105"
-                                >
-                                    + Add Feature
-                                </button>
-                            </div>
-                            {/* SCROLLABLE FEATURES LIST */}
-                            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-                                {formData?.keyFeatures?.map((item, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-start gap-2 pt-1 px-1"
+                        
+                        <div className="flex-1 flex flex-col overflow-hidden">
+                            {/* BORDERED CONTAINER */}
+                            <div className="flex-1 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/70 dark:bg-gray-900/70 backdrop-blur p-2 dark:border-white overflow-hidden flex flex-col">
+                                {/* HEADER WITH ADD BUTTON */}
+                                <div className="flex items-center justify-end pb-2 mb-2 border-b border-gray-200 dark:border-gray-700">
+                                    {/* <span className="text-xs text-gray-500 dark:text-gray-400">Add product specifications</span> */}
+                                    <button
+                                        type="button"
+                                        onClick={addFeatureField}
+                                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-white btn-primary font-semibold shadow-sm transition hover:scale-105"
                                     >
-                                        {/* FEATURE */}
-                                        <div className="w-1/2">
-                                            <Input
-                                                type="text"
-                                                placeholder="Feature"
-                                                value={item.key}
-                                                className="h-9 text-sm w-full rounded-lg px-3 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
-                                                onChange={(e) =>
-                                                    UpdateFeatureField(index, "key", e.target.value)
-                                                }
-                                            />
-                                        </div>
+                                        + Add Feature
+                                    </button>
+                                </div>
+                                {/* SCROLLABLE FEATURES LIST */}
+                                <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                                    {formData?.keyFeatures?.map((item, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex items-start gap-2 pt-1 px-1"
+                                        >
+                                            {/* FEATURE */}
+                                            <div className="w-1/2">
+                                                <Input
+                                                    type="text"
+                                                    placeholder="Feature"
+                                                    value={item.key}
+                                                    className="h-9 text-sm w-full rounded-lg px-3 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                                                    onChange={(e) =>
+                                                        UpdateFeatureField(index, "key", e.target.value)
+                                                    }
+                                                />
+                                            </div>
 
-                                        {/* DESCRIPTION */}
-                                        <div className="w-1/2">
-                                            <Input
-                                                type="text"
-                                                placeholder="Description"
-                                                value={item.value}
-                                                className={`h-9 text-sm w-full border ${
-                                                    validationErrors.featureFields?.[index]?.value
-                                                        ? "border-red-500"
-                                                        : "border-gray-300"
-                                                } focus:ring-1 focus:ring-[rgb(53,66,237)]`}
-                                                onChange={(e) =>
-                                                    UpdateFeatureField(index, "value", e.target.value)
-                                                }
-                                            />
+                                            {/* DESCRIPTION */}
+                                            <div className="w-1/2">
+                                                <Input
+                                                    type="text"
+                                                    placeholder="Description"
+                                                    value={item.value}
+                                                    className={`h-9 text-sm w-full border ${
+                                                        validationErrors.featureFields?.[index]?.value
+                                                            ? "border-red-500"
+                                                            : "border-gray-300"
+                                                    } focus:ring-1 focus:ring-[rgb(53,66,237)]`}
+                                                    onChange={(e) =>
+                                                        UpdateFeatureField(index, "value", e.target.value)
+                                                    }
+                                                />
 
-                                            {/* VALIDATION MESSAGE */}
-                                            {validationErrors.featureFields?.[index]?.value && (
-                                                <p className="!text-[13px] text-red-500 mt-1 ml-1">
-                                                    {validationErrors.featureFields[index].value}
-                                                </p>
+                                                {/* VALIDATION MESSAGE */}
+                                                {validationErrors.featureFields?.[index]?.value && (
+                                                    <p className="!text-[13px] text-red-500 mt-1 ml-1">
+                                                        {validationErrors.featureFields[index].value}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* DELETE */}
+                                            {formData.keyFeatures.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeFeature(index)}
+                                                    className="h-9 w-10 flex items-center justify-center rounded-md text-red-600 hover:text-red-500 transition mt-0.5"
+                                                    title="Remove feature"
+                                                >
+                                                    <MdDelete size={20} />
+                                                </button>
                                             )}
                                         </div>
-
-                                        {/* DELETE */}
-                                        {formData.keyFeatures.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => removeFeature(index)}
-                                                className="h-9 w-10 flex items-center justify-center rounded-md text-red-600 hover:text-red-500 transition mt-0.5"
-                                                title="Remove feature"
-                                            >
-                                                <MdDelete size={20} />
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
