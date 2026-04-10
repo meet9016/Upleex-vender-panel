@@ -15,7 +15,7 @@ import SearchableDropdown from "@/components/common/SearchableDropdown";
 import MultiSelectDropdown from "@/components/common/MultiSelectDropdown";
 import { exportQuotesToExcel, exportQuotesToPDF } from '@/utils/exportUtils';
 import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
-import { FiEdit3, FiCheck, FiX, FiMoreVertical } from 'react-icons/fi';
+import { FiEdit3, FiCheck, FiX, FiMoreVertical, FiTruck } from 'react-icons/fi';
 import ActionButtons from "@/components/common/ActionButtons";
 import Loader from "@/components/common/Loader";
 
@@ -448,6 +448,28 @@ const QuoteTable = () => {
             >
               <FiX className="text-base" />
             </button>
+
+            {/* Move to Delivery - Only show if approved and payment is paid */}
+            {/* {isApproved && (
+              <button
+                onClick={() => {
+                  if (params.data?.payment_status?.toLowerCase() !== 'paid') {
+                    toast.warning("Delivery available only after payment is PAID");
+                    return;
+                  }
+                  handleDelivery(params.data._id);
+                }}
+                className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200
+                ${params.data?.payment_status?.toLowerCase() !== 'paid'
+                    ? "bg-amber-50 text-amber-600 hover:bg-amber-100 opacity-60"
+                    : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 shadow-sm hover:shadow"
+                  }`}
+                title={params.data?.payment_status?.toLowerCase() !== 'paid' ? "Payment Pending" : "Mark as Delivery"}
+              >
+                <FiTruck className="text-base" />
+              </button>
+            )} */}
+
             <ActionButtons
               onEdit={() => router.push(`/quote/edit/${params.data._id || params.data.id}`)}
               showDelete={false}
@@ -565,6 +587,29 @@ const QuoteTable = () => {
     } catch (error) {
       console.log('Rejection error:', error);
       toast.error("Failed to reject quote");
+    }
+  };
+
+  const handleDelivery = async (quoteId: string) => {
+    try {
+      const deliveryStatus = statusList.find((s: any) =>
+        String(s.name || '').toLowerCase().includes('deliver')
+      );
+      if (!deliveryStatus) return toast.error("Delivery status not found");
+
+      const formData = new FormData();
+      formData.append('quote_id', quoteId);
+      formData.append('status', deliveryStatus.id);
+
+      const res = await api.post(endPointApi.changeStatus, formData);
+
+      if (res?.data?.status === 200) {
+        toast.success("Status changed to DELIVERY");
+        await getQuoteData(filters);
+      }
+    } catch (error) {
+      console.log('Delivery error:', error);
+      toast.error("Failed to update status");
     }
   };
 
