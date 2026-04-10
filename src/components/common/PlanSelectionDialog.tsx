@@ -236,7 +236,7 @@ const PlanSelectionDialog: React.FC<PlanSelectionDialogProps> = ({
                           selectedCount > plan.product_limit
                             ? 'bg-gray-400 cursor-not-allowed text-white'
                             : plan.popular 
-                              ? 'bg-[#28a8e9] hover:bg-[#28a8e9]/90 text-white shadow-md hover:shadow-lg' 
+                              ? 'btn-primary text-white shadow-md hover:shadow-lg' 
                               : 'bg-gray-700 hover:bg-gray-800 text-white'
                         }`}
                       >
@@ -361,7 +361,7 @@ const PlanSelectionDialog: React.FC<PlanSelectionDialogProps> = ({
                   {confirmPlan.name} Plan
                 </span>
                 {confirmPlan.popular && (
-                  <div className="flex items-center justify-center gap-1 mt-1">
+                  <div className="flex items-center justify-center gap-1 mt-1 ">
                     <IoMdStar className="text-[#28a8e9] text-sm" />
                     <span className="text-xs text-[#28a8e9]">Most Popular</span>
                     <IoMdStar className="text-[#28a8e9] text-sm" />

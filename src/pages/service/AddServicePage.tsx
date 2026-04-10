@@ -14,6 +14,7 @@ import { compressImage } from "@/utils/imageCompression";
 import { toast } from "react-toastify";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
 import { FiArrowLeft } from "react-icons/fi";
+import PageLoader from "@/components/common/PageLoader";
 
 export interface Option {
     value: string;
@@ -41,6 +42,7 @@ export default function AddServicePage() {
     const [subPreviews, setSubPreviews] = useState<any[]>([]);
     const [categoryList, setCategoryList] = useState<Option[]>([]);
     const [loading, setLoading] = useState(false);
+    const [pageLoading, setPageLoading] = useState(true);
     const [validationErrors, setValidationErrors] = useState<{
         name?: string;
         category?: string;
@@ -65,6 +67,8 @@ export default function AddServicePage() {
                 }
             } catch (err) {
                 console.error("Error fetching service categories", err);
+            } finally {
+                setPageLoading(false);
             }
         };
         fetchCategories();
@@ -187,8 +191,12 @@ export default function AddServicePage() {
     };
 
     return (
-        <div className="pb-20">
-            <div className="bg-white p-6">
+        <>
+            {pageLoading ? (
+                <PageLoader fullScreen={true} />
+            ) : (
+                <div className="pb-20 ">
+                    <div className="bg-white p-6  dark:bg-gray-800">
                 {/* <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
                         <button
@@ -282,7 +290,7 @@ export default function AddServicePage() {
                             error={!!validationErrors.location}
                             className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Mention the cities where you provide this service.</p>
+                        {/* <p className="text-xs text-gray-500 mt-1">Mention the cities where you provide this service.</p> */}
                         {validationErrors.location && (
                             <p className="error-message">{validationErrors.location}</p>
                         )}
@@ -290,10 +298,10 @@ export default function AddServicePage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    <div>
+                    <div className="h-[350px] flex flex-col">
                         <Label required className="font-semibold mb-2">Description</Label>
                         <div
-                            className={`rounded-xl overflow-hidden transition-all duration-200 border ${validationErrors.description
+                            className={`flex-1 rounded-xl overflow-hidden transition-all duration-200 border ${validationErrors.description
                                 ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
                                 : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
                                 }`}
@@ -301,7 +309,7 @@ export default function AddServicePage() {
                             <Editor
                                 value={formData.description}
                                 onTextChange={(e) => handleChange("description", e.htmlValue || "")}
-                                style={{ height: '250px' }}
+                                style={{ height: '100%' }}
                                 pt={{
                                     toolbar: {
                                         style: {
@@ -326,10 +334,10 @@ export default function AddServicePage() {
                         )}
                     </div>
 
-                    <div>
+                    <div className="h-[350px] flex flex-col mt-0.5">
                         <Label required>Service Image</Label>
                         <div
-                            className={`h-[300px] rounded-lg border transition-all duration-200 flex items-center justify-center overflow-hidden ${validationErrors.mainImage
+                            className={`flex-1 rounded-xl border transition-all duration-200 flex items-center justify-center overflow-hidden ${validationErrors.mainImage
                                 ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
                                 : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
                                 }`}
@@ -390,27 +398,29 @@ export default function AddServicePage() {
                         </div>
                     </div>
                 </div>
-            </div>
+                    </div>
 
-            <div className="mt-8 flex items-center justify-end gap-6 px-4">
-                <Button
-                    size="sm"
-                    variant="primary"
-                    className="btn-primary px-6 py-2.5 min-w-[100px]"
-                    onClick={handleSubmit}
-                    disabled={loading}
-                >
-                    {loading ? "Saving..." : isEditMode ? "Update" : "Save"}
-                </Button>
-                <Button
-                    size="sm"
-                    variant="outline"
-                    className="!py-2 px-5"
-                    onClick={() => router.back()}
-                >
-                    Cancel
-                </Button>
-            </div>
-        </div>
+                    <div className="mt-8 flex items-center justify-end gap-6 px-4">
+                        <Button
+                            size="sm"
+                            variant="primary"
+                            className="btn-primary px-6 py-2.5 min-w-[100px]"
+                            onClick={handleSubmit}
+                            disabled={loading}
+                        >
+                            {loading ? "Saving..." : isEditMode ? "Update" : "Save"}
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="!py-2 px-5"
+                            onClick={() => router.back()}
+                        >
+                            Cancel
+                        </Button>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }

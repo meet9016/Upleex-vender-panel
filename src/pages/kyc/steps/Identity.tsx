@@ -31,7 +31,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {/* PAN Number */}
         <div>
-          <Label required>PAN Number</Label>
+          <Label required>Pan Number</Label>
           <div className="relative">
             <Input
               placeholder="Enter your PAN Number"
@@ -127,7 +127,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
 
         {/* GST Number with Checkbox */}
         <div className="space-y-2">
-          <Label required>GST Number</Label>
+          <Label required>Gst Number</Label>
           <div className="relative">
             <Input
               placeholder="Enter your GST Number"

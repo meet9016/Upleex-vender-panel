@@ -363,7 +363,7 @@ const QuoteEditPage = () => {
                 />
               )}
               <div className="flex-1">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Product Name</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Product Name</p>
                 <p className="text-lg font-semibold text-gray-800 dark:text-white mb-2">{quoteData.product_name}</p>
                 <div className="flex gap-6">
                   <div>
@@ -380,19 +380,19 @@ const QuoteEditPage = () => {
 
             {/* Quantity */}
             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Quantity</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1  ">Quantity</p>
               <p className="text-2xl font-bold text-gray-800 dark:text-white">{quoteData.qty}</p>
             </div>
 
             {/* Price */}
             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Unit Price</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1 ">Unit Price</p>
               <p className="text-2xl font-bold text-gray-800 dark:text-white">₹{Number(quoteData.price).toFixed(2)}</p>
             </div>
 
             {/* Total Price */}
             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Total Price</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Price</p>
               <p className="text-2xl font-bold text-gray-800 dark:text-white">₹{Number(quoteData.total_price).toFixed(2)}</p>
             </div>
 
@@ -404,7 +404,7 @@ const QuoteEditPage = () => {
 
             {/* Month */}
             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Month</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Month</p>
               <p className="text-base font-semibold text-gray-800 dark:text-white">
                 {quoteData.month_name || quoteData.months_id || 'N/A'}
               </p>
@@ -412,13 +412,23 @@ const QuoteEditPage = () => {
 
             
              <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Note</p>
-              <p className="text-2xl font-bold text-gray-800 dark:text-white">{quoteData.note}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Note</p>
+              <div className="group relative">
+                <p className="text-sm text-gray-800 dark:text-white line-clamp-2 overflow-hidden text-ellipsis">
+                  {quoteData.note || 'N/A'}
+                </p>
+                {quoteData.note && quoteData.note.length > 100 && (
+                  <div className="invisible group-hover:visible absolute left-0 right-0 bottom-full mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 pointer-events-none">
+                    {quoteData.note}
+                    <div className="absolute left-5 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Status */}
             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Status</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Status</p>
               <SearchableDropdown
                 options={statusOptions}
                 value={formData.status}

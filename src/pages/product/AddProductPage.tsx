@@ -126,9 +126,9 @@ export default function AddProductPage() {
     const [listingTypeIdMap, setListingTypeIdMap] = useState<Record<string, string>>({});
     const [monthOptions, setMonthOptions] = useState<Option[]>([]);
     const [billingType, setBillingType] = useState<"day" | "month" | "hourly" | "">("");
-    const [pricingType, setPricingType] = useState<"free" | "paid">("free");
+    const [pricingType, setPricingType] = useState<"free" | "paid">("paid");
     const [mainImage, setMainImage] = useState<File | null>(null);
-    const [subImages, setSubImages] = useState<File[]>([]);
+    const [subImages, setSubImages] = useState<Record<string, File>>({});
 
     const [selectedListingType, setSelectedListingType] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -570,12 +570,12 @@ export default function AddProductPage() {
                     }
 
                     if (data.images?.length) {
-                        const subs = data.images.map((img: any) => {
+                        const subs = data.images.map((img: any, idx: number) => {
                             if (typeof img === "string") {
-                                return { product_image_id: 'existing', image: resolveImageUrl(img) };
+                                return { product_image_id: `existing_${idx}`, image: resolveImageUrl(img) };
                             }
                             return {
-                                product_image_id: img.product_image_id || 'existing',
+                                product_image_id: img.product_image_id || `existing_${idx}`,
                                 image: resolveImageUrl(img.image || '')
                             };
                         });
@@ -736,7 +736,7 @@ export default function AddProductPage() {
         // Rent Product Validation (only when listingType is "Rent")
         if (selectedListingType === "Rent") {
             if (!billingType) {
-                errors.billingType = "Please select billing type (Day or Month)";
+                errors.billingType = "Please select billing type (Day , Month or Hourly )";
             }
 
             if (billingType === "day") {
@@ -958,9 +958,24 @@ export default function AddProductPage() {
                 formdata.append("product_main_image", compressedMain);
             }
 
-            for (const file of subImages) {
+            // Handle Sub Images
+            // 1. New files
+            const subFiles = Object.values(subImages);
+            for (const file of subFiles) {
                 const compressedSub = await compressImage(file, 0.8);
                 formdata.append("image", compressedSub);
+            }
+
+            // 2. Existing images to keep (from subPreview) - send as indexed array
+            if (isEditMode && subPreview.length > 0) {
+                const existingImages = subPreview.filter(
+                    img => img.image && !img.product_image_id.startsWith('temp_')
+                );
+                
+                existingImages.forEach((img, index) => {
+                    formdata.append(`images[${index}][product_image_id]`, img.product_image_id);
+                    formdata.append(`images[${index}][image]`, img.image);
+                });
             }
 
             // ---------- API CALL ----------
@@ -998,7 +1013,7 @@ export default function AddProductPage() {
     return (
         <>
 
-            <div className="bg-white p-6">
+            <div className="bg-white p-6  dark:bg-gray-800">
                 <div className="flex items-center justify-end mb-2">
 
                     {/* Left Section */}
@@ -1218,9 +1233,9 @@ export default function AddProductPage() {
                                     onChange={(e) => handleNumberInput("depositAmount", e.target.value)}
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
-                                <span className="text-xs text-gray-500 mt-1">
+                                {/* <span className="text-xs text-gray-500 mt-1">
                                     Security deposit required for rental
-                                </span>
+                                </span> */}
                             </div>
                         </div>
                     )}
@@ -1237,9 +1252,9 @@ export default function AddProductPage() {
                                     onChange={(e) => handleNumberInput("availableQuantity", e.target.value, 6)}
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
-                                <span className="text-xs text-gray-500 mt-1">
+                                {/* <span className="text-xs text-gray-500 mt-1">
                                     Number of items available for rent
-                                </span>
+                                </span> */}
                             </div>
                         </div>
                     )}
@@ -1256,9 +1271,9 @@ export default function AddProductPage() {
                                     onChange={(e) => handleNumberInput("availableQuantity", e.target.value, 6)}
                                     className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                                 />
-                                <span className="text-xs text-gray-500 mt-1">
+                                {/* <span className="text-xs text-gray-500 mt-1">
                                     Number of items available for sale
-                                </span>
+                                </span> */}
                             </div>
                         </div>
                     )}
@@ -1513,16 +1528,16 @@ export default function AddProductPage() {
                     )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
 
                     {/* ================= LEFT – DESCRIPTION EDITOR (FIXED) ================= */}
-                    <div className="">
-                        <Label required className="font-semibold text-gray-700 dark:text-gray-200 mb-2 ">
+                    <div className="h-[400px] flex flex-col">
+                        <Label required className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
                             Description
                         </Label>
 
                         <div
-                            className={`rounded-xl overflow-hidden transition-all duration-200 border ${validationErrors.description
+                            className={`flex-1 rounded-xl overflow-hidden transition-all duration-200 border ${validationErrors.description
                                 ? "border-red-400 focus-within:ring-red-400 focus-within:ring-2"
                                 : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
                                 }`}
@@ -1531,7 +1546,7 @@ export default function AddProductPage() {
                                 className="dark:text-white"
                                 value={formData.description}
                                 onTextChange={(e) => handleChange("description", e.htmlValue)}
-                                style={{ height: "280px" }}
+                                style={{ height: "100%" }}
                                 pt={{
                                     toolbar: {
                                         style: {
@@ -1559,88 +1574,88 @@ export default function AddProductPage() {
 
                     {/* <!-- ======================================================== Features  ======================================================== -->*/}
 
-                    <div className="h-[300px] flex flex-col">
-                        {/* HEADER */}
-                        <div className="flex items-center justify-between mb-1">
-                            <Label className="font-semibold text-gray-700 dark:text-gray-200">
-                                Key Features
-                            </Label>
-                            <button
-                                type="button"
-                                onClick={addFeatureField}
-                                className="flex items-center gap-1 px-4 py-1.5 rounded-lg text-sm text-white btn-primary font-semibold shadow-sm transition hover:scale-105"
-
-                            >
-                                + Add Feature
-                            </button>
-                        </div>
-
+                    <div className="h-[400px] flex flex-col">
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                            Key Features
+                        </Label>
                         {/* BORDERED CONTAINER */}
-                        <div className="flex-1 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/70 dark:bg-gray-900/70 backdrop-blur p-2 dark:border-white">
-                            <div className="h-[300px] overflow-y-auto space-y-2">
-                {formData?.keyFeatures?.map((item, index) => (
-            <div
-            key={index}
-            className="flex items-start gap-2 pt-1 px-1"
-            >
-            {/* FEATURE */}
-            <div className="w-1/2">
-                <Input
-                type="text"
-                placeholder="Feature"
-                value={item.key}
-                className="h-9 text-sm w-full rounded-lg px-3 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
-                onChange={(e) =>
-                    UpdateFeatureField(index, "key", e.target.value)
-                }
-                />
-            </div>
+                        <div className="flex-1 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/70 dark:bg-gray-900/70 backdrop-blur p-2 dark:border-white overflow-hidden flex flex-col">
+                            {/* HEADER WITH ADD BUTTON */}
+                            <div className="flex items-center justify-end pb-2 mb-2 border-b border-gray-200 dark:border-gray-700">
+                                {/* <span className="text-xs text-gray-500 dark:text-gray-400">Add product specifications</span> */}
+                                <button
+                                    type="button"
+                                    onClick={addFeatureField}
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-white btn-primary font-semibold shadow-sm transition hover:scale-105"
+                                >
+                                    + Add Feature
+                                </button>
+                            </div>
+                            {/* SCROLLABLE FEATURES LIST */}
+                            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                                {formData?.keyFeatures?.map((item, index) => (
+                                    <div
+                                        key={index}
+                                        className="flex items-start gap-2 pt-1 px-1"
+                                    >
+                                        {/* FEATURE */}
+                                        <div className="w-1/2">
+                                            <Input
+                                                type="text"
+                                                placeholder="Feature"
+                                                value={item.key}
+                                                className="h-9 text-sm w-full rounded-lg px-3 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                                                onChange={(e) =>
+                                                    UpdateFeatureField(index, "key", e.target.value)
+                                                }
+                                            />
+                                        </div>
 
-            {/* DESCRIPTION */}
-            <div className="w-1/2">
-                <Input
-                type="text"
-                placeholder="Description"
-                value={item.value}
-                className={`h-9 text-sm w-full border ${
-                    validationErrors.featureFields?.[index]?.value
-                    ? "border-red-500"
-                    : "border-gray-300"
-                } focus:ring-1 focus:ring-[rgb(53,66,237)]`}
-                onChange={(e) =>
-                    UpdateFeatureField(index, "value", e.target.value)
-                }
-                />
+                                        {/* DESCRIPTION */}
+                                        <div className="w-1/2">
+                                            <Input
+                                                type="text"
+                                                placeholder="Description"
+                                                value={item.value}
+                                                className={`h-9 text-sm w-full border ${
+                                                    validationErrors.featureFields?.[index]?.value
+                                                        ? "border-red-500"
+                                                        : "border-gray-300"
+                                                } focus:ring-1 focus:ring-[rgb(53,66,237)]`}
+                                                onChange={(e) =>
+                                                    UpdateFeatureField(index, "value", e.target.value)
+                                                }
+                                            />
 
-                {/* VALIDATION MESSAGE */}
-                {validationErrors.featureFields?.[index]?.value && (
-                <p className="!text-[13px] text-red-500 mt-1 ml-1">
-                    {validationErrors.featureFields[index].value}
-                </p>
-                )}
-            </div>
+                                            {/* VALIDATION MESSAGE */}
+                                            {validationErrors.featureFields?.[index]?.value && (
+                                                <p className="!text-[13px] text-red-500 mt-1 ml-1">
+                                                    {validationErrors.featureFields[index].value}
+                                                </p>
+                                            )}
+                                        </div>
 
-            {/* DELETE */}
-            {formData.keyFeatures.length > 1 && (
-                <button
-                type="button"
-                onClick={() => removeFeature(index)}
-                className="h-9 w-10 flex items-center justify-center rounded-md text-red-600 hover:text-red-500 transition mt-0.5"
-                title="Remove feature"
-                >
-                <MdDelete size={20} />
-                </button>
-            )}
-            </div>
-        ))}
-        </div>              
+                                        {/* DELETE */}
+                                        {formData.keyFeatures.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeFeature(index)}
+                                                className="h-9 w-10 flex items-center justify-center rounded-md text-red-600 hover:text-red-500 transition mt-0.5"
+                                                title="Remove feature"
+                                            >
+                                                <MdDelete size={20} />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* <!-- ======================================================== Images  ======================================================== -->*/}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                     <div>
                         <Label required>Main Image</Label>
                         <div
@@ -1686,7 +1701,26 @@ export default function AddProductPage() {
                                 multiple={true}
                                 smallPreview={true}
                                 maxFiles={4}
-                                onFileSelect={(files) => setSubImages((prev) => [...prev, ...files])}
+                                onFileSelect={(files, ids) => {
+                                    setSubImages((prev) => {
+                                        const next = { ...prev };
+                                        files.forEach((file, idx) => {
+                                            const id = ids?.[idx] || `temp_${Date.now()}_${idx}`;
+                                            next[id] = file;
+                                        });
+                                        return next;
+                                    });
+                                }}
+                                onFileRemove={(id) => {
+                                    if (id) {
+                                        setSubImages((prev) => {
+                                            const next = { ...prev };
+                                            delete next[id];
+                                            return next;
+                                        });
+                                        setSubPreview((prev) => prev.filter(img => img.product_image_id !== id));
+                                    }
+                                }}
                                 isEditMode={isEditMode}
                             />
                         </div>

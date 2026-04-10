@@ -48,7 +48,7 @@ export default function StepDeclaration({
                 <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg">
                   <FiShield className="text-indigo-600 dark:text-indigo-400 text-base" />
                 </div>
-                <h4 className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em]">Self Declaration</h4>
+                <h4 className="text-[15px] font-bold text-indigo-600 dark:text-indigo-400  ">Self Declaration</h4>
               </div>
               
               <div className="space-y-3">
