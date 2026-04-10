@@ -1633,13 +1633,6 @@ export default function AddProductPage() {
                                                         UpdateFeatureField(index, "value", e.target.value)
                                                     }
                                                 />
-
-                                                {/* VALIDATION MESSAGE */}
-                                                {validationErrors.featureFields?.[index]?.value && (
-                                                    <p className="!text-[13px] text-red-500 mt-1 ml-1">
-                                                        {validationErrors.featureFields[index].value}
-                                                    </p>
-                                                )}
                                             </div>
 
                                             {/* DELETE */}
@@ -1656,6 +1649,11 @@ export default function AddProductPage() {
                                         </div>
                                     ))}
                                 </div>
+                            </div>
+
+                            {/* Validation message with fixed height space */}
+                            <div className="min-h-[20px] mt-1">
+                                {/* Reserved space for alignment */}
                             </div>
                         </div>
                     </div>
