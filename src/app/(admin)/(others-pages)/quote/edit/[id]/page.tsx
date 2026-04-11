@@ -325,7 +325,7 @@ const QuoteEditPage = () => {
   }));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-2 ">
       <div className="max-w-8xl mx-auto">
 
         {/* Quote Details Card */}

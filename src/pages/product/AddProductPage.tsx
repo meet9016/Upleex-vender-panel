@@ -8,7 +8,7 @@ import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 import { ChevronDownIcon } from "@/icons";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, useRef } from "react";
 import { Editor } from "primereact/editor";
 import { MdDelete } from "react-icons/md";
 import { api } from "@/utils/axiosInstance";
@@ -60,6 +60,7 @@ export default function AddProductPage() {
     /* <!-- ========================================================== States ========================================================== --> */
 
     const router = useRouter();
+    const editorRef = useRef<any>(null);
     const searchParams = useSearchParams();
     const productId = searchParams?.get("id") ?? null;
     const isEditMode = !!productId;
@@ -126,7 +127,7 @@ export default function AddProductPage() {
     const [listingTypeIdMap, setListingTypeIdMap] = useState<Record<string, string>>({});
     const [monthOptions, setMonthOptions] = useState<Option[]>([]);
     const [billingType, setBillingType] = useState<"day" | "month" | "hourly" | "">("");
-    const [pricingType, setPricingType] = useState<"free" | "paid">("paid");
+    const [pricingType, setPricingType] = useState<"free" | "paid">("free");
     const [mainImage, setMainImage] = useState<File | null>(null);
     const [subImages, setSubImages] = useState<Record<string, File>>({});
 
@@ -1536,19 +1537,28 @@ export default function AddProductPage() {
                             Description
                         </Label>
 
-                        <div className="flex-1 flex flex-col overflow-hidden">
+                        <div className="flex-1 flex flex-col">
                             <div
-                                className={`flex-1 rounded-xl overflow-hidden transition-all duration-200 border ${validationErrors.description
+                                onClick={() => editorRef.current?.getQuill().focus()}
+                                className={`flex-1 rounded-xl transition-all duration-200 border cursor-text ${validationErrors.description
                                     ? "border-red-400 focus-within:ring-red-400 focus-within:ring-2"
                                     : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
                                     }`}
                             >
                                 <Editor
+                                    ref={editorRef}
                                     className="dark:text-white"
                                     value={formData.description}
                                     onTextChange={(e) => handleChange("description", e.htmlValue)}
                                     style={{ height: "100%" }}
                                     pt={{
+                                        root: {
+                                            style: {
+                                                height: "100%",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                            },
+                                        },
                                         toolbar: {
                                             style: {
                                                 borderTopLeftRadius: "0.75rem",
@@ -1559,8 +1569,11 @@ export default function AddProductPage() {
                                         },
                                         content: {
                                             style: {
-                                                borderBottomLeftRadius: "0.5rem",
-                                                borderBottomRightRadius: "0.5rem",
+                                                flex: 1,
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                borderBottomLeftRadius: "0.75rem",
+                                                borderBottomRightRadius: "0.75rem",
                                                 border: "none",
                                             },
                                         },

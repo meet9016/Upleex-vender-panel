@@ -6,7 +6,7 @@ import DropzoneComponent from "@/components/form/form-elements/DropZone";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState,useRef } from "react";
 import { Editor } from "primereact/editor";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
@@ -23,6 +23,7 @@ export interface Option {
 
 export default function AddServicePage() {
     const router = useRouter();
+    const editorRef = useRef<any>(null);
     const searchParams = useSearchParams();
     const serviceId = searchParams?.get("id") ?? null;
     const isEditMode = !!serviceId;
@@ -301,16 +302,25 @@ export default function AddServicePage() {
                     <div className="h-[350px] flex flex-col">
                         <Label required className="font-semibold mb-2">Description</Label>
                         <div
+                         onClick={() => editorRef.current?.getQuill().focus()}
                             className={`flex-1 rounded-xl overflow-hidden transition-all duration-200 border ${validationErrors.description
                                 ? "border-error-600 focus-within:ring-error-600 focus-within:ring-2"
                                 : "border-gray-300 focus-within:ring-blue-500 focus-within:ring-2"
                                 }`}
                         >
                             <Editor
+                              ref={editorRef}
                                 value={formData.description}
                                 onTextChange={(e) => handleChange("description", e.htmlValue || "")}
                                 style={{ height: '100%' }}
                                 pt={{
+                                     root: {
+                                            style: {
+                                                height: "100%",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                            },
+                                        },
                                     toolbar: {
                                         style: {
                                             borderTopLeftRadius: "0.75rem",
@@ -321,8 +331,11 @@ export default function AddServicePage() {
                                     },
                                     content: {
                                         style: {
-                                            borderBottomLeftRadius: "0.5rem",
-                                            borderBottomRightRadius: "0.5rem",
+                                            flex: 1,
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                borderBottomLeftRadius: "0.75rem",
+                                                borderBottomRightRadius: "0.75rem",
                                             border: "none",
                                         },
                                     },
