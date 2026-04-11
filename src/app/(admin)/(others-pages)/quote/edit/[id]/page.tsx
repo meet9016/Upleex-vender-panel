@@ -166,10 +166,10 @@ const QuoteEditPage = () => {
     if (n.includes('approve')) return 'approval';
     if (n.includes('reject')) return 'reject';
     if (n.includes('active')) return 'active';
-    if (n.includes('complete')) return 'complete';
-    if (n.includes('success')) return 'successful';
-    if (n.includes('delivery')) return 'delivery';
-    return n; // Return the name itself if no match, instead of always defaulting to pending
+    if (n.includes('complete') || n.includes('success') || n.includes('return')) return 'complete'; // Mapped to 'complete'
+    if (n.includes('delivery') || n.includes('deliver')) return 'delivery';
+    if (n.includes('pending') || n.includes('new')) return 'pending';
+    return n;
   };
 
   // Check if user can access date/image/video upload based on status
@@ -416,8 +416,8 @@ const QuoteEditPage = () => {
               </p>
             </div>
 
-            
-             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
+
+            <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Note</p>
               <div className="group relative">
                 <p className="text-sm text-gray-800 dark:text-white line-clamp-2 overflow-hidden text-ellipsis">
