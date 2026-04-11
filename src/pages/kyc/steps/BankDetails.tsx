@@ -136,7 +136,7 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
           </div>
 
           <div>
-            <Label required>I fsc Code</Label>
+            <Label required>Ifsc Code</Label>
             <div className="relative">
               <Input
                 placeholder="Enter your IFSC Code"

@@ -11,6 +11,7 @@ import { ColDef } from "ag-grid-community";
 import StatusBadge from "@/components/common/StatusBadge";
 import { useWallet } from "@/context/WalletContext";
 import { Modal } from "@/components/ui/modal";
+import PageLoader from "@/components/common/PageLoader";
 
 const BoosterPlanView: React.FC = () => {
   const { currency, refreshBalance, balance } = useWallet();
@@ -180,12 +181,7 @@ const BoosterPlanView: React.FC = () => {
   ];
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-        <p className="text-gray-500 font-medium">Loading Booster Plans...</p>
-      </div>
-    );
+    return <PageLoader fullScreen={false} />;
   }
 
   return (
@@ -266,7 +262,7 @@ const BoosterPlanView: React.FC = () => {
               <Button
                 onClick={() => handleOpenConfirm(plan)}
                 disabled={isPurchasing}
-                className={`w-full py-4 rounded-xl font-bold  dark:bg-[#1c2938] ${activeBooster ? 'shadow-green-100' : 'shadow-indigo-100'}`}
+                className={`w-full !py-4 rounded-xl font-bold btn-primary dark:bg-[#1c2938] ${activeBooster ? 'shadow-green-100' : 'shadow-indigo-100'}`}
                 variant={activeBooster ? "primary" : "primary"}
               >
                 {isPurchasing ? "Processing..." : (activeBooster ? "Sync New Products" : `Boost All Products`)}
@@ -308,7 +304,7 @@ const BoosterPlanView: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-2xl font-black text-gray-900">
+            <h3 className="text-2xl font-black text-gray-900 dark:text-gray-200">
               {activeBooster ? "Sync Active Boost" : "Activate Booster Plan"}
             </h3>
             <p className="text-gray-500 text-sm leading-relaxed px-4">
@@ -318,13 +314,13 @@ const BoosterPlanView: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-inner">
+          <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-inner dark:bg-[#1c2938]">
             <div className="flex justify-between items-center text-sm mb-2">
-              <span className="text-gray-500">Products to Boost</span>
-              <span className="font-bold text-gray-900">{priorityCount}</span>
+              <span className="text-gray-500 dark:text-gray-200">Products to Boost</span>
+              <span className="font-bold text-gray-900 dark:text-gray-200">{priorityCount}</span>
             </div>
-            <div className="flex justify-between items-center text-sm font-black border-t pt-2 border-gray-200">
-              <span className="text-gray-900 uppercase">Total Payable</span>
+            <div className="flex justify-between items-center text-sm font-black border-t pt-2 border-gray-200 dark:border-gray-700 dark:text-gray-200">
+              <span className="text-gray-900 uppercase dark:text-gray-200">Total Payable</span>
               <span className={`text-lg ${activeBooster ? 'text-green-600' : 'text-indigo-600'}`}>
                 {activeBooster ? 'FREE' : `${currency}${selectedPlanForBoost?.price}`}
               </span>
@@ -334,7 +330,7 @@ const BoosterPlanView: React.FC = () => {
           <div className="flex flex-col gap-3">
             <Button
               variant="primary"
-              className="w-full py-4 rounded-xl font-bold shadow-xl shadow-indigo-100"
+              className="w-full !py-4 rounded-xl font-bold shadow-xl  btn-primary"
               onClick={handleBulkBoost}
               disabled={isPurchasing}
             >

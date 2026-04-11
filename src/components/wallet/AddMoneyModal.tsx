@@ -350,7 +350,7 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
           </Button>
           <Button
             onClick={handleRazorpayPayment}
-            className="flex-1"
+            className="flex-1 btn-primary"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -391,7 +391,7 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
           </span>
         </p>
       </div>
-      <Button onClick={handleClose} className="w-full">
+      <Button onClick={handleClose} className="w-full btn-primary">
         Done
       </Button>
     </div>

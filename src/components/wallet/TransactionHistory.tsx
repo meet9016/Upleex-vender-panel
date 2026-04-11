@@ -7,6 +7,7 @@ import { FaFileExcel, FaFilePdf } from "react-icons/fa";
 import { exportWalletTransactionsToExcel, exportWalletTransactionsToPDF } from "@/utils/exportUtils";
 import Loader from "@/components/common/Loader";
 import { toast } from "react-toastify";
+import { useWallet } from "@/context/WalletContext";
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -30,12 +31,19 @@ interface Transaction {
 interface TransactionHistoryProps {
   transactions?: Transaction[];
   loading?: boolean;
+  hasMore?: boolean;
+  isFetchingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
 const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   transactions = [],
   loading = false,
+  hasMore = false,
+  isFetchingMore = false,
+  onLoadMore,
 }) => {
+  const { totalCredited, totalDebited } = useWallet();
   const [filter, setFilter] = useState<"all" | "credit" | "debit">("all");
   const [searchText, setSearchText] = useState("");
   const debouncedSearch = useDebounce(searchText, 600);
@@ -43,6 +51,25 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   const [pdfLoading, setPdfLoading] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const actionsMenuRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const observerTargetRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isFetchingMore && !loading && onLoadMore) {
+          onLoadMore();
+        }
+      },
+      { threshold: 1.0, root: scrollContainerRef.current }
+    );
+
+    if (observerTargetRef.current) {
+      observer.observe(observerTargetRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, isFetchingMore, loading, onLoadMore]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -119,14 +146,6 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         t.id.toLowerCase().includes(searchText.toLowerCase());
     return matchesFilter && matchesSearch;
   });
-
-  const totalCredit = (transactions || [])
-    .filter((t) => t.type === "credit" && t.status === "completed")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalDebit = (transactions || [])
-    .filter((t) => t.type === "debit" && t.status === "completed")
-    .reduce((sum, t) => sum + t.amount, 0);
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-hidden flex mt-2 flex-col h-[700px] relative">
@@ -240,7 +259,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               <div>
                 <p className="text-xs text-green-700 dark:text-green-400 font-medium">Total Added</p>
                 <p className="text-sm font-bold text-green-800 dark:text-green-300">
-                  ₹{totalCredit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  ₹{totalCredited.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </p>
               </div>
             </div>
@@ -251,7 +270,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               <div>
                 <p className="text-xs text-red-700 dark:text-red-400 font-medium">Total Spent</p>
                 <p className="text-sm font-bold text-red-800 dark:text-red-300">
-                  ₹{totalDebit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  ₹{totalDebited.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </p>
               </div>
             </div>
@@ -260,7 +279,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       </div>
 
       {/* Body */}
-      <div className="p-4 sm:p-6 overflow-y-auto">
+      <div 
+        ref={scrollContainerRef}
+        className="p-4 sm:p-6 overflow-y-auto"
+      >
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center w-full text-center">
             <div className="flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-gray-100 dark:bg-gray-800">
@@ -337,6 +359,16 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                 </div>
               </div>
             ))}
+            
+            {/* Infinite Scroll Sentinel */}
+            <div ref={observerTargetRef} className="h-4 w-full" />
+            
+            {/* Loading more indicator */}
+            {isFetchingMore && (
+              <div className="flex justify-center py-4">
+                <Loader className="w-6 h-6 text-indigo-600" />
+              </div>
+            )}
           </div>
         )}
       </div>
