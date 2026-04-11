@@ -519,7 +519,7 @@ const SettingsPage: React.FC = () => {
             </div>
 
           {/* Priority Purchase History */}
-            <div className="mt-12 space-y-6">
+            <div className="mt-12 space-y-6 md:col-span-3">
               <div className="flex items-center gap-3">
                 <Package className="w-6 h-6 text-brand-600" />
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Plan History</h2>
