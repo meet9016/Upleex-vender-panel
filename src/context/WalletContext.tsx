@@ -7,6 +7,8 @@ import endPointApi from "@/utils/endPointApi";
 interface WalletContextType {
   balance: number;
   currency: string;
+  totalCredited: number;
+  totalDebited: number;
   isLoading: boolean;
   refreshBalance: () => Promise<void>;
   addMoney: (amount: number) => Promise<void>;
@@ -16,6 +18,8 @@ interface WalletContextType {
 const defaultWalletContext: WalletContextType = {
   balance: 0,
   currency: "₹",
+  totalCredited: 0,
+  totalDebited: 0,
   isLoading: false,
   refreshBalance: async () => {},
   addMoney: async () => {},
@@ -33,6 +37,8 @@ interface WalletProviderProps {
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [balance, setBalance] = useState<number>(0);
+  const [totalCredited, setTotalCredited] = useState<number>(0);
+  const [totalDebited, setTotalDebited] = useState<number>(0);
   const [currency] = useState<string>("₹");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [mounted, setMounted] = useState<boolean>(false);
@@ -46,6 +52,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       const response = await api.get(`${endPointApi.getWalletBalance}?t=${timestamp}`);
       if (response.data.success) {
         setBalance(response.data.data?.balance || 0);
+        setTotalCredited(response.data.data?.total_credited || 0);
+        setTotalDebited(response.data.data?.total_debited || 0);
       }
     } catch (error) {
       console.error("Error fetching wallet balance:", error);
@@ -109,6 +117,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const value: WalletContextType = {
     balance,
     currency,
+    totalCredited,
+    totalDebited,
     isLoading,
     refreshBalance,
     addMoney,

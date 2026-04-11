@@ -501,7 +501,7 @@ const SettingsPage: React.FC = () => {
                       <Button
                         onClick={() => handleSelectPlan(plan)}
                         variant={plan.is_popular ? 'primary' : 'outline'}
-                        className="w-full py-3.5 rounded-xl font-bold"
+                        className="w-full !py-3.5 rounded-xl font-bold btn-primary"
                       >
                         {isSubscribed ? 'Add More Products' : 'Select Plan'}
                       </Button>
