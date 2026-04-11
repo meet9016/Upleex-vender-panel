@@ -625,8 +625,7 @@ const QuoteTable = () => {
     if (s.includes('active')) return 'active';
     if (s.includes('approv')) return 'approval';
     if (s.includes('reject')) return 'reject';
-    if (s.includes('complet')) return 'complete';
-    if (s.includes('success')) return 'successful';
+    if (s.includes('complet') || s.includes('success') || s.includes('return')) return 'complete';
     if (s.includes('deliver')) return 'delivery';
     return 'pending';
   };
