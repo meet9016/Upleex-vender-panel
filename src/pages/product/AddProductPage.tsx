@@ -905,13 +905,13 @@ export default function AddProductPage() {
                 formdata.append("available_quantity", formData.availableQuantity.trim());
             }
 
-            // ---------- SELL FLOW ----------
+            // ---------- Sell FLOW ----------
             if (isSell) {
                 formdata.append("price", formData.monthPrice.trim());
                 formdata.append("cancel_price", formData.monthCancelPrice.trim());
             }
 
-            // ---------- RENT FLOW ----------
+            // ---------- Rent FLOW ----------
             if (isRent) {
                 // DAY
                 if (billingType === "day") {
@@ -972,7 +972,7 @@ export default function AddProductPage() {
                 const existingImages = subPreview.filter(
                     img => img.image && !img.product_image_id.startsWith('temp_')
                 );
-                
+
                 existingImages.forEach((img, index) => {
                     formdata.append(`images[${index}][product_image_id]`, img.product_image_id);
                     formdata.append(`images[${index}][image]`, img.image);
@@ -1596,7 +1596,7 @@ export default function AddProductPage() {
                         <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
                             Key Features
                         </Label>
-                        
+
                         <div className="flex-1 flex flex-col overflow-hidden">
                             {/* BORDERED CONTAINER */}
                             <div className="flex-1 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/70 dark:bg-gray-900/70 backdrop-blur p-2 dark:border-white overflow-hidden flex flex-col">
@@ -1637,16 +1637,15 @@ export default function AddProductPage() {
                                                     type="text"
                                                     placeholder="Description"
                                                     value={item.value}
-                                                    className={`h-9 text-sm w-full border ${
-                                                        validationErrors.featureFields?.[index]?.value
-                                                            ? "border-red-500"
-                                                            : "border-gray-300"
-                                                    } focus:ring-1 focus:ring-[rgb(53,66,237)]`}
+                                                    className={`h-9 text-sm w-full border ${validationErrors.featureFields?.[index]?.value
+                                                        ? "border-red-500"
+                                                        : "border-gray-300"
+                                                        } focus:ring-1 focus:ring-[rgb(53,66,237)]`}
                                                     onChange={(e) =>
                                                         UpdateFeatureField(index, "value", e.target.value)
                                                     }
                                                 />
-                                                
+
                                                 {/* Validation message for individual field */}
                                                 {validationErrors.featureFields?.[index]?.value && (
                                                     <p className="!text-[14px] text-red-500 mt-0.5 ml-1">

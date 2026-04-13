@@ -191,7 +191,7 @@ export const EcommerceMetrics = () => {
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-1">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate uppercase tracking-wider">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">
                     {metric.title}
                   </span>
                   <span className={`flex items-center text-[10px] font-bold ${metric.isPositive ? 'text-success-600' : 'text-error-600'} flex-shrink-0`}>
@@ -230,7 +230,7 @@ export const EcommerceMetrics = () => {
                   {/* Secondary Nested Card - Opens on the opposite side of primary if needed, but usually right is fine if primary is left */}
                   {openSubItem === item.label && item.subItems?.length > 0 && (
                     <div className={`absolute ${index % 4 === 3 ? 'right-full mr-2' : 'left-full ml-2'} top-0 min-w-[180px] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-2xl p-3 space-y-2 animate-in fade-in slide-in-from-${index % 4 === 3 ? 'right' : 'left'}-2 duration-200`}>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1 whitespace-nowrap border-b border-slate-100 dark:border-slate-800 pb-1">{item.label} Breakdown</p>
+                      <p className="text-[9px] font-black text-slate-400 mb-1 whitespace-nowrap border-b border-slate-100 dark:border-slate-800 pb-1">{item.label} Breakdown</p>
                       {item.subItems.map((sub: any, si: number) => (
                         <div key={si} className="flex items-center justify-between text-[11px] font-bold">
                           <span className="text-slate-500 whitespace-nowrap mr-4">{sub.label}</span>

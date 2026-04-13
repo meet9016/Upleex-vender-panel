@@ -6,13 +6,14 @@ import Label from "@/components/form/Label";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
 import Image from "next/image";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import OtpInput from "react-otp-input";
 import { saveToken } from "@/utils/tokenManager";
+import SearchableDropdown from "@/components/common/SearchableDropdown";
 
 export default function SignUpForm() {
   const router = useRouter();
@@ -34,6 +35,14 @@ export default function SignUpForm() {
     otp: ""
   });
 
+  const [cityOptions, setCityOptions] = useState<{ label: string; value: string }[]>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+  const [hasMoreCities, setHasMoreCities] = useState(true);
+  const cityPageRef = useRef(1);
+  const cityInFlightRef = useRef<Set<string>>(new Set());
+  const cityDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const citySearchRef = useRef("");
+
   const [errors, setErrors] = useState<{
     fname?: string;
     lname?: string;
@@ -52,6 +61,49 @@ export default function SignUpForm() {
     }
     return () => clearInterval(interval);
   }, [timer]);
+
+  const fetchCities = async (search: string, page: number) => {
+    const requestKey = `${search}|${page}`;
+    if (cityInFlightRef.current.has(requestKey)) return;
+    if (loadingCities) return;
+    cityInFlightRef.current.add(requestKey);
+    setLoadingCities(true);
+
+    try {
+      const res = await api.post(endPointApi.postVendorCityList as string, {
+        page,
+        search,
+      });
+      const list = res?.data?.data || [];
+
+      if (!Array.isArray(list) || list.length === 0) {
+        setHasMoreCities(false);
+        return;
+      }
+
+      const mapped = list
+        .map((item: any) => {
+          const name = String(item?.city_name || item?.name || item?.city || "").trim();
+          const id = String(item?.city_id || item?.id || item?._id || "");
+          if (!name || !id) return null;
+          return { label: name, value: id };
+        })
+        .filter(Boolean) as { label: string; value: string }[];
+
+      setCityOptions((prev) => (page === 1 ? mapped : [...prev, ...mapped]));
+      cityPageRef.current = page + 1;
+    } catch (error: any) {
+      const message = error?.response?.data?.message || "Failed to load cities";
+      toast.error(message);
+    } finally {
+      setLoadingCities(false);
+      cityInFlightRef.current.delete(requestKey);
+    }
+  };
+
+  useEffect(() => {
+    fetchCities("", 1);
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -88,6 +140,7 @@ export default function SignUpForm() {
         email: formData.email.trim(),
         number: formData.mobile,
         alternate_number: formData.altMobile || "",
+        city_id: formData.city,
         country: "97"
       });
       const status = res?.data?.status;
@@ -153,6 +206,7 @@ export default function SignUpForm() {
           email: formData.email.trim(),
           number: formData.mobile,
           alternate_number: formData.altMobile || "",
+          city_id: formData.city,
           country: "97",
           otp: formData.otp
         });
@@ -382,18 +436,39 @@ export default function SignUpForm() {
             {/* City */}
             <div>
               <Label>City <span className="text-red-500">*</span></Label>
-              <Input
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={(e) => {
-                  handleChange(e);
-                  if (e.target.value.trim()) setErrors(prev => ({ ...prev, city: '' }));
-                }}
-                placeholder="Enter your city"
-                className="mt-1"
-                error={!!errors.city}
-              />
+              <div className="mt-1">
+                <SearchableDropdown
+                  options={cityOptions}
+                  value={formData.city || null}
+                  onChange={(val) => {
+                    setFormData((prev) => ({ ...prev, city: val }));
+                    if (val.trim()) setErrors((prev) => ({ ...prev, city: "" }));
+                  }}
+                  placeholder="Select City"
+                  searchable={true}
+                  onSearch={(value) => {
+                    const next = value.trim();
+                    if (cityDebounceRef.current) clearTimeout(cityDebounceRef.current);
+                    cityDebounceRef.current = setTimeout(() => {
+                      citySearchRef.current = next;
+                      setHasMoreCities(true);
+                      cityPageRef.current = 1;
+                      setCityOptions([]);
+                      fetchCities(next, 1);
+                    }, 400);
+                  }}
+                  onScrollNearBottom={() => {
+                    if (!hasMoreCities || loadingCities) return;
+                    fetchCities(citySearchRef.current, cityPageRef.current);
+                  }}
+                  footer={
+                    hasMoreCities && loadingCities ? (
+                      <div className="px-4 py-3 text-center text-sm text-gray-400">Loading…</div>
+                    ) : null
+                  }
+                  error={!!errors.city}
+                />
+              </div>
               {errors.city && <p className="error-message">{errors.city}</p>}
             </div>
 

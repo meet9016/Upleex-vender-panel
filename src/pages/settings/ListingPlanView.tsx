@@ -360,7 +360,7 @@ const ListingPlanView: React.FC = () => {
       field: "plan_type",
       width: 120,
       cellRenderer: (params: any) => (
-        <span className="uppercase text-xs font-semibold">{params.value} Plan</span>
+        <span className=" text-xs font-semibold">{params.value} Plan</span>
       )
     },
     {
@@ -452,7 +452,7 @@ const ListingPlanView: React.FC = () => {
             <Button
 
               onClick={() => handleSelectPlan(plan)}
-              className="w-full py-4 rounded-xl font-bold shadow-lg shadow-emerald-50"
+              className="w-full !py-4 rounded-xl font-bold shadow-lg shadow-emerald-50 btn-primary"
               variant={planAggregates[plan.key] ? "outline" : "primary"}
             >
               {planAggregates[plan.key] ? 'Add More Products' : 'Select Plan'}
@@ -520,7 +520,7 @@ const ListingPlanView: React.FC = () => {
                     onClick={() => setActiveTab('Rent')}
                     className={`px-4 py-1.5 text-xs font-bold rounded-md transition h-auto ${activeTab === 'Rent' ? 'bg-white dark:bg-gray-700 text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   >
-                    RENT ({rentProducts.length})
+                    Rent ({rentProducts.length})
                   </button>
                   <button
                     // variant={activeTab === 'Sell' ? 'primary' : 'ghost'}
@@ -528,7 +528,7 @@ const ListingPlanView: React.FC = () => {
                     onClick={() => setActiveTab('Sell')}
                     className={`px-4 py-1.5 text-xs font-bold rounded-md transition h-auto ${activeTab === 'Sell' ? 'bg-white dark:bg-gray-700 text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   >
-                    SELL ({sellProducts.length})
+                    Sell ({sellProducts.length})
                   </button>
                 </div>
               </div>

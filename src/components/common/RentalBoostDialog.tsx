@@ -114,7 +114,7 @@ const RentalBoostDialog: React.FC<RentalBoostDialogProps> = ({
             </div>
           </div>
 
-          <h4 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4">
+          <h4 className="text-sm font-bold text-gray-400 mb-4">
             Select a Boost Plan
           </h4>
 
@@ -176,7 +176,7 @@ const RentalBoostDialog: React.FC<RentalBoostDialogProps> = ({
 
         <div className="px-8 py-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left">
-            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold">Total Payable</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-bold">Total Payable</p>
             <p className="text-2xl font-black text-gray-900 dark:text-white">
                 ₹{plans.find(p => p._id === selectedPlanId)?.price || 0}
             </p>

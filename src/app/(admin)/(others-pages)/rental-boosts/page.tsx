@@ -182,7 +182,7 @@ export default function RentalBoostsPage() {
                     <h3 className="font-bold text-gray-900 dark:text-white truncate" title={product.product_name}>
                       {product.product_name}
                     </h3>
-                    <div className="flex items-center gap-2 text-[10px] uppercase font-black tracking-widest text-[#28a8e9]">
+                    <div className="flex items-center gap-2 text-[10px]  font-black  text-[#28a8e9]">
                       <Sparkles className="w-3 h-3" />
                       Priority Active
                     </div>
@@ -191,7 +191,7 @@ export default function RentalBoostsPage() {
 
                 <div className="flex items-center justify-between mt-6">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Status</span>
+                    <span className="text-[10px] text-gray-400 font-bold ">Status</span>
                     <span className={`text-xs font-bold ${product.is_boosted ? 'text-orange-500' : 'text-gray-500'}`}>
                       {product.is_boosted ? 'Currently Boosted' : 'Not Boosted'}
                     </span>

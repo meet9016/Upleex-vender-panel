@@ -387,7 +387,7 @@ const SettingsPage: React.FC = () => {
           <Button
             variant={currentTab === "priority" ? "secondary" : "ghost"}
             onClick={() => setCurrentTab("priority")}
-            className={`flex-1 sm:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "priority"
+            className={`flex-1 sm:flex-none px-8 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "priority"
               ? "bg-white text-brand-600 shadow-md ring-1 ring-black/[0.04]"
               : "text-gray-500 hover:text-gray-900"
               }`}
@@ -398,7 +398,7 @@ const SettingsPage: React.FC = () => {
           <Button
             variant={currentTab === "booster" ? "secondary" : "ghost"}
             onClick={() => setCurrentTab("booster")}
-            className={`flex-1 sm:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "booster"
+            className={`flex-1 sm:flex-none px-8 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "booster"
               ? "bg-white text-indigo-600 shadow-md ring-1 ring-black/[0.04]"
               : "text-gray-500 hover:text-gray-900"
               }`}
@@ -455,7 +455,7 @@ const SettingsPage: React.FC = () => {
                         }`}
                     >
                       {plan.is_popular && (
-                        <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-5 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg">
+                        <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-5 py-1.5 rounded-full text-xs font-bold  tracking-widest shadow-lg">
                           Recommended
                         </span>
                       )}
@@ -511,7 +511,7 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
 
-              {/* <div className="flex items-center gap-3 px-5 py-2.5 bg-brand-50 rounded-2xl border border-brand-100">
+            {/* <div className="flex items-center gap-3 px-5 py-2.5 bg-brand-50 rounded-2xl border border-brand-100">
             <Wallet className="text-brand-600" size={20} />
             <div>
               <p className="text-[10px] text-brand-500 uppercase font-black tracking-widest leading-none">Wallet Balance</p>
@@ -588,7 +588,7 @@ const SettingsPage: React.FC = () => {
                             : 'text-gray-500 hover:text-gray-800'
                             }`}
                         >
-                          RENT ({rentProducts.length})
+                          Rent ({rentProducts.length})
                         </button>
 
                         <button
@@ -598,7 +598,7 @@ const SettingsPage: React.FC = () => {
                             : 'text-gray-500 hover:text-gray-800'
                             }`}
                         >
-                          SELL ({sellProducts.length})
+                          Sell ({sellProducts.length})
                         </button>
 
                       </div>

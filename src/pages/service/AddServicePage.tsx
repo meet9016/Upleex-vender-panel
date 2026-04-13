@@ -126,7 +126,6 @@ export default function AddServicePage() {
         if (!formData.category) errors.category = "Please select a category";
         if (!formData.price?.trim()) errors.price = "Please enter price";
         if (!formData.billing_type) errors.billing_type = "Please select billing type";
-        if (!formData.location?.trim()) errors.location = "Please enter location/city";
         if (!formData.description?.trim()) errors.description = "Please enter description";
         if (!mainImage && (!mainPreview || mainPreview.length === 0)) {
             errors.mainImage = "Please upload service image";
@@ -148,7 +147,6 @@ export default function AddServicePage() {
             data.append("category_id", formData.category);
             data.append("price", formData.price);
             data.append("billing_type", formData.billing_type);
-            data.append("location", formData.location);
             data.append("description", formData.description);
             if (mainImage) {
                 const compressedMain = await compressImage(mainImage, 0.8);
@@ -282,7 +280,7 @@ export default function AddServicePage() {
                         )}
                     </div>
 
-                    <div >
+                    {/* <div >
                         <Label required className="font-semibold mb-2">Providing City</Label>
                         <Input
                             value={formData.location}
@@ -291,11 +289,10 @@ export default function AddServicePage() {
                             error={!!validationErrors.location}
                             className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                         />
-                        {/* <p className="text-xs text-gray-500 mt-1">Mention the cities where you provide this service.</p> */}
                         {validationErrors.location && (
                             <p className="error-message">{validationErrors.location}</p>
                         )}
-                    </div>
+                    </div> */}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">

@@ -152,7 +152,7 @@ export default function DocumentUpload({
               {isPDF ? (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-rose-50 dark:bg-rose-900/20">
                   <FiFileText className="text-2xl text-red-500" />
-                  <span className="text-[8px] font-bold text-red-500 uppercase mt-1">PDF</span>
+                  <span className="text-[8px] font-bold text-red-500 mt-1">PDF</span>
                 </div>
               ) : preview ? (
                 <img
@@ -176,10 +176,10 @@ export default function DocumentUpload({
                 <FiCheckCircle className="text-emerald-500 text-xs flex-shrink-0" />
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
                   {file instanceof File ? (file.size / 1024 / 1024).toFixed(2) + " MB" : (isPDF ? 'PDF' : 'Image')}
                 </span>
-                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase ">
+                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400  ">
                   Ready to Submit
                 </span>
               </div>
