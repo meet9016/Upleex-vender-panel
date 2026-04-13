@@ -10,6 +10,7 @@ type Option = {
   label: string;
   value: string;
   image?: string;
+  disabled?: boolean;
 };
 
 type Props = {
@@ -122,7 +123,7 @@ export default function SearchableDropdown({
         e.stopPropagation(); // Prevent event bubbling to parent
         if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
           const opt = filteredOptions[highlightedIndex];
-          if (!disabled) {
+          if (!disabled && !opt.disabled) {
             const currentValue = value;
             if (currentValue === opt.value) {
               onChange("");
@@ -225,7 +226,7 @@ export default function SearchableDropdown({
         data-index={index}
         aria-selected={isSelected}
         onClick={() => {
-          if (disabled) return;
+          if (disabled || opt.disabled) return;
           const currentValue = value;
           if (currentValue === opt.value) {
             onChange("");
@@ -235,14 +236,16 @@ export default function SearchableDropdown({
           setOpen(false);
           setSearch("");
         }}
-        onMouseEnter={() => setHighlightedIndex(index)}
-        className={`px-4 py-2 text-sm cursor-pointer flex items-center gap-3 transition
+        onMouseEnter={() => !opt.disabled && setHighlightedIndex(index)}
+        className={`px-4 py-2 text-sm flex items-center gap-3 transition
           ${
-            isSelected
-              ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
-              : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+            opt.disabled
+              ? "opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800/50"
+              : isSelected
+              ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium cursor-pointer"
+              : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
           }
-          ${highlightedIndex === index ? "bg-gray-100 dark:bg-gray-800" : ""}
+          ${highlightedIndex === index && !opt.disabled ? "bg-gray-100 dark:bg-gray-800" : ""}
         `}
       >
         {/* CHECKBOX FIRST */}

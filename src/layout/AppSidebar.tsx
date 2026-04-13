@@ -133,11 +133,15 @@ const AppSidebar: React.FC = () => {
       aria-label="Main navigation"
     >
       <div className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
-        <Link href="/" aria-label="Home" onClick={() => {
-          if (isMobileOpen) {
-            toggleMobileSidebar();
-          }
-        }}>
+        <Link 
+          href={kycApproved === false ? "/kyc" : "/"} 
+          aria-label="Home" 
+          onClick={() => {
+            if (isMobileOpen) {
+              toggleMobileSidebar();
+            }
+          }}
+        >
           {showExpanded ? (
             <>
               <Image
