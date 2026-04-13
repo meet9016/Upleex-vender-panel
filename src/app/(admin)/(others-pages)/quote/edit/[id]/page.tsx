@@ -746,32 +746,33 @@ const QuoteEditPage = () => {
                   )}
                 </div>
               </div>
-                      {/* Action Buttons - Submit Changes and Cancel on Right */}
-            <div className="flex justify-end items-center gap-3 pt-6 mt-4 border-t border-gray-100 dark:border-gray-700">
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className={`px-4 py-2 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-sm flex items-center justify-center gap-2 ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}
-              >
-                {submitting ? (
-                  <>
-                    <FiLoader className="animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  'Submit Changes'
-                )}
-              </button>
             </div>
-    </div>
-          </form>
+
+          {/* Action Buttons - Submit Changes and Cancel on Right */}
+          <div className="flex justify-end items-center gap-3 pt-6 mt-4 border-t border-gray-100 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className={`px-4 py-2 text-sm font-semibold text-white btn-primary transition-all shadow-sm flex items-center justify-center gap-2 ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {submitting ? (
+                <>
+                  <FiLoader className="animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                'Submit Changes'
+              )}
+            </button>
+          </div>
+        </form>
         </div>
       </div>
     </div>
