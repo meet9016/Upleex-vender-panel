@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { clearToken } from './tokenManager'
 
 const apiAdminInstance = axios.create({  
   baseURL: process.env.NEXT_PUBLIC_APP_URL
@@ -31,7 +32,8 @@ apiAdminInstance.interceptors.response.use(
 
     if (response?.status === 401) {
       if (typeof window !== 'undefined' && window.location.pathname !== '/signin') {
-        localStorage.removeItem('auth_token');
+        clearToken();
+        localStorage.clear();
         window.location.replace('/signin');
       }
     }
