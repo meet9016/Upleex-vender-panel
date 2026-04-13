@@ -32,6 +32,7 @@ const QuoteEditPage = () => {
   const [returnImagePreview, setReturnImagePreview] = useState<string | null>(null);
   const [returnVideoPreview, setReturnVideoPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [previousStatus, setPreviousStatus] = useState<string>(""); // Track previous status
 
   const getStatuses = async () => {
     try {
@@ -131,6 +132,7 @@ const QuoteEditPage = () => {
 
         console.log("🚀 ~ Transformed Quote:", transformedQuote);
         setQuoteData(transformedQuote);
+        setPreviousStatus(quote?.status || ""); // Store previous status
 
         const toInputDate = (d: any) => {
           if (!d) return "";
@@ -188,6 +190,64 @@ const QuoteEditPage = () => {
     return currentStatus === 'complete';
   }, [formData.status, quoteData?.status]);
 
+  // Check if status is delivery (to allow only complete after delivery)
+  const isDeliveryStatus = useMemo(() => {
+    const currentStatus = formData.status || quoteData?.status;
+    return currentStatus === 'delivery';
+  }, [formData.status, quoteData?.status]);
+
+  // Get status options with disabled property based on transitions
+  const getAvailableStatusOptions = () => {
+    const savedStatus = quoteData?.status || "";
+    
+    return statusOptions.map(option => {
+      let isDisabled = false;
+      
+      // If current status is complete, no changes allowed
+      if (savedStatus === 'complete') {
+        isDisabled = option.value !== 'complete';
+      }
+      // If current status is delivery, only allow complete (and itself)
+      else if (savedStatus === 'delivery') {
+        isDisabled = option.value !== 'complete' && option.value !== 'delivery';
+      }
+      // For other statuses, cannot change to complete directly (must go through delivery)
+      else if (option.value === 'complete') {
+        isDisabled = true;
+      }
+
+      return {
+        ...option,
+        disabled: isDisabled
+      };
+    });
+  };
+
+  // Check if status change is allowed
+  const isStatusChangeAllowed = (newStatus: string) => {
+    const savedStatus = quoteData?.status || "";
+    
+    // Cannot change if already complete
+    if (savedStatus === 'complete') {
+      toast.error("Status cannot be changed as it is already Complete.");
+      return false;
+    }
+    
+    // If current status is delivery, only complete is allowed
+    if (savedStatus === 'delivery' && newStatus !== 'complete' && newStatus !== 'delivery') {
+      toast.error("Only 'Complete' status is allowed after 'Delivery'.");
+      return false;
+    }
+    
+    // Cannot change to complete directly (must go through delivery first)
+    if (newStatus === 'complete' && savedStatus !== 'delivery' && savedStatus !== 'complete') {
+      toast.error("Status cannot be changed to 'Complete' directly. Please change to 'Delivery' first.");
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -195,6 +255,12 @@ const QuoteEditPage = () => {
     if (!params?.id) {
       return;
     }
+    
+    // Validate status change
+    if (formData.status && !isStatusChangeAllowed(formData.status)) {
+      return;
+    }
+    
     try {
       setSubmitting(true);
 
@@ -229,6 +295,12 @@ const QuoteEditPage = () => {
       toast.error("Failed to update quote");
     } finally {
       setSubmitting(false); // Set loading false after API call completes
+    }
+  };
+
+  const handleStatusChange = (value: string) => {
+    if (isStatusChangeAllowed(value)) {
+      setFormData({ ...formData, status: value });
     }
   };
 
@@ -323,6 +395,9 @@ const QuoteEditPage = () => {
     label: status.name,
     value: toEnum(status.name),
   }));
+
+  // Get filtered status options based on current status
+  const availableStatusOptions = getAvailableStatusOptions();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-2 ">
@@ -435,14 +510,15 @@ const QuoteEditPage = () => {
             {/* Status */}
             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Status</p>
-              <SearchableDropdown
-                options={statusOptions}
-                value={formData.status}
-                placeholder="Select Status"
-                onChange={(value) => setFormData({ ...formData, status: value })}
-                searchable={true}
-                usePortal={true}
-              />
+                <SearchableDropdown
+                  options={availableStatusOptions}
+                  value={formData.status}
+                  placeholder="Select Status"
+                  onChange={handleStatusChange}
+                  searchable={true}
+                  usePortal={true}
+                  disabled={isCompleteStatus}
+                />
             </div>
           </div>
         </div>
@@ -457,7 +533,7 @@ const QuoteEditPage = () => {
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293-1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                 </div>
                 <div className="ml-3">
@@ -670,21 +746,31 @@ const QuoteEditPage = () => {
                   )}
                 </div>
               </div>
+                      {/* Action Buttons - Submit Changes and Cancel on Right */}
+            <div className="flex justify-end items-center gap-3 pt-6 mt-4 border-t border-gray-100 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`px-4 py-2 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-sm flex items-center justify-center gap-2 ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+              >
+                {submitting ? (
+                  <>
+                    <FiLoader className="animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  'Submit Changes'
+                )}
+              </button>
             </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={submitting}
-              className={`w-full px-4 py-2.5 btn-primary transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 ${submitting ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-            >
-              {submitting ? (
-                <Loader type="button" text="Submitting..." iconClassName="text-white" />
-              ) : (
-                'Submit Changes'
-              )}
-            </button>
+    </div>
           </form>
         </div>
       </div>
