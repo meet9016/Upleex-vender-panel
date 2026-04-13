@@ -105,26 +105,13 @@ const BoosterPlanView: React.FC = () => {
   const flattenedBoosterHistory = useMemo(() => {
     const rows: any[] = [];
     purchases.forEach(purchase => {
-      // Booster plans usually apply to all priority products
-      // We use the priorityProducts list to create product-specific rows
-      priorityProducts.forEach(product => {
-        rows.push({
-          ...purchase,
-          product_name: product.product_name,
-          category_name: product.category_name || "-",
-          sub_category_name: product.sub_category_name || "-",
-        });
+      const product = priorityProducts.find(p => p._id === purchase.product_id || p.id === purchase.product_id);
+      rows.push({
+        ...purchase,
+        product_name: purchase.product_name || product?.product_name || "All Priority Products",
+        category_name: product?.category_name || "-",
+        sub_category_name: product?.sub_category_name || "-",
       });
-
-      // If no priority products found but we have a purchase, show a generic row
-      if (priorityProducts.length === 0) {
-        rows.push({
-          ...purchase,
-          product_name: "All Priority Products",
-          category_name: "-",
-          sub_category_name: "-",
-        });
-      }
     });
     return rows.sort((a, b) => new Date(b.expiry_date).getTime() - new Date(a.expiry_date).getTime());
   }, [purchases, priorityProducts]);
@@ -212,7 +199,7 @@ const BoosterPlanView: React.FC = () => {
       )} */}
 
       {/* Plans Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 ">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {plans.map((plan) => (
           <div
             key={plan.id || plan._id}
@@ -227,20 +214,31 @@ const BoosterPlanView: React.FC = () => {
               </span>
             )}
 
-            <div className="mb-6 text-center ">
+            <div className="mb-6 text-center">
               <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform dark:text-gray-200 dark:bg-black">
                 <Rocket className="w-8 h-8 text-indigo-600" />
               </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-1 dark:text-gray-200">{plan.name}</h4>
-              <p className="text-gray-500 text-sm line-clamp-2 dark:text-gray-200">{plan.description}</p>
+              <h4 className="text-xl font-bold text-gray-900 mb-1 dark:text-gray-200">{plan.name || `${plan.days}-Day Boost`}</h4>
+              <p className="text-gray-500 text-sm line-clamp-2 dark:text-gray-200">{plan.description || `Boost all priority products for ${plan.days} days`}</p>
             </div>
 
-            <div className={`flex items-baseline justify-center gap-1 mb-8 p-4 rounded-2xl dark:text-gray-200 dark:bg-black ${activeBooster ? 'bg-green-50' : 'bg-indigo-50'}`}>
-              <span className={`text-4xl font-extrabold ${activeBooster ? 'text-green-600' : 'text-indigo-900'}`}>
-                {activeBooster ? 'FREE' : `${currency}${plan.price}`}
-              </span>
-              {!activeBooster && <span className="text-indigo-500 font-medium">/ {plan.days} days</span>}
-              {activeBooster && <span className="text-green-600 font-bold text-sm ml-2">Active</span>}
+            {/* Price block */}
+            <div className={`mb-8 p-5 rounded-2xl dark:bg-black ${activeBooster ? 'bg-green-50' : 'bg-indigo-50'}`}>
+              <div className="flex items-baseline justify-center gap-1">
+                <span className={`text-4xl font-extrabold ${activeBooster ? 'text-green-600' : 'text-indigo-900'}`}>
+                  {activeBooster ? 'FREE' : `${currency}${plan.price}`}
+                </span>
+                {!activeBooster && <span className="text-indigo-500 font-medium">/ plan</span>}
+                {activeBooster && <span className="text-green-600 font-bold text-sm ml-2">Active</span>}
+              </div>
+              <div className="mt-2 flex items-center justify-center gap-2">
+                <span className="text-xs font-semibold text-indigo-600 bg-indigo-100 px-2.5 py-1 rounded-full dark:bg-indigo-900/40">
+                  {plan.days} days duration
+                </span>
+                <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full dark:bg-slate-800">
+                  {priorityCount} products eligible
+                </span>
+              </div>
             </div>
 
             <div className="space-y-4 mb-8 flex-grow">
@@ -263,14 +261,14 @@ const BoosterPlanView: React.FC = () => {
                 onClick={() => handleOpenConfirm(plan)}
                 disabled={isPurchasing}
                 className={`w-full !py-4 rounded-xl font-bold btn-primary dark:bg-[#1c2938] ${activeBooster ? 'shadow-green-100' : 'shadow-indigo-100'}`}
-                variant={activeBooster ? "primary" : "primary"}
+                variant="primary"
               >
-                {isPurchasing ? "Processing..." : (activeBooster ? "Sync New Products" : `Boost All Products`)}
+                {isPurchasing ? "Processing..." : (activeBooster ? "Sync New Products" : `Boost All Products for ${currency}${plan.price}`)}
               </Button>
               <p className="text-center text-[10px] text-gray-400 font-medium px-4 leading-relaxed">
                 {activeBooster
                   ? "This will apply the current active boost expiry to any new products for free."
-                  : `Apply this ${plan.days}-day boost to ${priorityCount} products simultaneously.`}
+                  : `Apply this ${plan.days}-day boost to all ${priorityCount} priority products simultaneously.`}
               </p>
             </div>
           </div>
