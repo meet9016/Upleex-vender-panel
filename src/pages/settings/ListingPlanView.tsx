@@ -450,6 +450,7 @@ const ListingPlanView: React.FC = () => {
             </div>
 
             <Button
+
               onClick={() => handleSelectPlan(plan)}
               className="w-full py-4 rounded-xl font-bold shadow-lg shadow-emerald-50"
               variant={planAggregates[plan.key] ? "outline" : "primary"}
@@ -558,7 +559,7 @@ const ListingPlanView: React.FC = () => {
                     break;
                   }
                 }
-                
+
                 if (hasPlan) {
                   return { opacity: 0.6, pointerEvents: 'none', background: 'rgba(0,0,0,0.03)' };
                 }
