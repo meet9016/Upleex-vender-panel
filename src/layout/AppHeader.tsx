@@ -24,6 +24,25 @@ const AppHeader = () => {
   const { filters, setFilters, canFilter, isLoadingFilter } = useFilter();
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [kycApproved, setKycApproved] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await api.post(endPointApi.postFetchVendorKYCFormData as string);
+        const status = res?.data?.data?.status || "";
+        if (!mounted) return;
+        setKycApproved(String(status).toLowerCase() === "approved");
+      } catch {
+        if (!mounted) return;
+        setKycApproved(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleToggle = useCallback(() => {
     if (window.innerWidth >= 1024) {
@@ -112,7 +131,7 @@ const AppHeader = () => {
             )}
           </button>
 
-          <Link href="/" className="lg:hidden">
+          <Link href={kycApproved === false ? "/kyc" : "/"} className="lg:hidden">
             <Image
               className="dark:hidden"
               src="/images/logo/logo.webp"
@@ -255,7 +274,7 @@ const AppHeader = () => {
             </div>
 
             <ThemeToggleButton />
-            <WalletHeader />
+            <WalletHeader kycApproved={kycApproved} />
             <NotificationDropdown />
           </div>
           <UserDropdown />
@@ -297,7 +316,7 @@ const AppHeader = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <WalletHeader />
+              <WalletHeader kycApproved={kycApproved} />
               <ThemeToggleButton />
             </div>
           </div>

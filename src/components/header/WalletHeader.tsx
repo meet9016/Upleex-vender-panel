@@ -4,7 +4,11 @@ import Link from "next/link";
 import { WalletIcon } from "@/icons";
 import { useWallet } from "@/context/WalletContext";
 
-const WalletHeader: React.FC = () => {
+interface WalletHeaderProps {
+  kycApproved?: boolean | null;
+}
+
+const WalletHeader: React.FC<WalletHeaderProps> = ({ kycApproved }) => {
   const { balance, currency, isLoading, refreshBalance } = useWallet();
 
   useEffect(() => {
@@ -25,13 +29,19 @@ const WalletHeader: React.FC = () => {
     );
   }
 
+  const isEnabled = kycApproved === true;
+
   return (
     <Link
-      href="/wallet"
-      className="flex items-center gap-2 px-3 py-2 bg-brand-50 dark:bg-brand-900/20 hover:bg-brand-100 dark:hover:bg-brand-900/30 rounded-lg transition-colors group"
+      href={isEnabled ? "/wallet" : "/kyc"}
+      className={`flex items-center gap-2 px-3 py-2 bg-brand-50 dark:bg-brand-900/20 rounded-lg transition-colors group ${
+        isEnabled 
+          ? "hover:bg-brand-100 dark:hover:bg-brand-900/30 cursor-pointer" 
+          : "cursor-default"
+      }`}
     >
       {/* <WalletIcon className="w-4 h-4 text-brand-600 dark:text-brand-400 group-hover:text-brand-700 dark:group-hover:text-brand-300" /> */}
-      <span className="text-sm font-medium text-brand-700 dark:text-brand-300 group-hover:text-brand-800 dark:group-hover:text-brand-200">
+      <span className={`text-sm font-medium text-brand-700 dark:text-brand-300 ${isEnabled ? "group-hover:text-brand-800 dark:group-hover:text-brand-200" : ""}`}>
         {currency}{balance.toLocaleString('en-IN')}
       </span>
     </Link>
