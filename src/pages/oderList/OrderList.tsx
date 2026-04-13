@@ -52,7 +52,10 @@ interface VendorOrder {
   items: Array<{
     product_id?: {
       name?: string;
-      images?: string[];
+      images?: Array<{
+        url?: string;
+        product_image_id?: string;
+      }> | string[];
       sku?: string;
     };
     product_name?: string;
@@ -227,14 +230,14 @@ const OrderList = () => {
       cellRenderer: (params: any) => <StatusBadge status={params.value} />,
       cellStyle: { textAlign: "center" }
     },
-    {
-      headerName: "Type",
-      field: "payment_type",
-      minWidth: 120,
-      flex: 1,
-      cellRenderer: (params: any) => <StatusBadge status={params.value} />,
-      cellStyle: { textAlign: "center" }
-    },
+    // {
+    //   headerName: "Type",
+    //   field: "payment_type",
+    //   minWidth: 120,
+    //   flex: 1,
+    //   cellRenderer: (params: any) => <StatusBadge status={params.value} />,
+    //   cellStyle: { textAlign: "center" }
+    // },
     {
       headerName: "Paid On",
       field: "paid_at",
@@ -366,7 +369,7 @@ const OrderList = () => {
       cellRenderer: (params: any) => (
         <div className="flex flex-col gap-1 items-center">
           <StatusBadge status={params.value} />
-          {params.data.payment_type && <StatusBadge status={params.data.payment_type} />}
+          {/* {params.data.payment_type && <StatusBadge status={params.data.payment_type} />} */}
         </div>
       ),
       cellStyle: { textAlign: "center" }
@@ -535,11 +538,11 @@ const OrderList = () => {
     }
 
     // Restriction: Cannot update to delivery-related statuses if payment is on hold
-    const deliveryStatuses = ['picked_up', 'out_for_delivery', 'delivered'];
-    if (selectedOrder.payment_status === 'hold' && deliveryStatuses.includes(newStatus)) {
-      toast.error('Cannot proceed with delivery. Customer has only paid 30% advance. Remaining payment is pending.');
-      return;
-    }
+    // const deliveryStatuses = ['picked_up', 'out_for_delivery', 'delivered'];
+    // if (selectedOrder.payment_status === 'hold' && deliveryStatuses.includes(newStatus)) {
+    //   toast.error('Cannot proceed with delivery. Customer has only paid 30% advance. Remaining payment is pending.');
+    //   return;
+    // }
 
     try {
       setLoading(true);
@@ -739,35 +742,35 @@ const OrderList = () => {
       <div className="">
         {/* Header with Filters */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-1">
-             {/* Tab Navigation */}
-        <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-full sm:w-fit">
-          <button
-            onClick={() => {
-              setActiveTab('orders');
-              setPage(1);
-              setStatusFilter('');
-            }}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'orders'
-              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-              }`}
-          >
-            Orders
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('payments');
-              setPage(1);
-              setStatusFilter('');
-            }}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'payments'
-              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-              }`}
-          >
-            Payments
-          </button>
-        </div>
+          {/* Tab Navigation */}
+          <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-full sm:w-fit">
+            <button
+              onClick={() => {
+                setActiveTab('orders');
+                setPage(1);
+                setStatusFilter('');
+              }}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'orders'
+                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                }`}
+            >
+              Orders
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('payments');
+                setPage(1);
+                setStatusFilter('');
+              }}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'payments'
+                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                }`}
+            >
+              Payments
+            </button>
+          </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
             {/* Search Input */}
             <div className="relative w-full sm:w-auto">
@@ -828,7 +831,7 @@ const OrderList = () => {
 
               {showActionsMenu && (
                 <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-auto mt-3 w-auto sm:w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
-                
+
                   <div className="py-1">
                     <button
                       onClick={handleExportExcel}
@@ -867,7 +870,7 @@ const OrderList = () => {
               tableName={activeTab === 'orders' ? 'Orders' : 'Payments'}
               filter={false}
               showCheckboxes={false}
-              rowHeight={55 }
+              rowHeight={55}
             />
           </div>
         </div>
@@ -957,21 +960,17 @@ const OrderList = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Current Status</p>
-                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(selectedOrder.vendor_status || selectedOrder.order_status || 'pending')}`}>
-                      {(selectedOrder.vendor_status || selectedOrder.order_status || 'pending').replace('_', ' ').toUpperCase()}
-                    </span>
+                    <StatusBadge status={selectedOrder.vendor_status || selectedOrder.order_status || 'pending'} />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Payment Status</p>
-                    <div className="flex flex-col gap-1">
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${selectedOrder.payment_status === 'paid' ? 'bg-green-100 text-green-600' : (selectedOrder.payment_status === 'hold' ? 'bg-amber-100 text-amber-600' : 'bg-yellow-100 text-yellow-600')}`}>
-                        {(selectedOrder.payment_status || 'pending').toUpperCase()}
-                      </span>
-                      {selectedOrder.payment_status === 'hold' && (
+                    <div className="flex  gap-1">
+                      <StatusBadge status={selectedOrder.payment_status || 'pending'} />
+                      {/* {selectedOrder.payment_status === 'hold' && (
                         <p className="text-[10px] text-amber-600 font-bold leading-tight">
                           Restricted: Advance Paid (30%). Complete payment required for delivery.
                         </p>
-                      )}
+                      )} */}
                     </div>
                   </div>
                 </div>
@@ -983,7 +982,7 @@ const OrderList = () => {
                 <div className="space-y-2">
                   {selectedOrder.items?.map((item, index) => {
                     const productName = item.product_id?.name || item.product_name || item.name;
-                    const productImage = item.product_id?.images?.[0] || item.product_image;
+                    const productImage = item.product_image;
                     const itemPrice = item.price || item.product_price || 0;
                     const itemQuantity = item.quantity || 1;
 
@@ -991,12 +990,21 @@ const OrderList = () => {
                       <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-gray-600 rounded-lg">
                         <div className="flex items-center gap-3">
                           {productImage ? (
-                            <img src={productImage} alt={productName} className="w-12 h-12 object-cover rounded" />
-                          ) : (
-                            <div className="w-12 h-12 bg-gray-200 dark:bg-gray-500 rounded"></div>
-                          )}
+                            <img
+                              src={productImage}
+                              alt={productName || 'Product'}
+                              className="w-12 h-12 object-cover rounded"
+                            // onError={(e) => {
+                            //   e.currentTarget.style.display = 'none';
+                            //   e.currentTarget.nextElementSibling.style.display = 'flex';
+                            // }}
+                            />
+                          ) : null}
+                          <div className={`w-12 h-12 bg-gray-200 dark:bg-gray-500 rounded flex items-center justify-center ${productImage ? 'hidden' : 'flex'}`}>
+                            <span className="text-gray-400 text-xs">No Image</span>
+                          </div>
                           <div>
-                            <p className="font-medium text-gray-800 dark:text-white">{productName}</p>
+                            <p className="font-medium text-gray-800 dark:text-white">{productName || 'Unknown Product'}</p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">Qty: {itemQuantity}</p>
                           </div>
                         </div>
