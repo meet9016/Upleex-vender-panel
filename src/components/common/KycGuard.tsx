@@ -25,6 +25,11 @@ export function KycGuard({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // If we are on a protected page, we MUST be in checking state first
+      if (mounted) {
+        setChecking(true);
+      }
+
       try {
         const res = await api.post(endPointApi.postFetchVendorKYCFormData as string);
         const status = res?.data?.data?.status || "";
