@@ -12,6 +12,7 @@ interface DatePickerProps {
   label?: string;
   className?: string;
   width?: string;
+  disabled?: boolean;
 }
 
 export default function DatePicker({
@@ -21,6 +22,7 @@ export default function DatePicker({
 //   label = "Select Date",
   className,
   width,
+  disabled = false,
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date()); // For navigation
@@ -195,9 +197,10 @@ export default function DatePicker({
     >
       {/* Trigger */}
       <div 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
         className={clsx(
           "flex items-center justify-between h-9 pl-4 pr-4 border rounded-lg bg-gray-50 transition-colors cursor-pointer dark:bg-[#0d111c] dark:border-gray-600 dark:text-gray-300",
+          disabled ? "opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800" : "",
           isOpen ? "border-blue-500 ring-1 ring-blue-200" : "border-gray-200 hover:border-blue-400"
         )}
         style={{ width: width || "100%" }}

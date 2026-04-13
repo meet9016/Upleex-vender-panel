@@ -10,6 +10,7 @@ import { useRouter, usePathname } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { BreadcrumbProvider, useBreadcrumb } from "@/context/BreadcrumbContext";
+import { KycGuard } from "@/components/common/KycGuard";
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
@@ -69,7 +70,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <FilterProvider>
       <WalletProvider>
         <BreadcrumbProvider>
-          <AdminLayoutContent>{children}</AdminLayoutContent>
+          <KycGuard>
+            <AdminLayoutContent>{children}</AdminLayoutContent>
+          </KycGuard>
         </BreadcrumbProvider>
       </WalletProvider>
     </FilterProvider>

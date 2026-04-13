@@ -421,7 +421,7 @@ const QuoteEditPage = () => {
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Note</p>
               <div className="group relative">
                 <p className="text-sm text-gray-800 dark:text-white line-clamp-2 overflow-hidden text-ellipsis">
-                  {quoteData.note || 'N/A'}
+                  {quoteData.note || '-'}
                 </p>
                 {quoteData.note && quoteData.note.length > 100 && (
                   <div className="invisible group-hover:visible absolute left-0 right-0 bottom-full mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 pointer-events-none">
@@ -483,7 +483,7 @@ const QuoteEditPage = () => {
                   value={formData.start_date}
                   onChange={(date) => setFormData({ ...formData, start_date: date })}
                   min={new Date().toISOString().split('T')[0]}
-                  className={!canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed' : ''}
+                  disabled={!canAccessUploadFeatures}
                 />
               </div>
 
@@ -496,7 +496,7 @@ const QuoteEditPage = () => {
                   value={formData.end_date}
                   onChange={(date) => setFormData({ ...formData, end_date: date })}
                   min={formData.start_date || new Date().toISOString().split('T')[0]}
-                  className={!canAccessUploadFeatures ? 'opacity-50 cursor-not-allowed' : ''}
+                  disabled={!canAccessUploadFeatures}
                 />
               </div>
             </div>
