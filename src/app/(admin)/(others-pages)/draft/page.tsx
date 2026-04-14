@@ -404,36 +404,16 @@ export default function DraftPage() {
         </div>
       )}
 
-      {/* Table or Empty State */}
-      {rows.length === 0 && !loading ? (
-        <div className="text-center py-12 mt-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CiWarning className="text-gray-400 text-2xl" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            No Draft Products
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            You don't have any draft products at the moment.
-          </p>
-          <Button
-            onClick={() => window.location.href = '/product/addProduct'}
-            className="px-4 py-2 btn-primary"
-          >
-            Create New Product
-          </Button>
-        </div>
-      ) : (
-        <AgGridTable
-          columns={columns}
-          rowData={rows}
-          tableName="Draft Products"
-          onSelectionChange={setSelected}
-          loading={loading}
-          rowHeight={50}
-          height={"650px"}
-        />
-      )}
+      <AgGridTable
+        columns={columns}
+        rowData={rows}
+        tableName="Draft Products"
+        onSelectionChange={setSelected}
+        loading={loading}
+        rowHeight={50}
+        height={"650px"}
+        noRowsMessage="No product found"
+      />
 
       {/* Plan Selection Dialog - Using the new component */}
       <PlanSelectionDialog
