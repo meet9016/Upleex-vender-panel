@@ -5,16 +5,19 @@ import AgGridTable from '@/components/tables/AgGridTable';
 import { api } from '@/utils/axiosInstance';
 import endPointApi from '@/utils/endPointApi';
 import { toast } from 'react-toastify';
-import { MdPayment, MdShoppingCart, MdDateRange, MdPending, MdCheckCircle, MdCancel } from 'react-icons/md';
+import { MdPayment, MdShoppingCart, MdDateRange, MdPending, MdCheckCircle, MdCancel, MdSearch, MdClose } from 'react-icons/md';
 import { FaRupeeSign, FaUser, FaBox, FaEdit, FaFileExcel, FaFilePdf } from 'react-icons/fa';
 import { FiRefreshCw, FiMoreVertical } from 'react-icons/fi';
+import { CiFilter } from "react-icons/ci";
 import ComponentCard from '@/components/common/ComponentCard';
 import SearchableDropdown from '@/components/common/SearchableDropdown';
+import MultiSelectDropdown from '@/components/common/MultiSelectDropdown';
+import Label from '@/components/form/Label';
 import { HiOutlineEye } from 'react-icons/hi';
 import ActionButtons from '@/components/common/ActionButtons';
 import { useRouter } from 'next/navigation';
 import StatusBadge from '../../components/common/StatusBadge';
-import { exportOrdersToExcel, exportOrdersToPDF, exportPaymentsToExcel, exportPaymentsToPDF } from '@/utils/exportUtils';
+import { exportOrdersToExcel, exportOrdersToPDF } from '@/utils/exportUtils';
 import Loader from '@/components/common/Loader';
 
 function useDebounce<T>(value: T, delay: number = 500): T {
@@ -26,6 +29,7 @@ function useDebounce<T>(value: T, delay: number = 500): T {
   return debouncedValue;
 }
 
+/*
 interface PaymentOrder {
   order_id: string;
   order_date: string;
@@ -39,6 +43,7 @@ interface PaymentOrder {
   order_status: string;
   razorpay_payment_id: string;
 }
+*/
 
 interface VendorOrder {
   _id?: string;
@@ -100,10 +105,10 @@ interface StatusOption {
 
 const OrderList = () => {
   const router = useRouter();
-  const [paymentOrders, setPaymentOrders] = useState<PaymentOrder[]>([]);
+  // const [paymentOrders, setPaymentOrders] = useState<PaymentOrder[]>([]);
   const [vendorOrders, setVendorOrders] = useState<VendorOrder[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'payments' | 'orders'>('orders');
+  // const [activeTab, setActiveTab] = useState<'payments' | 'orders'>('orders');
   const [stats, setStats] = useState<OrderStats>({
     total_orders: 0,
     total_earnings: 0,
@@ -121,18 +126,58 @@ const OrderList = () => {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [statusNotes, setStatusNotes] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
   const [searchText, setSearchText] = useState('');
   const debouncedSearch = useDebounce(searchText, 600);
   const [excelLoading, setExcelLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const actionsMenuRef = React.useRef<HTMLDivElement>(null);
+  const filterModalRef = React.useRef<HTMLDivElement>(null);
+  const filterButtonRef = React.useRef<HTMLButtonElement>(null);
+
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [filters, setFilters] = useState({
+    customer_name: '',
+    product_name: '',
+    sku: '',
+    status: [] as string[],
+  });
+
+  const [pendingFilters, setPendingFilters] = useState({
+    customer_name: '',
+    product_name: '',
+    sku: '',
+    status: [] as string[],
+  });
+
+  const activeFilterCount = Object.values(filters).filter(v => 
+    Array.isArray(v) ? v.length > 0 : v && v.trim() !== ''
+  ).length;
+
+  const editStatusOptions = statusOptions
+    .filter((opt: StatusOption) => 
+      ['pending', 'delivered', 'accepted'].includes(opt.value.toLowerCase())
+    )
+    .map((opt: StatusOption) => {
+      // Map labels as requested
+      if (opt.value.toLowerCase() === 'accepted') return { ...opt, label: 'Approve' };
+      if (opt.value.toLowerCase() === 'delivered') return { ...opt, label: 'Delivery' };
+      return opt;
+    });
 
   const getCurrentParams = () => {
     const params: any = {};
-    if (statusFilter && statusFilter !== 'all') {
-      params.status = statusFilter;
+    if (filters.status && filters.status.length > 0) {
+      params.status = filters.status.join(',');
+    }
+    if (filters.customer_name && filters.customer_name.trim() !== '') {
+      params.customer_name = filters.customer_name.trim();
+    }
+    if (filters.product_name && filters.product_name.trim() !== '') {
+      params.product_name = filters.product_name.trim();
+    }
+    if (filters.sku && filters.sku.trim() !== '') {
+      params.sku = filters.sku.trim();
     }
     if (debouncedSearch && debouncedSearch.trim() !== '') {
       params.search = debouncedSearch.trim();
@@ -168,6 +213,10 @@ const OrderList = () => {
   };
 
   // Payment History Columns
+
+
+
+  /*
   const paymentColumns: ColDef[] = [
     {
       headerName: "Order ID",
@@ -230,14 +279,6 @@ const OrderList = () => {
       cellRenderer: (params: any) => <StatusBadge status={params.value} />,
       cellStyle: { textAlign: "center" }
     },
-    // {
-    //   headerName: "Type",
-    //   field: "payment_type",
-    //   minWidth: 120,
-    //   flex: 1,
-    //   cellRenderer: (params: any) => <StatusBadge status={params.value} />,
-    //   cellStyle: { textAlign: "center" }
-    // },
     {
       headerName: "Paid On",
       field: "paid_at",
@@ -267,6 +308,7 @@ const OrderList = () => {
       cellStyle: { textAlign: "center" }
     },
   ];
+  */
 
   // Vendor Orders Columns
   const vendorColumns: ColDef[] = [
@@ -431,6 +473,7 @@ const OrderList = () => {
     }
   ];
 
+  /*
   const fetchPaymentHistory = async () => {
     try {
       setLoading(true);
@@ -448,19 +491,17 @@ const OrderList = () => {
       setLoading(false);
     }
   };
+  */
 
   const fetchVendorOrders = async () => {
     try {
       setLoading(true);
+      const filterParams = getCurrentParams();
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '20'
+        limit: '20',
+        ...filterParams
       });
-
-      // Add status filter if selected
-      if (statusFilter && statusFilter !== 'all') {
-        params.append('status', statusFilter);
-      }
 
       const response = await api.get(`${endPointApi.getVendorOrders}?${params}`);
 
@@ -579,8 +620,8 @@ const OrderList = () => {
       const ordersData = ordersResponse.data.data.orders || [];
 
       const totalEarnings = paymentResponse.data.data.total_earnings || 0;
-      const completedPayments = paymentData.filter((order: PaymentOrder) => order.payment_status === 'paid').length;
-      const pendingPayments = paymentData.filter((order: PaymentOrder) => order.payment_status === 'pending').length;
+      const completedPayments = paymentData.filter((order: any) => order.payment_status === 'paid').length;
+      const pendingPayments = paymentData.filter((order: any) => order.payment_status === 'pending').length;
 
       const pendingOrders = ordersData.filter((order: VendorOrder) => order.vendor_status === 'pending').length;
       const deliveredOrders = ordersData.filter((order: VendorOrder) => order.vendor_status === 'delivered').length;
@@ -601,24 +642,20 @@ const OrderList = () => {
   };
 
   const fetchOrders = async () => {
-    if (activeTab === 'payments') {
-      await fetchPaymentHistory();
-    } else {
-      await fetchVendorOrders();
-    }
+    await fetchVendorOrders();
   };
 
   const handleExportExcel = async () => {
     try {
       setExcelLoading(true);
       const params = getCurrentParams();
-      if (activeTab === 'orders') {
+      /* if (activeTab === 'orders') { */
         await exportOrdersToExcel(params);
         toast.success('Orders exported to Excel successfully!');
-      } else {
+      /* } else {
         await exportPaymentsToExcel(params);
         toast.success('Payments exported to Excel successfully!');
-      }
+      } */
       setShowActionsMenu(false);
     } catch (error: any) {
       toast.error(error.message || 'Failed to export to Excel');
@@ -631,13 +668,13 @@ const OrderList = () => {
     try {
       setPdfLoading(true);
       const params = getCurrentParams();
-      if (activeTab === 'orders') {
+      /* if (activeTab === 'orders') { */
         await exportOrdersToPDF(params);
         toast.success('Orders exported to PDF successfully!');
-      } else {
+      /* } else {
         await exportPaymentsToPDF(params);
         toast.success('Payments exported to PDF successfully!');
-      }
+      } */
       setShowActionsMenu(false);
     } catch (error: any) {
       toast.error(error.message || 'Failed to export to PDF');
@@ -649,10 +686,8 @@ const OrderList = () => {
   useEffect(() => {
     fetchOrders();
     fetchStats();
-    if (activeTab === 'orders') {
-      fetchStatusOptions();
-    }
-  }, [page, statusFilter, activeTab, debouncedSearch]);
+    fetchStatusOptions();
+  }, [page, filters, debouncedSearch]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -680,16 +715,16 @@ const OrderList = () => {
       bgColor: 'bg-green-50',
     },
     {
-      title: activeTab === 'payments' ? 'Completed Payments' : 'Delivered Orders',
-      value: activeTab === 'payments' ? stats.completed_payments : stats.delivered_orders,
-      icon: activeTab === 'payments' ? MdPayment : MdCheckCircle,
+      title: /* activeTab === 'payments' ? 'Completed Payments' : */ 'Delivered Orders',
+      value: /* activeTab === 'payments' ? stats.completed_payments : */ stats.delivered_orders,
+      icon: /* activeTab === 'payments' ? MdPayment : */ MdCheckCircle,
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-50',
     },
     {
-      title: activeTab === 'payments' ? 'Pending Payments' : 'Pending Orders',
-      value: activeTab === 'payments' ? stats.pending_payments : stats.pending_orders,
-      icon: activeTab === 'payments' ? MdDateRange : MdPending,
+      title: /* activeTab === 'payments' ? 'Pending Payments' : */ 'Pending Orders',
+      value: /* activeTab === 'payments' ? stats.pending_payments : stats.pending_orders */ stats.pending_orders,
+      icon: /* activeTab === 'payments' ? MdDateRange : */ MdPending,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
     },
@@ -745,71 +780,161 @@ const OrderList = () => {
           {/* Tab Navigation */}
           <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-full sm:w-fit">
             <button
+              /*
               onClick={() => {
                 setActiveTab('orders');
                 setPage(1);
-                setStatusFilter('');
               }}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'orders'
-                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-                }`}
+              */
+              className={`px-4 py-2 rounded-md text-sm font-medium bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm`}
             >
               Orders
             </button>
+            {/*
             <button
               onClick={() => {
                 setActiveTab('payments');
                 setPage(1);
-                setStatusFilter('');
               }}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'payments'
-                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-                }`}
+              className={`px-4 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200`}
             >
               Payments
             </button>
+            */}
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
             {/* Search Input */}
             <div className="relative w-full sm:w-auto">
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search orders..."
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 className="pl-10 pr-10 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
               />
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               {searchText && (
                 <button
                   onClick={() => setSearchText('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <MdClose size={18} />
                 </button>
               )}
             </div>
 
-            {activeTab === 'orders' && (
-              <div className="w-full sm:w-52">
-                <SearchableDropdown
-                  value={statusFilter || ''}
-                  options={[{ value: '', label: 'All Status' }, ...statusOptions]}
-                  placeholder="All Status"
-                  searchable
-                  onChange={(val) => {
-                    setStatusFilter(val);
-                    setPage(1);
-                  }}
-                />
-              </div>
-            )}
+            {/* Filter Button */}
+            <div className="relative">
+              <button
+                ref={filterButtonRef}
+                onClick={() => {
+                  setPendingFilters(filters);
+                  setShowFilterModal(!showFilterModal);
+                }}
+                className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md border-gray-300 border-1 hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
+              >
+                <CiFilter size={20} />
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Filter Modal */}
+              {showFilterModal && (
+                <div
+                  ref={filterModalRef}
+                  className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-24 sm:top-full mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl w-auto sm:w-[320px] z-50 border border-gray-200 dark:border-gray-700 max-h-[calc(100vh-140px)] overflow-y-auto transform origin-top-right transition-all duration-200 animate-in zoom-in-95"
+                >
+                  <div className="p-5">
+                    <div className="flex justify-between items-center mb-4 pb-1 border-b border-gray-100 dark:border-gray-700">
+                      <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        Filter Orders
+                      </h3>
+                      <button
+                        onClick={() => setShowFilterModal(false)}
+                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                      >
+                        <MdClose size={18} className="text-gray-500" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Customer Name Filter */}
+                      <div className="space-y-1.5">
+                        <Label className="text-[13px] font-semibold text-gray-700 dark:text-gray-300">Customer Name</Label>
+                        <input
+                          type="text"
+                          value={pendingFilters.customer_name}
+                          onChange={(e) => setPendingFilters(prev => ({ ...prev, customer_name: e.target.value }))}
+                          placeholder="Search customer..."
+                          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                        />
+                      </div>
+
+                      {/* Product Name Filter */}
+                      <div className="space-y-1.5">
+                        <Label className="text-[13px] font-semibold text-gray-700 dark:text-gray-300">Product Name</Label>
+                        <input
+                          type="text"
+                          value={pendingFilters.product_name}
+                          onChange={(e) => setPendingFilters(prev => ({ ...prev, product_name: e.target.value }))}
+                          placeholder="Search product..."
+                          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                        />
+                      </div>
+                          {/* Order Status Multi-select */}
+                      <div className="space-y-1.5">
+                        <Label className="text-[13px] font-semibold text-gray-700 dark:text-gray-300">Order Status</Label>
+                        <MultiSelectDropdown
+                          options={statusOptions}
+                          selectedValues={pendingFilters.status}
+                          onChange={(values) => setPendingFilters(prev => ({ ...prev, status: values }))}
+                          placeholder="Select Status"
+                        />
+                      </div>
+                      {/* SKU Filter */}
+                      <div className="space-y-1.5">
+                        <Label className="text-[13px] font-semibold text-gray-700 dark:text-gray-300">SKU</Label>
+                        <input
+                          type="text"
+                          value={pendingFilters.sku}
+                          onChange={(e) => setPendingFilters(prev => ({ ...prev, sku: e.target.value }))}
+                          placeholder="Search SKU..."
+                          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
+                      <button
+                        onClick={() => {
+                          setPendingFilters({ customer_name: '', product_name: '', sku: '', status: [] });
+                          setFilters({ customer_name: '', product_name: '', sku: '', status: [] });
+                          setShowFilterModal(false);
+                          setPage(1);
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-[13px] font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        Clear All
+                      </button>
+                      <button
+                        onClick={() => {
+                          setFilters(pendingFilters);
+                          setShowFilterModal(false);
+                          setPage(1);
+                        }}
+                        className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <button
               onClick={fetchOrders}
               disabled={loading}
@@ -863,11 +988,11 @@ const OrderList = () => {
         <div className="overflow-x-auto -mx-2 sm:mx-0">
           <div className="inline-block min-w-full align-middle">
             <AgGridTable
-              columns={activeTab === 'orders' ? vendorColumns : paymentColumns}
-              rowData={activeTab === 'orders' ? vendorOrders : paymentOrders}
+              columns={vendorColumns}
+              rowData={vendorOrders}
               loading={loading}
               height={"580px"}
-              tableName={activeTab === 'orders' ? 'Orders' : 'Payments'}
+              tableName={'Orders'}
               filter={false}
               showCheckboxes={false}
               rowHeight={55}
@@ -1083,7 +1208,7 @@ const OrderList = () => {
                 </label>
                 <SearchableDropdown
                   value={newStatus || ''}
-                  options={statusOptions}
+                  options={editStatusOptions}
                   placeholder="Select status"
                   searchable
                   onChange={(val) => setNewStatus(val)}

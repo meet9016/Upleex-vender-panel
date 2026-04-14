@@ -170,7 +170,7 @@ const ServicePriorityPlanView: React.FC = () => {
                 <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> Verified Badge</li>
                 <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> All services included</li>
               </ul>
-              <Button onClick={() => handleOpenPurchase("monthly")} className="btn-primary">Select Monthly</Button>
+              <Button onClick={() => handleOpenPurchase("monthly")} className="btn-primary !py-3.5">Select Monthly</Button>
             </div>
 
             {/* Yearly Plan Card */}
@@ -185,7 +185,7 @@ const ServicePriorityPlanView: React.FC = () => {
                 <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> All services included</li>
                 <li className="flex items-center gap-2 text-sm font-bold text-brand-600"><Sparkles size={16}/> Annual Exclusive Addon</li>
               </ul>
-              <Button onClick={() => handleOpenPurchase("yearly")} className="btn-primary bg-brand-600 hover:bg-brand-700">Select Yearly</Button>
+              <Button onClick={() => handleOpenPurchase("yearly")} className="btn-primary bg-brand-600 hover:bg-brand-700 !py-3.5">Select Yearly</Button>
             </div>
           </>
         )}
@@ -212,7 +212,7 @@ const ServicePriorityPlanView: React.FC = () => {
             <div className="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Zap className="text-brand-600 w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold italic uppercase">Activate {selectedDuration} Priority</h3>
+            <h3 className="text-xl font-bold">Activate {selectedDuration} Priority</h3>
             <p className="text-sm text-gray-500 mt-1">This will apply priority status to ALL your services.</p>
           </div>
           
