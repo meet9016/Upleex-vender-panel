@@ -542,74 +542,112 @@ const QuoteTable = () => {
   };
 
   const handleApproval = async (quoteId: string) => {
+    // Optimistic update
+    const previousData = [...quoteData];
+    const statusApprovedRaw = statusList.find((s: any) =>
+      String(s.name || '').toLowerCase().includes('approv')
+    );
+    
+    setQuoteData(prev => prev.map(q => 
+      q._id === quoteId ? { ...q, status: getInternalStatus(statusApprovedRaw?.name || 'approval') } : q
+    ));
+
     try {
-      const statusApproved = statusList.find((s: any) =>
-        String(s.name || '').toLowerCase().includes('approv')
-      );
-      if (!statusApproved) return toast.error("Approval status not found");
+      if (!statusApprovedRaw) {
+        setQuoteData(previousData);
+        return toast.error("Approval status not found");
+      }
 
       const formData = new FormData();
       formData.append('quote_id', quoteId);
-      formData.append('status', statusApproved.id);
+      formData.append('status', statusApprovedRaw.id);
 
       const res = await api.post(endPointApi.changeStatus, formData);
 
       if (res?.data?.status === 200) {
-        toast.success(`Status changed to ${String(statusApproved.name).toUpperCase()}`);
-        await getQuoteData(filters);
+        toast.success(`Status changed to ${String(statusApprovedRaw.name).toUpperCase()}`);
+        // No need to full fetch if status is already correct
+      } else {
+        toast.error(res?.data?.message || "Failed to approve quote");
+        setQuoteData(previousData);
       }
     } catch (error) {
       console.log('Approval error:', error);
       toast.error("Failed to approve quote");
+      setQuoteData(previousData);
     }
   };
 
   const handleRejected = async (quoteId: string) => {
+    // Optimistic update
+    const previousData = [...quoteData];
+    const rejectedStatusRaw = statusList.find(s =>
+      s.name?.toLowerCase() === 'rejected' || s.name?.toLowerCase() === 'reject'
+    );
+
+    setQuoteData(prev => prev.map(q => 
+      q._id === quoteId ? { ...q, status: getInternalStatus(rejectedStatusRaw?.name || 'reject') } : q
+    ));
+
     try {
-      const rejectedStatus = statusList.find(s =>
-        s.name?.toLowerCase() === 'rejected' || s.name?.toLowerCase() === 'reject'
-      );
-      if (!rejectedStatus) {
+      if (!rejectedStatusRaw) {
+        setQuoteData(previousData);
         toast.error("Rejected status not found");
         return;
       }
 
       const formData = new FormData();
       formData.append('quote_id', quoteId);
-      formData.append('status', rejectedStatus.id);
+      formData.append('status', rejectedStatusRaw.id);
 
       const res = await api.post(endPointApi.changeStatus, formData);
 
       if (res?.data?.status === 200) {
         toast.success("Quote rejected successfully");
-        await getQuoteData(filters);
+      } else {
+        toast.error(res?.data?.message || "Failed to reject quote");
+        setQuoteData(previousData);
       }
     } catch (error) {
       console.log('Rejection error:', error);
       toast.error("Failed to reject quote");
+      setQuoteData(previousData);
     }
   };
 
   const handleDelivery = async (quoteId: string) => {
+    // Optimistic update
+    const previousData = [...quoteData];
+    const deliveryStatusRaw = statusList.find((s: any) =>
+      String(s.name || '').toLowerCase().includes('deliver')
+    );
+
+    setQuoteData(prev => prev.map(q => 
+      q._id === quoteId ? { ...q, status: getInternalStatus(deliveryStatusRaw?.name || 'delivery') } : q
+    ));
+
     try {
-      const deliveryStatus = statusList.find((s: any) =>
-        String(s.name || '').toLowerCase().includes('deliver')
-      );
-      if (!deliveryStatus) return toast.error("Delivery status not found");
+      if (!deliveryStatusRaw) {
+        setQuoteData(previousData);
+        return toast.error("Delivery status not found");
+      }
 
       const formData = new FormData();
       formData.append('quote_id', quoteId);
-      formData.append('status', deliveryStatus.id);
+      formData.append('status', deliveryStatusRaw.id);
 
       const res = await api.post(endPointApi.changeStatus, formData);
 
       if (res?.data?.status === 200) {
         toast.success("Status changed to DELIVERY");
-        await getQuoteData(filters);
+      } else {
+        toast.error(res?.data?.message || "Failed to update status");
+        setQuoteData(previousData);
       }
     } catch (error) {
       console.log('Delivery error:', error);
       toast.error("Failed to update status");
+      setQuoteData(previousData);
     }
   };
 
