@@ -15,6 +15,9 @@ import { ColDef } from "ag-grid-community";
 import StatusBadge from "@/components/common/StatusBadge";
 import BoosterPlanView from "./BoosterPlanView";
 import ListingPlanView from "./ListingPlanView";
+import ServicePlanView from "./ServicePlanView";
+import ServicePriorityPlanView from "./ServicePriorityPlanView";
+import { Briefcase, Zap } from "lucide-react";
 
 interface PriorityPlan {
   id: string;
@@ -65,6 +68,8 @@ const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
   const [gridSearch, setGridSearch] = useState("");
   const [currentTab, setCurrentTab] = useState<"priority" | "booster" | "listing">("priority");
+  const [currentServiceTab, setCurrentServiceTab] = useState<"listing" | "priority">("listing");
+  const [planScope, setPlanScope] = useState<"product" | "service">("product");
   const { balance, currency, refreshBalance } = useWallet();
 
   const fetchData = async () => {
@@ -382,287 +387,312 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-gray-100 shadow-sm mb-6 dark:bg-black">
-        <div className="flex p-1.5 bg-gray-100/80 rounded-2xl w-full sm:w-auto dark:bg-[#1c2938] gap-1.5">
-          <Button
-            variant={currentTab === "priority" ? "secondary" : "ghost"}
-            onClick={() => setCurrentTab("priority")}
-            className={`flex-1 sm:flex-none px-8 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "priority"
-              ? "bg-white text-brand-600 shadow-md ring-1 ring-black/[0.04]"
-              : "text-gray-500 hover:text-gray-900"
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-gray-100 shadow-sm mb-6 dark:bg-black">
+        <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 w-fit dark:bg-[#1c2938]">
+          <button
+            onClick={() => setPlanScope("product")}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all ${planScope === "product"
+              ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
+              : "text-gray-500 hover:text-gray-700"
               }`}
           >
-            <Package size={18} className={currentTab === "priority" ? "text-brand-500" : "text-gray-400"} />
-            Priority Plan
-          </Button>
-          <Button
-            variant={currentTab === "booster" ? "secondary" : "ghost"}
-            onClick={() => setCurrentTab("booster")}
-            className={`flex-1 sm:flex-none px-8 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "booster"
-              ? "bg-white text-indigo-600 shadow-md ring-1 ring-black/[0.04]"
-              : "text-gray-500 hover:text-gray-900"
+            <Package size={16} />
+            Product Plans
+          </button>
+          <button
+            onClick={() => setPlanScope("service")}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all ${planScope === "service"
+              ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
+              : "text-gray-500 hover:text-gray-700"
               }`}
           >
-            <Rocket size={18} className={currentTab === "booster" ? "text-indigo-500" : "text-gray-400"} />
-            Booster Plan
-          </Button>
-          <Button
-            variant={currentTab === "listing" ? "secondary" : "ghost"}
-            onClick={() => setCurrentTab("listing")}
-            className={`flex-1 sm:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "listing"
-              ? "bg-white text-emerald-600 shadow-md ring-1 ring-black/[0.04]"
-              : "text-gray-500 hover:text-gray-900"
-              }`}
-          >
-            <Package size={18} className={currentTab === "listing" ? "text-emerald-500" : "text-gray-400"} />
-            Listing Plan
-          </Button>
+            <Briefcase size={16} />
+            Service Plans
+          </button>
         </div>
 
-        {/* <div className="flex items-center gap-3 px-5 py-2.5 bg-brand-50 rounded-2xl border border-brand-100">
-          <Wallet className="text-brand-600" size={20} />
-          <div>
-            <p className="text-[10px] text-brand-500 uppercase font-black tracking-widest leading-none">Wallet Balance</p>
-            <p className="text-lg font-black text-brand-900 leading-tight">{currency}{balance.toLocaleString()}</p>
-          </div>
-        </div> */}
-      </div>
-      {currentTab === "priority" ? (
-        <>
-          {/* Priority Plan Content (Original code remains here) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-3">
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2 dark:text-gray-100">
-                  Priority Visibility Plans
-                </h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {plans.map((plan) => {
-                  const planId = plan.id || (plan as any)._id;
-                  const matchPurchases = vendorPurchases.filter(p => String(p.plan_id) === String(planId));
-                  const isSubscribed = matchPurchases.length > 0;
-                  const totalCapacity = matchPurchases.reduce((acc, p) => acc + Number(p.total_slots), 0);
-                  const totalUsedCount = matchPurchases.reduce((acc, p) => acc + p.product_ids.length, 0);
-
-                  return (
-                    <div
-                      key={plan.id}
-                      className={`relative p-8 rounded-3xl border transition-all duration-500 flex flex-col h-full bg-white dark:bg-[#0d111c] group ${plan.is_popular
-                        ? 'border-brand-500 shadow-2xl shadow-brand-100 scale-[1.02] z-10'
-                        : 'border-gray-200 hover:border-brand-300 hover:shadow-xl shadow-sm'
-                        }`}
-                    >
-                      {plan.is_popular && (
-                        <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-5 py-1.5 rounded-full text-xs font-bold  tracking-widest shadow-lg">
-                          Recommended
-                        </span>
-                      )}
-
-                      <div className="mb-6">
-                        <h4 className="text-xl font-bold text-gray-900 mb-1 dark:text-gray-300">{plan.name}</h4>
-                        <p className="text-gray-500 text-sm dark:text-gray-300">{plan.description}</p>
-                      </div>
-
-                      <div className="flex items-baseline gap-1 mb-8 p-4 bg-gray-50 rounded-2xl dark:bg-[#0d111c]">
-                        <span className="text-4xl font-extrabold text-gray-900 dark:text-gray-300">{currency}{plan.monthly_price}</span>
-                        <span className="text-gray-500 font-medium dark:text-gray-300">/ month</span>
-                      </div>
-
-                      {isSubscribed && plan.product_slots > 1 && (
-                        <div className="mb-6 p-3 bg-green-50 border border-green-100 rounded-xl dark:bg-[#0d111c]">
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-green-600 font-medium">Remaining Slots</span>
-                            <span className="font-bold text-green-800 dark:text-green-200 text-lg">
-                              {Math.max(0, totalCapacity - totalUsedCount)}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="space-y-4 mb-8 flex-grow">
-                        <div className="flex items-start gap-4">
-                          <div className="mt-1 bg-green-100 p-1.5 rounded-full"><Check className="text-green-600" size={14} /></div>
-                          <div>
-                            <p className="text-gray-900 font-bold text-sm dark:text-gray-300">{plan.product_slots} Product Slots</p>
-                            <p className="text-xs text-gray-500">Add up to {plan.product_slots} items</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-4">
-                          <div className="mt-1 bg-green-100 p-1.5 rounded-full"><Check className="text-green-600" size={14} /></div>
-                          <div>
-                            <p className="text-gray-900 font-bold text-sm dark:text-gray-300">Top Feed Priority</p>
-                            <p className="text-xs text-gray-500">Show above standard listings</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <Button
-                        onClick={() => handleSelectPlan(plan)}
-                        variant={plan.is_popular ? 'primary' : 'outline'}
-                        className="w-full !py-3.5 rounded-xl font-bold btn-primary"
-                      >
-                        {isSubscribed ? 'Add More Products' : 'Select Plan'}
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* <div className="flex items-center gap-3 px-5 py-2.5 bg-brand-50 rounded-2xl border border-brand-100">
-            <Wallet className="text-brand-600" size={20} />
-            <div>
-              <p className="text-[10px] text-brand-500 uppercase font-black tracking-widest leading-none">Wallet Balance</p>
-              <p className="text-lg font-black text-brand-900 leading-tight">{currency}{balance.toLocaleString()}</p>
-            </div>
-
-          {/* Priority Purchase History */}
-            <div className="mt-12 space-y-6 md:col-span-3">
-              <div className="flex items-center gap-3">
-                <Package className="w-6 h-6 text-brand-600" />
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Plan History</h2>
-              </div>
-
-              <AgGridTable
-                rowData={flattenedPriorityHistory}
-                columns={priorityHistoryColumns}
-                showCheckboxes={false}
-                height={400}
-                rowHeight={52}
-              />
-            </div>
-
-
-            <Modal
-              isOpen={isModalOpen}
-              onClose={() => setIsModalOpen(false)}
-              className="max-w-6xl w-full"
+        {planScope === "product" && (
+          <div className="flex p-1.5 bg-gray-100/80 rounded-2xl w-full sm:w-auto dark:bg-[#1c2938] gap-1.5">
+            <Button
+              variant={currentTab === "priority" ? "secondary" : "ghost"}
+              onClick={() => setCurrentTab("priority")}
+              className={`flex-1 sm:flex-none px-8 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "priority"
+                ? "bg-white text-brand-600 shadow-md ring-1 ring-black/[0.04]"
+                : "text-gray-500 hover:text-gray-900"
+                }`}
             >
-              <div className="flex flex-col h-[70vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
+              <Package size={18} className={currentTab === "priority" ? "text-brand-500" : "text-gray-400"} />
+              Priority Plan
+            </Button>
+            <Button
+              variant={currentTab === "booster" ? "secondary" : "ghost"}
+              onClick={() => setCurrentTab("booster")}
+              className={`flex-1 sm:flex-none px-8 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "booster"
+                ? "bg-white text-indigo-600 shadow-md ring-1 ring-black/[0.04]"
+                : "text-gray-500 hover:text-gray-900"
+                }`}
+            >
+              <Rocket size={18} className={currentTab === "booster" ? "text-indigo-500" : "text-gray-400"} />
+              Booster Plan
+            </Button>
+            <Button
+              variant={currentTab === "listing" ? "secondary" : "ghost"}
+              onClick={() => setCurrentTab("listing")}
+              className={`flex-1 sm:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "listing"
+                ? "bg-white text-emerald-600 shadow-md ring-1 ring-black/[0.04]"
+                : "text-gray-500 hover:text-gray-900"
+                }`}
+            >
+              <Package size={18} className={currentTab === "listing" ? "text-emerald-500" : "text-gray-400"} />
+              Listing Plan
+            </Button>
+          </div>
+        )}
 
-                {/* 🔹 HEADER */}
-                {/* pr-14 IMPORTANT: close icon overlap fix */}
-                <div className="px-6 pr-14 py-4 border-b bg-white dark:bg-gray-900">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        {planScope === "service" && (
+          <div className="flex p-1.5 bg-gray-100/80 rounded-2xl w-full sm:w-auto dark:bg-[#1c2938] gap-1.5">
+            <Button
+              variant={currentServiceTab === "listing" ? "secondary" : "ghost"}
+              onClick={() => setCurrentServiceTab("listing")}
+              className={`flex-1 sm:flex-none px-8 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentServiceTab === "listing"
+                ? "bg-white text-emerald-600 shadow-md ring-1 ring-black/[0.04]"
+                : "text-gray-500 hover:text-gray-900"
+                }`}
+            >
+              <Briefcase size={18} className={currentServiceTab === "listing" ? "text-emerald-500" : "text-gray-400"} />
+              Listing Plan
+            </Button>
+            <Button
+              variant={currentServiceTab === "priority" ? "secondary" : "ghost"}
+              onClick={() => setCurrentServiceTab("priority")}
+              className={`flex-1 sm:flex-none px-8 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentServiceTab === "priority"
+                ? "bg-white text-brand-600 shadow-md ring-1 ring-black/[0.04]"
+                : "text-gray-500 hover:text-gray-900"
+                }`}
+            >
+              <Zap size={18} className={currentServiceTab === "priority" ? "text-brand-500" : "text-gray-400"} />
+              Priority Plan
+            </Button>
+          </div>
+        )}
+      </div>
 
-                    {/* Left */}
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                        {selectedPlan?.name} Products
-                      </h3>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Remaining Slots:
-                        <span className="ml-1 font-semibold text-brand-600">
-                          {remainingSlots} left
-                        </span>
-                      </p>
-                    </div>
+      {planScope === "product" ? (
+        currentTab === "priority" ? (
+          <>
+            {/* Priority Plan Content */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="md:col-span-3">
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2 dark:text-gray-100">
+                    Priority Visibility Plans
+                  </h3>
+                </div>
 
-                    {/* Right */}
-                    <div className="flex flex-wrap items-center gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {plans.map((plan) => {
+                    const planId = plan.id || (plan as any)._id;
+                    const matchPurchases = vendorPurchases.filter(p => String(p.plan_id) === String(planId));
+                    const isSubscribed = matchPurchases.length > 0;
+                    const totalCapacity = matchPurchases.reduce((acc, p) => acc + Number(p.total_slots), 0);
+                    const totalUsedCount = matchPurchases.reduce((acc, p) => acc + p.product_ids.length, 0);
 
-                      {/* 🔍 Search */}
-                      <div className="relative w-full sm:w-64">
-                        <Search
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                          size={16}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Search products..."
-                          value={gridSearch}
-                          onChange={(e) => setGridSearch(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500/20 outline-none"
-                        />
+                    return (
+                      <div
+                        key={plan.id}
+                        className={`relative p-8 rounded-3xl border transition-all duration-500 flex flex-col h-full bg-white dark:bg-[#0d111c] group ${plan.is_popular
+                          ? 'border-brand-500 shadow-2xl shadow-brand-100 scale-[1.02] z-10'
+                          : 'border-gray-200 hover:border-brand-300 hover:shadow-xl shadow-sm'
+                          }`}
+                      >
+                        {plan.is_popular && (
+                          <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-5 py-1.5 rounded-full text-xs font-bold  tracking-widest shadow-lg">
+                            Recommended
+                          </span>
+                        )}
+
+                        <div className="mb-6">
+                          <h4 className="text-xl font-bold text-gray-900 mb-1 dark:text-gray-300">{plan.name}</h4>
+                          <p className="text-gray-500 text-sm dark:text-gray-300">{plan.description}</p>
+                        </div>
+
+                        <div className="flex items-baseline gap-1 mb-8 p-4 bg-gray-50 rounded-2xl dark:bg-[#0d111c]">
+                          <span className="text-4xl font-extrabold text-gray-900 dark:text-gray-300">{currency}{plan.monthly_price}</span>
+                          <span className="text-gray-500 font-medium dark:text-gray-300">/ month</span>
+                        </div>
+
+                        {isSubscribed && plan.product_slots > 1 && (
+                          <div className="mb-6 p-3 bg-green-50 border border-green-100 rounded-xl dark:bg-[#0d111c]">
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-green-600 font-medium">Remaining Slots</span>
+                              <span className="font-bold text-green-800 dark:text-green-200 text-lg">
+                                {Math.max(0, totalCapacity - totalUsedCount)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="space-y-4 mb-8 flex-grow">
+                          <div className="flex items-start gap-4">
+                            <div className="mt-1 bg-green-100 p-1.5 rounded-full"><Check className="text-green-600" size={14} /></div>
+                            <div>
+                              <p className="text-gray-900 font-bold text-sm dark:text-gray-300">{plan.product_slots} Product Slots</p>
+                              <p className="text-xs text-gray-500">Add up to {plan.product_slots} items</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-4">
+                            <div className="mt-1 bg-green-100 p-1.5 rounded-full"><Check className="text-green-600" size={14} /></div>
+                            <div>
+                              <p className="text-gray-900 font-bold text-sm dark:text-gray-300">Top Feed Priority</p>
+                              <p className="text-xs text-gray-500">Show above standard listings</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={() => handleSelectPlan(plan)}
+                          variant={plan.is_popular ? 'primary' : 'outline'}
+                          className="w-full !py-3.5 rounded-xl font-bold btn-primary"
+                        >
+                          {isSubscribed ? 'Add More Products' : 'Select Plan'}
+                        </Button>
                       </div>
+                    );
+                  })}
+                </div>
+              </div>
 
-                      {/* 🔘 Tabs */}
-                      <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700">
+              {/* Priority Purchase History */}
+              <div className="mt-12 space-y-6 md:col-span-3">
+                <div className="flex items-center gap-3">
+                  <Package className="w-6 h-6 text-brand-600" />
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Plan History</h2>
+                </div>
 
-                        <button
-                          onClick={() => setActiveTab('Rent')}
-                          className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Rent'
-                            ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-800'
-                            }`}
-                        >
-                          Rent ({rentProducts.length})
-                        </button>
+                <AgGridTable
+                  rowData={flattenedPriorityHistory}
+                  columns={priorityHistoryColumns}
+                  showCheckboxes={false}
+                  height={400}
+                  rowHeight={52}
+                />
+              </div>
 
-                        <button
-                          onClick={() => setActiveTab('Sell')}
-                          className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Sell'
-                            ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-800'
-                            }`}
-                        >
-                          Sell ({sellProducts.length})
-                        </button>
-
+              <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                className="max-w-6xl w-full"
+              >
+                <div className="flex flex-col h-[70vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
+                  <div className="px-6 pr-14 py-4 border-b bg-white dark:bg-gray-900">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                          {selectedPlan?.name} Products
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Remaining Slots:
+                          <span className="ml-1 font-semibold text-brand-600">
+                            {remainingSlots} left
+                          </span>
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="relative w-full sm:w-64">
+                          <Search
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            size={16}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Search products..."
+                            value={gridSearch}
+                            onChange={(e) => setGridSearch(e.target.value)}
+                            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500/20 outline-none"
+                          />
+                        </div>
+                        <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700">
+                          <button
+                            onClick={() => setActiveTab('Rent')}
+                            className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Rent'
+                              ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm'
+                              : 'text-gray-500 hover:text-gray-800'
+                              }`}
+                          >
+                            Rent ({rentProducts.length})
+                          </button>
+                          <button
+                            onClick={() => setActiveTab('Sell')}
+                            className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Sell'
+                              ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm'
+                              : 'text-gray-500 hover:text-gray-800'
+                              }`}
+                          >
+                            Sell ({sellProducts.length})
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
+                  <div className="flex-1 px-6  overflow-hidden">
+                    <AgGridTable
+                      columns={columns}
+                      rowData={filteredProducts}
+                      onSelectionChange={handleSelectionChange}
+                      showCheckboxes={true}
+                      height={480}
+                      rowHeight={45}
+                      isRowSelectable={(params) => !params.data.active_plan_name}
+                      getRowStyle={(params) =>
+                        params.data.active_plan_name
+                          ? {
+                            opacity: 0.5,
+                            pointerEvents: 'none',
+                            background: 'rgba(0,0,0,0.03)',
+                          }
+                          : undefined
+                      }
+                    />
+                  </div>
+                  <div className="px-6 py-4 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsModalOpen(false)}
+                      className="px-6 py-2.5 rounded-xl font-bold"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={handlePurchase}
+                      disabled={
+                        isPurchasing ||
+                        selectedProductIds.length === 0 ||
+                        (selectedProductIds.length > remainingSlots &&
+                          activePurchasesForPlan.length === 0 &&
+                          selectedProductIds.length >
+                          (selectedPlan?.product_slots || 0))
+                      }
+                      className="px-8 py-2.5 rounded-xl font-bold transition-all shadow-lg"
+                    >
+                      {isPurchasing ? 'Processing...' : 'Confirm & Activate'}
+                    </Button>
+                  </div>
                 </div>
-
-                {/* 🔹 TABLE */}
-                <div className="flex-1 px-6  overflow-hidden">
-                  <AgGridTable
-                    columns={columns}
-                    rowData={filteredProducts}
-                    onSelectionChange={handleSelectionChange}
-                    showCheckboxes={true}
-                    height={480}
-                    rowHeight={45}
-                    isRowSelectable={(params) => !params.data.active_plan_name}
-                    getRowStyle={(params) =>
-                      params.data.active_plan_name
-                        ? {
-                          opacity: 0.5,
-                          pointerEvents: 'none',
-                          background: 'rgba(0,0,0,0.03)',
-                        }
-                        : undefined
-                    }
-                  />
-                </div>
-
-                <div className="px-6 py-4 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-6 py-2.5 rounded-xl font-bold"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={handlePurchase}
-                    disabled={
-                      isPurchasing ||
-                      selectedProductIds.length === 0 ||
-                      (selectedProductIds.length > remainingSlots &&
-                        activePurchasesForPlan.length === 0 &&
-                        selectedProductIds.length >
-                        (selectedPlan?.product_slots || 0))
-                    }
-
-                    className="px-8 py-2.5 rounded-xl font-bold transition-all shadow-lg"
-                  >
-                    {isPurchasing ? 'Processing...' : 'Confirm & Activate'}
-                  </Button>
-                </div>
-
-              </div>
-
-            </Modal>
-          </div>
-        </>
-      ) : currentTab === "booster" ? (
-        <BoosterPlanView />
+              </Modal>
+            </div>
+          </>
+        ) : currentTab === "booster" ? (
+          <BoosterPlanView />
+        ) : (
+          <ListingPlanView />
+        )
       ) : (
-        <ListingPlanView />
+        currentServiceTab === "listing" ? (
+          <ServicePlanView />
+        ) : (
+          <ServicePriorityPlanView />
+        )
       )}
     </div>
   )
