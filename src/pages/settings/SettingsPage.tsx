@@ -364,7 +364,9 @@ const SettingsPage: React.FC = () => {
   }, [currentTabProducts, gridSearch]);
 
   const handleSelectionChange = (rows: Product[]) => {
-    const ids = rows.map((p) => p.id || (p as any)._id);
+    // Filter out disabled rows (already assigned to a plan) so "Select All"
+    const selectableRows = rows.filter((p) => !p.active_plan_name);
+    const ids = selectableRows.map((p) => p.id || (p as any)._id);
     setSelectedProductIds(ids);
   };
 
@@ -387,91 +389,94 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-gray-100 shadow-sm mb-6 dark:bg-black">
-        <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 w-fit dark:bg-[#1c2938]">
+      {/* Top Scope + Tab Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm mb-4 sm:mb-6 dark:bg-black">
+        {/* Left: Scope switcher */}
+        <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 w-full sm:w-fit dark:bg-[#1c2938]">
           <button
             onClick={() => setPlanScope("product")}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all ${planScope === "product"
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "product"
               ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
               : "text-gray-500 hover:text-gray-700"
               }`}
           >
-            <Package size={16} />
-            Product Plans
+            <Package size={15} />
+            <span>Product Plans</span>
           </button>
           <button
             onClick={() => setPlanScope("service")}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all ${planScope === "service"
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "service"
               ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
               : "text-gray-500 hover:text-gray-700"
               }`}
           >
-            <Briefcase size={16} />
-            Service Plans
+            <Briefcase size={15} />
+            <span>Service Plans</span>
           </button>
         </div>
 
+        {/* Right: Sub-tab switcher */}
         {planScope === "product" && (
-          <div className="flex p-1.5 bg-gray-100/80 rounded-2xl w-full sm:w-auto dark:bg-[#1c2938] gap-1.5">
+          <div className="flex p-1 sm:p-1.5 bg-gray-100/80 rounded-xl sm:rounded-2xl w-full sm:w-auto dark:bg-[#1c2938] gap-1 sm:gap-1.5">
             <Button
               variant={currentTab === "priority" ? "secondary" : "ghost"}
               onClick={() => setCurrentTab("priority")}
-              className={`flex-1 sm:flex-none px-8 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "priority"
+              className={`flex-1 px-2 sm:px-6 py-2 sm:py-3 cursor-pointer rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "priority"
                 ? "bg-white text-brand-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
             >
-              <Package size={18} className={currentTab === "priority" ? "text-brand-500" : "text-gray-400"} />
-              Priority Plan
+              <Package size={15} className={currentTab === "priority" ? "text-brand-500" : "text-gray-400"} />
+              <span>Priority</span>
             </Button>
             <Button
               variant={currentTab === "booster" ? "secondary" : "ghost"}
               onClick={() => setCurrentTab("booster")}
-              className={`flex-1 sm:flex-none px-8 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "booster"
+              className={`flex-1 px-2 sm:px-6 py-2 sm:py-3 cursor-pointer rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "booster"
                 ? "bg-white text-indigo-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
             >
-              <Rocket size={18} className={currentTab === "booster" ? "text-indigo-500" : "text-gray-400"} />
-              Booster Plan
+              <Rocket size={15} className={currentTab === "booster" ? "text-indigo-500" : "text-gray-400"} />
+              <span>Booster</span>
             </Button>
             <Button
               variant={currentTab === "listing" ? "secondary" : "ghost"}
               onClick={() => setCurrentTab("listing")}
-              className={`flex-1 sm:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentTab === "listing"
+              className={`flex-1 px-2 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "listing"
                 ? "bg-white text-emerald-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
             >
-              <Package size={18} className={currentTab === "listing" ? "text-emerald-500" : "text-gray-400"} />
-              Listing Plan
+              <Package size={15} className={currentTab === "listing" ? "text-emerald-500" : "text-gray-400"} />
+              <span>Listing</span>
             </Button>
           </div>
         )}
 
         {planScope === "service" && (
-          <div className="flex p-1.5 bg-gray-100/80 rounded-2xl w-full sm:w-auto dark:bg-[#1c2938] gap-1.5">
+          <div className="flex p-1 sm:p-1.5 bg-gray-100/80 rounded-xl sm:rounded-2xl w-full sm:w-auto dark:bg-[#1c2938] gap-1 sm:gap-1.5">
             <Button
               variant={currentServiceTab === "listing" ? "secondary" : "ghost"}
               onClick={() => setCurrentServiceTab("listing")}
-              className={`flex-1 sm:flex-none px-8 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentServiceTab === "listing"
+              className={`flex-1 px-2 sm:px-8 py-2 sm:py-3 cursor-pointer rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentServiceTab === "listing"
                 ? "bg-white text-emerald-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
             >
-              <Briefcase size={18} className={currentServiceTab === "listing" ? "text-emerald-500" : "text-gray-400"} />
-              Listing Plan
+              <Briefcase size={15} className={currentServiceTab === "listing" ? "text-emerald-500" : "text-gray-400"} />
+              <span>Listing Plan</span>
             </Button>
             <Button
               variant={currentServiceTab === "priority" ? "secondary" : "ghost"}
               onClick={() => setCurrentServiceTab("priority")}
-              className={`flex-1 sm:flex-none px-8 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 h-auto ${currentServiceTab === "priority"
+              className={`flex-1 px-2 sm:px-8 py-2 sm:py-3 cursor-pointer rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentServiceTab === "priority"
                 ? "bg-white text-brand-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
             >
-              <Zap size={18} className={currentServiceTab === "priority" ? "text-brand-500" : "text-gray-400"} />
-              Priority Plan
+              <Zap size={15} className={currentServiceTab === "priority" ? "text-brand-500" : "text-gray-400"} />
+              <span>Priority Plan</span>
             </Button>
           </div>
         )}
@@ -489,77 +494,77 @@ const SettingsPage: React.FC = () => {
                   </h3>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {plans.map((plan) => {
-                    const planId = plan.id || (plan as any)._id;
-                    const matchPurchases = vendorPurchases.filter(p => String(p.plan_id) === String(planId));
-                    const isSubscribed = matchPurchases.length > 0;
-                    const totalCapacity = matchPurchases.reduce((acc, p) => acc + Number(p.total_slots), 0);
-                    const totalUsedCount = matchPurchases.reduce((acc, p) => acc + p.product_ids.length, 0);
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
+                {plans.map((plan) => {
+                  const planId = plan.id || (plan as any)._id;
+                  const matchPurchases = vendorPurchases.filter(p => String(p.plan_id) === String(planId));
+                  const isSubscribed = matchPurchases.length > 0;
+                  const totalCapacity = matchPurchases.reduce((acc, p) => acc + Number(p.total_slots), 0);
+                  const totalUsedCount = matchPurchases.reduce((acc, p) => acc + p.product_ids.length, 0);
 
-                    return (
-                      <div
-                        key={plan.id}
-                        className={`relative p-8 rounded-3xl border transition-all duration-500 flex flex-col h-full bg-white dark:bg-[#0d111c] group ${plan.is_popular
-                          ? 'border-brand-500 shadow-2xl shadow-brand-100 scale-[1.02] z-10'
-                          : 'border-gray-200 hover:border-brand-300 hover:shadow-xl shadow-sm'
-                          }`}
-                      >
-                        {plan.is_popular && (
-                          <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-5 py-1.5 rounded-full text-xs font-bold  tracking-widest shadow-lg">
-                            Recommended
-                          </span>
-                        )}
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`relative p-5 sm:p-8 rounded-2xl sm:rounded-3xl border transition-all duration-500 flex flex-col h-full bg-white dark:bg-[#0d111c] group ${plan.is_popular
+                        ? 'border-brand-500 shadow-2xl shadow-brand-100 sm:scale-[1.02] z-10'
+                        : 'border-gray-200 hover:border-brand-300 hover:shadow-xl shadow-sm'
+                        }`}
+                    >
+                      {plan.is_popular && (
+                        <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-5 py-1.5 rounded-full text-xs font-bold tracking-widest shadow-lg">
+                          Recommended
+                        </span>
+                      )}
 
-                        <div className="mb-6">
-                          <h4 className="text-xl font-bold text-gray-900 mb-1 dark:text-gray-300">{plan.name}</h4>
-                          <p className="text-gray-500 text-sm dark:text-gray-300">{plan.description}</p>
-                        </div>
-
-                        <div className="flex items-baseline gap-1 mb-8 p-4 bg-gray-50 rounded-2xl dark:bg-[#0d111c]">
-                          <span className="text-4xl font-extrabold text-gray-900 dark:text-gray-300">{currency}{plan.monthly_price}</span>
-                          <span className="text-gray-500 font-medium dark:text-gray-300">/ month</span>
-                        </div>
-
-                        {isSubscribed && plan.product_slots > 1 && (
-                          <div className="mb-6 p-3 bg-green-50 border border-green-100 rounded-xl dark:bg-[#0d111c]">
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-green-600 font-medium">Remaining Slots</span>
-                              <span className="font-bold text-green-800 dark:text-green-200 text-lg">
-                                {Math.max(0, totalCapacity - totalUsedCount)}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="space-y-4 mb-8 flex-grow">
-                          <div className="flex items-start gap-4">
-                            <div className="mt-1 bg-green-100 p-1.5 rounded-full"><Check className="text-green-600" size={14} /></div>
-                            <div>
-                              <p className="text-gray-900 font-bold text-sm dark:text-gray-300">{plan.product_slots} Product Slots</p>
-                              <p className="text-xs text-gray-500">Add up to {plan.product_slots} items</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-4">
-                            <div className="mt-1 bg-green-100 p-1.5 rounded-full"><Check className="text-green-600" size={14} /></div>
-                            <div>
-                              <p className="text-gray-900 font-bold text-sm dark:text-gray-300">Top Feed Priority</p>
-                              <p className="text-xs text-gray-500">Show above standard listings</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <Button
-                          onClick={() => handleSelectPlan(plan)}
-                          variant={plan.is_popular ? 'primary' : 'outline'}
-                          className="w-full !py-3.5 rounded-xl font-bold btn-primary"
-                        >
-                          {isSubscribed ? 'Add More Products' : 'Select Plan'}
-                        </Button>
+                      <div className="mb-4 sm:mb-6">
+                        <h4 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 dark:text-gray-300">{plan.name}</h4>
+                        <p className="text-gray-500 text-sm dark:text-gray-300">{plan.description}</p>
                       </div>
-                    );
-                  })}
-                </div>
+
+                      <div className="flex items-baseline gap-1 mb-5 sm:mb-8 p-3 sm:p-4 bg-gray-50 rounded-xl sm:rounded-2xl dark:bg-[#0d111c]">
+                        <span className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-gray-300">{currency}{plan.monthly_price}</span>
+                        <span className="text-gray-500 font-medium dark:text-gray-300">/ month</span>
+                      </div>
+
+                      {isSubscribed && plan.product_slots > 1 && (
+                        <div className="mb-4 sm:mb-6 p-3 bg-green-50 border border-green-100 rounded-xl dark:bg-[#0d111c]">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-green-600 font-medium">Remaining Slots</span>
+                            <span className="font-bold text-green-800 dark:text-green-200 text-lg">
+                              {Math.max(0, totalCapacity - totalUsedCount)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-3 sm:space-y-4 mb-5 sm:mb-8 flex-grow">
+                        <div className="flex items-start gap-3 sm:gap-4">
+                          <div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0"><Check className="text-green-600" size={14} /></div>
+                          <div>
+                            <p className="text-gray-900 font-bold text-sm dark:text-gray-300">{plan.product_slots} Product Slots</p>
+                            <p className="text-xs text-gray-500">Add up to {plan.product_slots} items</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 sm:gap-4">
+                          <div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0"><Check className="text-green-600" size={14} /></div>
+                          <div>
+                            <p className="text-gray-900 font-bold text-sm dark:text-gray-300">Top Feed Priority</p>
+                            <p className="text-xs text-gray-500">Show above standard listings</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button
+                        onClick={() => handleSelectPlan(plan)}
+                        variant={plan.is_popular ? 'primary' : 'outline'}
+                        className="w-full !py-3.5 rounded-xl font-bold btn-primary"
+                      >
+                        {isSubscribed ? 'Add More Products' : 'Select Plan'}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
               </div>
 
               {/* Priority Purchase History */}
@@ -581,27 +586,31 @@ const SettingsPage: React.FC = () => {
               <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                className="max-w-6xl w-full"
+                className="max-w-6xl w-full mx-2 sm:mx-auto"
               >
-                <div className="flex flex-col h-[70vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
-                  <div className="px-6 pr-14 py-4 border-b bg-white dark:bg-gray-900">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                          {selectedPlan?.name} Products
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Remaining Slots:
-                          <span className="ml-1 font-semibold text-brand-600">
-                            {remainingSlots} left
-                          </span>
-                        </p>
+                <div className="flex flex-col h-[85vh] sm:h-[70vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
+                  {/* Modal Header */}
+                  <div className="px-4 sm:px-6 pr-10 sm:pr-14 py-3 sm:py-4 border-b bg-white dark:bg-gray-900">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">
+                            {selectedPlan?.name} Products
+                          </h3>
+                          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                            Remaining Slots:
+                            <span className="ml-1 font-semibold text-brand-600">
+                              {remainingSlots} left
+                            </span>
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <div className="relative w-full sm:w-64">
+                      {/* Search + Tab row */}
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <div className="relative flex-1 sm:flex-none sm:w-56">
                           <Search
                             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                            size={16}
+                            size={15}
                           />
                           <input
                             type="text"
@@ -611,10 +620,10 @@ const SettingsPage: React.FC = () => {
                             className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500/20 outline-none"
                           />
                         </div>
-                        <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700">
+                        <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 w-full sm:w-auto">
                           <button
                             onClick={() => setActiveTab('Rent')}
-                            className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Rent'
+                            className={`flex-1 sm:flex-none px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Rent'
                               ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm'
                               : 'text-gray-500 hover:text-gray-800'
                               }`}
@@ -623,7 +632,7 @@ const SettingsPage: React.FC = () => {
                           </button>
                           <button
                             onClick={() => setActiveTab('Sell')}
-                            className={`px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Sell'
+                            className={`flex-1 sm:flex-none px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Sell'
                               ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm'
                               : 'text-gray-500 hover:text-gray-800'
                               }`}
@@ -634,7 +643,8 @@ const SettingsPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex-1 px-6  overflow-hidden">
+                  {/* Table */}
+                  <div className="flex-1 px-2 sm:px-6 overflow-hidden">
                     <AgGridTable
                       columns={columns}
                       rowData={filteredProducts}
@@ -654,11 +664,12 @@ const SettingsPage: React.FC = () => {
                       }
                     />
                   </div>
-                  <div className="px-6 py-4 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end gap-3">
+                  {/* Footer Actions */}
+                  <div className="px-4 sm:px-6 py-3 sm:py-4 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end gap-2 sm:gap-3">
                     <Button
                       variant="outline"
                       onClick={() => setIsModalOpen(false)}
-                      className="px-6 py-2.5 rounded-xl font-bold"
+                      className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl font-bold text-sm"
                     >
                       Cancel
                     </Button>
@@ -673,7 +684,7 @@ const SettingsPage: React.FC = () => {
                           selectedProductIds.length >
                           (selectedPlan?.product_slots || 0))
                       }
-                      className="px-8 py-2.5 rounded-xl font-bold transition-all shadow-lg"
+                      className="px-5 sm:px-8 py-2 sm:py-2.5 rounded-xl font-bold transition-all shadow-lg text-sm"
                     >
                       {isPurchasing ? 'Processing...' : 'Confirm & Activate'}
                     </Button>

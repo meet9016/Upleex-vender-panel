@@ -25,6 +25,7 @@ import PlanSelectionDialog from '@/components/common/PlanSelectionDialog';
 import Button from '@/components/ui/button/Button';
 import Switch from '@/components/form/switch/Switch';
 import Checkbox from '@/components/form/input/Checkbox';
+import { useWallet } from '@/context/WalletContext';
 
 
 function useDebounce<T>(value: T, delay: number = 500): T {
@@ -76,6 +77,7 @@ type Option = {
 
 const ProductTable = () => {
   const router = useRouter();
+  const { balance } = useWallet();
   const [productData, setProductData] = useState<Product[]>([]);
   const [rentProducts, setRentProducts] = useState<Product[]>([]);
   const [sellProducts, setSellProducts] = useState<Product[]>([]);
@@ -1064,7 +1066,13 @@ const ProductTable = () => {
         <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 w-full sm:w-auto">
           {/* Add Product Button */}
           <button
-            onClick={() => router.push('/product/addProduct')}
+            onClick={() => {
+              if (balance <= 0) {
+                toast.error("Insufficient wallet balance. Please add money to your wallet before adding a product.");
+                return;
+              }
+              router.push('/product/addProduct');
+            }}
             className="w-full sm:w-auto px-4 py-2 btn-primary font-medium whitespace-nowrap"
           >
             <span className="hidden sm:inline">+ Add Product</span>

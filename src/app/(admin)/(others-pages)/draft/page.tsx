@@ -42,7 +42,7 @@ const getImageUrl = (p: any): string => {
 export default function DraftPage() {
   const [rows, setRows] = useState<any[]>([]);
   const [selected, setSelected] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
   const debouncedSearch = useDebounce(searchText, 600);
   const [excelLoading, setExcelLoading] = useState(false);

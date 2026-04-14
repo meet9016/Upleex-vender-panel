@@ -387,7 +387,23 @@ const QuoteTable = () => {
       minWidth: 160,
       cellRenderer: (params: any) => {
         const link = params.value;
+        const isPaid = String(params.data?.payment_status || '').toLowerCase() === 'paid';
+
         if (!link) return <span className="text-gray-400">-</span>;
+
+        if (isPaid) {
+          return (
+            <div className="flex items-center h-full">
+              <span
+                className="text-xs bg-gray-100 text-gray-400 px-3 py-1 rounded-full border border-gray-200 inline-block font-medium truncate max-w-[140px] cursor-not-allowed select-none"
+                title="Payment already completed"
+              >
+                Copy Link
+              </span>
+            </div>
+          );
+        }
+
         return (
           <div className="flex items-center h-full">
             <a
@@ -547,8 +563,8 @@ const QuoteTable = () => {
     const statusApprovedRaw = statusList.find((s: any) =>
       String(s.name || '').toLowerCase().includes('approv')
     );
-    
-    setQuoteData(prev => prev.map(q => 
+
+    setQuoteData(prev => prev.map(q =>
       q._id === quoteId ? { ...q, status: getInternalStatus(statusApprovedRaw?.name || 'approval') } : q
     ));
 
@@ -585,7 +601,7 @@ const QuoteTable = () => {
       s.name?.toLowerCase() === 'rejected' || s.name?.toLowerCase() === 'reject'
     );
 
-    setQuoteData(prev => prev.map(q => 
+    setQuoteData(prev => prev.map(q =>
       q._id === quoteId ? { ...q, status: getInternalStatus(rejectedStatusRaw?.name || 'reject') } : q
     ));
 
@@ -622,7 +638,7 @@ const QuoteTable = () => {
       String(s.name || '').toLowerCase().includes('deliver')
     );
 
-    setQuoteData(prev => prev.map(q => 
+    setQuoteData(prev => prev.map(q =>
       q._id === quoteId ? { ...q, status: getInternalStatus(deliveryStatusRaw?.name || 'delivery') } : q
     ));
 
@@ -805,11 +821,11 @@ const QuoteTable = () => {
       // Parse DD/MM/YYYY
       const parts = params.data.end_date.split('/');
       if (parts.length !== 3) return undefined;
-      
+
       const day = parseInt(parts[0], 10);
       const month = parseInt(parts[1], 10) - 1;
       const year = parseInt(parts[2], 10);
-      
+
       const endDate = new Date(year, month, day);
       endDate.setHours(0, 0, 0, 0);
 

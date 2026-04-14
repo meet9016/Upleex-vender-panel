@@ -72,7 +72,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   autoGroupColumnDef,
   groupDefaultExpanded,
   getRowId,
-  noRowsMessage = "No data found",
+  noRowsMessage,
 }) => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
@@ -238,12 +238,8 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             suppressRowClickSelection={true}
             alwaysShowHorizontalScroll={true}
             getRowStyle={getRowStyle}
-            overlayNoRowsTemplate={`<div class="ag-overlay-no-rows-center" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; color: #64748b;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 12px; opacity: 0.5;">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <span style="font-size: 14px; font-weight: 500;">${noRowsMessage}</span>
-            </div>`}
+            suppressNoRowsOverlay={loading}
+            overlayNoRowsTemplate={noRowsMessage ? `<span class="text-gray-500 dark:text-gray-400 font-medium">${noRowsMessage}</span>` : "<span></span>"}
             isRowSelectable={isRowSelectable}
             treeData={treeData}
             getDataPath={getDataPath}
