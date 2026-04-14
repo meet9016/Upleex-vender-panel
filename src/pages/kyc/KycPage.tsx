@@ -510,7 +510,7 @@ export default function KYCPage() {
         } else {
           // Last step (Declaration) - Show only KYC Submitted Successfully
           toast.success("KYC Submitted Successfully!");
-          setTimeout(() => router.push("/"), 1800);
+          setTimeout(() => setCurrentStep(0), 1800);
         }
       } else {
         toast.error(res.data.message || "Server error");

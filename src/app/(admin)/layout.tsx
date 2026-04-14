@@ -11,6 +11,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { BreadcrumbProvider, useBreadcrumb } from "@/context/BreadcrumbContext";
 import { KycGuard } from "@/components/common/KycGuard";
+import { KycProvider } from "@/context/KycContext";
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
@@ -56,8 +57,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
           <div className="animate-in fade-in duration-700 delay-200">
             <BreadcrumbProvider>
-      {children}
-    </BreadcrumbProvider>
+              <KycGuard>
+                {children}
+              </KycGuard>
+            </BreadcrumbProvider>
           </div>
         </main>
       </div>
@@ -70,9 +73,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <FilterProvider>
       <WalletProvider>
         <BreadcrumbProvider>
-          <KycGuard>
+          <KycProvider>
             <AdminLayoutContent>{children}</AdminLayoutContent>
-          </KycGuard>
+          </KycProvider>
         </BreadcrumbProvider>
       </WalletProvider>
     </FilterProvider>

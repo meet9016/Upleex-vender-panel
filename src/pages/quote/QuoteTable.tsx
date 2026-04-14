@@ -757,6 +757,43 @@ const QuoteTable = () => {
     getQuoteData({});
   }, []);
 
+  const getRowStyle = (params: any) => {
+    if (!params.data || !params.data.end_date || params.data.end_date === '-') return undefined;
+
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Parse DD/MM/YYYY
+      const parts = params.data.end_date.split('/');
+      if (parts.length !== 3) return undefined;
+      
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const year = parseInt(parts[2], 10);
+      
+      const endDate = new Date(year, month, day);
+      endDate.setHours(0, 0, 0, 0);
+
+      const status = (params.data.status || '').toLowerCase();
+      const isCompleted = status.includes('complet') || status.includes('success') || status.includes('return');
+
+      // 1. If end_date is today -> Light Green
+      if (endDate.getTime() === today.getTime()) {
+        return { backgroundColor: 'rgba(16, 185, 129, 0.15)' }; // Light Green (Emerald)
+      }
+
+      // 2. If end_date < today AND status is not complete -> Light Red
+      if (endDate.getTime() < today.getTime() && !isCompleted) {
+        return { backgroundColor: 'rgba(244, 63, 94, 0.15)' }; // Light Red (Rose)
+      }
+    } catch (e) {
+      console.error("Error calculating row style:", e);
+    }
+
+    return undefined;
+  };
+
   return (
     <div className="">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-2 mt-5 !justify-end">
@@ -944,6 +981,7 @@ const QuoteTable = () => {
             showCheckboxes={false}
             loading={loading}
             height={"650px"}
+            getRowStyle={getRowStyle}
           />
         </div>
       </div>
