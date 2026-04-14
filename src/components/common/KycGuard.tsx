@@ -1,66 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { api } from "@/utils/axiosInstance";
-import endPointApi from "@/utils/endPointApi";
 import PageLoader from "@/components/common/PageLoader";
+import { useKyc } from "@/context/KycContext";
 
 export function KycGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [checking, setChecking] = useState(true);
-  const [approved, setApproved] = useState(false);
+  const { kycApproved, isLoading } = useKyc();
 
   useEffect(() => {
-    let mounted = true;
+    // If we've finished checking and the user is NOT approved AND NOT on the KYC page, redirect to KYC.
+    if (!isLoading && kycApproved === false && pathname !== "/kyc") {
+      router.replace("/kyc");
+    }
+  }, [kycApproved, isLoading, pathname, router]);
 
-    const checkKyc = async () => {
-      // Allow access to KYC page regardless of status
-      if (pathname === "/kyc") {
-        if (mounted) {
-          setApproved(true);
-          setChecking(false);
-        }
-        return;
-      }
-
-      // If we are on a protected page, we MUST be in checking state first
-      if (mounted) {
-        setChecking(true);
-      }
-
-      try {
-        const res = await api.post(endPointApi.postFetchVendorKYCFormData as string);
-        const status = res?.data?.data?.status || "";
-        const isApproved = String(status).toLowerCase() === "approved";
-
-        if (mounted) {
-          if (!isApproved) {
-            // Redirect to KYC page if not approved
-            router.replace("/kyc");
-          } else {
-            setApproved(true);
-          }
-          setChecking(false);
-        }
-      } catch {
-        if (mounted) {
-          // If check fails, redirect to KYC
-          router.replace("/kyc");
-          setChecking(false);
-        }
-      }
-    };
-
-    checkKyc();
-
-    return () => {
-      mounted = false;
-    };
-  }, [pathname, router]);
-
-  if (checking) {
+  // Only show the PageLoader if we're still checking AND NOT already approved (from cache) AND NOT on the KYC page.
+  if (isLoading && pathname !== "/kyc") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <PageLoader fullScreen={false} />
@@ -68,8 +26,9 @@ export function KycGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!approved && pathname !== "/kyc") {
-    return null; // Will redirect in useEffect
+  // If not approved and not on kyc page, don't show children while we're about to redirect.
+  if (kycApproved === false && pathname !== "/kyc") {
+    return null;
   }
 
   return <>{children}</>;

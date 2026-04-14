@@ -542,74 +542,112 @@ const QuoteTable = () => {
   };
 
   const handleApproval = async (quoteId: string) => {
+    // Optimistic update
+    const previousData = [...quoteData];
+    const statusApprovedRaw = statusList.find((s: any) =>
+      String(s.name || '').toLowerCase().includes('approv')
+    );
+    
+    setQuoteData(prev => prev.map(q => 
+      q._id === quoteId ? { ...q, status: getInternalStatus(statusApprovedRaw?.name || 'approval') } : q
+    ));
+
     try {
-      const statusApproved = statusList.find((s: any) =>
-        String(s.name || '').toLowerCase().includes('approv')
-      );
-      if (!statusApproved) return toast.error("Approval status not found");
+      if (!statusApprovedRaw) {
+        setQuoteData(previousData);
+        return toast.error("Approval status not found");
+      }
 
       const formData = new FormData();
       formData.append('quote_id', quoteId);
-      formData.append('status', statusApproved.id);
+      formData.append('status', statusApprovedRaw.id);
 
       const res = await api.post(endPointApi.changeStatus, formData);
 
       if (res?.data?.status === 200) {
-        toast.success(`Status changed to ${String(statusApproved.name).toUpperCase()}`);
-        await getQuoteData(filters);
+        toast.success(`Status changed to ${String(statusApprovedRaw.name).toUpperCase()}`);
+        // No need to full fetch if status is already correct
+      } else {
+        toast.error(res?.data?.message || "Failed to approve quote");
+        setQuoteData(previousData);
       }
     } catch (error) {
       console.log('Approval error:', error);
       toast.error("Failed to approve quote");
+      setQuoteData(previousData);
     }
   };
 
   const handleRejected = async (quoteId: string) => {
+    // Optimistic update
+    const previousData = [...quoteData];
+    const rejectedStatusRaw = statusList.find(s =>
+      s.name?.toLowerCase() === 'rejected' || s.name?.toLowerCase() === 'reject'
+    );
+
+    setQuoteData(prev => prev.map(q => 
+      q._id === quoteId ? { ...q, status: getInternalStatus(rejectedStatusRaw?.name || 'reject') } : q
+    ));
+
     try {
-      const rejectedStatus = statusList.find(s =>
-        s.name?.toLowerCase() === 'rejected' || s.name?.toLowerCase() === 'reject'
-      );
-      if (!rejectedStatus) {
+      if (!rejectedStatusRaw) {
+        setQuoteData(previousData);
         toast.error("Rejected status not found");
         return;
       }
 
       const formData = new FormData();
       formData.append('quote_id', quoteId);
-      formData.append('status', rejectedStatus.id);
+      formData.append('status', rejectedStatusRaw.id);
 
       const res = await api.post(endPointApi.changeStatus, formData);
 
       if (res?.data?.status === 200) {
         toast.success("Quote rejected successfully");
-        await getQuoteData(filters);
+      } else {
+        toast.error(res?.data?.message || "Failed to reject quote");
+        setQuoteData(previousData);
       }
     } catch (error) {
       console.log('Rejection error:', error);
       toast.error("Failed to reject quote");
+      setQuoteData(previousData);
     }
   };
 
   const handleDelivery = async (quoteId: string) => {
+    // Optimistic update
+    const previousData = [...quoteData];
+    const deliveryStatusRaw = statusList.find((s: any) =>
+      String(s.name || '').toLowerCase().includes('deliver')
+    );
+
+    setQuoteData(prev => prev.map(q => 
+      q._id === quoteId ? { ...q, status: getInternalStatus(deliveryStatusRaw?.name || 'delivery') } : q
+    ));
+
     try {
-      const deliveryStatus = statusList.find((s: any) =>
-        String(s.name || '').toLowerCase().includes('deliver')
-      );
-      if (!deliveryStatus) return toast.error("Delivery status not found");
+      if (!deliveryStatusRaw) {
+        setQuoteData(previousData);
+        return toast.error("Delivery status not found");
+      }
 
       const formData = new FormData();
       formData.append('quote_id', quoteId);
-      formData.append('status', deliveryStatus.id);
+      formData.append('status', deliveryStatusRaw.id);
 
       const res = await api.post(endPointApi.changeStatus, formData);
 
       if (res?.data?.status === 200) {
         toast.success("Status changed to DELIVERY");
-        await getQuoteData(filters);
+      } else {
+        toast.error(res?.data?.message || "Failed to update status");
+        setQuoteData(previousData);
       }
     } catch (error) {
       console.log('Delivery error:', error);
       toast.error("Failed to update status");
+      setQuoteData(previousData);
     }
   };
 
@@ -756,6 +794,43 @@ const QuoteTable = () => {
     // Load initial data without filters
     getQuoteData({});
   }, []);
+
+  const getRowStyle = (params: any) => {
+    if (!params.data || !params.data.end_date || params.data.end_date === '-') return undefined;
+
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Parse DD/MM/YYYY
+      const parts = params.data.end_date.split('/');
+      if (parts.length !== 3) return undefined;
+      
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const year = parseInt(parts[2], 10);
+      
+      const endDate = new Date(year, month, day);
+      endDate.setHours(0, 0, 0, 0);
+
+      const status = (params.data.status || '').toLowerCase();
+      const isCompleted = status.includes('complet') || status.includes('success') || status.includes('return');
+
+      // 1. If end_date is today -> Light Green
+      if (endDate.getTime() === today.getTime()) {
+        return { backgroundColor: 'rgba(16, 185, 129, 0.15)' }; // Light Green (Emerald)
+      }
+
+      // 2. If end_date < today AND status is not complete -> Light Red
+      if (endDate.getTime() < today.getTime() && !isCompleted) {
+        return { backgroundColor: 'rgba(244, 63, 94, 0.15)' }; // Light Red (Rose)
+      }
+    } catch (e) {
+      console.error("Error calculating row style:", e);
+    }
+
+    return undefined;
+  };
 
   return (
     <div className="">
@@ -944,6 +1019,7 @@ const QuoteTable = () => {
             showCheckboxes={false}
             loading={loading}
             height={"650px"}
+            getRowStyle={getRowStyle}
           />
         </div>
       </div>
