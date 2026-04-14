@@ -29,6 +29,7 @@ type Service = {
   status: string;
   image?: string;
   _id?: string;
+  is_priority?: boolean;
 };
 
 const ServiceTable = () => {
@@ -143,9 +144,24 @@ const ServiceTable = () => {
               />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-medium text-[13px] text-gray-800 dark:text-white truncate" title={serviceName}>
+              <span className="font-medium text-[13px] text-gray-800 dark:text-white truncate flex items-center gap-2" title={serviceName}>
                 {serviceName}
+                {service?.is_priority && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold">
+                    Priority
+                  </span>
+                )}
+                {/* {service?.listing_expires_at && new Date(service.listing_expires_at) < new Date() && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold">
+                    Expired
+                  </span>
+                )} */}
               </span>
+              {/* {service?.listing_expires_at && (
+                <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                  Expires: {new Date(service.listing_expires_at).toLocaleDateString()}
+                </span>
+              )} */}
             </div>
           </div>
         );
@@ -213,7 +229,11 @@ const ServiceTable = () => {
     try {
       setLoading(true);
       const res = await api.get(endPointApi.postAllVendorServiceList, {
-        params: { search }
+        params: { 
+          search,
+          sortBy: 'is_priority', // Ensure priority sorting
+          order: 'desc'
+        }
       });
       setServiceData(res?.data?.data || []);
     } catch (error) {

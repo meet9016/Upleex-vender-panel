@@ -15,6 +15,7 @@ import { toast } from "react-toastify";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
 import { FiArrowLeft } from "react-icons/fi";
 import PageLoader from "@/components/common/PageLoader";
+import { useWallet } from "@/context/WalletContext";
 
 export interface Option {
     value: string;
@@ -27,6 +28,17 @@ export default function AddServicePage() {
     const searchParams = useSearchParams();
     const serviceId = searchParams?.get("id") ?? null;
     const isEditMode = !!serviceId;
+
+    // Safely use wallet hook
+    let balance = 0;
+    let refreshBalance = async () => { };
+    try {
+        const walletContext = useWallet();
+        balance = walletContext.balance;
+        refreshBalance = walletContext.refreshBalance;
+    } catch (error) {
+        console.warn("Wallet context not available");
+    }
 
     const [formData, setFormData] = useState({
         name: "",
@@ -126,7 +138,6 @@ export default function AddServicePage() {
         if (!formData.category) errors.category = "Please select a category";
         if (!formData.price?.trim()) errors.price = "Please enter price";
         if (!formData.billing_type) errors.billing_type = "Please select billing type";
-        if (!formData.location?.trim()) errors.location = "Please enter location/city";
         if (!formData.description?.trim()) errors.description = "Please enter description";
         if (!mainImage && (!mainPreview || mainPreview.length === 0)) {
             errors.mainImage = "Please upload service image";
@@ -141,6 +152,12 @@ export default function AddServicePage() {
             return;
         }
 
+        // Check wallet balance for listing fee (₹29) only in non-edit mode (new service)
+        if (!isEditMode && balance < 29) {
+            toast.error("Insufficient wallet balance. Minimum ₹29 required for Service listing fee. Please add money to your wallet.");
+            return;
+        }
+
         try {
             setSubmitting(true);
             const data = new FormData();
@@ -148,8 +165,11 @@ export default function AddServicePage() {
             data.append("category_id", formData.category);
             data.append("price", formData.price);
             data.append("billing_type", formData.billing_type);
-            data.append("location", formData.location);
             data.append("description", formData.description);
+            // Inform backend about the listing fee if needed (usually handled by backend on creation)
+            if (!isEditMode) {
+                data.append("listing_fee", "29");
+            }
             if (mainImage) {
                 const compressedMain = await compressImage(mainImage, 0.8);
                 data.append("image", compressedMain);
@@ -282,7 +302,7 @@ export default function AddServicePage() {
                         )}
                     </div>
 
-                    <div >
+                    {/* <div >
                         <Label required className="font-semibold mb-2">Providing City</Label>
                         <Input
                             value={formData.location}
@@ -291,11 +311,10 @@ export default function AddServicePage() {
                             error={!!validationErrors.location}
                             className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                         />
-                        {/* <p className="text-xs text-gray-500 mt-1">Mention the cities where you provide this service.</p> */}
                         {validationErrors.location && (
                             <p className="error-message">{validationErrors.location}</p>
                         )}
-                    </div>
+                    </div> */}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -413,23 +432,30 @@ export default function AddServicePage() {
                 </div>
                     </div>
 
-                    <div className="mt-8 flex items-center justify-end gap-6 px-4">
-                        <Button
-                            size="sm"
-                            variant="primary"
-                            className="btn-primary px-6 py-2.5 min-w-[100px]"
-                            onClick={handleSubmit}
-                        >
-                            {isEditMode ? "Update" : "Save"}
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="!py-2 px-5"
-                            onClick={() => router.back()}
-                        >
-                            Cancel
-                        </Button>
+                    <div className="mt-8 flex flex-col items-end gap-2 px-4">
+                        {!isEditMode && (
+                            <p className="text-sm text-gray-500 mb-2">
+                                * Service listing fee of <span className="font-bold text-blue-600">₹29</span> will be deducted from your wallet.
+                            </p>
+                        )}
+                        <div className="flex items-center gap-6">
+                            <Button
+                                size="sm"
+                                variant="primary"
+                                className="btn-primary px-6 py-2.5 min-w-[100px]"
+                                onClick={handleSubmit}
+                            >
+                                {isEditMode ? "Update" : "Save"}
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="!py-2 px-5"
+                                onClick={() => router.back()}
+                            >
+                                Cancel
+                            </Button>
+                        </div>
                     </div>
                 </div>
             )}

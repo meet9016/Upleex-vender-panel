@@ -760,12 +760,12 @@ const QuoteEditPage = () => {
             <button
               type="submit"
               disabled={submitting}
-              className={`px-4 py-2 text-sm font-semibold text-white btn-primary transition-all shadow-sm flex items-center justify-center gap-2 ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`px-6 py-2.5 text-sm font-bold text-white btn-primary transition-all shadow-md flex items-center justify-center gap-2 min-w-[170px] ${submitting ? 'opacity-80 cursor-not-allowed scale-[0.98]' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
             >
               {submitting ? (
                 <>
-                  <FiLoader className="animate-spin" />
-                  <span>Saving...</span>
+                  <FiLoader className="animate-spin text-lg" />
+                  <span>Updating...</span>
                 </>
               ) : (
                 'Submit Changes'

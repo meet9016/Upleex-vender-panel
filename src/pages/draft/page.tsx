@@ -10,10 +10,12 @@ import ConfirmDeleteModal from '@/components/common/ConfirmDeleteModal';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import { api } from '@/utils/axiosInstance';
 import endPointApi from '@/utils/endPointApi';
+import { Package, Briefcase } from 'lucide-react';
 
 const DraftsPage = () => {
   const router = useRouter();
   const [draftData, setDraftData] = useState([]);
+  const [activeScope, setActiveScope] = useState<'product' | 'service'>('product');
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -29,8 +31,8 @@ const DraftsPage = () => {
 
   const columns: ColDef[] = [
     {
-      headerName: "Product Name",
-      field: "product_name",
+      headerName: activeScope === 'product' ? "Product Name" : "Service Name",
+      field: activeScope === 'product' ? "product_name" : "service_name",
       flex: 1,
       minWidth: 200,
     },
@@ -73,7 +75,7 @@ const DraftsPage = () => {
               Dedraft
             </button>
             <ActionButtons
-              onEdit={() => router.push(`/product/edit/${params.data._id || params.data.id}`)}
+              onEdit={() => router.push(activeScope === 'product' ? `/product/edit/${params.data._id || params.data.id}` : `/service/edit/${params.data._id || params.data.id}`)}
               onDelete={() => openDeletePopup(params.data._id || params.data.id)}
             />
           </div>
@@ -84,13 +86,17 @@ const DraftsPage = () => {
 
   const getDraftData = async () => {
     try {
-      const response = await api.get(endPointApi.postAllVendorProductList);
+      setLoading(true);
+      const endpoint = activeScope === 'product' ? endPointApi.postAllVendorProductList : endPointApi.postAllVendorServiceList;
+      const response = await api.get(endpoint);
       const drafts = response.data?.data?.filter((item: any) => item.status === 'draft') || [];
       setDraftData(drafts);
       setSelectedRows([]);
     } catch (error) {
       console.log("Get draft data error:", error);
-      toast.error("Failed to fetch drafts");
+      toast.error(`Failed to fetch ${activeScope} drafts`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -98,25 +104,43 @@ const DraftsPage = () => {
   const fetchPlans = async () => {
     setPlansLoading(true);
     try {
-      const res = await api.get((endPointApi as any).getPlanOptions as string);
+      const endpoint = activeScope === 'product' ? endPointApi.getPlanOptions : endPointApi.getServicePlanOptions;
+      const res = await api.get(endpoint);
       const list = res?.data?.data || [];
       // Normalize to UI shape
-      const normalized = list.map((p: any) => ({
-        key: p.plan_type,
-        name: p.plan_type?.charAt(0).toUpperCase() + p.plan_type?.slice(1),
-        description: `${p.months} months, up to ${p.max_products} products`,
-        price: p.amount,
-        duration_months: p.months,
-        product_limit: p.max_products,
-      }));
+      let normalized = [];
+      if (activeScope === 'product') {
+        normalized = list.map((p: any) => ({
+          key: p.plan_type,
+          name: p.plan_type?.charAt(0).toUpperCase() + p.plan_type?.slice(1),
+          description: `${p.months} months, up to ${p.max_products} products`,
+          price: p.amount,
+          duration_months: p.months,
+          product_limit: p.max_products,
+        }));
+      } else {
+        normalized = list.map((p: any) => ({
+          _id: p._id || p.id,
+          key: p._id || p.id,
+          name: p.plan_name,
+          description: `${p.months} months visibility`,
+          price: p.amount,
+          duration_months: p.months,
+        }));
+      }
       setPlans(normalized);
     } catch (e) {
-      // Fallback to defaults if API fails
-      setPlans([
-        // { key: 'basic', name: 'Basic', description: '2 months, 1 product', price: 39, duration_months: 2, product_limit: 1 },
-        { key: 'standard', name: 'Standard', description: '5 months, up to 3 products', price: 59, duration_months: 5, product_limit: 3 },
-        { key: 'premium', name: 'Premium', description: '12 months, up to 7 products', price: 109, duration_months: 12, product_limit: 7 },
-      ]);
+      // Fallback
+      if (activeScope === 'product') {
+        setPlans([
+          { key: 'standard', name: 'Standard', description: '5 months, up to 3 products', price: 59, duration_months: 5, product_limit: 3 },
+          { key: 'premium', name: 'Premium', description: '12 months, up to 7 products', price: 109, duration_months: 12, product_limit: 7 },
+        ]);
+      } else {
+        setPlans([
+          { key: 'basic', name: 'Basic', description: '1 month visibility', price: 29, duration_months: 1 },
+        ]);
+      }
     } finally {
       setPlansLoading(false);
     }
@@ -135,13 +159,22 @@ const DraftsPage = () => {
     try {
       setLoading(true);
       const ids = selectedRows.map((r: any) => r._id || r.id);
-      await api.post(endPointApi.postBulkDeleteProducts, { product_ids: ids });
-      toast.success(`${ids.length} draft products deleted successfully`);
+      
+      if (activeScope === 'product') {
+        await api.post(endPointApi.postBulkDeleteProducts, { product_ids: ids });
+      } else {
+        // Services might not have bulk delete yet, delete one by one if so
+        for (const id of ids) {
+          await api.delete(`${endPointApi.postDeleteVendorServiceList}/${id}`);
+        }
+      }
+      
+      toast.success(`${ids.length} draft ${activeScope}s deleted successfully`);
       setBulkDeleteConfirm(false);
       getDraftData();
     } catch (error) {
       console.log("Bulk delete error:", error);
-      toast.error("Failed to delete selected drafts");
+      toast.error(`Failed to delete selected ${activeScope} drafts`);
     } finally {
       setLoading(false);
     }
@@ -150,7 +183,7 @@ const DraftsPage = () => {
   // Open bulk delete confirmation
   const openBulkDeleteConfirm = () => {
     if (!selectedRows.length) {
-      toast.info("Select drafts to delete");
+      toast.info(`Select ${activeScope} drafts to delete`);
       return;
     }
     setBulkDeleteConfirm(true);
@@ -163,13 +196,24 @@ const DraftsPage = () => {
     }
     try {
       const ids = selectedRows.length ? selectedRows.map((r: any) => r._id || r.id) : [(selectedProduct?._id || selectedProduct?.id)];
-      const body: any = { plan_type: selectedPlanType, product_ids: ids };
-      if (selectedPlanType === 'custom') {
-        body.months = customMonths;
-        body.max_products = customMaxProducts;
+      
+      let response;
+      if (activeScope === 'product') {
+        const body: any = { plan_type: selectedPlanType, product_ids: ids };
+        if (selectedPlanType === 'custom') {
+          body.months = customMonths;
+          body.max_products = customMaxProducts;
+        }
+        response = await api.post(endPointApi.postCreateListingPlan, body);
+      } else {
+        // Service listing plan purchase
+        response = await api.post(endPointApi.postCreateServiceListingPlan, {
+          plan_id: selectedPlanType,
+          service_ids: ids,
+        });
       }
-      const response = await api.post(endPointApi.postCreateListingPlan, body);
-      const message = response?.data?.message || "Plan applied successfully! Selected products activated.";
+
+      const message = response?.data?.message || "Plan applied successfully! Selected items activated.";
       toast.success(message);
       setShowPlanModal(false);
       setSelectedPlanType('');
@@ -183,7 +227,7 @@ const DraftsPage = () => {
 
   useEffect(() => {
     getDraftData();
-  }, []);
+  }, [activeScope]);
 
   const openDeletePopup = (id: string) => {
     setDeleteId(id);
@@ -192,7 +236,8 @@ const DraftsPage = () => {
 
   const deleteById = async (id: string | number) => {
     try {
-      await api.delete(`${endPointApi.postDeleteVendorProductList}/${id}`);
+      const endpoint = activeScope === 'product' ? endPointApi.postDeleteVendorProductList : endPointApi.postDeleteVendorServiceList;
+      await api.delete(`${endpoint}/${id}`);
       toast.success("Deleted successfully");
       getDraftData();
     } catch (error) {
@@ -210,35 +255,66 @@ const DraftsPage = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Draft Products</h2>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              if (!selectedRows.length) {
-                toast.info("Select draft products to activate");
-                return;
-              }
-              setSelectedProduct(null);
-              setSelectedPlanType('');
-              setShowPlanModal(true);
-            }}
-            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
-          >
-            Dedraft Selected (Select Plan)
-          </button>
-          <button
-            onClick={openBulkDeleteConfirm}
-            className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
-          >
-            Delete Selected ({selectedRows.length})
-          </button>
-          <button
-            onClick={() => router.push('/product')}
-            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium"
-          >
-            Back to Products
-          </button>
+      <div className="flex flex-col gap-4 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Draft Management</h2>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push(activeScope === 'product' ? '/product' : '/service')}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+            >
+              Back to {activeScope === 'product' ? 'Products' : 'Services'}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          {/* Toggle for Product/Service */}
+          <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 w-fit dark:bg-gray-900 dark:border-gray-700">
+            <button
+              onClick={() => setActiveScope("product")}
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all ${activeScope === "product"
+                ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
+                : "text-gray-500 hover:text-gray-700"
+                }`}
+            >
+              <Package size={16} />
+              Product Drafts
+            </button>
+            <button
+              onClick={() => setActiveScope("service")}
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all ${activeScope === "service"
+                ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
+                : "text-gray-500 hover:text-gray-700"
+                }`}
+            >
+              <Briefcase size={16} />
+              Service Drafts
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => {
+                if (!selectedRows.length) {
+                  toast.info(`Select draft ${activeScope}s to activate`);
+                  return;
+                }
+                setSelectedProduct(null);
+                setSelectedPlanType('');
+                setShowPlanModal(true);
+              }}
+              className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-bold shadow-sm shadow-blue-100"
+            >
+              Dedraft Selected ({selectedRows.length})
+            </button>
+            <button
+              onClick={openBulkDeleteConfirm}
+              className="flex-1 sm:flex-none px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 rounded-lg transition-colors text-sm font-bold dark:bg-red-900/20 dark:border-red-900/30"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
 
@@ -246,7 +322,7 @@ const DraftsPage = () => {
         columns={columns}
         rowData={draftData}
         filter={false}
-        tableName="Drafts"
+        tableName={activeScope === 'product' ? "Product Drafts" : "Service Drafts"}
         onSelectionChange={setSelectedRows}
       />
 

@@ -141,7 +141,7 @@ const BoosterPlanView: React.FC = () => {
       field: "plan_name",
       width: 150,
       cellRenderer: (params: any) => (
-        <span className="uppercase text-xs font-semibold">{params.value}</span>
+        <span className=" text-xs font-semibold">{params.value}</span>
       )
     },
     {
@@ -209,7 +209,7 @@ const BoosterPlanView: React.FC = () => {
               }`}
           >
             {plan.is_popular && (
-              <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-5 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg">
+              <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-5 py-1.5 rounded-full text-xs font-bold shadow-lg">
                 Recommended
               </span>
             )}
@@ -318,7 +318,7 @@ const BoosterPlanView: React.FC = () => {
               <span className="font-bold text-gray-900 dark:text-gray-200">{priorityCount}</span>
             </div>
             <div className="flex justify-between items-center text-sm font-black border-t pt-2 border-gray-200 dark:border-gray-700 dark:text-gray-200">
-              <span className="text-gray-900 uppercase dark:text-gray-200">Total Payable</span>
+              <span className="text-gray-900 dark:text-gray-200">Total Payable</span>
               <span className={`text-lg ${activeBooster ? 'text-green-600' : 'text-indigo-600'}`}>
                 {activeBooster ? 'FREE' : `${currency}${selectedPlanForBoost?.price}`}
               </span>

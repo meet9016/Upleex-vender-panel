@@ -79,6 +79,12 @@ export interface EndPointApi {
     getAllRentalBoostPlans: string;
     purchaseRentalBoostPlan: string;
     getVendorRentalBoostPurchases: string;
+    getServicePlanOptions: string;
+    postCreateServiceListingPlan: string;
+    getPurchasedServicePlans: string;
+    getServicePriorityPlanOptions: string;
+    postCreateServicePriorityPlan: string;
+    getPurchasedServicePriorityPlans: string;
 }
 
 // Define and export the API endpoint object
@@ -169,6 +175,16 @@ const endPointApi: EndPointApi = {
     getAllRentalBoostPlans: 'rental-boost-plans/getall',
     purchaseRentalBoostPlan: 'rental-boost-plans/purchase-bulk',
     getVendorRentalBoostPurchases: 'rental-boost-plans/vendor/purchases',
+
+    // Service Plans
+    getServicePlanOptions: 'service-plans/getall',
+    postCreateServiceListingPlan: 'service-listing-plans/create',
+    getPurchasedServicePlans: 'service-listing-plans/getall',
+
+    // Service Priority Plans
+    getServicePriorityPlanOptions: 'service-priority-plans/getall',
+    postCreateServicePriorityPlan: 'service-priority-purchases/create',
+    getPurchasedServicePriorityPlans: 'service-priority-purchases/getall',
 };
 
 export default endPointApi;

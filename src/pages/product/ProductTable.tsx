@@ -1041,7 +1041,7 @@ const ProductTable = () => {
             <svg className={`w-3.5 h-3.5 ${activeTab === 'rent' ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className="hidden sm:inline">RENT</span>
+            <span className="hidden sm:inline">Rent</span>
             <span className="sm:hidden">R</span>
           </button>
 
@@ -1055,7 +1055,7 @@ const ProductTable = () => {
             <svg className={`w-3.5 h-3.5 ${activeTab === 'sell' ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-            <span className="hidden sm:inline">SELL</span>
+            <span className="hidden sm:inline">Sell</span>
             <span className="sm:hidden">S</span>
           </button>
         </div>

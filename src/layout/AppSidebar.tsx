@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import { useFilter } from "../context/FilterContext";
+import { useKyc } from "../context/KycContext";
 import { CalenderIcon, GridIcon, HorizontaLDots, BoxIcon, DocsIcon, ListIcon, DollarLineIcon, TaskIcon, WalletIcon } from "../icons/index";
 import { BsChatSquareQuote } from "react-icons/bs";
 import endPointApi from "@/utils/endPointApi";
@@ -39,31 +40,7 @@ const AppSidebar: React.FC = () => {
   const { filters } = useFilter();
   const pathname = usePathname();
   const router = useRouter();
-  const [kycApproved, setKycApproved] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await api.post(endPointApi.postFetchVendorKYCFormData as string);
-        const status = res?.data?.data?.status || "";
-        if (!mounted) return;
-        const approved = String(status).toLowerCase() === "approved";
-        setKycApproved(approved);
-      } catch {
-        if (!mounted) return;
-        setKycApproved(false);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const { kycApproved, isLoading } = useKyc();
 
   // Close mobile sidebar when route changes
   useEffect(() => {
@@ -76,8 +53,8 @@ const AppSidebar: React.FC = () => {
 
 
   const visibleItems = useMemo(() => {
-    if (isLoading) {
-      return []; // Show nothing while loading
+    if (isLoading && !kycApproved) {
+      return []; // Show nothing while initial loading and not yet known to be approved
     }
     if (kycApproved === false) {
       return kycOnlyItems; // Show only KYC if not approved
@@ -170,7 +147,7 @@ const AppSidebar: React.FC = () => {
       <nav className="flex flex-col overflow-y-auto duration-300 no-scrollbar">
         {!isLoading && (
           <>
-            <h2 className={`mb-4 text-xs uppercase flex text-gray-400 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
+            <h2 className={`mb-4 text-xs  flex text-gray-400 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
               {showExpanded ? "Menu" : <HorizontaLDots />}
             </h2>
 
