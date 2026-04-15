@@ -814,7 +814,7 @@ const QuoteTable = () => {
 
   const getRowStyle = (params: any) => {
     // If isNew is true -> Light Yellow 
-    if (params.data?.isNew === true) {
+    if (params.data?.isNew === true && String(params.data?.status || '').toLowerCase() === 'pending') {
       return { backgroundColor: 'rgba(253, 230, 138, 0.4)' }; 
     }
 
@@ -839,7 +839,7 @@ const QuoteTable = () => {
       const isCompleted = status.includes('complet') || status.includes('success') || status.includes('return');
 
       // 2. If end_date is today -> Light Green
-      if (endDate.getTime() === today.getTime() && paymentStatus === 'paid') {
+      if (endDate.getTime() === today.getTime() && paymentStatus === 'paid' && status.includes('delivery')) {
         return { backgroundColor: 'rgba(16, 185, 129, 0.15)' }; // Light Green (Emerald)
       }
 

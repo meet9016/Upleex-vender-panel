@@ -144,7 +144,7 @@ const AppSidebar: React.FC = () => {
         </Link>
       </div>
 
-      <nav className="flex flex-col overflow-y-auto duration-300 no-scrollbar">
+      <nav className="flex flex-col overflow-y-auto duration-300 custom-scrollbar">
         {!isLoading && (
           <>
             <h2 className={`mb-4 text-xs  flex text-gray-400 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}>
