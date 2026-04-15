@@ -263,7 +263,7 @@
 
 @utility custom-scrollbar {
   &::-webkit-scrollbar {
-    @apply size-1.5;
+    width: 6px;
   }
 
   &::-webkit-scrollbar-track {
@@ -271,12 +271,34 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    @apply bg-gray-200 rounded-full dark:bg-gray-700;
+    background: linear-gradient(to bottom, #7c3aed, #3b82f6, #0ea5e9);
+    @apply rounded-full;
   }
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #344054;
+  background: linear-gradient(to bottom, #7c3aed, #3b82f6, #0ea5e9);
+}
+
+/* Global scrollbar for all overflow elements */
+* {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #7c3aed, #3b82f6, #0ea5e9);
+    border-radius: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #6d28d9, #2563eb, #0284c7);
+  }
 }
 
 
