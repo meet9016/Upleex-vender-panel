@@ -586,7 +586,7 @@ const ListingPlanView: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         className="max-w-6xl w-full"
       >
-        <div className="flex flex-col h-[80vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
+        <div className="flex flex-col h-[85vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
           <div className="px-6 pr-14 py-4 border-b bg-white dark:bg-gray-900">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
@@ -645,7 +645,7 @@ const ListingPlanView: React.FC = () => {
               rowData={filteredProducts}
               onSelectionChange={handleSelectionChange}
               showCheckboxes={true}
-              height={400}
+              height={500}
               rowHeight={50}
               isRowSelectable={(params) => {
                 // Disable if product is already in ANY active listing plan
