@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { Package, Search, Check, ShoppingBag, Loader2, AlertCircle, History, Eye } from "lucide-react";
+import { Package, Search, Check, ShoppingBag, Loader2, AlertCircle, History, Eye, Zap } from "lucide-react";
 import PageLoader from "@/components/common/PageLoader";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
@@ -47,9 +47,12 @@ const ListingPlanView: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<ListingPlan | null>(null);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [priorityAddons, setPriorityAddons] = useState<any[]>([]);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
   const [gridSearch, setGridSearch] = useState("");
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean } | null>(null);
 
   const planAggregates = useMemo(() => {
     const aggregates: Record<string, { total: number; used: number; productIds: Set<string> }> = {};
@@ -76,20 +79,35 @@ const ListingPlanView: React.FC = () => {
       });
     });
 
+    // Add Priority Addon slots
+    priorityAddons.forEach(p => {
+      const type = "Priority Addon";
+      if (!aggregates[type]) {
+        aggregates[type] = { total: 0, used: 0, productIds: new Set() };
+      }
+      aggregates[type].total += Number(p.addon_max_slots || 0); 
+      // Actually, we should use addon_product_ids for the "used" count
+      const addonPIds = p.addon_product_ids || [];
+      addonPIds.forEach((id: any) => {
+        aggregates[type].productIds.add(String(id));
+      });
+    });
+
     Object.keys(aggregates).forEach(type => {
       aggregates[type].used = aggregates[type].productIds.size;
     });
 
     return aggregates;
-  }, [purchasedPlans]);
+  }, [purchasedPlans, priorityAddons]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [plansRes, productsRes, purchasesRes] = await Promise.all([
+      const [plansRes, productsRes, purchasesRes, priorityRes] = await Promise.all([
         api.get(endPointApi.getPlanOptions),
         api.get(endPointApi.postAllVendorProductList, { params: { limit: 1000 } }),
-        api.get(endPointApi.getPurchasedPlans)
+        api.get(endPointApi.getPurchasedPlans),
+        api.get(endPointApi.getVendorPriorityPurchases)
       ]);
 
       const rawPlans = plansRes.data.data || [];
@@ -124,6 +142,7 @@ const ListingPlanView: React.FC = () => {
       setPlans(normalizedPlans);
       setProducts(normalizedProducts);
       setPurchasedPlans(purchasesRes.data.data || []);
+      setPriorityAddons((priorityRes.data.data || []).filter((p: any) => p.is_addon_purchased));
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to load listing plan data");
     } finally {
@@ -141,7 +160,23 @@ const ListingPlanView: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handlePurchase = async () => {
+  const handleAddonRefill = (addon: any) => {
+    // Open modal with addon context
+    setSelectedPlan({
+      key: 'Priority Addon',
+      name: addon.plan_name + ' Addon',
+      description: 'Bonus annual listing slots',
+      price: 0,
+      duration_months: 12,
+      product_limit: addon.addon_max_slots,
+      id: addon.id || addon._id, // Store purchase ID for refill
+      plan_id: addon.plan_id, // Add this to satisfy Joi validation
+    } as any);
+    setSelectedProductIds([]);
+    setIsModalOpen(true);
+  };
+
+  const handlePurchase = async (isConfirmed = false) => {
     if (!selectedPlan) return;
 
     if (selectedProductIds.length === 0) {
@@ -151,27 +186,53 @@ const ListingPlanView: React.FC = () => {
 
     const agg = planAggregates[selectedPlan.key] || { total: 0, used: 0, productIds: new Set() };
     const remainingSlots = Math.max(0, agg.total - agg.used);
-
-    // Identify truly new products (not already in THIS plan type)
     const trulyNewIds = selectedProductIds.filter(id => !agg.productIds.has(String(id)));
+    const isRefillAvailable = remainingSlots > 0 && selectedProductIds.length <= remainingSlots;
+    const isAddonRefill = (selectedPlan as any).key === 'Priority Addon' && remainingSlots > 0;
 
-    // Deduction is only needed if new products exceed current remaining slots
-    // Actually, following the backend logic, if trulyNewIds fit in remainingSlots, cost is 0.
-    const isNewPurchaseNeeded = trulyNewIds.length > remainingSlots || agg.total === 0;
-    const priceToPay = isNewPurchaseNeeded ? selectedPlan.price : 0;
+    let finalPrice = selectedPlan.price;
+    if (isRefillAvailable || isAddonRefill) {
+      finalPrice = 0;
+    }
 
-    if (priceToPay > balance) {
-      toast.error("Insufficient wallet balance.");
+    if (!isConfirmed) {
+      setPurchaseSummary({
+        count: selectedProductIds.length,
+        amount: finalPrice,
+        isRefill: isRefillAvailable || isAddonRefill
+      });
+      setIsConfirmModalOpen(true);
       return;
     }
 
-    if (trulyNewIds.length > (isNewPurchaseNeeded ? selectedPlan.product_limit : remainingSlots)) {
-      toast.error(`Exceeds available capacity. You can add up to ${isNewPurchaseNeeded ? selectedPlan.product_limit : remainingSlots} products.`);
+    if (finalPrice > balance) {
+      toast.error("Insufficient wallet balance.");
       return;
     }
 
     setIsPurchasing(true);
     try {
+      if ((selectedPlan as any).key === 'Priority Addon') {
+        const res = await api.post(endPointApi.purchasePriorityPlan, {
+          plan_id: (selectedPlan as any).plan_id || (selectedPlan as any).id,
+          product_ids: [],
+          price: 0,
+          plan_duration: 'yearly',
+          is_addon_purchased: true,
+          addon_product_ids: selectedProductIds,
+          is_refill: true,
+          purchase_id: (selectedPlan as any).id
+        });
+
+        if (res.data.success) {
+          toast.success(res.data.message || "Products added to benefit slots!");
+          setIsModalOpen(false);
+          setIsConfirmModalOpen(false);
+          fetchData();
+        }
+        return;
+      }
+
       const res = await api.post(endPointApi.postCreateListingPlan, {
         plan_type: selectedPlan.key,
         product_ids: selectedProductIds,
@@ -180,11 +241,12 @@ const ListingPlanView: React.FC = () => {
       if (res.data.success) {
         toast.success(res.data.message || "Listing plan activated successfully!");
         setIsModalOpen(false);
+        setIsConfirmModalOpen(false);
         refreshBalance();
         fetchData();
       }
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Purchase failed");
+      toast.error(error?.response?.data?.message || "Operation failed");
     } finally {
       setIsPurchasing(false);
     }
@@ -284,7 +346,7 @@ const ListingPlanView: React.FC = () => {
       valueGetter: (p) => {
         for (const [type, agg] of Object.entries(planAggregates)) {
           if (agg.productIds.has(String(p.data.id))) {
-            return type.charAt(0).toUpperCase() + type.slice(1);
+            return type;
           }
         }
         return "";
@@ -332,8 +394,9 @@ const ListingPlanView: React.FC = () => {
         });
       });
     });
-    return rows.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [purchasedPlans]);
+
+    return rows.sort((a, b) => new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime());
+  }, [purchasedPlans, products]);
 
   const purchaseHistoryColumns: ColDef[] = [
     {
@@ -459,6 +522,47 @@ const ListingPlanView: React.FC = () => {
             </Button>
           </div>
         ))}
+        {priorityAddons.map((addon) => (
+          <div
+            key={addon._id}
+            className={`relative p-8 rounded-3xl border-2 border-indigo-100 transition-all duration-500 flex flex-col h-full bg-gradient-to-br from-indigo-50/30 to-white group dark:bg-[#0d111c] hover:border-indigo-300 hover:shadow-xl shadow-sm`}
+          >
+            <div className="absolute top-4 right-4 bg-indigo-600 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase">Add-on Active</div>
+            <div className="mb-6 text-center">
+              <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform dark:bg-[#1c2938]">
+                <Zap className="w-8 h-8 text-indigo-600" />
+              </div>
+              <h4 className="text-xl font-bold text-gray-900 mb-1 dark:text-gray-100">{addon.plan_name} Addon</h4>
+              <p className="text-gray-500 text-sm line-clamp-2 dark:text-gray-400">Exclusive Annual Benefit Listing Slots</p>
+            </div>
+
+            <div className="space-y-4 mb-8 flex-grow">
+              <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl dark:bg-[#1c2938]">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-indigo-600 font-medium">Add-on Slots Remaining</span>
+                  <span className="font-extrabold text-indigo-900 dark:text-indigo-200">
+                    {Math.max(0, (addon.addon_max_slots || 0) - (addon.addon_product_ids?.length || 0))} / {addon.addon_max_slots || 0}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <Check className="w-3 h-3 text-indigo-600" />
+                </div>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Extended listing for 1 year</span>
+              </div>
+            </div>
+
+            <Button
+              className={`w-full !py-4 rounded-xl font-bold shadow-lg transition-all active:scale-95 btn-primary bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100`}
+              onClick={() => handleAddonRefill(addon)}
+              variant="primary"
+              disabled={isPurchasing}
+            >
+              {(addon.addon_max_slots || 0) <= (addon.addon_product_ids?.length || 0) ? 'Renew Benefit' : 'Add More Products'}
+            </Button>
+          </div>
+        ))}
       </div>
 
       {/* History Section */}
@@ -541,7 +645,7 @@ const ListingPlanView: React.FC = () => {
               rowData={filteredProducts}
               onSelectionChange={handleSelectionChange}
               showCheckboxes={true}
-              height={500}
+              height={400}
               rowHeight={50}
               isRowSelectable={(params) => {
                 // Disable if product is already in ANY active listing plan
@@ -589,6 +693,64 @@ const ListingPlanView: React.FC = () => {
                   return (remaining > 0 && selectedProductIds.length <= remaining) ? 'Add to Plan (Free)' : 'Activate Plan';
                 })()
               )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Confirmation Modal */}
+      <Modal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        className="max-w-md w-full"
+      >
+        <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center dark:bg-emerald-900/30">
+              <Package className="text-emerald-600" size={24} />
+            </div>
+            <h3 className="text-xl font-bold dark:text-white">Confirm Listing Plan</h3>
+          </div>
+
+          <div className="space-y-4 mb-6">
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
+              <span className="text-gray-500 font-medium">Plan Type</span>
+              <span className="font-bold text-gray-900 dark:text-white capitalize">{selectedPlan?.name}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
+              <span className="text-gray-500 font-medium">Duration</span>
+              <span className="font-bold text-gray-900 dark:text-white">{selectedPlan?.duration_months} Months</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
+              <span className="text-gray-500 font-medium">Selected Products</span>
+              <span className="font-bold text-gray-900 dark:text-white">{purchaseSummary?.count} Items</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-xl border border-emerald-100 dark:bg-emerald-900/10">
+              <span className="text-emerald-600 font-bold uppercase text-xs tracking-wider">Total Amount</span>
+              <span className="text-2xl font-black text-emerald-600">{currency}{purchaseSummary?.amount?.toLocaleString()}</span>
+            </div>
+            {purchaseSummary?.amount === 0 && (
+              <p className="text-xs text-green-600 font-bold text-center px-4">
+                ✓ Using remaining slots from your active subscription. No additional charge.
+              </p>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-xl"
+              onClick={() => setIsConfirmModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-1 rounded-xl btn-primary bg-emerald-600 hover:bg-emerald-700"
+              onClick={() => handlePurchase(true)}
+              disabled={isPurchasing}
+            >
+              {isPurchasing ? "Processing..." : "Confirm Activation"}
             </Button>
           </div>
         </div>
