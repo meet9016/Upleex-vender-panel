@@ -312,13 +312,17 @@ const BoosterPlanView: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-inner dark:bg-[#1c2938]">
-            <div className="flex justify-between items-center text-sm mb-2">
+          <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-inner dark:bg-[#1c2938] space-y-3">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-500 dark:text-gray-200">Booster Plan</span>
+              <span className="font-bold text-gray-900 dark:text-gray-200">{selectedPlanForBoost?.name || `${selectedPlanForBoost?.days}-Day Boost`}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
               <span className="text-gray-500 dark:text-gray-200">Products to Boost</span>
-              <span className="font-bold text-gray-900 dark:text-gray-200">{priorityCount}</span>
+              <span className="font-bold text-gray-900 dark:text-gray-200">{priorityCount} Items</span>
             </div>
             <div className="flex justify-between items-center text-sm font-black border-t pt-2 border-gray-200 dark:border-gray-700 dark:text-gray-200">
-              <span className="text-gray-900 dark:text-gray-200">Total Payable</span>
+              <span className="text-gray-900 dark:text-gray-200 uppercase text-xs">Total Payable</span>
               <span className={`text-lg ${activeBooster ? 'text-green-600' : 'text-indigo-600'}`}>
                 {activeBooster ? 'FREE' : `${currency}${selectedPlanForBoost?.price}`}
               </span>

@@ -61,6 +61,7 @@ type Quote = {
   product_main_image?: string;
   razorpay_payment_link?: string;
   payment_status?: string;
+  isNew?: boolean;
 };
 
 const QuoteTable = () => {
@@ -812,6 +813,11 @@ const QuoteTable = () => {
   }, []);
 
   const getRowStyle = (params: any) => {
+    // If isNew is true -> Light Yellow 
+    if (params.data?.isNew === true && String(params.data?.status || '').toLowerCase() === 'pending') {
+      return { backgroundColor: 'rgba(253, 230, 138, 0.4)' }; 
+    }
+
     if (!params.data || !params.data.end_date || params.data.end_date === '-') return undefined;
 
     try {
@@ -828,17 +834,17 @@ const QuoteTable = () => {
 
       const endDate = new Date(year, month, day);
       endDate.setHours(0, 0, 0, 0);
-
+      const paymentStatus = String(params.data.payment_status || '').toLowerCase();
       const status = (params.data.status || '').toLowerCase();
       const isCompleted = status.includes('complet') || status.includes('success') || status.includes('return');
 
-      // 1. If end_date is today -> Light Green
-      if (endDate.getTime() === today.getTime()) {
+      // 2. If end_date is today -> Light Green
+      if (endDate.getTime() === today.getTime() && paymentStatus === 'paid' && status.includes('delivery')) {
         return { backgroundColor: 'rgba(16, 185, 129, 0.15)' }; // Light Green (Emerald)
       }
 
-      // 2. If end_date < today AND status is not complete -> Light Red
-      if (endDate.getTime() < today.getTime() && !isCompleted) {
+      // 3. If end_date < today AND status is not complete -> Light Red
+      if (endDate.getTime() < today.getTime() && !isCompleted && status.includes('delivery')) {
         return { backgroundColor: 'rgba(244, 63, 94, 0.15)' }; // Light Red (Rose)
       }
     } catch (e) {
