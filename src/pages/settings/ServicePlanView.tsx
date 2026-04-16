@@ -42,7 +42,7 @@ const ServicePlanView: React.FC = () => {
   const [plans, setPlans] = useState<ServiceListingPlan[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [purchasedPlans, setPurchasedPlans] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<ServiceListingPlan | null>(null);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -309,22 +309,25 @@ const ServicePlanView: React.FC = () => {
     );
   }, [services, gridSearch]);
 
-  if (loading) return <PageLoader fullScreen={false} />;
-
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="relative space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {loading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 dark:bg-black/70 backdrop-blur-sm rounded-2xl min-h-[60vh]">
+          <PageLoader fullScreen={false} />
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {plans.map((plan) => (
           <div
             key={plan._id}
             className="relative p-8 rounded-3xl border border-gray-200 transition-all duration-500 flex flex-col h-full bg-white group dark:bg-[#0d111c] hover:border-blue-300 hover:shadow-xl shadow-sm"
           >
-            <div className="mb-6 text-center">
-              <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform dark:bg-[#1c2938]">
-                <Briefcase className="w-8 h-8 text-blue-600" />
+            <div className="mb-3 text-center">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform dark:bg-[#1c2938]">
+                <Briefcase className="w-5 h-5 text-blue-600" />
               </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-1 dark:text-gray-100">{plan.plan_name}</h4>
-              <p className="text-gray-500 text-sm dark:text-gray-400">Listing plan for services</p>
+              <h4 className="text-base font-bold text-gray-900 mb-0.5 dark:text-gray-100">{plan.plan_name}</h4>
+              <p className="text-gray-500 text-xs dark:text-gray-400">Listing plan for services</p>
             </div>
 
             <div className="flex items-baseline justify-center gap-1 mb-8 p-4 bg-blue-50 rounded-2xl dark:bg-[#1c2938]">

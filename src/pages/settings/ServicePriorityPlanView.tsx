@@ -25,7 +25,7 @@ const ServicePriorityPlanView: React.FC = () => {
   const { currency, balance, refreshBalance } = useWallet();
   const [plan, setPlan] = useState<PriorityPlan | null>(null);
   const [purchases, setPurchases] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState<"monthly" | "yearly">("monthly");
   const [hasDurationAddon, setHasDurationAddon] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,18 +45,6 @@ const ServicePriorityPlanView: React.FC = () => {
       toast.error("Failed to load data");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fixExistingPurchases = async () => {
-    try {
-      const response = await api.post(endPointApi.postCreateServicePriorityPlan.replace('/create', '/fix-existing'));
-      if (response.data.success) {
-        toast.success(response.data.message);
-        fetchData(); // Refresh data
-      }
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to fix purchase records");
     }
   };
 
@@ -153,18 +141,26 @@ const ServicePriorityPlanView: React.FC = () => {
     }
   ];
 
-  if (loading) return <PageLoader />;
-
   return (
-    <div className="space-y-10">
+    <div className="relative space-y-10">
+      {loading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 dark:bg-black/70 backdrop-blur-sm rounded-2xl min-h-[60vh]">
+          <PageLoader fullScreen={false} />
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
         {plan && (
           <>
             {/* Monthly Plan Card */}
-            <div className="p-8 rounded-3xl border border-gray-200 bg-white dark:bg-gray-800 flex flex-col hover:border-brand-500 transition-all group">
-              <Zap className="w-12 h-12 text-brand-500 mb-4 group-hover:scale-110 transition-transform" />
-              <h4 className="text-xl font-bold mb-2">Monthly Priority</h4>
-              <div className="text-3xl font-black mb-6">{currency}{plan.monthly_price} <span className="text-sm font-normal text-gray-500">/ month</span></div>
+            <div className="p-6 rounded-3xl border border-gray-200 bg-white dark:bg-gray-800 flex flex-col hover:border-brand-500 transition-all group">
+              <div className="mb-3 text-center">
+                <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform dark:bg-[#1c2938]">
+                  <Zap className="w-5 h-5 text-brand-500" />
+                </div>
+                <h4 className="text-base font-bold mb-0.5">Monthly Priority</h4>
+                <p className="text-gray-500 text-xs">All services included</p>
+              </div>
+              <div className="text-3xl font-black mb-6 text-center">{currency}{plan.monthly_price} <span className="text-sm font-normal text-gray-500">/ month</span></div>
               <ul className="space-y-3 mb-8 flex-grow">
                 <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> Top Placement</li>
                 <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> Verified Badge</li>
@@ -174,11 +170,16 @@ const ServicePriorityPlanView: React.FC = () => {
             </div>
 
             {/* Yearly Plan Card */}
-            <div className="p-8 rounded-3xl border-2 border-brand-500 bg-brand-50/30 dark:bg-brand-900/10 flex flex-col relative overflow-hidden group">
+            <div className="p-6 rounded-3xl border-2 border-brand-500 bg-brand-50/30 dark:bg-brand-900/10 flex flex-col relative overflow-hidden group">
               <div className="absolute top-4 right-4 bg-brand-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">BEST VALUE</div>
-              <Zap className="w-12 h-12 text-brand-500 mb-4 group-hover:scale-110 transition-transform" />
-              <h4 className="text-xl font-bold mb-2">Annual Priority</h4>
-              <div className="text-3xl font-black mb-6">{currency}{plan.yearly_price} <span className="text-sm font-normal text-gray-500">/ year</span></div>
+              <div className="mb-3 text-center">
+                <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform dark:bg-[#1c2938]">
+                  <Zap className="w-5 h-5 text-brand-500" />
+                </div>
+                <h4 className="text-base font-bold mb-0.5">Annual Priority</h4>
+                <p className="text-gray-500 text-xs">Best value plan</p>
+              </div>
+              <div className="text-3xl font-black mb-6 text-center">{currency}{plan.yearly_price} <span className="text-sm font-normal text-gray-500">/ year</span></div>
               <ul className="space-y-3 mb-8 flex-grow">
                 <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> Top Placement</li>
                 <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> Verified Badge</li>
@@ -192,16 +193,9 @@ const ServicePriorityPlanView: React.FC = () => {
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold flex items-center gap-2"><History /> Priority Purchase History</h2>
-          <Button 
-            onClick={fixExistingPurchases}
-            variant="outline"
-            size="sm"
-            className="text-xs"
-          >
-            Fix Purchase Records
-          </Button>
+        <div className="flex items-center gap-3">
+          <History className="w-6 h-6 text-brand-600" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Purchase History</h2>
         </div>
         <AgGridTable rowData={purchases} columns={columns} height={400} />
       </div>
@@ -217,11 +211,17 @@ const ServicePriorityPlanView: React.FC = () => {
           </div>
           
           {selectedDuration === "yearly" && plan && (
-            <div className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${hasDurationAddon ? 'border-brand-500 bg-brand-50' : 'border-gray-100 bg-gray-50'}`}
+            <div className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${hasDurationAddon ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-gray-100 bg-gray-50 dark:bg-gray-800'}`}
                  onClick={() => setHasDurationAddon(!hasDurationAddon)}>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                  <Sparkles className="text-brand-500" />
+                  <input
+                    type="checkbox"
+                    checked={hasDurationAddon}
+                    onChange={() => setHasDurationAddon(!hasDurationAddon)}
+                    className="w-4 h-4 accent-brand-600 cursor-pointer flex-shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  />
                   <div>
                     <p className="font-bold text-sm">Exclusive Priority Annual Benefit</p>
                     <p className="text-[10px] text-gray-500">Unlimited service listings for the year</p>
