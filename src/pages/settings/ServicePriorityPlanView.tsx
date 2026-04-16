@@ -25,22 +25,26 @@ const ServicePriorityPlanView: React.FC = () => {
   const { currency, balance, refreshBalance } = useWallet();
   const [plan, setPlan] = useState<PriorityPlan | null>(null);
   const [purchases, setPurchases] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState<"monthly" | "yearly">("monthly");
   const [hasDurationAddon, setHasDurationAddon] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [historyTab, setHistoryTab] = useState<"free" | "paid">("paid");
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [plansRes, purchasesRes] = await Promise.all([
+      const [plansRes, purchasesRes, servicesRes] = await Promise.all([
         api.get(endPointApi.getServicePriorityPlanOptions),
-        api.get(endPointApi.getPurchasedServicePriorityPlans)
+        api.get(endPointApi.getPurchasedServicePriorityPlans),
+        api.get(endPointApi.postAllVendorServiceList, { params: { limit: 1000 } })
       ]);
       const activePlans = plansRes.data.data || [];
       setPlan(activePlans.length > 0 ? activePlans[0] : null);
       setPurchases(purchasesRes.data.data || []);
+      setServices(servicesRes.data.data || []);
     } catch (error) {
       toast.error("Failed to load data");
     } finally {
@@ -92,6 +96,14 @@ const ServicePriorityPlanView: React.FC = () => {
     }
   };
 
+  const freeServices = useMemo(() => services.filter(s => (s.pricing_type || 'paid').toLowerCase() === 'free'), [services]);
+  const paidServices = useMemo(() => services.filter(s => (s.pricing_type || 'paid').toLowerCase() !== 'free'), [services]);
+
+  const filteredPurchases = useMemo(() => {
+    if (historyTab === 'free') return purchases.filter(p => p.pricing_type?.toLowerCase() === 'free');
+    return purchases.filter(p => (p.pricing_type || 'paid').toLowerCase() !== 'free');
+  }, [purchases, historyTab]);
+
   const columns: ColDef[] = [
     { headerName: "Plan", field: "plan_name", flex: 1 },
     { 
@@ -138,6 +150,16 @@ const ServicePriorityPlanView: React.FC = () => {
           </div>
         );
       }
+    },
+    {
+      headerName: "Pricing",
+      field: "pricing_type",
+      width: 100,
+      cellRenderer: (params: any) => (
+        <div className="flex items-center h-full">
+          <StatusBadge status={(params.value || 'paid').toLowerCase() === 'free' ? 'free' : 'paid'} />
+        </div>
+      )
     }
   ];
 
@@ -193,11 +215,28 @@ const ServicePriorityPlanView: React.FC = () => {
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <History className="w-6 h-6 text-brand-600" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Purchase History</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <History className="w-6 h-6 text-brand-600" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Purchase History</h2>
+          </div>
+          <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 gap-1">
+            {(["free", "paid"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setHistoryTab(tab)}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition capitalize ${
+                  historyTab === tab
+                    ? 'bg-white dark:bg-gray-700 text-brand-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab === 'free' ? 'Free' : 'Paid'}
+              </button>
+            ))}
+          </div>
         </div>
-        <AgGridTable rowData={purchases} columns={columns} height={400} />
+        <AgGridTable rowData={filteredPurchases} columns={columns} height={400} />
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} className="max-w-md w-full">
@@ -240,6 +279,17 @@ const ServicePriorityPlanView: React.FC = () => {
               <span>{selectedDuration === 'monthly' ? 'Monthly' : 'Yearly'} Plan</span>
               <span>{currency}{selectedDuration === 'monthly' ? plan?.monthly_price : plan?.yearly_price}</span>
             </div>
+            {services.length > 0 && (
+              <div className="flex justify-between text-sm mb-2 text-gray-600">
+                <span>Services Covered</span>
+                <span className="font-semibold">
+                  {paidServices.length} Paid
+                  {freeServices.length > 0 && (
+                    <span className="ml-2 text-green-600">(+{freeServices.length} Free)</span>
+                  )}
+                </span>
+              </div>
+            )}
             {hasDurationAddon && (
               <div className="flex justify-between text-sm mb-2 text-gray-600">
                 <span>Annual Benefit Addon</span>

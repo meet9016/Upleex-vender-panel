@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
@@ -18,7 +18,9 @@ import { FiMoreVertical } from "react-icons/fi";
 import { FaFileExcel, FaFilePdf } from "react-icons/fa";
 import Loader from "@/components/common/Loader";
 import PlanSelectionDialog from "@/components/common/PlanSelectionDialog";
+import FreeActivationDialog from "@/components/common/FreeActivationDialog";
 import { exportProductsToExcel, exportProductsToPDF } from "@/utils/exportUtils";
+import StatusBadge from "@/components/common/StatusBadge";
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -55,6 +57,8 @@ export default function DraftPage() {
   const [subCategoryOptions, setSubCategoryOptions] = useState<{ label: string; value: string }[]>([]);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>("");
   const [showPlanDialog, setShowPlanDialog] = useState(false);
+  const [showFreeDialog, setShowFreeDialog] = useState(false);
+  const [freeActivateLoading, setFreeActivateLoading] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -102,7 +106,46 @@ export default function DraftPage() {
     }
   };
 
-  const columns: ColDef[] = useMemo(() => [
+  // Separate selected into free vs paid
+  const freeSelected = selected.filter((p) => p.pricing_type === 'free');
+  const paidSelected = selected.filter((p) => p.pricing_type !== 'free');
+  const hasOnlyFree = selected.length > 0 && paidSelected.length === 0;
+  const hasMixed = freeSelected.length > 0 && paidSelected.length > 0;
+
+  // Handle free product activation (1 month, no cost)
+  const handleFreeActivation = async () => {
+    try {
+      const ids = freeSelected.map((r) => r._id || r.id);
+      if (!ids.length) {
+        toast.info("Select free draft products to activate");
+        return;
+      }
+      setFreeActivateLoading(true);
+      const body: any = {
+        plan_type: 'custom',
+        product_ids: ids,
+        months: 1,
+        max_products: ids.length,
+        amount: 0,
+      };
+      await api.post(endPointApi.postCreateListingPlan, body);
+      toast.success(
+        `🎉 ${ids.length} free product${ids.length > 1 ? 's' : ''} activated for 1 month!`,
+        { autoClose: 5000 }
+      );
+      await fetchDrafts();
+      setSelected([]);
+      setShowFreeDialog(false);
+    } catch (error: any) {
+      console.error("Error activating free products:", error);
+      const errorMessage = error?.response?.data?.message || "Failed to activate free products";
+      toast.error(errorMessage);
+    } finally {
+      setFreeActivateLoading(false);
+    }
+  };
+
+  const columns: ColDef<any, any>[] = [
     {
       headerName: "Product",
       field: "product_name",
@@ -147,8 +190,19 @@ export default function DraftPage() {
       ),
       cellStyle: { textAlign: "center" }
     },
-    { field: "expires_at", headerName: "Expires On", width: 240, valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : "-", cellStyle: { textAlign: "center" } },
-  ], []);
+    { field: "expires_at", headerName: "Expires On", width: 180, valueFormatter: p => p.value ? new Date(p.value).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : "-", cellStyle: { textAlign: "center" } },
+    {
+            field: "pricing_type",
+            headerName: "Pricing",
+            minWidth: 110,
+            cellRenderer: (params: any) => (
+              <div className="flex items-center h-full">
+                <StatusBadge status={params.value || 'free'} />
+              </div>
+            ),
+            cellStyle: { justifyContent: "left" },
+          },
+  ];
 
   const fetchCategories = async () => {
     try {
@@ -375,31 +429,54 @@ export default function DraftPage() {
                 {selected.length} product{selected.length > 1 ? 's' : ''} selected for activation
               </span>
               <p className="text-xs text-blue-600 dark:text-blue-300 mt-0.5">
-                Choose a plan to activate these draft products
+                {hasOnlyFree
+                  ? 'These are free listings — activate for 1 month at no cost'
+                  : hasMixed
+                    ? 'Free listings activate free; paid listings require a plan'
+                    : 'Choose a plan to activate these draft products'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* <Button
-              onClick={() => setSelected([])}
-              className="text-xs px-3 py-1.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-            >
-              Clear Selection
-            </Button> */}
-            <Button
-              onClick={() => setShowPlanDialog(true)}
-              disabled={loading}
-              className="text-sm font-medium btn-primary disabled:opacity-50 px-4 py-2"
-            >
-              {loading ? (
-                <div className="flex items-center gap-2 ">
-                  <Loader type="button" iconClassName="text-white h-4 w-4" />
-                  <span>Activating...</span>
-                </div>
-              ) : (
-                'Activate Products'
-              )}
-            </Button>
+            {hasMixed && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                Mixed: {freeSelected.length} free, {paidSelected.length} paid
+              </p>
+            )}
+            {/* Free products activate button */}
+            {freeSelected.length > 0 && (
+              <Button
+                onClick={() => setShowFreeDialog(true)}
+                disabled={freeActivateLoading}
+                className="text-sm font-medium btn-primary hover:bg-primary-700 text-white disabled:opacity-50 px-4 py-2 rounded-lg"
+              >
+                {freeActivateLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader type="button" iconClassName="text-white h-4 w-4" />
+                    <span>Activating...</span>
+                  </div>
+                ) : (
+                  `Activate Free (${freeSelected.length})`
+                )}
+              </Button>
+            )}
+            {/* Paid products activate button */}
+            {paidSelected.length > 0 && (
+              <Button
+                onClick={() => setShowPlanDialog(true)}
+                disabled={loading}
+                className="text-sm font-medium btn-primary disabled:opacity-50 px-4 py-2"
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader type="button" iconClassName="text-white h-4 w-4" />
+                    <span>Activating...</span>
+                  </div>
+                ) : (
+                  `Activate Paid (${paidSelected.length})`
+                )}
+              </Button>
+            )}
           </div>
         </div>
       )}
@@ -415,13 +492,22 @@ export default function DraftPage() {
         noRowsMessage="No product found"
       />
 
-      {/* Plan Selection Dialog - Using the new component */}
+      {/* Plan Selection Dialog (Paid products) */}
       <PlanSelectionDialog
         isOpen={showPlanDialog}
         onClose={() => setShowPlanDialog(false)}
-        selectedCount={selected.length}
+        selectedCount={paidSelected.length || selected.length}
         onApplyPlan={applyPlan}
-        selectedProducts={selected}
+        selectedProducts={paidSelected.length > 0 ? paidSelected : selected}
+      />
+
+      {/* Free Activation Dialog */}
+      <FreeActivationDialog
+        isOpen={showFreeDialog}
+        onClose={() => setShowFreeDialog(false)}
+        products={freeSelected}
+        loading={freeActivateLoading}
+        onConfirm={handleFreeActivation}
       />
     </>
   );
