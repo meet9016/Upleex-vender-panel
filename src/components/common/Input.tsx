@@ -39,6 +39,9 @@ interface BaseInputProps {
 
     // Accessibility
     ariaLabel?: string;
+
+    // Info Tooltip
+    infoTooltip?: React.ReactNode;
 }
 
 interface SingleLineInputProps extends BaseInputProps, Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
@@ -87,6 +90,9 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
 
             // Accessibility
             ariaLabel,
+
+            // Info Tooltip
+            infoTooltip,
 
             // Standard props
             className = "",
@@ -139,11 +145,11 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
 
         // Icon padding
         const getIconPadding = () => {
-            if (!leftIcon && !rightIcon && !isSearch && !showPasswordToggle && !isLoading) return "";
+            if (!leftIcon && !rightIcon && !isSearch && !showPasswordToggle && !isLoading && !infoTooltip) return "";
 
             let padding = "";
             if (leftIcon || isSearch) padding += " pl-10";
-            if (rightIcon || showPasswordToggle || isLoading || (isSearch && internalValue)) padding += " pr-10";
+            if (rightIcon || showPasswordToggle || isLoading || (isSearch && internalValue) || infoTooltip) padding += " pr-10";
             return padding;
         };
 
@@ -206,7 +212,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
 
         // Determine which icons to show
         const hasLeftIcon = leftIcon || isSearch;
-        const hasRightIcon = rightIcon || showPasswordToggle || isLoading || (isSearch && internalValue);
+        const hasRightIcon = rightIcon || showPasswordToggle || isLoading || (isSearch && internalValue) || infoTooltip;
 
         const inputClasses = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${getIconPadding()} ${widthClass} ${className}`;
 
@@ -346,6 +352,27 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, CommonInputProp
                                 <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
+                            )}
+
+                            {/* Info Tooltip */}
+                            {infoTooltip && !isLoading && (
+                                <div className="group relative flex items-center">
+                                    <button
+                                        type="button"
+                                        className="text-gray-400 hover:text-blue-500 transition-colors focus:outline-none cursor-help"
+                                        aria-label="Information"
+                                        tabIndex={-1}
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </button>
+                                    
+                                    <div className="absolute right-0 bottom-full mb-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-max max-w-xs p-3 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-xl shadow-xl z-[100] md:max-w-sm whitespace-normal break-words pointer-events-none">
+                                        {infoTooltip}
+                                        <div className="absolute -bottom-1.5 right-2 w-3 h-3 bg-gray-900 dark:bg-gray-800 transform rotate-45"></div>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     )}

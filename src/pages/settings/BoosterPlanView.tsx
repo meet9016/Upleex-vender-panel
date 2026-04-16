@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { Rocket, History, TrendingUp, Sparkles, AlertCircle, Loader2, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
+import { Rocket, History, TrendingUp, Sparkles, AlertCircle, Loader2, CheckCircle2, ShieldCheck, Zap, Package } from "lucide-react";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import Button from "@/components/ui/button/Button";
@@ -168,7 +168,11 @@ const BoosterPlanView: React.FC = () => {
   ];
 
   if (loading) {
-    return <PageLoader fullScreen={false} />;
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <PageLoader fullScreen={false} />
+      </div>
+    );
   }
 
   return (
@@ -214,12 +218,12 @@ const BoosterPlanView: React.FC = () => {
               </span>
             )}
 
-            <div className="mb-6 text-center">
-              <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform dark:text-gray-200 dark:bg-black">
-                <Rocket className="w-8 h-8 text-indigo-600" />
+            <div className="mb-3 text-center">
+              <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform dark:text-gray-200 dark:bg-black">
+                <Package className="w-5 h-5 text-indigo-600" />
               </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-1 dark:text-gray-200">{plan.name || `${plan.days}-Day Boost`}</h4>
-              <p className="text-gray-500 text-sm line-clamp-2 dark:text-gray-200">{plan.description || `Boost all priority products for ${plan.days} days`}</p>
+              <h4 className="text-base font-bold text-gray-900 mb-0.5 dark:text-gray-200">{plan.name || `${plan.days}-Day Boost`}</h4>
+              <p className="text-gray-500 text-xs line-clamp-2 dark:text-gray-200">{plan.description || `Boost all priority products for ${plan.days} days`}</p>
             </div>
 
             {/* Price block */}
@@ -351,9 +355,9 @@ const BoosterPlanView: React.FC = () => {
       </Modal>
 
       {/* History Section */}
-      <div className="space-y-6">
+      <div className="space-y-2">
         <div className="flex items-center gap-3">
-          <History className="w-6 h-6 text-indigo-600" />
+          <Package className="w-6 h-6 text-brand-600" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Booster Purchase History</h2>
         </div>
 

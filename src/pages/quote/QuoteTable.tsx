@@ -859,6 +859,7 @@ const QuoteTable = () => {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-2 mt-5 !justify-end">
         {/* <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Quotes</h2> */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 ">
+              <ColorLegend />
           <div className="relative w-full sm:w-auto">
             <input
               type="text"
@@ -1069,3 +1070,20 @@ const QuoteTable = () => {
 };
 
 export default QuoteTable;
+
+const ColorLegend = () => (
+  <div className="flex flex-wrap items-center text-xs sm:text-sm">
+    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-full">
+      <span className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm shadow-green-200"></span>
+      <span className="text-gray-700 dark:text-gray-300 font-medium">Completed / Successful</span>
+    </div>
+    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-full">
+      <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 shadow-sm shadow-yellow-200"></span>
+      <span className="text-gray-700 dark:text-gray-300 font-medium">Pending / New</span>
+    </div>
+    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-full">
+      <span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm shadow-red-200"></span>
+      <span className="text-gray-700 dark:text-gray-300 font-medium">Expired Delivery</span>
+    </div>
+  </div>
+);

@@ -136,6 +136,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               value={KYCformData?.gst_number || ""}
               maxLength={15}
               disabled={KYCformData?.no_gst || false}
+              infoTooltip="Without GST, you can add only 1 product. Add your GST details to list up to 3 products for free."
               onChange={(e) => {
                 const value = e.target.value.toUpperCase();
                 clearError("gst_number");

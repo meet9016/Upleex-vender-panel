@@ -304,10 +304,10 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         <div>
           <Label required>Full Name</Label>
           <Input
-          disabled
+            disabled
             placeholder="Enter your full name"
             className="py-3"
-  error={!!errors?.full_name}
+            error={!!errors?.full_name}
             type="text"
             value={KYCformData?.full_name}
             onChange={(e) => {
@@ -332,7 +332,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         <div>
           <Label required>Mobile Number</Label>
           <Input placeholder="Enter your mobile number" type="text"
-          disabled
+            disabled
             value={KYCformData?.mobile}
             onChange={(e) => {
               const value = e.target.value;
@@ -346,7 +346,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             }}
             maxLength={10}
             className="py-3"
-              error={!!errors?.mobile}
+            error={!!errors?.mobile}
           />
           {errors?.mobile && (
             <p className="error-message">{errors.mobile}</p>
@@ -358,9 +358,9 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         <div>
           <Label required>Email</Label>
           <Input
-          disabled
+            disabled
             className="py-3"
-  error={!!errors?.email}
+            error={!!errors?.email}
             placeholder="Enter your email address"
             type="email"
             value={KYCformData?.email}
@@ -406,6 +406,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
           <Input placeholder="Enter your Address" type="text"
             className="py-3"
             value={KYCformData?.address}
+            infoTooltip="This address will be shown to users."
             onChange={(e) => {
               clearError("address")
               setKYCFormData(prevData => ({
@@ -413,7 +414,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
                 address: e.target.value,
               }));
             }}
-              error={!!errors?.address}
+            error={!!errors?.address}
           />
           {errors?.address && (
             <p className="error-message">{errors.address}</p>
@@ -537,19 +538,19 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               const selected = filteredCountries.find((c) => c.value === value);
               if (selected) {
                 clearError("country_id");
-                
+
                 // Clear dependent states
                 setStates([]);
                 setSelectedState(null);
                 pageRefState.current = 1;
                 setHasMoreStates(true);
-                
+
                 // Clear dependent cities
                 setCities([]);
                 setSelectedCity(null);
                 pageRefCity.current = 1;
                 setHasMoreCities(true);
-                
+
                 setSelectedCountry(selected);
                 setKYCFormData((prevData) => ({
                   ...prevData,
@@ -593,7 +594,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
               }
             }}
             className="py-3"
-              error={!!errors?.pincode}
+            error={!!errors?.pincode}
           />
           {errors?.pincode && (
             <p className="error-message">{errors.pincode}</p>
