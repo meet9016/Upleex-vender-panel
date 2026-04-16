@@ -16,7 +16,6 @@ import { Modal } from "@/components/ui/modal";
 interface ListingPlan {
   key: string;
   name: string;
-  description: string;
   price: number;
   duration_months: number;
   product_limit: number;
@@ -114,7 +113,6 @@ const ListingPlanView: React.FC = () => {
       const normalizedPlans = rawPlans.map((p: any) => ({
         key: p.plan_type,
         name: p.plan_type?.charAt(0).toUpperCase() + p.plan_type?.slice(1),
-        description: `${p.months} months, up to ${p.max_products} products`,
         price: p.amount,
         duration_months: p.months,
         product_limit: p.max_products,
@@ -165,7 +163,6 @@ const ListingPlanView: React.FC = () => {
     setSelectedPlan({
       key: 'Priority Addon',
       name: addon.plan_name + ' Addon',
-      description: 'Bonus annual listing slots',
       price: 0,
       duration_months: 12,
       product_limit: addon.addon_max_slots,
@@ -471,7 +468,6 @@ const ListingPlanView: React.FC = () => {
                 <Package className="w-5 h-5 text-emerald-600" />
               </div>
               <h4 className="text-base font-bold text-gray-900 mb-0.5 dark:text-gray-100">{plan.name}</h4>
-              <p className="text-gray-500 text-xs line-clamp-2 dark:text-gray-400">{plan.description}</p>
             </div>
 
             <div className="flex items-baseline justify-center gap-1 mb-8 p-4 bg-emerald-50 rounded-2xl dark:bg-[#1c2938]">

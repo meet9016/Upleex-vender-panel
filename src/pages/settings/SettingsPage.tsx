@@ -10,6 +10,7 @@ import Button from "@/components/ui/button/Button";
 import { Wallet, Package, Search, Check, Rocket } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { useWallet } from "@/context/WalletContext";
+import { useFilter } from "@/context/FilterContext";
 import AgGridTable from "@/components/tables/AgGridTable";
 import { ColDef } from "ag-grid-community";
 import StatusBadge from "@/components/common/StatusBadge";
@@ -26,7 +27,6 @@ interface PriorityPlan {
   monthly_price: number;
   yearly_price: number;
   product_slots: number;
-  description: string;
   is_popular: boolean;
   addon_available_for_yearly?: boolean;
   addon_price_per_year?: number;
@@ -85,6 +85,10 @@ const SettingsPage: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean } | null>(null);
   const { balance, currency, refreshBalance } = useWallet();
+  const { filters, isLoadingFilter } = useFilter();
+
+  const showProduct = !isLoadingFilter && (filters.vendor || (!filters.vendor && !filters.service));
+  const showService = !isLoadingFilter && (filters.service || (!filters.vendor && !filters.service));
 
   const fetchData = async () => {
     setLoading(true);
@@ -510,29 +514,31 @@ const SettingsPage: React.FC = () => {
     <div className="space-y-5 animate-in fade-in duration-500">
       {/* Top Scope + Tab Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm mb-4 sm:mb-6 dark:bg-black">
-        {/* Left: Scope switcher */}
-        <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 w-full sm:w-fit dark:bg-[#1c2938]">
-          <button
-            onClick={() => setPlanScope("product")}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "product"
-              ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
-              : "text-gray-500 hover:text-gray-700"
-              }`}
-          >
-            <Package size={15} />
-            <span>Product Plans</span>
-          </button>
-          <button
-            onClick={() => setPlanScope("service")}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "service"
-              ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
-              : "text-gray-500 hover:text-gray-700"
-              }`}
-          >
-            <Briefcase size={15} />
-            <span>Service Plans</span>
-          </button>
-        </div>
+        {/* Left: Scope switcher - only show if both types active */}
+        {showProduct && showService && (
+          <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 w-full sm:w-fit dark:bg-[#1c2938]">
+            <button
+              onClick={() => setPlanScope("product")}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "product"
+                ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
+                : "text-gray-500 hover:text-gray-700"
+                }`}
+            >
+              <Package size={15} />
+              <span>Product Plans</span>
+            </button>
+            <button
+              onClick={() => setPlanScope("service")}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "service"
+                ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
+                : "text-gray-500 hover:text-gray-700"
+                }`}
+            >
+              <Briefcase size={15} />
+              <span>Service Plans</span>
+            </button>
+          </div>
+        )}
 
         {/* Right: Sub-tab switcher */}
         {planScope === "product" && (
@@ -610,7 +616,8 @@ const SettingsPage: React.FC = () => {
         )}
       </div>
 
-      {planScope === "product" ? (
+      {isLoadingFilter ? null : showProduct && !showService ? (
+        // Only product vendor
         currentTab === "priority" ? (
           <>
             {/* Priority Plan Content */}
@@ -660,88 +667,83 @@ const SettingsPage: React.FC = () => {
                             <Package className="w-5 h-5 text-brand-600" />
                           </div>
                           <h4 className="text-base font-bold text-gray-900 mb-0.5 dark:text-gray-300">{plan.name}</h4>
-                          <p className="text-gray-500 text-xs dark:text-gray-300">{plan.description}</p>
                         </div>
 
-                                                <div className="flex gap-3 mb-8">
-                                                  {(["monthly", "yearly"] as const).map((dur) => {
-                                                    const isSelected = (planDurations[planId] || "monthly") === dur;
-                                                    const price = dur === "monthly" ? plan.monthly_price : plan.yearly_price;
-                                                    return (
-                                                      <button
-                                                        key={dur}
-                                                        onClick={() => setPlanDurations(prev => ({ ...prev, [planId]: dur }))}
-                                                        className={`flex-1 flex flex-col gap-1 p-4 rounded-2xl border-2 transition-all text-left ${
-                                                          isSelected
-                                                            ? "border-brand-500 bg-gradient-to-br from-brand-50 to-white dark:from-brand-900/20 dark:to-[#0d111c] shadow-md"
-                                                            : "border-gray-200 bg-gray-50 dark:bg-[#0d111c] dark:border-gray-700 hover:border-brand-200"
-                                                        }`}
-                                                      >
-                                                        <span className={`text-xs font-bold uppercase tracking-wide ${
-                                                          isSelected ? "text-brand-500" : "text-gray-400"
-                                                        }`}>
-                                                          {dur === "monthly" ? "Monthly" : "Yearly"}
-                                                        </span>
-                                                        <div className="flex items-baseline gap-0.5">
-                                                          <span className={`text-2xl font-black ${
-                                                            isSelected ? "text-brand-600" : "text-gray-400"
-                                                          }`}>
-                                                            {currency}{price}
-                                                          </span>
-                                                          <span className={`text-xs font-bold ${
-                                                            isSelected ? "text-gray-500" : "text-gray-400"
-                                                          }`}>
-                                                            /{dur === "monthly" ? "mo" : "yr"}
-                                                          </span>
-                                                        </div>
-                                                      </button>
-                                                    );
-                                                  })}
-                                                </div>
+                        <div className="flex gap-3 mb-8">
+                          {(["monthly", "yearly"] as const).map((dur) => {
+                            const isSelected = (planDurations[planId] || "monthly") === dur;
+                            const price = dur === "monthly" ? plan.monthly_price : plan.yearly_price;
+                            return (
+                              <button
+                                key={dur}
+                                onClick={() => setPlanDurations(prev => ({ ...prev, [planId]: dur }))}
+                                className={`flex-1 flex flex-col gap-1 p-4 rounded-2xl border-2 transition-all text-left ${isSelected
+                                  ? "border-brand-500 bg-gradient-to-br from-brand-50 to-white dark:from-brand-900/20 dark:to-[#0d111c] shadow-md"
+                                  : "border-gray-200 bg-gray-50 dark:bg-[#0d111c] dark:border-gray-700 hover:border-brand-200"
+                                  }`}
+                              >
+                                <span className={`text-xs font-bold uppercase tracking-wide ${isSelected ? "text-brand-500" : "text-gray-400"
+                                  }`}>
+                                  {dur === "monthly" ? "Monthly" : "Yearly"}
+                                </span>
+                                <div className="flex items-baseline gap-0.5">
+                                  <span className={`text-2xl font-black ${isSelected ? "text-brand-600" : "text-gray-400"
+                                    }`}>
+                                    {currency}{price}
+                                  </span>
+                                  <span className={`text-xs font-bold ${isSelected ? "text-gray-500" : "text-gray-400"
+                                    }`}>
+                                    /{dur === "monthly" ? "mo" : "yr"}
+                                  </span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
 
-                                                {isDurationActive && (
-                                                  <div className="mb-4 sm:mb-6 p-4 bg-green-50 border border-green-100 rounded-xl dark:bg-[#1c2938]">
-                                                    <div className="flex justify-between items-center text-sm">
-                                                      <div>
-                                                        <span className="text-green-600 font-bold text-xs uppercase tracking-tight">Active {durationToggle} Slots</span>
-                                                        <p className="text-[10px] text-green-500">Remaining for current period</p>
-                                                      </div>
-                                                      <span className="font-black text-green-800 dark:text-green-200 text-2xl">
-                                                        {currentRemaining}
-                                                      </span>
-                                                    </div>
-                                                  </div>
-                                                )}
+                        {isDurationActive && (
+                          <div className="mb-4 sm:mb-6 p-4 bg-green-50 border border-green-100 rounded-xl dark:bg-[#1c2938]">
+                            <div className="flex justify-between items-center text-sm">
+                              <div>
+                                <span className="text-green-600 font-bold text-xs uppercase tracking-tight">Active {durationToggle} Slots</span>
+                                <p className="text-[10px] text-green-500">Remaining for current period</p>
+                              </div>
+                              <span className="font-black text-green-800 dark:text-green-200 text-2xl">
+                                {currentRemaining}
+                              </span>
+                            </div>
+                          </div>
+                        )}
 
-                                                <div className="space-y-3 sm:space-y-4 mb-5 sm:mb-8 flex-grow">
-                                                  <div className="flex items-start gap-3 sm:gap-4">
-                                                    <div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0"><Check className="text-green-600" size={14} /></div>
-                                                    <div>
-                                                      <p className="text-gray-900 font-bold text-sm dark:text-gray-300">{plan.product_slots} Product Slots</p>
-                                                      <p className="text-xs text-gray-500">Add up to {plan.product_slots} items</p>
-                                                    </div>
-                                                  </div>
-                                                  <div className="flex items-start gap-3 sm:gap-4">
-                                                    <div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0"><Check className="text-green-600" size={14} /></div>
-                                                    <div>
-                                                      <p className="text-gray-900 font-bold text-sm dark:text-gray-300">Top Feed Priority</p>
-                                                      <p className="text-xs text-gray-500">Show above standard listings</p>
-                                                    </div>
-                                                  </div>
-                                                </div>
+                        <div className="space-y-3 sm:space-y-4 mb-5 sm:mb-8 flex-grow">
+                          <div className="flex items-start gap-3 sm:gap-4">
+                            <div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0"><Check className="text-green-600" size={14} /></div>
+                            <div>
+                              <p className="text-gray-900 font-bold text-sm dark:text-gray-300">{plan.product_slots} Product Slots</p>
+                              <p className="text-xs text-gray-500">Add up to {plan.product_slots} items</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3 sm:gap-4">
+                            <div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0"><Check className="text-green-600" size={14} /></div>
+                            <div>
+                              <p className="text-gray-900 font-bold text-sm dark:text-gray-300">Top Feed Priority</p>
+                              <p className="text-xs text-gray-500">Show above standard listings</p>
+                            </div>
+                          </div>
+                        </div>
 
-                                                <Button
-                                                  onClick={() => handleSelectPlan(plan)}
-                                                  variant={plan.is_popular ? 'primary' : 'outline'}
-                                                  className="w-full !py-3.5 rounded-xl font-bold btn-primary"
-                                                >
-                                                  {isDurationActive ? 'Add More Products' : 'Select Plan'}
-                                                </Button>
-                                              </div>
-                                            );
-                                          })}
-                                        </div>
-                                      </div>
+                        <Button
+                          onClick={() => handleSelectPlan(plan)}
+                          variant={plan.is_popular ? 'primary' : 'outline'}
+                          className="w-full !py-3.5 rounded-xl font-bold btn-primary"
+                        >
+                          {isDurationActive ? 'Add More Products' : 'Select Plan'}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
               {/* Priority Purchase History */}
               <div className="space-y-2 md:col-span-3">
@@ -996,13 +998,88 @@ const SettingsPage: React.FC = () => {
         ) : (
           <ListingPlanView />
         )
-      ) : (
+      ) : showService && !showProduct ? (
+        // Only service vendor
         currentServiceTab === "listing" ? (
           <ServicePlanView />
         ) : (
           <ServicePriorityPlanView />
         )
-      )}
+      ) : showProduct && showService ? (
+        // Both - use planScope switcher
+        planScope === "product" ? (
+          currentTab === "priority" ? (
+            <>
+              {/* Priority Plan Content */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="md:col-span-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
+                    {plans.map((plan) => {
+                      const planId = plan.id || (plan as any)._id;
+                      const durationToggle = planDurations[planId] || "monthly";
+                      const monthlyPurchases = vendorPurchases.filter(p => String(p.plan_id) === String(planId) && p.plan_duration === "monthly");
+                      const yearlyPurchases = vendorPurchases.filter(p => String(p.plan_id) === String(planId) && p.plan_duration === "yearly");
+                      const mTotal = monthlyPurchases.reduce((acc, p) => acc + Number(p.total_slots), 0);
+                      const mUsed = monthlyPurchases.reduce((acc, p) => acc + p.product_ids.length, 0);
+                      const yTotal = yearlyPurchases.reduce((acc, p) => acc + Number(p.total_slots), 0);
+                      const yUsed = yearlyPurchases.reduce((acc, p) => acc + p.product_ids.length, 0);
+                      const currentRemaining = durationToggle === "monthly" ? Math.max(0, mTotal - mUsed) : Math.max(0, yTotal - yUsed);
+                      const isDurationActive = durationToggle === "monthly" ? mTotal > 0 : yTotal > 0;
+                      return (
+                        <div key={plan.id} className={`relative p-5 sm:p-8 rounded-2xl sm:rounded-3xl border transition-all duration-500 flex flex-col h-full bg-white dark:bg-[#0d111c] group ${plan.is_popular ? 'border-brand-500 shadow-2xl shadow-brand-100 sm:scale-[1.02] z-10' : 'border-gray-200 hover:border-brand-300 hover:shadow-xl shadow-sm'}`}>
+                          {plan.is_popular && <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-5 py-1.5 rounded-full text-xs font-bold tracking-widest shadow-lg">Recommended</span>}
+                          <div className="mb-3 flex flex-col items-center text-center">
+                            <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform dark:bg-[#1c2938]"><Package className="w-5 h-5 text-brand-600" /></div>
+                            <h4 className="text-base font-bold text-gray-900 mb-0.5 dark:text-gray-300">{plan.name}</h4>
+                          </div>
+                          <div className="flex gap-3 mb-8">
+                            {(["monthly", "yearly"] as const).map((dur) => {
+                              const isSelected = (planDurations[planId] || "monthly") === dur;
+                              const price = dur === "monthly" ? plan.monthly_price : plan.yearly_price;
+                              return (
+                                <button key={dur} onClick={() => setPlanDurations(prev => ({ ...prev, [planId]: dur }))} className={`flex-1 flex flex-col gap-1 p-4 rounded-2xl border-2 transition-all text-left ${isSelected ? "border-brand-500 bg-gradient-to-br from-brand-50 to-white dark:from-brand-900/20 dark:to-[#0d111c] shadow-md" : "border-gray-200 bg-gray-50 dark:bg-[#0d111c] dark:border-gray-700 hover:border-brand-200"}`}>
+                                  <span className={`text-xs font-bold uppercase tracking-wide ${isSelected ? "text-brand-500" : "text-gray-400"}`}>{dur === "monthly" ? "Monthly" : "Yearly"}</span>
+                                  <div className="flex items-baseline gap-0.5">
+                                    <span className={`text-2xl font-black ${isSelected ? "text-brand-600" : "text-gray-400"}`}>{currency}{price}</span>
+                                    <span className={`text-xs font-bold ${isSelected ? "text-gray-500" : "text-gray-400"}`}>/{dur === "monthly" ? "mo" : "yr"}</span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {isDurationActive && (
+                            <div className="mb-4 sm:mb-6 p-4 bg-green-50 border border-green-100 rounded-xl dark:bg-[#1c2938]">
+                              <div className="flex justify-between items-center text-sm">
+                                <div><span className="text-green-600 font-bold text-xs uppercase tracking-tight">Active {durationToggle} Slots</span><p className="text-[10px] text-green-500">Remaining for current period</p></div>
+                                <span className="font-black text-green-800 dark:text-green-200 text-2xl">{currentRemaining}</span>
+                              </div>
+                            </div>
+                          )}
+                          <div className="space-y-3 sm:space-y-4 mb-5 sm:mb-8 flex-grow">
+                            <div className="flex items-start gap-3"><div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0"><Check className="text-green-600" size={14} /></div><div><p className="text-gray-900 font-bold text-sm dark:text-gray-300">{plan.product_slots} Product Slots</p><p className="text-xs text-gray-500">Add up to {plan.product_slots} items</p></div></div>
+                            <div className="flex items-start gap-3"><div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0"><Check className="text-green-600" size={14} /></div><div><p className="text-gray-900 font-bold text-sm dark:text-gray-300">Top Feed Priority</p><p className="text-xs text-gray-500">Show above standard listings</p></div></div>
+                          </div>
+                          <Button onClick={() => handleSelectPlan(plan)} variant={plan.is_popular ? 'primary' : 'outline'} className="w-full !py-3.5 rounded-xl font-bold btn-primary">{isDurationActive ? 'Add More Products' : 'Select Plan'}</Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="space-y-2 md:col-span-3">
+                  <div className="flex items-center gap-3"><Package className="w-6 h-6 text-brand-600" /><h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Plan History</h2></div>
+                  <AgGridTable rowData={flattenedPriorityHistory} columns={priorityHistoryColumns} showCheckboxes={false} height={400} rowHeight={52} />
+                </div>
+              </div>
+            </>
+          ) : currentTab === "booster" ? (
+            <BoosterPlanView />
+          ) : (
+            <ListingPlanView />
+          )
+        ) : (
+          currentServiceTab === "listing" ? <ServicePlanView /> : <ServicePriorityPlanView />
+        )
+      ) : null}
     </div>
   )
 };
