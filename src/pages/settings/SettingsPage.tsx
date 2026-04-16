@@ -84,6 +84,7 @@ const SettingsPage: React.FC = () => {
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean } | null>(null);
+  const [priorityHistoryTab, setPriorityHistoryTab] = useState<"rent" | "sell">("rent");
   const { balance, currency, refreshBalance } = useWallet();
   const { filters, isLoadingFilter } = useFilter();
 
@@ -145,6 +146,13 @@ const SettingsPage: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (!isLoadingFilter) {
+      if (!showProduct && showService) setPlanScope("service");
+      else if (showProduct && !showService) setPlanScope("product");
+    }
+  }, [isLoadingFilter, showProduct, showService]);
 
   const rentProducts = useMemo(() => products.filter(p => p.product_type_name?.toLowerCase() === "rent"), [products]);
   const sellProducts = useMemo(() => products.filter(p => p.product_type_name?.toLowerCase() === "sell"), [products]);
@@ -298,6 +306,16 @@ const SettingsPage: React.FC = () => {
       )
     },
     {
+      headerName: "Pricing",
+      field: "pricing_type",
+      width: 100,
+      cellRenderer: (params: any) => (
+        <div className="flex items-center h-full">
+          <StatusBadge status={(params.value || 'paid').toLowerCase() === 'free' ? 'free' : 'paid'} />
+        </div>
+      )
+    },
+    {
       headerName: "Plan",
       field: "active_plan_name",
       width: 120,
@@ -387,13 +405,13 @@ const SettingsPage: React.FC = () => {
   const flattenedPriorityHistory = useMemo(() => {
     const rows: any[] = [];
     vendorPurchases.forEach(purchase => {
-      // If no product_ids, show the purchase itself as one row (optional, but per user request we focus on products)
       if (!purchase.product_ids || purchase.product_ids.length === 0) {
         rows.push({
           ...purchase,
           product_name: "-",
           category_name: "-",
           sub_category_name: "-",
+          product_type_name: "-",
           is_placeholder: true
         });
         return;
@@ -406,12 +424,14 @@ const SettingsPage: React.FC = () => {
           product_name: product?.product_name || `Product ID: ${pId}`,
           category_name: product?.category_name || "-",
           sub_category_name: (product as any)?.sub_category_name || "-",
+          product_type_name: product?.product_type_name || "-",
         });
       });
     });
-    // Sort by expiry date (latest first)
-    return rows.sort((a, b) => new Date(b.expire_at).getTime() - new Date(a.expire_at).getTime());
-  }, [vendorPurchases, products]);
+    const sorted = rows.sort((a, b) => new Date(b.expire_at).getTime() - new Date(a.expire_at).getTime());
+    if (priorityHistoryTab === "sell") return sorted.filter(r => r.product_type_name?.toLowerCase() === "sell");
+    return sorted.filter(r => r.product_type_name?.toLowerCase() === "rent");
+  }, [vendorPurchases, products, priorityHistoryTab]);
 
   const priorityHistoryColumns = useMemo((): ColDef[] => [
     {
@@ -515,28 +535,32 @@ const SettingsPage: React.FC = () => {
       {/* Top Scope + Tab Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm mb-4 sm:mb-6 dark:bg-black">
         {/* Left: Scope switcher - only show if both types active */}
-        {showProduct && showService && (
+        {(showProduct || showService) && (
           <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 w-full sm:w-fit dark:bg-[#1c2938]">
-            <button
-              onClick={() => setPlanScope("product")}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "product"
-                ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
-                : "text-gray-500 hover:text-gray-700"
-                }`}
-            >
-              <Package size={15} />
-              <span>Product Plans</span>
-            </button>
-            <button
-              onClick={() => setPlanScope("service")}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "service"
-                ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
-                : "text-gray-500 hover:text-gray-700"
-                }`}
-            >
-              <Briefcase size={15} />
-              <span>Service Plans</span>
-            </button>
+            {showProduct && (
+              <button
+                onClick={() => setPlanScope("product")}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "product"
+                  ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
+                  : "text-gray-500 hover:text-gray-700"
+                  }`}
+              >
+                <Package size={15} />
+                <span>Product Plans</span>
+              </button>
+            )}
+            {showService && (
+              <button
+                onClick={() => setPlanScope("service")}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "service"
+                  ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
+                  : "text-gray-500 hover:text-gray-700"
+                  }`}
+              >
+                <Briefcase size={15} />
+                <span>Service Plans</span>
+              </button>
+            )}
           </div>
         )}
 
@@ -615,6 +639,210 @@ const SettingsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Shared Modals - rendered once outside all conditional branches */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        className="max-w-6xl w-full mx-2 sm:mx-auto"
+      >
+        <div className="flex flex-col h-[85vh] sm:h-[70vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
+          {/* Modal Header */}
+          <div className="px-4 sm:px-6 pr-10 sm:pr-14 py-3 sm:py-4 border-b bg-white dark:bg-gray-900">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">
+                    {isAddonModalOpen ? "Select Add-on Products" : `${selectedPlan?.name} Products (${planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly"})`}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                    {isAddonModalOpen ? (
+                      <>Available Add-on Slots: <span className="ml-1 font-semibold text-brand-600">{Number(selectedPlan?.addon_max_slots || 0) - addonProductIds.length} left</span></>
+                    ) : (
+                      <>Remaining Priority Slots: <span className="ml-1 font-semibold text-brand-600">{remainingSlots} left</span></>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {(planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly") === "yearly" &&
+                selectedPlan?.addon_available_for_yearly &&
+                !isAddonModalOpen &&
+                !isRefillScenario &&
+                !activePurchasesForPlan.some(p => p.is_addon_purchased) && (
+                  <div className="bg-brand-50 border border-brand-100 p-4 rounded-xl mb-2 flex items-center justify-between animate-in slide-in-from-left duration-500">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-brand-100 rounded-full flex items-center justify-center">
+                        <Zap className="text-brand-600" size={20} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-brand-900">Exclusive Priority Annual Benefit</p>
+                        <p className="text-[11px] text-brand-600 font-medium">Add {selectedPlan.addon_max_slots} Listing Slots for just ₹{selectedPlan.addon_price_per_year}/yr</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setIncludeAddon(!includeAddon)}
+                      className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${includeAddon ? 'bg-brand-600 text-white shadow-lg' : 'bg-white text-brand-600 border border-brand-200 hover:bg-brand-50'}`}
+                    >
+                      {includeAddon ? '✓ Selected' : '+ Add Benefit'}
+                    </button>
+                  </div>
+                )}
+              {/* Search + Tab row */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="relative flex-1 sm:flex-none sm:w-56">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={gridSearch}
+                    onChange={(e) => setGridSearch(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500/20 outline-none"
+                  />
+                </div>
+                <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 w-full sm:w-auto">
+                  <button
+                    onClick={() => setActiveTab('Rent')}
+                    className={`flex-1 sm:flex-none px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Rent' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+                  >
+                    Rent ({rentProducts.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('Sell')}
+                    className={`flex-1 sm:flex-none px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Sell' ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+                  >
+                    Sell ({sellProducts.length})
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Table */}
+          <div className="flex-1 px-2 sm:px-6 overflow-hidden">
+            <AgGridTable
+              key={isAddonModalOpen ? "addon" : "priority"}
+              columns={isAddonModalOpen ? listingColumns : columns}
+              rowData={filteredProducts}
+              onSelectionChange={(rows) => {
+                if (isAddonModalOpen) {
+                  const ids = rows.map(p => p.id || (p as any)._id);
+                  setAddonProductIds(ids);
+                } else {
+                  const ids = rows.filter(p => !p.active_plan_name).map(p => p.id || (p as any)._id);
+                  setSelectedProductIds(ids);
+                }
+              }}
+              showCheckboxes={true}
+              height={320}
+              rowHeight={45}
+              isRowSelectable={(params) => {
+                if (isAddonModalOpen) {
+                  const hasListing = listingPurchases.some(lp => lp.product_ids?.some((pr: any) => String(pr.id || pr._id || pr) === String(params.data.id || params.data._id)));
+                  return !hasListing;
+                }
+                // Disable free products — they don't need a Priority plan
+                if ((params.data.pricing_type || 'paid').toLowerCase() === 'free') return false;
+                return !params.data.active_plan_name;
+              }}
+              getRowStyle={(params) => {
+                const hasCurrentPlan = params.data.active_plan_name;
+                const isFree = (params.data.pricing_type || 'paid').toLowerCase() === 'free';
+                const hasListing = listingPurchases.some(lp => lp.product_ids?.some((pr: any) => String(pr.id || pr._id || pr) === String(params.data.id || params.data._id)));
+                if ((!isAddonModalOpen && (hasCurrentPlan || isFree)) || (isAddonModalOpen && hasListing)) {
+                  return { opacity: 0.4, pointerEvents: 'none', background: 'rgba(0,0,0,0.03)' };
+                }
+                return undefined;
+              }}
+            />
+          </div>
+          {/* Footer Actions */}
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end gap-2 sm:gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (isAddonModalOpen) {
+                  setIsAddonModalOpen(false);
+                } else {
+                  setIsModalOpen(false);
+                }
+              }}
+              className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl font-bold text-sm"
+            >
+              {isAddonModalOpen ? "Back" : "Cancel"}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                if (includeAddon && !isAddonModalOpen) {
+                  setIsAddonModalOpen(true);
+                  return;
+                }
+                handlePurchase();
+              }}
+              disabled={
+                isPurchasing ||
+                (isAddonModalOpen ? addonProductIds.length === 0 : selectedProductIds.length === 0) ||
+                (!isAddonModalOpen && selectedProductIds.length > remainingSlots && activePurchasesForPlan.length === 0 && selectedProductIds.length > (selectedPlan?.product_slots || 0)) ||
+                (isAddonModalOpen && addonProductIds.length > (selectedPlan?.addon_max_slots || 0))
+              }
+              className={`px-5 sm:px-8 py-2 sm:py-2.5 rounded-xl font-bold transition-all shadow-lg text-sm ${includeAddon && !isAddonModalOpen ? 'bg-indigo-600 hover:bg-indigo-700' : ''}`}
+            >
+              {isPurchasing ? 'Processing...' : (includeAddon && !isAddonModalOpen ? 'Next: Select Add-on Items' : 'Confirm & Activate')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Confirmation Modal */}
+      <Modal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        className="max-w-md w-full"
+      >
+        <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center dark:bg-blue-900/30">
+              <Search className="text-blue-600" size={24} />
+            </div>
+            <h3 className="text-xl font-bold dark:text-white">Confirm Plan</h3>
+          </div>
+          <div className="space-y-4 mb-6">
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
+              <span className="text-gray-500 font-medium">Plan Name</span>
+              <span className="font-bold text-gray-900 dark:text-white">{selectedPlan?.name}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
+              <span className="text-gray-500 font-medium">Duration</span>
+              <span className="font-bold text-gray-900 dark:text-white capitalize">{planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly"}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
+              <span className="text-gray-500 font-medium">{isAddonModalOpen ? "Add-on Products" : "Priority Products"}</span>
+              <span className="font-bold text-gray-900 dark:text-white">{purchaseSummary?.count} Items</span>
+            </div>
+            {includeAddon && !isAddonModalOpen && (
+              <div className="flex justify-between items-center p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 dark:bg-indigo-900/10">
+                <span className="text-indigo-600 font-medium italic text-xs">Included Benefit</span>
+                <span className="font-bold text-indigo-700 text-xs text-right">Enabled (Selection Next Step)</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center p-3 bg-brand-50 rounded-xl border border-brand-100 dark:bg-brand-900/10">
+              <span className="text-brand-600 font-bold uppercase text-xs tracking-wider">Total Amount</span>
+              <span className="text-2xl font-black text-brand-600">{currency}{purchaseSummary?.amount?.toLocaleString()}</span>
+            </div>
+            {purchaseSummary?.amount === 0 && purchaseSummary?.isRefill && (
+              <p className="text-xs text-green-600 font-bold text-center px-4">
+                ✓ Using remaining slots from your active subscription. No additional charge.
+              </p>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setIsConfirmModalOpen(false)}>Cancel</Button>
+            <Button variant="primary" className="flex-1 rounded-xl btn-primary" onClick={() => handlePurchase(true)} disabled={isPurchasing}>
+              {isPurchasing ? "Processing..." : "Confirm Purchase"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {isLoadingFilter ? null : showProduct && !showService ? (
         // Only product vendor
@@ -747,9 +975,26 @@ const SettingsPage: React.FC = () => {
 
               {/* Priority Purchase History */}
               <div className="space-y-2 md:col-span-3">
-                <div className="flex items-center gap-3">
-                  <Package className="w-6 h-6 text-brand-600" />
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Plan History</h2>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Package className="w-6 h-6 text-brand-600" />
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Plan History</h2>
+                  </div>
+                  <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 gap-1">
+                    {(["rent", "sell"] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setPriorityHistoryTab(tab)}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition capitalize ${
+                          priorityHistoryTab === tab
+                            ? 'bg-white dark:bg-gray-700 text-brand-600 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        {tab === 'rent' ? 'Rent' : 'Sell'}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <AgGridTable
@@ -761,236 +1006,6 @@ const SettingsPage: React.FC = () => {
                 />
               </div>
 
-              <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                className="max-w-6xl w-full mx-2 sm:mx-auto"
-              >
-                <div className="flex flex-col h-[85vh] sm:h-[70vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
-                  {/* Modal Header */}
-                  <div className="px-4 sm:px-6 pr-10 sm:pr-14 py-3 sm:py-4 border-b bg-white dark:bg-gray-900">
-                    <div className="flex flex-col gap-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">
-                            {isAddonModalOpen ? "Select Add-on Products" : `${selectedPlan?.name} Products (${planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly"})`}
-                          </h3>
-                          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-                            {isAddonModalOpen ? (
-                              <>Available Add-on Slots: <span className="ml-1 font-semibold text-brand-600">{Number(selectedPlan?.addon_max_slots || 0) - addonProductIds.length} left</span></>
-                            ) : (
-                              <>Remaining Priority Slots: <span className="ml-1 font-semibold text-brand-600">{remainingSlots} left</span></>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-
-                      {(planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly") === "yearly" &&
-                        selectedPlan?.addon_available_for_yearly &&
-                        !isAddonModalOpen &&
-                        !isRefillScenario &&
-                        !activePurchasesForPlan.some(p => p.is_addon_purchased) && (
-                          <div className="bg-brand-50 border border-brand-100 p-4 rounded-xl mb-2 flex items-center justify-between animate-in slide-in-from-left duration-500">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-brand-100 rounded-full flex items-center justify-center">
-                                <Zap className="text-brand-600" size={20} />
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-brand-900">Exclusive Priority Annual Benefit</p>
-                                <p className="text-[11px] text-brand-600 font-medium">Add {selectedPlan.addon_max_slots} Listing Slots for just ₹{selectedPlan.addon_price_per_year}/yr</p>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => setIncludeAddon(!includeAddon)}
-                              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${includeAddon ? 'bg-brand-600 text-white shadow-lg' : 'bg-white text-brand-600 border border-brand-200 hover:bg-brand-50'}`}
-                            >
-                              {includeAddon ? '✓ Selected' : '+ Add Benefit'}
-                            </button>
-                          </div>
-                        )}
-                      {/* Search + Tab row */}
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        <div className="relative flex-1 sm:flex-none sm:w-56">
-                          <Search
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                            size={15}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Search products..."
-                            value={gridSearch}
-                            onChange={(e) => setGridSearch(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-brand-500/20 outline-none"
-                          />
-                        </div>
-                        <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 w-full sm:w-auto">
-                          <button
-                            onClick={() => setActiveTab('Rent')}
-                            className={`flex-1 sm:flex-none px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Rent'
-                              ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm'
-                              : 'text-gray-500 hover:text-gray-800'
-                              }`}
-                          >
-                            Rent ({rentProducts.length})
-                          </button>
-                          <button
-                            onClick={() => setActiveTab('Sell')}
-                            className={`flex-1 sm:flex-none px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-md transition ${activeTab === 'Sell'
-                              ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm'
-                              : 'text-gray-500 hover:text-gray-800'
-                              }`}
-                          >
-                            Sell ({sellProducts.length})
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Table */}
-                  <div className="flex-1 px-2 sm:px-6 overflow-hidden">
-                    <AgGridTable
-                      key={isAddonModalOpen ? "addon" : "priority"}
-                      columns={isAddonModalOpen ? listingColumns : columns}
-                      rowData={filteredProducts}
-                      onSelectionChange={(rows) => {
-                        if (isAddonModalOpen) {
-                          const ids = rows.map(p => p.id || (p as any)._id);
-                          setAddonProductIds(ids);
-                        } else {
-                          const ids = rows.filter(p => !p.active_plan_name).map(p => p.id || (p as any)._id);
-                          setSelectedProductIds(ids);
-                        }
-                      }}
-                      showCheckboxes={true}
-                      height={320}
-                      rowHeight={45}
-                      // pagination={true}
-                      // paginationPageSize={10}
-                      isRowSelectable={(params) => {
-                        if (isAddonModalOpen) {
-                          // Disable if product already has a listing plan
-                          const hasListing = listingPurchases.some(lp => lp.product_ids?.some((pr: any) => String(pr.id || pr._id || pr) === String(params.data.id || params.data._id)));
-                          return !hasListing;
-                        }
-                        return !params.data.active_plan_name;
-                      }}
-                      getRowStyle={(params) => {
-                        const hasCurrentPlan = params.data.active_plan_name;
-                        const hasListing = listingPurchases.some(lp => lp.product_ids?.some((pr: any) => String(pr.id || pr._id || pr) === String(params.data.id || params.data._id)));
-
-                        if ((!isAddonModalOpen && hasCurrentPlan) || (isAddonModalOpen && hasListing)) {
-                          return {
-                            opacity: 0.5,
-                            pointerEvents: 'none',
-                            background: 'rgba(0,0,0,0.03)',
-                          };
-                        }
-                        return undefined;
-                      }}
-                    />
-                  </div>
-                  {/* Footer Actions */}
-                  <div className="px-4 sm:px-6 py-3 sm:py-4 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end gap-2 sm:gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        if (isAddonModalOpen) {
-                          setIsAddonModalOpen(false);
-                        } else {
-                          setIsModalOpen(false);
-                        }
-                      }}
-                      className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl font-bold text-sm"
-                    >
-                      {isAddonModalOpen ? "Back" : "Cancel"}
-                    </Button>
-
-                    <Button
-                      variant="primary"
-                      onClick={() => {
-                        if (includeAddon && !isAddonModalOpen) {
-                          setIsAddonModalOpen(true);
-                          return;
-                        }
-                        handlePurchase();
-                      }}
-                      disabled={
-                        isPurchasing ||
-                        (isAddonModalOpen ? addonProductIds.length === 0 : selectedProductIds.length === 0) ||
-                        (!isAddonModalOpen && selectedProductIds.length > remainingSlots && activePurchasesForPlan.length === 0 && selectedProductIds.length > (selectedPlan?.product_slots || 0)) ||
-                        (isAddonModalOpen && addonProductIds.length > (selectedPlan?.addon_max_slots || 0))
-                      }
-                      className={`px-5 sm:px-8 py-2 sm:py-2.5 rounded-xl font-bold transition-all shadow-lg text-sm ${includeAddon && !isAddonModalOpen ? 'bg-indigo-600 hover:bg-indigo-700' : ''}`}
-                    >
-                      {isPurchasing ? 'Processing...' : (includeAddon && !isAddonModalOpen ? 'Next: Select Add-on Items' : 'Confirm & Activate')}
-                    </Button>
-                  </div>
-                </div>
-              </Modal>
-
-              {/* Confirmation Modal */}
-              <Modal
-                isOpen={isConfirmModalOpen}
-                onClose={() => setIsConfirmModalOpen(false)}
-                className="max-w-md w-full"
-              >
-                <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center dark:bg-blue-900/30">
-                      <Search className="text-blue-600" size={24} />
-                    </div>
-                    <h3 className="text-xl font-bold dark:text-white">Confirm Plan</h3>
-                  </div>
-
-                  <div className="space-y-4 mb-6">
-                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
-                      <span className="text-gray-500 font-medium">Plan Name</span>
-                      <span className="font-bold text-gray-900 dark:text-white">{selectedPlan?.name}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
-                      <span className="text-gray-500 font-medium">Duration</span>
-                      <span className="font-bold text-gray-900 dark:text-white capitalize">{planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly"}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
-                      <span className="text-gray-500 font-medium">{isAddonModalOpen ? "Add-on Products" : "Priority Products"}</span>
-                      <span className="font-bold text-gray-900 dark:text-white">{purchaseSummary?.count} Items</span>
-                    </div>
-                    {includeAddon && !isAddonModalOpen && (
-                      <div className="flex justify-between items-center p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 dark:bg-indigo-900/10">
-                        <span className="text-indigo-600 font-medium italic text-xs">Included Benefit</span>
-                        <span className="font-bold text-indigo-700 text-xs text-right">Enabled (Selection Next Step)</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between items-center p-3 bg-brand-50 rounded-xl border border-brand-100 dark:bg-brand-900/10">
-                      <span className="text-brand-600 font-bold uppercase text-xs tracking-wider">Total Amount</span>
-                      <span className="text-2xl font-black text-brand-600">{currency}{purchaseSummary?.amount?.toLocaleString()}</span>
-                    </div>
-                    {purchaseSummary?.amount === 0 && purchaseSummary?.isRefill && (
-                      <p className="text-xs text-green-600 font-bold text-center px-4">
-                        ✓ Using remaining slots from your active subscription. No additional charge.
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      className="flex-1 rounded-xl"
-                      onClick={() => setIsConfirmModalOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      variant="primary"
-                      className="flex-1 rounded-xl btn-primary"
-                      onClick={() => handlePurchase(true)}
-                      disabled={isPurchasing}
-                    >
-                      {isPurchasing ? "Processing..." : "Confirm Purchase"}
-                    </Button>
-                  </div>
-                </div>
-              </Modal>
             </div>
           </>
         ) : currentTab === "booster" ? (
@@ -1066,7 +1081,19 @@ const SettingsPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="space-y-2 md:col-span-3">
-                  <div className="flex items-center gap-3"><Package className="w-6 h-6 text-brand-600" /><h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Plan History</h2></div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3"><Package className="w-6 h-6 text-brand-600" /><h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Plan History</h2></div>
+                    <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 gap-1">
+                      {(["rent", "sell"] as const).map((tab) => (
+                        <button key={tab} onClick={() => setPriorityHistoryTab(tab)}
+                          className={`px-3 py-1 text-xs font-bold rounded-md transition capitalize ${
+                            priorityHistoryTab === tab ? 'bg-white dark:bg-gray-700 text-brand-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                          }`}>
+                          {tab === 'rent' ? 'Rent' : 'Sell'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <AgGridTable rowData={flattenedPriorityHistory} columns={priorityHistoryColumns} showCheckboxes={false} height={400} rowHeight={52} />
                 </div>
               </div>

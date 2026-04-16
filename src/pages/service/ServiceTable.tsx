@@ -17,6 +17,7 @@ import { toast } from 'react-toastify';
 import { Modal } from '@/components/ui/modal';
 import Loader from '@/components/common/Loader';
 import { exportServicesToExcel, exportServicesToPDF } from '@/utils/exportUtils';
+import { useWallet } from '@/context/WalletContext';
 
 const DEFAULT_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Crect width=\'48\' height=\'48\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'24\' y=\'24\' font-family=\'Arial\' font-size=\'10\' fill=\'%23999\' text-anchor=\'middle\' dominant-baseline=\'middle\'%3ENo Image%3C/text%3E%3C/svg%3E';
 
@@ -34,6 +35,7 @@ type Service = {
 
 const ServiceTable = () => {
   const router = useRouter();
+    const { balance } = useWallet();
   const [serviceData, setServiceData] = useState<Service[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
@@ -274,7 +276,14 @@ const ServiceTable = () => {
         <div className="flex items-center gap-3 justify-between">
           
           <button
-            onClick={() => router.push('/service/addService')}
+          
+            onClick={() => {
+               if (balance <= 0) {
+                toast.error("Insufficient wallet balance. Please add money to your wallet before adding a Service.");
+                return;
+              }
+            router.push('/service/addService')
+          }}
             className="px-4 py-2 btn-primary font-medium"
           >
             + Add Service

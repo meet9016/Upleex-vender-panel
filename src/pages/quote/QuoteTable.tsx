@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import AgGridTable from "@/components/tables/AgGridTable";
 import { ColDef } from "ag-grid-community";
@@ -62,6 +62,8 @@ type Quote = {
   razorpay_payment_link?: string;
   payment_status?: string;
   isNew?: boolean;
+  has_reviewed?: boolean;
+  review_details?: any;
 };
 
 const QuoteTable = () => {
@@ -230,244 +232,251 @@ const QuoteTable = () => {
     });
   };
 
-  const columns: ColDef[] = [
-    {
-      headerName: "Product",
-      field: "product_name",
-      minWidth: 300,
-      sortable: true,
-      cellRenderer: (params: any) => {
-        const imageUrl = params.data?.product_main_image;
-        const productName = params.data?.product_name;
+  const columns = useMemo((): ColDef[] => {
+    return [
+      {
+        headerName: "Product",
+        field: "product_name",
+        minWidth: 300,
+        sortable: true,
+        cellRenderer: (params: any) => {
+          const imageUrl = params.data?.product_main_image;
+          const productName = params.data?.product_name;
 
-        return (
-          <div className="flex items-center gap-3 h-full">
-            <div className="flex-shrink-0 relative">
-              {imageUrl ? (
-                <img
-                  src={imageUrl}
-                  alt={productName}
-                  className="w-9 h-9 object-cover rounded-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer transition-shadow hover:shadow-md hover-zoom-trigger"
-                  onMouseEnter={(e: any) => {
-                    setHoveredImage(imageUrl);
-                    setMousePos({ x: e.clientX, y: e.clientY });
-                  }}
-                  onMouseMove={(e: any) => {
-                    setMousePos({ x: e.clientX, y: e.clientY });
-                  }}
-                  onMouseLeave={() => {
-                    setHoveredImage(null);
-                  }}
-                  onError={(e: any) => {
-                    e.target.src =
-                      "https://via.placeholder.com/60x60?text=No+Image";
-                  }}
-                />
-              ) : (
-                <div className="w-9 h-9 flex items-center justify-center bg-gray-100 text-gray-400 text-[10px] rounded-lg border">
-                  No
-                </div>
-              )}
+          return (
+            <div className="flex items-center gap-3 h-full">
+              <div className="flex-shrink-0 relative">
+                {imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt={productName}
+                    className="w-9 h-9 object-cover rounded-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer transition-shadow hover:shadow-md hover-zoom-trigger"
+                    onMouseEnter={(e: any) => {
+                      setHoveredImage(imageUrl);
+                      setMousePos({ x: e.clientX, y: e.clientY });
+                    }}
+                    onMouseMove={(e: any) => {
+                      setMousePos({ x: e.clientX, y: e.clientY });
+                    }}
+                    onMouseLeave={() => {
+                      setHoveredImage(null);
+                    }}
+                    onError={(e: any) => {
+                      e.target.src =
+                        "https://via.placeholder.com/60x60?text=No+Image";
+                    }}
+                  />
+                ) : (
+                  <div className="w-9 h-9 flex items-center justify-center bg-gray-100 text-gray-400 text-[10px] rounded-lg border">
+                    No
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="font-medium text-[13px] text-gray-800 dark:text-white truncate" title={productName}>
+                  {productName || "N/A"}
+                </span>
+                <span className="text-[10px] text-gray-500 truncate">
+                  {params.data?.category_name || ''}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="font-medium text-[13px] text-gray-800 dark:text-white truncate" title={productName}>
-                {productName || "N/A"}
-              </span>
-              <span className="text-[10px] text-gray-500 truncate">
-                {params.data?.category_name || ''}
-              </span>
-            </div>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      field: "product_type_name",
-      headerName: "Product Type",
-      minWidth: 120,
-      cellStyle: { textAlign: "center" }
-    },
-    {
-      field: "product_listing_type_name",
-      headerName: "Product Listing Type",
-      minWidth: 220,
-      cellStyle: { textAlign: "center" }
-    },
+      {
+        field: "product_type_name",
+        headerName: "Product Type",
+        minWidth: 120,
+        cellStyle: { textAlign: "center" }
+      },
+      {
+        field: "product_listing_type_name",
+        headerName: "Product Listing Type",
+        minWidth: 220,
+        cellStyle: { textAlign: "center" }
+      },
 
-    {
-      field: "month_name",
-      headerName: "Month",
-      minWidth: 120,
-      cellStyle: { textAlign: "center" }
-    },
-    {
-      field: "qty",
-      headerName: "Qty",
-      minWidth: 100,
-      cellStyle: { textAlign: "center" },
-    },
-    {
-      field: "price",
-      headerName: "Unit Price",
-      minWidth: 120,
-      valueFormatter: (params) => {
-        const value = params.value;
-        if (!value || value === '0') return "₹0";
-        return `₹${Number(value).toLocaleString('en-IN')}`;
+      {
+        field: "month_name",
+        headerName: "Month",
+        minWidth: 120,
+        cellStyle: { textAlign: "center" }
       },
-      cellStyle: { textAlign: "center" },
-    },
-    {
-      field: "total_price",
-      headerName: "Total Price",
-      minWidth: 140,
-      valueFormatter: (params) => {
-        const value = params.value;
-        if (!value || value === '0') return "₹0";
-        return `₹${Number(value).toLocaleString('en-IN')}`;
+      {
+        field: "qty",
+        headerName: "Qty",
+        minWidth: 100,
+        cellStyle: { textAlign: "center" },
       },
-      cellStyle: { textAlign: "left", fontWeight: "600" },
-    },
-    {
-      field: "status",
-      headerName: "Status",
-      minWidth: 130,
-      cellStyle: { textAlign: "left" },
-      cellRenderer: (params: any) => (
-        <div className="flex items-center h-full">
-          <StatusBadge status={params.value || 'pending'} />
-        </div>
-      ),
-    },
-    {
-      field: "payment_status",
-      headerName: "Payment Status",
-      minWidth: 140,
-      cellStyle: { textAlign: "center" },
-      cellRenderer: (params: any) => {
-        return (
-          <div className="flex items-center justify-center h-full">
+      {
+        field: "price",
+        headerName: "Unit Price",
+        minWidth: 120,
+        valueFormatter: (params) => {
+          const value = params.value;
+          if (!value || value === '0') return "₹0";
+          return `₹${Number(value).toLocaleString('en-IN')}`;
+        },
+        cellStyle: { textAlign: "center" },
+      },
+      {
+        field: "total_price",
+        headerName: "Total Price",
+        minWidth: 140,
+        valueFormatter: (params) => {
+          const value = params.value;
+          if (!value || value === '0') return "₹0";
+          return `₹${Number(value).toLocaleString('en-IN')}`;
+        },
+        cellStyle: { textAlign: "left", fontWeight: "600" },
+      },
+      {
+        field: "status",
+        headerName: "Status",
+        minWidth: 130,
+        cellStyle: { textAlign: "left" },
+        cellRenderer: (params: any) => (
+          <div className="flex items-center h-full">
             <StatusBadge status={params.value || 'pending'} />
           </div>
-        );
-      }
-    },
-    // {
-    //   field: "delivery_date",
-    //   headerName: "Delivery Date",
-    //   minWidth: 150,
-    //   cellStyle: { textAlign: "center" }
-    // },
-    {
-      field: "start_date",
-      headerName: "Start Date",
-      minWidth: 150,
-      cellStyle: { textAlign: "center" }
-    },
-    {
-      field: "start_time",
-      headerName: "Start Time",
-      minWidth: 130,
-      cellStyle: { textAlign: "center" }
-    },
-    {
-      field: "end_date",
-      headerName: "End Date",
-      minWidth: 150,
-      cellStyle: { textAlign: "center" }
-    },
-    {
-      field: "end_time",
-      headerName: "End Time",
-      minWidth: 130,
-      cellStyle: { textAlign: "center" }
-    },
-    {
-      field: "razorpay_payment_link",
-      headerName: "Payment Link",
-      minWidth: 160,
-      cellRenderer: (params: any) => {
-        const link = params.value;
-        const isPaid = String(params.data?.payment_status || '').toLowerCase() === 'paid';
-
-        if (!link) return <span className="text-gray-400">-</span>;
-
-        if (isPaid) {
+        ),
+      },
+      {
+        field: "payment_status",
+        headerName: "Payment Status",
+        minWidth: 140,
+        cellStyle: { textAlign: "center" },
+        cellRenderer: (params: any) => {
           return (
-            <div className="flex items-center h-full">
-              <span
-                className="text-xs bg-gray-100 text-gray-400 px-3 py-1 rounded-full border border-gray-200 inline-block font-medium truncate max-w-[140px] cursor-not-allowed select-none"
-                title="Payment already completed"
-              >
-                Copy Link
-              </span>
+            <div className="flex items-center justify-center h-full">
+              <StatusBadge status={params.value || 'pending'} />
             </div>
           );
         }
+      },
+      // {
+      //   field: "delivery_date",
+      //   headerName: "Delivery Date",
+      //   minWidth: 150,
+      //   cellStyle: { textAlign: "center" }
+      // },
+      {
+        field: "start_date",
+        headerName: "Start Date",
+        minWidth: 150,
+        cellStyle: { textAlign: "center" }
+      },
+      {
+        field: "start_time",
+        headerName: "Start Time",
+        minWidth: 130,
+        cellStyle: { textAlign: "center" },
+        valueFormatter: (params) => {
+          return params.data?.product_listing_type_name === 'HOURLY' ? (params.value || '-') : '-';
+        }
+      },
+      {
+        field: "end_date",
+        headerName: "End Date",
+        minWidth: 150,
+        cellStyle: { textAlign: "center" }
+      },
+      {
+        field: "end_time",
+        headerName: "End Time",
+        minWidth: 130,
+        cellStyle: { textAlign: "center" },
+        valueFormatter: (params) => {
+          return params.data?.product_listing_type_name === 'HOURLY' ? (params.value || '-') : '-';
+        }
+      },
+      {
+        field: "razorpay_payment_link",
+        headerName: "Payment Link",
+        minWidth: 160,
+        cellRenderer: (params: any) => {
+          const link = params.value;
+          const isPaid = String(params.data?.payment_status || '').toLowerCase() === 'paid';
 
-        return (
-          <div className="flex items-center h-full">
-            <a
-              href={link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-200 hover:bg-blue-100 transition-colors inline-block font-medium truncate max-w-[140px]"
-              title={link}
-            >
-              Copy Link
-            </a>
-          </div>
-        );
-      }
-    },
+          if (!link) return <span className="text-gray-400">-</span>;
 
-    {
-      headerName: "Action",
-      width: 150,
-      minWidth: 150,
-      pinned: 'right',
-      suppressHeaderMenuButton: true,
+          if (isPaid) {
+            return (
+              <div className="flex items-center h-full">
+                <span
+                  className="text-xs bg-gray-100 text-gray-400 px-3 py-1 rounded-full border border-gray-200 inline-block font-medium truncate max-w-[140px] cursor-not-allowed select-none"
+                  title="Payment already completed"
+                >
+                  Copy Link
+                </span>
+              </div>
+            );
+          }
 
-      cellRenderer: (params: any) => {
-        const status = params.data?.status?.toLowerCase();
-        const isApproved = status === 'approval' || status === 'approved';
-        const isRejected = status === 'reject' || status === 'rejected';
-        const isCompleted = status === 'complete' || status === 'completed' || status === 'successful' || status === 'success';
-        const isDelivery = status === 'delivery';
-        const isDisabled = isApproved || isRejected || isCompleted || isDelivery;
+          return (
+            <div className="flex items-center h-full">
+              <a
+                href={link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-200 hover:bg-blue-100 transition-colors inline-block font-medium truncate max-w-[140px]"
+                title={link}
+              >
+                Copy Link
+              </a>
+            </div>
+          );
+        }
+      },
 
-        return (
-          <div className="flex items-center justify-center gap-2 h-full">
-            {/* Approve */}
-            <button
-              onClick={() => handleApproval(params.data._id)}
-              disabled={isDisabled}
-              className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200
+      {
+        headerName: "Action",
+        width: 150,
+        minWidth: 150,
+        pinned: 'right',
+        suppressHeaderMenuButton: true,
+
+        cellRenderer: (params: any) => {
+          const status = params.data?.status?.toLowerCase();
+          const isApproved = status === 'approval' || status === 'approved';
+          const isRejected = status === 'reject' || status === 'rejected';
+          const isCompleted = status === 'complete' || status === 'completed' || status === 'successful' || status === 'success';
+          const isDelivery = status === 'delivery';
+          const isDisabled = isApproved || isRejected || isCompleted || isDelivery;
+
+          return (
+            <div className="flex items-center justify-center gap-2 h-full">
+              {/* Approve */}
+              <button
+                onClick={() => handleApproval(params.data._id)}
+                disabled={isDisabled}
+                className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200
               ${isDisabled
-                  ? "bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed opacity-50"
-                  : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 shadow-sm hover:shadow"
-                }`}
-              title="Approve"
-            >
-              <FiCheck className="text-base" />
-            </button>
+                    ? "bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed opacity-50"
+                    : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 shadow-sm hover:shadow"
+                  }`}
+                title="Approve"
+              >
+                <FiCheck className="text-base" />
+              </button>
 
-            {/* Reject */}
-            <button
-              onClick={() => handleRejected(params.data._id)}
-              disabled={isDisabled}
-              className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200
+              {/* Reject */}
+              <button
+                onClick={() => handleRejected(params.data._id)}
+                disabled={isDisabled}
+                className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200
               ${isDisabled
-                  ? "bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed opacity-50"
-                  : "bg-rose-50 text-rose-600 hover:bg-rose-100 shadow-sm hover:shadow"
-                }`}
-              title="Reject"
-            >
-              <FiX className="text-base" />
-            </button>
+                    ? "bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed opacity-50"
+                    : "bg-rose-50 text-rose-600 hover:bg-rose-100 shadow-sm hover:shadow"
+                  }`}
+                title="Reject"
+              >
+                <FiX className="text-base" />
+              </button>
 
-            {/* Move to Delivery - Only show if approved and payment is paid */}
-            {/* {isApproved && (
+              {/* Move to Delivery - Only show if approved and payment is paid */}
+              {/* {isApproved && (
               <button
                 onClick={() => {
                   if (params.data?.payment_status?.toLowerCase() !== 'paid') {
@@ -487,15 +496,16 @@ const QuoteTable = () => {
               </button>
             )} */}
 
-            <ActionButtons
-              onEdit={() => router.push(`/quote/edit/${params.data._id || params.data.id}`)}
-              showDelete={false}
-            />
-          </div>
-        );
-      },
-    }
-  ];
+              <ActionButtons
+                onEdit={() => router.push(`/quote/edit/${params.data._id || params.data.id}`)}
+                showDelete={false}
+              />
+            </div>
+          );
+        },
+      }
+    ];
+  }, [quoteData]);
 
   const getQuoteData = async (filterParams: any = {}) => {
     try {

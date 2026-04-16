@@ -259,6 +259,16 @@ const ServicePlanView: React.FC = () => {
       width: 150,
     },
     {
+      headerName: "Pricing",
+      field: "pricing_type",
+      width: 100,
+      cellRenderer: (params: any) => (
+        <div className="flex items-center h-full">
+          <StatusBadge status={(params.value || 'paid').toLowerCase() === 'free' ? 'free' : 'paid'} />
+        </div>
+      )
+    },
+    {
       headerName: "Active Plan",
       field: "active_plan_name",
       width: 120,
@@ -417,7 +427,8 @@ const ServicePlanView: React.FC = () => {
               columns={serviceSelectionColumns}
               rowData={filteredServices}
               onSelectionChange={(rows) => {
-                const ids = rows.map(r => r._id || r.id).filter(id => !!id);
+                const selectableRows = rows.filter((r: any) => !r.active_plan_name && (r.pricing_type || 'paid').toLowerCase() !== 'free');
+                const ids = selectableRows.map((r: any) => r._id || r.id).filter((id: any) => !!id);
                 if (selectedPlan?.max_services !== 0 && ids.length > (selectedPlan?.max_services || 0)) {
                   toast.error(`You can only select up to ${selectedPlan?.max_services} services for this plan.`);
                   // Optionally, you can revert the selection or take other actions
@@ -429,20 +440,22 @@ const ServicePlanView: React.FC = () => {
               height={500}
               isRowSelectable={(params) => {
                 const isAlreadyActive = params.data.active_plan_name;
+                const isFree = (params.data.pricing_type || 'paid').toLowerCase() === 'free';
                 const isMaxServicesReached = selectedPlan?.max_services !== 0 && selectedServiceIds.length >= (selectedPlan?.max_services || 0);
-                
+                if (isFree) return false;
                 // Disable if already active or if max services reached and this service is not already selected
                 return !isAlreadyActive && !(isMaxServicesReached && !selectedServiceIds.includes(params.data._id || params.data.id));
               }}
-              getRowStyle={(params) =>
-                params.data.active_plan_name
-                  ? {
+              getRowStyle={(params) => {
+                const isFree = (params.data.pricing_type || 'paid').toLowerCase() === 'free';
+                if (params.data.active_plan_name || isFree)
+                  return {
                       opacity: 0.5,
                       pointerEvents: 'none',
                       background: 'rgba(0,0,0,0.03)',
-                    }
-                  : undefined
-              }
+                    };
+                return undefined;
+              }}
             />
           </div>
           <div className="px-6 py-4 border-t flex justify-end gap-3">
