@@ -103,6 +103,8 @@ const ProductTable = () => {
   const [snoozeToday, setSnoozeToday] = useState(false);
   const [excelLoading, setExcelLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [hasGst, setHasGst] = useState<boolean>(false);
+  const [freeProductCount, setFreeProductCount] = useState<number>(0);
   const [productsToActivate, setProductsToActivate] = useState<any[]>([]);
   const [selectedExpiringProducts, setSelectedExpiringProducts] = useState<string[]>([]);
   const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
@@ -817,6 +819,42 @@ const ProductTable = () => {
     fetchDropdownData();
   }, []);
 
+  // Fetch vendor profile and free product count for validation
+  useEffect(() => {
+    const fetchVendorDataForValidation = async () => {
+      try {
+        // Fetch vendor profile to check GST
+        const profileRes = await api.get(endPointApi.postFetchVendorKYCFormData || 'vendor-single-details');
+        if (profileRes?.data?.status === 200 && profileRes?.data?.data) {
+          const data = profileRes.data.data;
+          setHasGst(!!(data.Identity?.gst_number || data.gst_number));
+        }
+
+        // Fetch free product count
+        const productsRes = await api.get(endPointApi.postAllVendorProductList);
+        if (productsRes?.data?.data && Array.isArray(productsRes.data.data)) {
+          const products = productsRes.data.data;
+          
+          // Count active free products for current month
+          const startOfMonth = new Date();
+          startOfMonth.setHours(0, 0, 0, 0);
+          startOfMonth.setDate(1);
+
+          const freeCount = products.filter((p: any) =>
+            p.pricing_type === 'free' &&
+            p.status === 'active' &&
+            new Date(p.createdAt || p.updatedAt) >= startOfMonth
+          ).length;
+          setFreeProductCount(freeCount);
+        }
+      } catch (error) {
+        console.error("Error fetching vendor data for validation:", error);
+      }
+    };
+
+    fetchVendorDataForValidation();
+  }, []);
+
   // Open delete confirmation modal
   const openDeletePopup = (id: string) => {
     setDeleteId(id);
@@ -1067,10 +1105,22 @@ const ProductTable = () => {
           {/* Add Product Button */}
           <button
             onClick={() => {
-              if (balance <= 0) {
-                toast.error("Insufficient wallet balance. Please add money to your wallet before adding a product.");
+              const freeLimit = hasGst ? 3 : 1;
+              const hasWalletBalance = balance > 0;
+              const canAddFreeProduct = freeProductCount < freeLimit;
+
+              // Check if they can add (either have free listing available or have wallet balance)
+              if (!canAddFreeProduct && !hasWalletBalance) {
+                toast.error("Your wallet balance is 0. Please add money to your wallet to add paid products.");
                 return;
               }
+
+              // Check free listing limit reached
+              if (freeProductCount >= freeLimit && !hasWalletBalance) {
+                toast.error(`Free listing limit reached (${freeProductCount}/${freeLimit}). Please select 'Base (Paid listing)' or add money to your wallet.`);
+                return;
+              }
+
               router.push('/product/addProduct');
             }}
             className="w-full sm:w-auto px-4 py-2 btn-primary font-medium whitespace-nowrap"
