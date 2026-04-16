@@ -85,7 +85,7 @@ const ListingPlanView: React.FC = () => {
       if (!aggregates[type]) {
         aggregates[type] = { total: 0, used: 0, productIds: new Set() };
       }
-      aggregates[type].total += Number(p.addon_max_slots || 0); 
+      aggregates[type].total += Number(p.addon_max_slots || 0);
       // Actually, we should use addon_product_ids for the "used" count
       const addonPIds = p.addon_product_ids || [];
       addonPIds.forEach((id: any) => {
@@ -450,24 +450,28 @@ const ListingPlanView: React.FC = () => {
   ];
 
   if (loading) {
-    return <PageLoader fullScreen={false} />;
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <PageLoader fullScreen={false} />
+      </div>
+    );
   }
 
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 ">
         {plans.map((plan) => (
           <div
             key={plan.key}
             className={`relative p-8 rounded-3xl border border-gray-200 transition-all duration-500 flex flex-col h-full bg-white group dark:bg-[#0d111c] hover:border-emerald-300 hover:shadow-xl shadow-sm`}
           >
-            <div className="mb-6 text-center">
-              <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform dark:bg-[#1c2938]">
-                <Package className="w-8 h-8 text-emerald-600" />
+            <div className="mb-3 text-center">
+              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform dark:bg-[#1c2938]">
+                <Package className="w-5 h-5 text-emerald-600" />
               </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-1 dark:text-gray-100">{plan.name}</h4>
-              <p className="text-gray-500 text-sm line-clamp-2 dark:text-gray-400">{plan.description}</p>
+              <h4 className="text-base font-bold text-gray-900 mb-0.5 dark:text-gray-100">{plan.name}</h4>
+              <p className="text-gray-500 text-xs line-clamp-2 dark:text-gray-400">{plan.description}</p>
             </div>
 
             <div className="flex items-baseline justify-center gap-1 mb-8 p-4 bg-emerald-50 rounded-2xl dark:bg-[#1c2938]">
@@ -477,7 +481,7 @@ const ListingPlanView: React.FC = () => {
               <span className="text-emerald-500 font-medium">/ {plan.duration_months} months</span>
             </div>
 
-            <div className="space-y-4 mb-8 flex-grow">
+            <div className="space-y-2 mb-8 flex-grow">
               {(() => {
                 const myActive = purchasedPlans.find(p => p.plan_type === plan.key);
                 if (myActive) {
@@ -528,12 +532,12 @@ const ListingPlanView: React.FC = () => {
             className={`relative p-8 rounded-3xl border-2 border-indigo-100 transition-all duration-500 flex flex-col h-full bg-gradient-to-br from-indigo-50/30 to-white group dark:bg-[#0d111c] hover:border-indigo-300 hover:shadow-xl shadow-sm`}
           >
             <div className="absolute top-4 right-4 bg-indigo-600 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase">Add-on Active</div>
-            <div className="mb-6 text-center">
-              <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform dark:bg-[#1c2938]">
-                <Zap className="w-8 h-8 text-indigo-600" />
+            <div className="mb-3 text-center">
+              <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform dark:bg-[#1c2938]">
+                <Package className="w-5 h-5 text-indigo-600" />
               </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-1 dark:text-gray-100">{addon.plan_name} Addon</h4>
-              <p className="text-gray-500 text-sm line-clamp-2 dark:text-gray-400">Exclusive Annual Benefit Listing Slots</p>
+              <h4 className="text-base font-bold text-gray-900 mb-0.5 dark:text-gray-100">{addon.plan_name} Addon</h4>
+              <p className="text-gray-500 text-xs line-clamp-2 dark:text-gray-400">Exclusive Annual Benefit Listing Slots</p>
             </div>
 
             <div className="space-y-4 mb-8 flex-grow">
@@ -566,9 +570,9 @@ const ListingPlanView: React.FC = () => {
       </div>
 
       {/* History Section */}
-      <div className="space-y-6">
+      <div className="space-y-2">
         <div className="flex items-center gap-3">
-          <History className="w-6 h-6 text-emerald-600" />
+          <Package className="w-6 h-6 text-brand-600" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Listing Plan History</h2>
         </div>
 
