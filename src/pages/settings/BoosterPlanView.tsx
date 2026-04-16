@@ -223,7 +223,7 @@ const BoosterPlanView: React.FC = () => {
                 <Package className="w-5 h-5 text-indigo-600" />
               </div>
               <h4 className="text-base font-bold text-gray-900 mb-0.5 dark:text-gray-200">{plan.name || `${plan.days}-Day Boost`}</h4>
-              <p className="text-gray-500 text-xs line-clamp-2 dark:text-gray-200">{plan.description || `Boost all priority products for ${plan.days} days`}</p>
+              {/* <p className="text-gray-500 text-xs line-clamp-2 dark:text-gray-200">{plan.description || `Boost all priority products for ${plan.days} days`}</p> */}
             </div>
 
             {/* Price block */}
