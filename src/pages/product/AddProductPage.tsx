@@ -19,7 +19,8 @@ import Checkbox from "@/components/form/input/Checkbox";
 import { toast } from "react-toastify";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
 import { useWallet } from "@/context/WalletContext";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiInfo } from "react-icons/fi";
+import Tooltip from "@/components/common/Tooltip";
 
 /* <!-- ========================================================== Types ========================================================== --> */
 
@@ -1043,13 +1044,19 @@ export default function AddProductPage() {
                         </div>
 
                     </div> */}
-                    <div className="bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex items-center">
+                    <div className="bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-2">
                         <Checkbox
                             label="Base (Paid listing)"
                             checked={pricingType === "paid"}
                             onChange={handlePricingChange}
                             className={pricingType === "paid" ? "text-blue-700 dark:text-blue-400" : ""}
                         />
+                        <Tooltip
+                            content="This product will be marked as Base (Paid listing). ₹10 will be deducted from your wallet"
+                            position="left"
+                        >
+                            <FiInfo className="text-gray-400 hover:text-gray-600 cursor-pointer" />
+                        </Tooltip>
                     </div>
                 </div>
 
@@ -1195,6 +1202,7 @@ export default function AddProductPage() {
                                 placeholder="Auto-generated SKU"
                                 type="text"
                                 value={formData.sku}
+                                infoTooltip="SKU ID is automatically generated."
                                 onChange={(e) => handleChange("sku", e.target.value)}
                                 error={!!validationErrors.sku}
                                 className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full bg-gray-50"
