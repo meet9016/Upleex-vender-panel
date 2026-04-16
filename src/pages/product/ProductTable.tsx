@@ -365,6 +365,17 @@ const ProductTable = () => {
     // Add remaining common columns
     baseColumns.push(
       {
+        field: "pricing_type",
+        headerName: "Pricing",
+        minWidth: 110,
+        cellRenderer: (params: any) => (
+          <div className="flex items-center h-full">
+            <StatusBadge status={params.value || 'free'} />
+          </div>
+        ),
+        cellStyle: { justifyContent: "left" },
+      },
+      {
         field: "is_new",
         headerName: "New",
         minWidth: 100,

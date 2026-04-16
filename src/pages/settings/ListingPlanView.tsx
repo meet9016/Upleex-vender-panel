@@ -53,6 +53,8 @@ const ListingPlanView: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean } | null>(null);
 
+  const [historyTab, setHistoryTab] = useState<"rent" | "sell">("rent");
+
   const planAggregates = useMemo(() => {
     const aggregates: Record<string, { total: number; used: number; productIds: Set<string> }> = {};
     const now = new Date();
@@ -309,6 +311,15 @@ const ListingPlanView: React.FC = () => {
       }
     },
 
+    {headerName: "Pricing",
+      field: "pricing_type",
+      width: 100,
+      cellRenderer: (params: any) => (
+        <div className="flex items-center h-full">
+          <StatusBadge status={(params.value || 'paid').toLowerCase() === 'free' ? 'free' : 'paid'} />
+        </div>
+      )
+    },
     {
       headerName: "Status",
       field: "status",
@@ -364,7 +375,10 @@ const ListingPlanView: React.FC = () => {
   }, [currentTabProducts, gridSearch]);
 
   const handleSelectionChange = (rows: Product[]) => {
-    const ids = rows.map((p) => p.id);
+    // Exclude free products from selection
+    const ids = rows
+      .filter((p) => (p as any).pricing_type !== 'free')
+      .map((p) => p.id);
     setSelectedProductIds(ids);
   };
 
@@ -378,22 +392,30 @@ const ListingPlanView: React.FC = () => {
           product_name: "-",
           category_name: "-",
           sub_category_name: "-",
+          product_type_name: "-",
           is_placeholder: true
         });
         return;
       }
       productList.forEach((prod: any) => {
+        // Try to find full product from local products list for type info
+        const prodId = typeof prod === 'string' ? prod : (prod.id || prod._id || prod.product_id);
+        const fullProduct = products.find(p => String(p.id) === String(prodId));
         rows.push({
           ...purchase,
-          product_name: prod.product_name || "-",
-          category_name: prod.category_name || "-",
-          sub_category_name: prod.sub_category_name || "-",
+          product_name: prod.product_name || fullProduct?.product_name || "-",
+          category_name: prod.category_name || fullProduct?.category_name || "-",
+          sub_category_name: prod.sub_category_name || fullProduct?.sub_category_name || "-",
+          product_type_name: fullProduct?.product_type_name || prod.product_type_name || "-",
         });
       });
     });
 
-    return rows.sort((a, b) => new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime());
-  }, [purchasedPlans, products]);
+    const sorted = rows.sort((a, b) => new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime());
+
+    if (historyTab === "sell") return sorted.filter(r => r.product_type_name?.toLowerCase() === "sell");
+    return sorted.filter(r => r.product_type_name?.toLowerCase() === "rent");
+  }, [purchasedPlans, products, historyTab]);
 
   const purchaseHistoryColumns: ColDef[] = [
     {
@@ -567,9 +589,27 @@ const ListingPlanView: React.FC = () => {
 
       {/* History Section */}
       <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <Package className="w-6 h-6 text-brand-600" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Listing Plan History</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Package className="w-6 h-6 text-brand-600" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Listing Plan History</h2>
+          </div>
+          {/* Rent / Sell tabs */}
+          <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 gap-1">
+            {(["rent", "sell"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setHistoryTab(tab)}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition capitalize ${
+                  historyTab === tab
+                    ? 'bg-white dark:bg-gray-700 text-emerald-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab === 'rent' ? 'Rent' : 'Sell'}
+              </button>
+            ))}
+          </div>
         </div>
 
         <AgGridTable
@@ -648,6 +688,8 @@ const ListingPlanView: React.FC = () => {
               height={500}
               rowHeight={50}
               isRowSelectable={(params) => {
+                // Disable free products — they don't need a Listing plan
+                if ((params.data.pricing_type || 'paid').toLowerCase() === 'free') return false;
                 // Disable if product is already in ANY active listing plan
                 for (const agg of Object.values(planAggregates)) {
                   if (agg.productIds.has(String(params.data.id))) return false;
@@ -655,7 +697,8 @@ const ListingPlanView: React.FC = () => {
                 return true;
               }}
               getRowStyle={(params) => {
-                // Visual feedback for products already in a plan
+                const isFree = (params.data.pricing_type || 'paid').toLowerCase() === 'free';
+                // Visual feedback for products already in a plan or free
                 let hasPlan = false;
                 for (const agg of Object.values(planAggregates)) {
                   if (agg.productIds.has(String(params.data.id))) {
@@ -664,8 +707,8 @@ const ListingPlanView: React.FC = () => {
                   }
                 }
 
-                if (hasPlan) {
-                  return { opacity: 0.6, pointerEvents: 'none', background: 'rgba(0,0,0,0.03)' };
+                if (hasPlan || isFree) {
+                  return { opacity: 0.4, pointerEvents: 'none', background: 'rgba(0,0,0,0.03)' };
                 }
                 return undefined;
               }}

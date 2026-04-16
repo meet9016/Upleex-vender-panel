@@ -23,6 +23,7 @@ const BoosterPlanView: React.FC = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedPlanForBoost, setSelectedPlanForBoost] = useState<any>(null);
   const [priorityProducts, setPriorityProducts] = useState<any[]>([]);
+  const [historyTab, setHistoryTab] = useState<"rent" | "sell">("rent");
 
   const fetchData = async () => {
     try {
@@ -102,6 +103,9 @@ const BoosterPlanView: React.FC = () => {
     }
   };
 
+  const rentProducts = useMemo(() => priorityProducts.filter(p => p.product_type_name?.toLowerCase() === "rent"), [priorityProducts]);
+  const sellProducts = useMemo(() => priorityProducts.filter(p => p.product_type_name?.toLowerCase() === "sell"), [priorityProducts]);
+
   const flattenedBoosterHistory = useMemo(() => {
     const rows: any[] = [];
     purchases.forEach(purchase => {
@@ -111,10 +115,13 @@ const BoosterPlanView: React.FC = () => {
         product_name: purchase.product_name || product?.product_name || "All Priority Products",
         category_name: product?.category_name || "-",
         sub_category_name: product?.sub_category_name || "-",
+        product_type_name: product?.product_type_name || "-",
       });
     });
-    return rows.sort((a, b) => new Date(b.expiry_date).getTime() - new Date(a.expiry_date).getTime());
-  }, [purchases, priorityProducts]);
+    const sorted = rows.sort((a, b) => new Date(b.expiry_date).getTime() - new Date(a.expiry_date).getTime());
+    if (historyTab === "sell") return sorted.filter(r => r.product_type_name?.toLowerCase() === "sell");
+    return sorted.filter(r => r.product_type_name?.toLowerCase() === "rent");
+  }, [purchases, priorityProducts, historyTab]);
 
   const columns: ColDef[] = [
     {
@@ -356,9 +363,26 @@ const BoosterPlanView: React.FC = () => {
 
       {/* History Section */}
       <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <Package className="w-6 h-6 text-brand-600" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Booster Purchase History</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Package className="w-6 h-6 text-brand-600" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Booster Purchase History</h2>
+          </div>
+          <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 gap-1">
+            {(["rent", "sell"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setHistoryTab(tab)}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition capitalize ${
+                  historyTab === tab
+                    ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab === 'rent' ? 'Rent' : 'Sell'}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl overflow-hidden"> */}
