@@ -226,8 +226,13 @@ export default function SignUpForm() {
           }
           
           if (vendor) {
+            // Find the city label from cityOptions to store it for KYC autofill
+            const selectedCity = cityOptions.find(c => c.value === formData.city);
+            if (selectedCity) {
+              vendor.city_name = selectedCity.label;
+            }
             localStorage.setItem('user_info', JSON.stringify(vendor));
-            console.log('User info stored successfully');
+            console.log('User info stored successfully with city_name:', vendor.city_name);
           }
           
           toast.success(message);
