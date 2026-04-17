@@ -392,6 +392,7 @@ const BoosterPlanView: React.FC = () => {
             showCheckboxes={false}
             height={400}
             rowHeight={52}
+            noRowsMessage="no booster purchases yet"
           />
         {/* </div> */}
       </div>

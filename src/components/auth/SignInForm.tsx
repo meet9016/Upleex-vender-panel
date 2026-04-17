@@ -37,7 +37,6 @@ export default function SignInForm() {
   const [otpSent, setOtpSent] = useState(false);
 
   const [error, setError] = useState<ErrorState>({});
-  console.log("🚀 ~ SignInForm ~ error:", error)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -80,11 +79,9 @@ export default function SignInForm() {
         toast.success(res.data.message);
         setOtpSent(true);
       } else {
-        console.log("res");
         toast.error(res.data.message);
       }
     } catch (err: any) {
-      console.log("res", err.response.data.message);
       toast.error(err.response.data.message);
       setError(err.message || "Invalid email or password. Please try again.");
     } finally {
@@ -148,7 +145,6 @@ export default function SignInForm() {
         toast.error(res.data.message);
       }
     } catch (err: any) {
-      console.log("OTP verification error:", err);
       const errorMessage = err?.response?.data?.message || err?.message || "Invalid OTP. Please try again.";
       toast.error(errorMessage);
       setError({ otp: errorMessage });

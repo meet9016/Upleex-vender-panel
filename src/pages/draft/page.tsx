@@ -93,7 +93,6 @@ const DraftsPage = () => {
       setDraftData(drafts);
       setSelectedRows([]);
     } catch (error) {
-      console.log("Get draft data error:", error);
       toast.error(`Failed to fetch ${activeScope} drafts`);
     } finally {
       setLoading(false);
@@ -173,7 +172,6 @@ const DraftsPage = () => {
       setBulkDeleteConfirm(false);
       getDraftData();
     } catch (error) {
-      console.log("Bulk delete error:", error);
       toast.error(`Failed to delete selected ${activeScope} drafts`);
     } finally {
       setLoading(false);

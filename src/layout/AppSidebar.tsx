@@ -10,6 +10,7 @@ import { CalenderIcon, GridIcon, HorizontaLDots, BoxIcon, DocsIcon, ListIcon, Do
 import { BsChatSquareQuote } from "react-icons/bs";
 import endPointApi from "@/utils/endPointApi";
 import { api } from "@/utils/axiosInstance";
+import { DiamondPlus } from "lucide-react";
 
 type NavItem = {
   name: string;
@@ -20,7 +21,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { icon: <GridIcon />, name: "Dashboard", path: "/" },
   { icon: <CalenderIcon />, name: "KYC", path: "/kyc" },
-  { icon: <CalenderIcon />, name: "Product", path: "/product" },
+  { icon: <DiamondPlus />, name: "Product", path: "/product" },
   { icon: <TaskIcon />, name: "Service", path: "/service" },
   { icon: <BsChatSquareQuote className="w-5 h-5" />, name: "Quote", path: "/quote" },
   // { icon: <DollarLineIcon />, name: "Purchased", path: "/purchasedplan" },

@@ -753,6 +753,7 @@ const SettingsPage: React.FC = () => {
                 }
                 return undefined;
               }}
+              noRowsMessage="no priority purchases yet"
             />
           </div>
           {/* Footer Actions */}
@@ -1003,6 +1004,7 @@ const SettingsPage: React.FC = () => {
                   showCheckboxes={false}
                   height={400}
                   rowHeight={52}
+                  noRowsMessage="no priority purchases yet"
                 />
               </div>
 
@@ -1094,7 +1096,14 @@ const SettingsPage: React.FC = () => {
                       ))}
                     </div>
                   </div>
-                  <AgGridTable rowData={flattenedPriorityHistory} columns={priorityHistoryColumns} showCheckboxes={false} height={400} rowHeight={52} />
+                  <AgGridTable
+                   rowData={flattenedPriorityHistory} 
+                   columns={priorityHistoryColumns}
+                    showCheckboxes={false} 
+                    height={400} 
+                    rowHeight={52} 
+                    noRowsMessage="no priority purchases yet"
+                    />
                 </div>
               </div>
             </>

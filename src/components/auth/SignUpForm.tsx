@@ -218,9 +218,6 @@ export default function SignUpForm() {
           const authToken = res?.data?.data?.auth_token || res?.data?.data?.token;
           const vendor = res?.data?.data?.vendor;
           
-          console.log('Auth token:', authToken);
-          console.log('Vendor data:', vendor);
-          
           if (authToken) {
             saveToken(authToken);
           }

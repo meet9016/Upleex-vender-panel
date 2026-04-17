@@ -75,7 +75,6 @@ const QuoteTable = () => {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [productTypes, setProductTypes] = useState<any[]>([]);
-  console.log("🚀 ~ QuoteTable ~ productTypes:", productTypes)
   const [listingTypes, setListingTypes] = useState<any[]>([]);
   const [months, setMonths] = useState<any[]>([]);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -115,8 +114,6 @@ const QuoteTable = () => {
   const [pendingFilters, setPendingFilters] = useState(filters);
 
   // Categories data - removed since not needed
-  console.log("🚀 ~ QuoteTable ~ filters:", filters)
-
   const activeFilterCount = Object.values(filters).filter(v =>
     Array.isArray(v) ? v.length > 0 : v !== ''
   ).length;
@@ -169,16 +166,6 @@ const QuoteTable = () => {
       let totalPrice = '0';
       let unitPrice = '0';
 
-      console.log('Processing quote:', {
-        quoteId: quote._id,
-        months_id: quote.months_id,
-        calculated_price: quote.calculated_price,
-        product_month_arr: product.month_arr,
-        product_price: product.price,
-        qty: quote.qty,
-        number_of_days: quote.number_of_days
-      });
-
       if (quote.calculated_price) {
         // Use calculated price from backend if available
         totalPrice = quote.calculated_price.toString();
@@ -195,7 +182,6 @@ const QuoteTable = () => {
           // Daily/Hourly product - calculate unit price
           unitPrice = days > 0 ? (parseFloat(totalPrice) / (qty * days)).toString() : '0';
         }
-        console.log('Using calculated price:', { totalPrice, unitPrice });
       } else if (quote.months_id && product.month_arr && Array.isArray(product.month_arr)) {
         // Monthly product - calculate from month_arr
         const month = product.month_arr.find((m: any) =>
@@ -204,7 +190,6 @@ const QuoteTable = () => {
         if (month) {
           unitPrice = month.price || '0';
           totalPrice = (parseFloat(month.price || '0') * parseInt(quote.qty || '1')).toString();
-          console.log('Monthly calculation:', { month, unitPrice, totalPrice });
         }
       } else {
         // Daily/Hourly product - calculate from base price
@@ -212,7 +197,6 @@ const QuoteTable = () => {
         const days = parseInt(quote.number_of_days || '1');
         const qty = parseInt(quote.qty || '1');
         totalPrice = (parseFloat(unitPrice) * days * qty).toString();
-        console.log('Daily/Hourly calculation:', { unitPrice, days, qty, totalPrice });
       }
 
       return {
@@ -513,18 +497,13 @@ const QuoteTable = () => {
       // Build query params
       const params = { ...filterParams };
 
-      console.log("🚀 ~ API Request Params:", params);
-
       const res = await api.get(endPointApi.postGetQuote, { params });
-      console.log("🚀 ~ API Response:", res);
 
       if (res?.data?.success && res?.data?.data) {
         const transformedData = transformQuoteData(res.data.data);
-        console.log("🚀 ~ Transformed Data:", transformedData);
         setQuoteData(transformedData);
       }
     } catch (error) {
-      console.log("fetch quotes error:", error);
       toast.error("Failed to fetch quotes");
     } finally {
       setLoading(false);
@@ -536,12 +515,10 @@ const QuoteTable = () => {
   const getDropdownData = async () => {
     try {
       const res = await api.post(endPointApi.postProductDropDownList);
-      console.log("🚀 ~ getDropdownData ~ res:", res);
 
       // Check for success flag instead of status
       if (res?.data?.success === true) {
         const data = res.data; // Data is at root level
-        console.log("🚀 ~ getDropdownData ~ data:", data)
         setProductTypes(data.products_type || []);
         setListingTypes(data.products_listing_type || []);
         setMonths(data.products_months || []);
@@ -599,7 +576,6 @@ const QuoteTable = () => {
         setQuoteData(previousData);
       }
     } catch (error) {
-      console.log('Approval error:', error);
       toast.error("Failed to approve quote");
       setQuoteData(previousData);
     }
@@ -672,7 +648,6 @@ const QuoteTable = () => {
         setQuoteData(previousData);
       }
     } catch (error) {
-      console.log('Delivery error:', error);
       toast.error("Failed to update status");
       setQuoteData(previousData);
     }
@@ -732,9 +707,6 @@ const QuoteTable = () => {
     const params = getCurrentParams(pendingFilters);
     params.page = 1;
     params.limit = 10;
-
-    console.log("🚀 ~ Applying filters:", params);
-    console.log("🚀 ~ Current filter state:", pendingFilters);
 
     getQuoteData(params);
     setShowFilterModal(false);
@@ -1084,16 +1056,16 @@ export default QuoteTable;
 const ColorLegend = () => (
   <div className="flex flex-wrap items-center text-xs sm:text-sm">
     <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-full">
-      <span className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm shadow-green-200"></span>
-      <span className="text-gray-700 dark:text-gray-300 font-medium">Completed / Successful</span>
+      <span className="w-2.5 h-2.5 rounded-full bg-[#e1f4ee] border border-green-300  shadow-sm shadow-green-200"></span>
+      <span className="text-gray-700 dark:text-gray-300 font-medium">Due Today</span>
     </div>
     <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-full">
-      <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 shadow-sm shadow-yellow-200"></span>
-      <span className="text-gray-700 dark:text-gray-300 font-medium">Pending / New</span>
+      <span className="w-2.5 h-2.5 rounded-full bg-[#fef6d0] border border-yellow-300 shadow-sm shadow-yellow-200"></span>
+      <span className="text-gray-700 dark:text-gray-300 font-medium">New Quote</span>
     </div>
     <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-full">
-      <span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm shadow-red-200"></span>
-      <span className="text-gray-700 dark:text-gray-300 font-medium">Expired Delivery</span>
+      <span className="w-2.5 h-2.5 rounded-full bg-[#fee3e7] border border-red-300 shadow-sm shadow-red-200"></span>
+      <span className="text-gray-700 dark:text-gray-300 font-medium">Late Return</span>
     </div>
   </div>
 );

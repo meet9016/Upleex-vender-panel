@@ -636,7 +636,6 @@ const ProductTable = () => {
         }
       } catch { }
     } catch (error) {
-      console.log("fetch error", error);
       toast.error("Failed to fetch products");
     } finally {
       setLoading(false);
@@ -724,7 +723,6 @@ const ProductTable = () => {
         setListingTypes(dropdownData.listing_type);
       }
     } catch (error) {
-      console.log("fetch dropdown error", error);
       toast.error("Failed to load filter options");
     }
   };
@@ -802,7 +800,6 @@ const ProductTable = () => {
 
       if (!hasOtherFilters) {
         // No filters at all, get all data
-        console.log('No filters, getting all data');
         getProductData({});
       }
     }

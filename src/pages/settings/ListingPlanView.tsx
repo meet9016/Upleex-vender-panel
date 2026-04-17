@@ -618,6 +618,7 @@ const ListingPlanView: React.FC = () => {
           showCheckboxes={false}
           height={400}
           rowHeight={52}
+          noRowsMessage="no purchase history found"
         />
       </div>
 
@@ -712,6 +713,7 @@ const ListingPlanView: React.FC = () => {
                 }
                 return undefined;
               }}
+              noRowsMessage="no products found"  
             />
           </div>
 

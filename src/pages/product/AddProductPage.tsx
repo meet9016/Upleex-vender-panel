@@ -8,7 +8,7 @@ import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
 import { ChevronDownIcon } from "@/icons";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ReactNode, useEffect, useState, useRef } from "react";
+import { ReactNode, useEffect, useState, useRef, useCallback } from "react";
 import { Editor } from "primereact/editor";
 import { MdDelete } from "react-icons/md";
 import { api } from "@/utils/axiosInstance";
@@ -191,7 +191,6 @@ export default function AddProductPage() {
             if (userInfo) {
                 const user = JSON.parse(userInfo);
                 const businessName = user.business_name;
-                console.log("Fetched vendor business name from localStorage:", businessName);
                 if (businessName) {
                     setVendorBusinessName(businessName);
                     return;
@@ -203,7 +202,6 @@ export default function AddProductPage() {
             if (res?.data?.status === 200 && res?.data?.data) {
                 const data = res.data.data;
                 const businessName = data.business_name || data.businessName || data.Identity?.business_name;
-                console.log("Fetched vendor profile from API:", data);
                 setVendorBusinessName(businessName || "Vendor");
                 setHasGst(!!(data.Identity?.gst_number || data.gst_number));
             } else {
@@ -297,7 +295,7 @@ export default function AddProductPage() {
 
     /* <!-- ========================================================== Input change ========================================================== --> */
 
-    const handleChange = (field: string, value: any) => {
+    const handleChange = useCallback((field: string, value: any) => {
         setFormData((prev) => {
             if (prev[field as keyof typeof prev] === value) return prev;
             return {
@@ -308,48 +306,46 @@ export default function AddProductPage() {
 
         // Clear validation error only when user directly interacts with that field
         // Do NOT clear subCategory error when category changes
-        if (field !== 'subCategory' && validationErrors[field as keyof typeof validationErrors]) {
-            setValidationErrors(prev => {
-                if (!prev[field as keyof typeof prev]) return prev;
+        setValidationErrors(prev => {
+            if (field !== 'subCategory' && prev[field as keyof typeof prev]) {
                 return {
                     ...prev,
                     [field]: undefined
                 };
-            });
-        }
-        // Clear subCategory error only when user actually selects a subCategory
-        if (field === 'subCategory' && value) {
-            setValidationErrors(prev => {
-                if (!prev.subCategory) return prev;
+            }
+            
+            // Clear subCategory error only when user actually selects a subCategory
+            if (field === 'subCategory' && value && prev.subCategory) {
                 return {
                     ...prev,
                     subCategory: undefined
                 };
-            });
-        }
-    };
+            }
+            
+            return prev;
+        });
+    }, []);
 
-
-    const handleNumberInput = (field: string, value: string, maxLength: number = 10) => {
+    const handleNumberInput = useCallback((field: string, value: string, maxLength: number = 10) => {
         // Remove non-numeric characters and limit length
         const numericValue = value.replace(/[^0-9]/g, '').slice(0, maxLength);
         handleChange(field, numericValue);
-    };
+    }, [handleChange]);
 
 
-    const addFeatureField = () => {
+    const addFeatureField = useCallback(() => {
         setFormData((prev) => ({
             ...prev,
             keyFeatures: [...prev.keyFeatures, { key: "", value: "" }],
         }));
-    };
+    }, []);
 
-    const removeFeature = (index: number) => {
+    const removeFeature = useCallback((index: number) => {
         setFormData((prev) => ({
             ...prev,
             keyFeatures: prev.keyFeatures.filter((_, i) => i !== index),
         }));
-    };
+    }, []);
 
     const UpdateFeatureField = (
         index: number,
@@ -659,7 +655,7 @@ export default function AddProductPage() {
             setSelectedSubCategory(formData.subCategory);
         }
         // No auto-selection or clearing here; user will select manually
-    }, [selectedCategory, categoriesData, isEditMode]);
+    }, [selectedCategory, categoriesData, isEditMode, handleChange]);
 
     /* <!-- ============================================ Fetch dropdown options  ============================================ --> */
 
@@ -1583,6 +1579,8 @@ export default function AddProductPage() {
                                                 borderBottomLeftRadius: "0.75rem",
                                                 borderBottomRightRadius: "0.75rem",
                                                 border: "none",
+                                                maxHeight: "280px",
+                                                overflowY: "auto",
                                             },
                                         },
                                     }}

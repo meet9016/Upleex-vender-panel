@@ -400,6 +400,7 @@ const ServicePlanView: React.FC = () => {
           columns={purchaseHistoryColumns}
           showCheckboxes={false}
           height={400}
+          noRowsMessage="no service purchases yet"
         />
       </div>
 
@@ -456,6 +457,7 @@ const ServicePlanView: React.FC = () => {
                     };
                 return undefined;
               }}
+              noRowsMessage="no service purchases yet"
             />
           </div>
           <div className="px-6 py-4 border-t flex justify-end gap-3">

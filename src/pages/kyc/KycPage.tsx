@@ -126,7 +126,6 @@ export default function KYCPage() {
     terms_conditions: false,
     completed_pages: [],
   });
-  console.log("KYCPage Rendered with KYCformData:", KYCformData);
 
   // Sync currentStep to URL
   useEffect(() => {
