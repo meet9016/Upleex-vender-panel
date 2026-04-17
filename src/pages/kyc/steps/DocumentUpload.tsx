@@ -14,6 +14,7 @@ type Props = {
   clearError?: () => void;
   required?: boolean;
   disabled?: boolean;
+  hint?: string;
 };
 
 export default function DocumentUpload({
@@ -24,6 +25,7 @@ export default function DocumentUpload({
   clearError,
   disabled,
   required = false,
+  hint,
 }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -132,6 +134,7 @@ export default function DocumentUpload({
               Drag & drop or <span className="text-indigo-600 dark:text-indigo-400">Browse</span>
             </p>
             <p className="text-xs text-slate-400">Supports JPG, PNG or PDF (Max 2MB recommended)</p>
+            {hint && <p className="text-[10px] text-indigo-500 font-medium mt-1 italic">{hint}</p>}
           </div>
           <input
             type="file"

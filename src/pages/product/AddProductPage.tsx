@@ -437,11 +437,11 @@ export default function AddProductPage() {
 
         setPricingType(isChecked ? "paid" : "free");
 
-        if (isChecked) {
-            toast.info("This product will be marked as Base (Paid listing). ₹10 will be deducted from your wallet.");
-        } else {
-            toast.info("This product is now set as Free listing");
-        }
+        // if (isChecked) {
+        //     toast.info("This product will be marked as Base (Paid listing). ₹10 will be deducted from your wallet.");
+        // } else {
+        //     toast.info("This product is now set as Free listing");
+        // }
     };
     /* <!-- ============================================ handle select rent time ============================================ --> */
 

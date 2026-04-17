@@ -203,9 +203,10 @@ export default function AddServicePage() {
                 toast.success(`Service ${isEditMode ? 'updated' : 'added'} successfully`);
                 router.push("/service");
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Save service error", error);
-            toast.error("Failed to save service");
+            const message = error?.response?.data?.message || "Failed to save service";
+            toast.error(message);
         } finally {
             setSubmitting(false);
         }

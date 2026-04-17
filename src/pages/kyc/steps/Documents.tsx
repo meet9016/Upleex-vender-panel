@@ -82,6 +82,7 @@ export default function Documents({
         onChange={updateFile("business_logo_image")}
         error={errors?.business_logo_image}
         clearError={() => clearError('business_logo_image')}
+        hint="Recommended size: 500x500 px (1:1 ratio) for better visibility on user panel."
       />
 
       <DocumentUpload

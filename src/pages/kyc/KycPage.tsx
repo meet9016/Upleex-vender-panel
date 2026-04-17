@@ -150,6 +150,7 @@ export default function KYCPage() {
         email: vendor.email || '',
         mobile: vendor.number || '',
         business_name: vendor.business_name || '',
+        city_id: vendor.city_id ? { value: vendor.city_id, label: vendor.city_name || '' } : prev.city_id,
       }));
     }
     fetchKYCFormdata();
@@ -493,6 +494,20 @@ export default function KYCPage() {
       });
 
       if (res.data.status === 200) {
+        // If we just saved contact details, sync back to localStorage user_info
+        if (actualStep === 0) {
+          const userInfo = localStorage.getItem('user_info');
+          if (userInfo) {
+            const vendor = JSON.parse(userInfo);
+            vendor.full_name = KYCformData.full_name;
+            vendor.email = KYCformData.email;
+            vendor.number = KYCformData.mobile;
+            vendor.city_id = KYCformData.city_id.value;
+            vendor.city_name = KYCformData.city_id.label;
+            localStorage.setItem('user_info', JSON.stringify(vendor));
+          }
+        }
+
         await fetchKYCFormdata();
 
         if (currentStep < steps.length - 1) {
@@ -577,9 +592,9 @@ export default function KYCPage() {
           mobile: contact.mobile || prev.mobile,
           address: contact.address || prev.address,
           pincode: contact.pincode || prev.pincode,
-          country_id: { value: contact.country_id || "", label: contact.country_name || "" },
-          state_id: { value: contact.state_id || "", label: contact.state_name || "" },
-          city_id: { value: contact.city_id || "", label: contact.city_name || "" },
+          country_id: { value: contact.country_id || prev.country_id.value, label: contact.country_name || prev.country_id.label },
+          state_id: { value: contact.state_id || prev.state_id.value, label: contact.state_name || prev.state_id.label },
+          city_id: { value: contact.city_id || prev.city_id.value, label: contact.city_name || prev.city_id.label },
           pancard_number: identity.pancard_number || prev.pancard_number,
           aadharcard_number: identity.aadharcard_number || prev.aadharcard_number,
           business_name: identity.business_name || prev.business_name,
