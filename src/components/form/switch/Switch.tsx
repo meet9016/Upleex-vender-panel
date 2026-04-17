@@ -33,10 +33,19 @@ const Switch: React.FC<SwitchProps> = ({
 
   const handleToggle = () => {
     if (disabled) return;
-    const newCheckedState = !isChecked;
-    setIsChecked(newCheckedState);
-    if (onChange) {
-      onChange(newCheckedState);
+    
+    // If controlled (checked prop provided), just call onChange
+    if (checked !== undefined) {
+      if (onChange) {
+        onChange(!checked);
+      }
+    } else {
+      // Uncontrolled mode
+      const newCheckedState = !isChecked;
+      setIsChecked(newCheckedState);
+      if (onChange) {
+        onChange(newCheckedState);
+      }
     }
   };
 
@@ -80,14 +89,14 @@ const Switch: React.FC<SwitchProps> = ({
   const switchElement = (
     <div className={`relative ${className}`}>
       <div
-        className={`block transition duration-150 ease-linear ${sizeClasses[size].container} rounded-full ${
+        className={`block transition-all duration-300 ease-in-out ${sizeClasses[size].container} rounded-full ${
           disabled
             ? "bg-gray-100 pointer-events-none dark:bg-gray-800"
             : switchColors.background
         }`}
       ></div>
       <div
-        className={`absolute ${sizeClasses[size].knob} rounded-full shadow-theme-sm duration-150 ease-linear transform ${switchColors.knob}`}
+        className={`absolute ${sizeClasses[size].knob} rounded-full shadow-theme-sm transition-all duration-300 ease-in-out transform ${switchColors.knob}`}
       ></div>
     </div>
   );

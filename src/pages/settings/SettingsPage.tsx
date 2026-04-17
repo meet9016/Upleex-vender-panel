@@ -733,7 +733,7 @@ const SettingsPage: React.FC = () => {
                 }
               }}
               showCheckboxes={true}
-              height={320}
+              height={420}
               rowHeight={45}
               isRowSelectable={(params) => {
                 if (isAddonModalOpen) {
