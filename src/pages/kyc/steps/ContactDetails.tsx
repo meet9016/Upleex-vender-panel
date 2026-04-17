@@ -189,27 +189,87 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
     fetchOptions("city", searchCity, 1);
   }, [searchCity]);
 
-  // Auto-fetch states when country is selected, search is empty, and states list is empty
+  // Auto-fetch states when country is selected, search is empty
   useEffect(() => {
-    if (selectedCountry?.value && states.length === 0 && searchState === "") {
-      pageRefState.current = 1;
-      fetchOptions("state", "", 1, selectedCountry.value);
+    if (selectedCountry?.value && searchState === "") {
+      // If we only have the auto-selected state, or no states, fetch full list
+      if (states.length <= 1) {
+        pageRefState.current = 1;
+        fetchOptions("state", "", 1, selectedCountry.value);
+      }
     }
-  }, [selectedCountry?.value, states.length, searchState]);
+  }, [selectedCountry?.value, searchState]);
 
-  // Auto-fetch cities when state is selected, search is empty, and cities list is empty
+  // Auto-fetch cities when state is selected, search is empty
   useEffect(() => {
-    if (selectedState?.value && cities.length === 0 && searchCity === "") {
-      pageRefCity.current = 1;
-      fetchOptions("city", "", 1, selectedState.value);
+    if (selectedState?.value && searchCity === "") {
+      // If we only have the auto-selected city, or no cities, fetch full list
+      if (cities.length <= 1) {
+        pageRefCity.current = 1;
+        fetchOptions("city", "", 1, selectedState.value);
+      }
     }
-  }, [selectedState?.value, cities.length, searchCity]);
+  }, [selectedState?.value, searchCity]);
 
   // Load initial country list on mount (states and cities will load reactively
   // after selectedCountry/selectedState are synced from KYCformData)
   useEffect(() => {
     if (!countries.length) fetchOptions("country", "", 1);
-  }, []);
+
+    // Sync from localStorage if KYCformData is missing city/state/country
+    const storedCityId = localStorage.getItem('city_id');
+    if (storedCityId && storedCityId.includes('-')) {
+      const parts = storedCityId.split('-');
+      if (parts.length >= 3) {
+        const cityName = parts[parts.length - 1];
+        const stateId = parts.slice(0, -1).join('-');
+        const countryId = parts[0];
+
+        setKYCFormData(prev => {
+          const needsUpdate = !prev.city_id.value || !prev.state_id.value || !prev.country_id.value;
+          if (!needsUpdate) return prev;
+
+          const updated = {
+            ...prev,
+            city_id: prev.city_id.value ? prev.city_id : { value: storedCityId, label: cityName },
+            state_id: prev.state_id.value ? prev.state_id : { value: stateId, label: "" },
+            country_id: prev.country_id.value ? prev.country_id : { value: countryId, label: "" }
+          };
+          return updated;
+        });
+      }
+    }
+  }, []); // Only run on mount or when city_id is missing initially
+
+  // Auto-fill state and country based on city_id value if they are missing
+  useEffect(() => {
+    if (KYCformData?.city_id?.value && KYCformData.city_id.value.includes('-')) {
+      const parts = KYCformData.city_id.value.split('-');
+      if (parts.length >= 3) {
+        const countryId = parts[0];
+        const stateId = parts.slice(0, -1).join('-');
+        const cityName = parts[parts.length - 1];
+
+        const needsUpdate = 
+          !KYCformData.state_id.value || 
+          !KYCformData.country_id.value || 
+          !KYCformData.city_id.label || 
+          KYCformData.city_id.label === KYCformData.city_id.value;
+
+        if (needsUpdate) {
+          setKYCFormData(prev => ({
+            ...prev,
+            city_id: { 
+              value: prev.city_id.value, 
+              label: prev.city_id.label && prev.city_id.label !== prev.city_id.value ? prev.city_id.label : cityName 
+            },
+            state_id: prev.state_id.value ? prev.state_id : { value: stateId, label: "" },
+            country_id: prev.country_id.value ? prev.country_id : { value: countryId, label: "" }
+          }));
+        }
+      }
+    }
+  }, [KYCformData?.city_id?.value]);
 
   // Removed the buggy useEffects that tried to clear states/cities.
   // Clearing dependent arrays is now handled explicitly in the onChange handlers.
@@ -218,8 +278,14 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
   useEffect(() => {
     const val = KYCformData?.country_id?.value;
     const label = KYCformData?.country_id?.label;
-    if (val && label) {
-      const option: Option = { value: String(val), label: String(label) };
+    if (val) {
+      let finalLabel = label || val;
+      // Special case for common IDs to improve UX immediately
+      if (!label || label === val) {
+        if (val === "IN") finalLabel = "India";
+      }
+      
+      const option: Option = { value: String(val), label: String(finalLabel) };
       setSelectedCountry(option);
       setCountries(prev => {
         const exists = prev.some(c => c.value === option.value);
@@ -235,13 +301,23 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
       const exists = prev.some(c => c.value === selectedCountry.value);
       return exists ? prev : [selectedCountry, ...prev];
     });
-  }, [selectedCountry?.value, countries.length]);
+
+    // Fix label if it was just the ID or empty
+    const currentLabel = selectedCountry.label;
+    if (!currentLabel || currentLabel === selectedCountry.value) {
+      const match = countries.find(c => c.value === selectedCountry.value && c.label && c.label !== c.value);
+      if (match) {
+        setSelectedCountry(match);
+        setKYCFormData(prev => ({ ...prev, country_id: match }));
+      }
+    }
+  }, [selectedCountry?.value, countries]);
 
   useEffect(() => {
-    if (KYCformData?.state_id?.value && KYCformData?.state_id?.label) {
+    if (KYCformData?.state_id?.value) {
       const stateOption: Option = {
         value: KYCformData.state_id.value,
-        label: KYCformData.state_id.label,
+        label: KYCformData.state_id.label || KYCformData.state_id.value,
       };
       setSelectedState(stateOption);
       // Add to states list if not already present
@@ -259,13 +335,35 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
       const exists = prev.some(s => s.value === selectedState.value);
       return exists ? prev : [selectedState, ...prev];
     });
-  }, [selectedState?.value, states.length]);
+
+    // Fix label if it was just the ID or empty
+    const currentLabel = selectedState.label;
+    if (!currentLabel || currentLabel === selectedState.value) {
+      const match = states.find(s => s.value === selectedState.value && s.label && s.label !== s.value);
+      if (match) {
+        setSelectedState(match);
+        setKYCFormData(prev => ({ ...prev, state_id: match }));
+      }
+    }
+  }, [selectedState?.value, states]);
 
   useEffect(() => {
-    if (KYCformData?.city_id?.value && KYCformData?.city_id?.label) {
+    if (KYCformData?.city_id?.value) {
+      const val = KYCformData.city_id.value;
+      const label = KYCformData.city_id.label;
+      let finalLabel = label || val;
+      
+      // If label is missing and it's a composite ID, try to parse the name
+      if (!label || label === val) {
+        if (val.includes('-')) {
+          const parts = val.split('-');
+          finalLabel = parts[parts.length - 1];
+        }
+      }
+
       const cityOption: Option = {
-        value: KYCformData.city_id.value,
-        label: KYCformData.city_id.label,
+        value: val,
+        label: finalLabel,
       };
       setSelectedCity(cityOption);
       // Add to cities list if not already present
@@ -276,14 +374,57 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
     }
   }, [KYCformData?.city_id?.value, KYCformData?.city_id?.label]);
 
-  // When cities list updates later, re-insert selected if missing
+  // When cities list updates later, re-insert selected if missing and fix label/auto-fill state/country
   useEffect(() => {
-    if (!selectedCity?.value) return;
+    if (!KYCformData?.city_id?.value) return;
+    const val = KYCformData.city_id.value;
+    
     setCities(prev => {
-      const exists = prev.some(c => c.value === selectedCity.value);
-      return exists ? prev : [selectedCity, ...prev];
+      const exists = prev.some(c => c.value === val);
+      return exists ? prev : [selectedCity || { value: val, label: KYCformData.city_id.label || val }, ...prev];
     });
-  }, [selectedCity?.value, cities.length]);
+
+    // Try to find a match in the loaded cities list to fix the label and auto-fill state/country
+    const match = cities.find(c => c.value === val);
+    if (match && match.extra) {
+      const cityData = match.extra;
+      const newState = cityData?.state_id ? { value: String(cityData.state_id), label: cityData.state_name } : null;
+      const newCountry = cityData?.country_id ? { value: String(cityData.country_id), label: cityData.country_name } : null;
+
+      // Update if label is missing/wrong or if state/country are not set
+      const currentLabel = KYCformData.city_id.label;
+      const shouldUpdate = 
+        !currentLabel || 
+        currentLabel === val ||
+        KYCformData.city_id.label !== match.label ||
+        (newState && KYCformData.state_id.value !== newState.value) ||
+        (newCountry && KYCformData.country_id.value !== newCountry.value);
+
+      if (shouldUpdate) {
+        setKYCFormData(prev => ({
+          ...prev,
+          city_id: match,
+          ...(newState && { state_id: newState }),
+          ...(newCountry && { country_id: newCountry }),
+        }));
+        if (newState) {
+          setSelectedState(newState);
+          setStates(prev => prev.some(s => s.value === newState.value) ? prev : [newState, ...prev]);
+        }
+        if (newCountry) {
+          setSelectedCountry(newCountry);
+          setCountries(prev => prev.some(c => c.value === newCountry.value) ? prev : [newCountry, ...prev]);
+        }
+      }
+    } else if (match) {
+      // Just fix the label if no extra data but we found the name
+      const currentLabel = KYCformData.city_id.label;
+      if (!currentLabel || currentLabel === val) {
+        setKYCFormData(prev => ({ ...prev, city_id: match }));
+        setSelectedCity(match);
+      }
+    }
+  }, [KYCformData?.city_id?.value, cities]);
 
   /* <!-- ================================================ Scroll handle ================================================ --> */
 
@@ -451,11 +592,17 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
 
                 if (newState) {
                   setSelectedState(newState);
-                  setStates((prev) => prev.some(s => s.value === newState.value) ? prev : [newState, ...prev]);
+                  setStates((prev) => {
+                    const exists = prev.some(s => s.value === newState.value);
+                    return exists ? prev : [newState, ...prev];
+                  });
                 }
                 if (newCountry) {
                   setSelectedCountry(newCountry);
-                  setCountries((prev) => prev.some(c => c.value === newCountry.value) ? prev : [newCountry, ...prev]);
+                  setCountries((prev) => {
+                    const exists = prev.some(c => c.value === newCountry.value);
+                    return exists ? prev : [newCountry, ...prev];
+                  });
                 }
               }
             }}
