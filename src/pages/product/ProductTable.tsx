@@ -197,23 +197,30 @@ const ProductTable = () => {
   // Toggle product visibility
   const toggleProductVisibility = async (productId: string, currentVisibility: boolean) => {
     try {
+      const newVisibility = !currentVisibility;
+      
+      // Optimistically update UI
+      setProductData(prev => prev.map(p => 
+        (p._id || p.id) === productId ? { ...p, is_visible: newVisibility } : p
+      ));
+
       await api.post(endPointApi.toggleProductVisibility, {
         product_id: productId,
-        is_visible: !currentVisibility
+        is_visible: newVisibility
       });
 
-      const message = !currentVisibility
+      const message = newVisibility
         ? 'Product is now visible to users'
         : 'Product is now hidden from users';
 
       toast.success(message);
-
-      // Refresh the product data
-      getProductData(getCurrentParams(), undefined, true);
     } catch (error: any) {
       console.error('Error toggling visibility:', error);
       const errorMessage = error?.response?.data?.message || 'Failed to update product visibility';
       toast.error(errorMessage);
+      
+      // Revert optimistic update on error
+      getProductData(getCurrentParams(), undefined, true);
     }
   };
 
