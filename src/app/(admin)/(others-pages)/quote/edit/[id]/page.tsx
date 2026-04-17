@@ -41,7 +41,6 @@ const QuoteEditPage = () => {
         setStatuses(res.data.data);
       }
     } catch (error) {
-      console.log("fetch statuses error:", error);
     }
   };
 
@@ -50,7 +49,6 @@ const QuoteEditPage = () => {
     try {
       setLoading(true);
       const res = await api.get(`${endPointApi.getQuoteById}/${params.id}`);
-      console.log("🚀 ~ API Response:", res.data);
 
       if (res?.data?.success && res?.data?.data) {
         const quote = res.data.data;
@@ -105,7 +103,6 @@ const QuoteEditPage = () => {
             // Daily/Hourly product - calculate unit price
             unitPrice = days > 0 ? (parseFloat(totalPrice) / (qty * days)).toString() : '0';
           }
-          console.log('Using calculated price:', { totalPrice, unitPrice });
         } else if (quote.months_id && productDetails.month_arr && Array.isArray(productDetails.month_arr)) {
           // Monthly product - calculate from month_arr
           const month = productDetails.month_arr.find((m: any) =>
@@ -114,7 +111,6 @@ const QuoteEditPage = () => {
           if (month) {
             unitPrice = month.price || '0';
             totalPrice = (parseFloat(month.price || '0') * parseInt(quote.qty || '1')).toString();
-            console.log('Monthly calculation:', { month, unitPrice, totalPrice });
           }
         } else {
           // Daily/Hourly product - calculate from base price
@@ -130,7 +126,6 @@ const QuoteEditPage = () => {
         transformedQuote.total_price = totalPrice;
         transformedQuote.month_name = monthName;
 
-        console.log("🚀 ~ Transformed Quote:", transformedQuote);
         setQuoteData(transformedQuote);
         setPreviousStatus(quote?.status || ""); // Store previous status
 

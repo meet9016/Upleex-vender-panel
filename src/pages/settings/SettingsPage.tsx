@@ -753,6 +753,7 @@ const SettingsPage: React.FC = () => {
                 }
                 return undefined;
               }}
+              noRowsMessage="no priority purchases yet"
             />
           </div>
           {/* Footer Actions */}
@@ -877,97 +878,138 @@ const SettingsPage: React.FC = () => {
                     const isDurationActive = durationToggle === "monthly" ? mTotal > 0 : yTotal > 0;
 
                     return (
-                      <div
-                        key={plan.id}
-                        className={`relative p-5 sm:p-8 rounded-2xl sm:rounded-3xl border transition-all duration-500 flex flex-col h-full bg-white dark:bg-[#0d111c] group ${plan.is_popular
-                          ? 'border-brand-500 shadow-2xl shadow-brand-100 sm:scale-[1.02] z-10'
-                          : 'border-gray-200 hover:border-brand-300 hover:shadow-xl shadow-sm'
-                          }`}
-                      >
-                        {plan.is_popular && (
-                          <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-5 py-1.5 rounded-full text-xs font-bold tracking-widest shadow-lg">
-                            Recommended
-                          </span>
-                        )}
+                     <div
+  key={plan.id}
+  className={`
+    relative p-4 sm:p-5 md:p-6 lg:p-8 
+    rounded-xl sm:rounded-2xl md:rounded-3xl 
+    border transition-all duration-500 
+    flex flex-col h-full 
+    bg-white dark:bg-[#0d111c] group
+    ${plan.is_popular
+      ? 'border-brand-500 shadow-2xl shadow-brand-100 md:scale-[1.02] z-10'
+      : 'border-gray-200 hover:border-brand-300 hover:shadow-xl shadow-sm'
+    }
+  `}
+>
+  {plan.is_popular && (
+    <span className="absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-3 sm:px-5 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold tracking-widest shadow-lg whitespace-nowrap">
+      Recommended
+    </span>
+  )}
 
-                        <div className="mb-3 flex flex-col items-center text-center">
-                          <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform dark:bg-[#1c2938]">
-                            <Package className="w-5 h-5 text-brand-600" />
-                          </div>
-                          <h4 className="text-base font-bold text-gray-900 mb-0.5 dark:text-gray-300">{plan.name}</h4>
-                        </div>
+  <div className="mb-3 sm:mb-4 flex flex-col items-center text-center">
+    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-50 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform dark:bg-[#1c2938]">
+      <Package className="w-4 h-4 sm:w-5 sm:h-5 text-brand-600" />
+    </div>
+    <h4 className="text-sm sm:text-base font-bold text-gray-900 mb-0.5 dark:text-gray-300 line-clamp-1">
+      {plan.name}
+    </h4>
+  </div>
 
-                        <div className="flex gap-3 mb-8">
-                          {(["monthly", "yearly"] as const).map((dur) => {
-                            const isSelected = (planDurations[planId] || "monthly") === dur;
-                            const price = dur === "monthly" ? plan.monthly_price : plan.yearly_price;
-                            return (
-                              <button
-                                key={dur}
-                                onClick={() => setPlanDurations(prev => ({ ...prev, [planId]: dur }))}
-                                className={`flex-1 flex flex-col gap-1 p-4 rounded-2xl border-2 transition-all text-left ${isSelected
-                                  ? "border-brand-500 bg-gradient-to-br from-brand-50 to-white dark:from-brand-900/20 dark:to-[#0d111c] shadow-md"
-                                  : "border-gray-200 bg-gray-50 dark:bg-[#0d111c] dark:border-gray-700 hover:border-brand-200"
-                                  }`}
-                              >
-                                <span className={`text-xs font-bold uppercase tracking-wide ${isSelected ? "text-brand-500" : "text-gray-400"
-                                  }`}>
-                                  {dur === "monthly" ? "Monthly" : "Yearly"}
-                                </span>
-                                <div className="flex items-baseline gap-0.5">
-                                  <span className={`text-2xl font-black ${isSelected ? "text-brand-600" : "text-gray-400"
-                                    }`}>
-                                    {currency}{price}
-                                  </span>
-                                  <span className={`text-xs font-bold ${isSelected ? "text-gray-500" : "text-gray-400"
-                                    }`}>
-                                    /{dur === "monthly" ? "mo" : "yr"}
-                                  </span>
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
+  {/* Duration Buttons - Responsive Grid */}
+  <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-6 sm:mb-8">
+    {(["monthly", "yearly"] as const).map((dur) => {
+      const isSelected = (planDurations[planId] || "monthly") === dur;
+      const price = dur === "monthly" ? plan.monthly_price : plan.yearly_price;
+      return (
+        <button
+          key={dur}
+          onClick={() => setPlanDurations(prev => ({ ...prev, [planId]: dur }))}
+          className={`
+            flex flex-col gap-0.5 sm:gap-1 
+            p-3 sm:p-4 
+            rounded-xl sm:rounded-2xl 
+            border-2 transition-all 
+            ${isSelected
+              ? "border-brand-500 bg-gradient-to-br from-brand-50 to-white dark:from-brand-900/20 dark:to-[#0d111c] shadow-md"
+              : "border-gray-200 bg-gray-50 dark:bg-[#0d111c] dark:border-gray-700 hover:border-brand-200"
+            }
+          `}
+        >
+          <span className={`
+            text-[10px] sm:text-xs font-bold uppercase tracking-wide 
+            ${isSelected ? "text-brand-500" : "text-gray-400"}
+          `}>
+            {dur === "monthly" ? "Monthly" : "Yearly"}
+          </span>
+          <div className="flex items-baseline gap-0.5 flex-wrap">
+            <span className={`
+              text-lg sm:text-2xl font-black 
+              ${isSelected ? "text-brand-600" : "text-gray-400"}
+            `}>
+              {currency}{price}
+            </span>
+            <span className={`
+              text-[10px] sm:text-xs font-bold 
+              ${isSelected ? "text-gray-500" : "text-gray-400"}
+            `}>
+              /{dur === "monthly" ? "mo" : "yr"}
+            </span>
+          </div>
+        </button>
+      );
+    })}
+  </div>
 
-                        {isDurationActive && (
-                          <div className="mb-4 sm:mb-6 p-4 bg-green-50 border border-green-100 rounded-xl dark:bg-[#1c2938]">
-                            <div className="flex justify-between items-center text-sm">
-                              <div>
-                                <span className="text-green-600 font-bold text-xs uppercase tracking-tight">Active {durationToggle} Slots</span>
-                                <p className="text-[10px] text-green-500">Remaining for current period</p>
-                              </div>
-                              <span className="font-black text-green-800 dark:text-green-200 text-2xl">
-                                {currentRemaining}
-                              </span>
-                            </div>
-                          </div>
-                        )}
+  {/* Active Slots Section - Responsive */}
+  {isDurationActive && (
+    <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 border border-green-100 rounded-lg sm:rounded-xl dark:bg-[#1c2938]">
+      <div className="flex justify-between items-center text-sm">
+        <div>
+          <span className="text-green-600 font-bold text-[10px] sm:text-xs uppercase tracking-tight">
+            Active {durationToggle} Slots
+          </span>
+          <p className="text-[9px] sm:text-[10px] text-green-500">
+            Remaining for current period
+          </p>
+        </div>
+        <span className="font-black text-green-800 dark:text-green-200 text-xl sm:text-2xl">
+          {currentRemaining}
+        </span>
+      </div>
+    </div>
+  )}
 
-                        <div className="space-y-3 sm:space-y-4 mb-5 sm:mb-8 flex-grow">
-                          <div className="flex items-start gap-3 sm:gap-4">
-                            <div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0"><Check className="text-green-600" size={14} /></div>
-                            <div>
-                              <p className="text-gray-900 font-bold text-sm dark:text-gray-300">{plan.product_slots} Product Slots</p>
-                              <p className="text-xs text-gray-500">Add up to {plan.product_slots} items</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-3 sm:gap-4">
-                            <div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0"><Check className="text-green-600" size={14} /></div>
-                            <div>
-                              <p className="text-gray-900 font-bold text-sm dark:text-gray-300">Top Feed Priority</p>
-                              <p className="text-xs text-gray-500">Show above standard listings</p>
-                            </div>
-                          </div>
-                        </div>
+  {/* Features List - Responsive */}
+  <div className="space-y-2 sm:space-y-3 md:space-y-4 mb-5 sm:mb-6 md:mb-8 flex-grow">
+    <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
+      <div className="mt-0.5 sm:mt-1 bg-green-100 p-1 sm:p-1.5 rounded-full flex-shrink-0">
+        <Check className="text-green-600" size={12} />
+      </div>
+      <div>
+        <p className="text-gray-900 font-bold text-xs sm:text-sm dark:text-gray-300">
+          {plan.product_slots} Product Slots
+        </p>
+        <p className="text-[10px] sm:text-xs text-gray-500">
+          Add up to {plan.product_slots} items
+        </p>
+      </div>
+    </div>
+    <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
+      <div className="mt-0.5 sm:mt-1 bg-green-100 p-1 sm:p-1.5 rounded-full flex-shrink-0">
+        <Check className="text-green-600" size={12} />
+      </div>
+      <div>
+        <p className="text-gray-900 font-bold text-xs sm:text-sm dark:text-gray-300">
+          Top Feed Priority
+        </p>
+        <p className="text-[10px] sm:text-xs text-gray-500">
+          Show above standard listings
+        </p>
+      </div>
+    </div>
+  </div>
 
-                        <Button
-                          onClick={() => handleSelectPlan(plan)}
-                          variant={plan.is_popular ? 'primary' : 'outline'}
-                          className="w-full !py-3.5 rounded-xl font-bold btn-primary"
-                        >
-                          {isDurationActive ? 'Add More Products' : 'Select Plan'}
-                        </Button>
-                      </div>
+  {/* Button - Responsive */}
+  <Button
+    onClick={() => handleSelectPlan(plan)}
+    variant={plan.is_popular ? 'primary' : 'outline'}
+    className="w-full !py-2.5 sm:!py-3 md:!py-3.5 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm btn-primary"
+  >
+    {isDurationActive ? 'Add More Products' : 'Select Plan'}
+  </Button>
+</div>
                     );
                   })}
                 </div>
@@ -1003,6 +1045,7 @@ const SettingsPage: React.FC = () => {
                   showCheckboxes={false}
                   height={400}
                   rowHeight={52}
+                  noRowsMessage="no priority purchases yet"
                 />
               </div>
 
@@ -1094,7 +1137,14 @@ const SettingsPage: React.FC = () => {
                       ))}
                     </div>
                   </div>
-                  <AgGridTable rowData={flattenedPriorityHistory} columns={priorityHistoryColumns} showCheckboxes={false} height={400} rowHeight={52} />
+                  <AgGridTable
+                   rowData={flattenedPriorityHistory} 
+                   columns={priorityHistoryColumns}
+                    showCheckboxes={false} 
+                    height={400} 
+                    rowHeight={52} 
+                    noRowsMessage="no priority purchases yet"
+                    />
                 </div>
               </div>
             </>

@@ -26,7 +26,6 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
   };
   useEffect(() => {
     const loggedInUser = getUser();
-    console.log("🚀 ~ UserDropdown ~ loggedInUser:", loggedInUser);
     if (loggedInUser) setUser(loggedInUser);
   }, []);
 

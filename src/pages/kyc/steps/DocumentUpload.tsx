@@ -111,7 +111,6 @@ export default function DocumentUpload({
       fileInput.value = '';
     }
 
-    console.log('File removal onChange called with null'); // Debug log
   };
 
   return (

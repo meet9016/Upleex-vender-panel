@@ -155,9 +155,9 @@ const OrderList = () => {
   ).length;
 
   const editStatusOptions = statusOptions
-    .filter((opt: StatusOption) => 
-      ['pending', 'delivered', 'accepted'].includes(opt.value.toLowerCase())
-    )
+    // .filter((opt: StatusOption) => 
+    //   ['pending', 'delivered', 'accepted'].includes(opt.value.toLowerCase())
+    // )
     .map((opt: StatusOption) => {
       // Map labels as requested
       if (opt.value.toLowerCase() === 'accepted') return { ...opt, label: 'Approve' };
@@ -454,7 +454,6 @@ const OrderList = () => {
           <div className="flex items-center justify-left gap-2 h-full">
             <button
               onClick={() => {
-                console.log('View order:', params.data);
                 handleViewOrder(params.data);
               }}
               className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-all shadow-sm"
@@ -534,7 +533,6 @@ const OrderList = () => {
   };
 
   const handleUpdateStatus = (order: VendorOrder) => {
-    console.log('Selected order for status update:', order);
 
     if (!order) {
       toast.error('Order data is missing');
@@ -587,7 +585,6 @@ const OrderList = () => {
 
     try {
       setLoading(true);
-      console.log('Updating order:', selectedOrder._id, 'to status:', newStatus);
 
       // Make sure the URL is correct
       const response = await api.put(`${endPointApi.updateVendorOrderStatus}/${selectedOrder._id}/status`, {
