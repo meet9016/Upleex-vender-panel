@@ -1457,6 +1457,7 @@ const ProductTable = () => {
             rowHeight={52}
             showCheckboxes={false}
             height={"650px"}
+            noRowsMessage='no Product found'
           />
         </div>
       </div>

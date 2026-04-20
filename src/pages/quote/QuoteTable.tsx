@@ -1025,6 +1025,7 @@ const QuoteTable = () => {
             loading={loading}
             height={"650px"}
             getRowStyle={getRowStyle}
+            noRowsMessage="no Quote found"
           />
         </div>
       </div>

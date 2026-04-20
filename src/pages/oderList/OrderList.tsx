@@ -993,6 +993,7 @@ const OrderList = () => {
               filter={false}
               showCheckboxes={false}
               rowHeight={55}
+              noRowsMessage='no Order found'
             />
           </div>
         </div>
