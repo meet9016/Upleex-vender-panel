@@ -339,12 +339,6 @@ const QuoteTable = () => {
           );
         }
       },
-      // {
-      //   field: "delivery_date",
-      //   headerName: "Delivery Date",
-      //   minWidth: 150,
-      //   cellStyle: { textAlign: "center" }
-      // },
       {
         field: "start_date",
         headerName: "Start Date",

@@ -1543,17 +1543,6 @@ const ProductTable = () => {
                           </div>
                         </div>
                       </div>
-                      {/* <Button
-                        onClick={() => {
-                          // stopPropagation();
-                          setSingleProductActivate(p);
-                          setExpiryModalOpen(false);
-                          setShowPlanDialog(true);
-                        }}
-                        className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-                      >
-                        Activate
-                      </Button> */}
                     </div>
                   );
                 })}

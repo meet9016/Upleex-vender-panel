@@ -153,9 +153,6 @@ const OrderList = () => {
   ).length;
 
   const editStatusOptions = statusOptions
-    // .filter((opt: StatusOption) => 
-    //   ['pending', 'delivered', 'accepted'].includes(opt.value.toLowerCase())
-    // )
     .map((opt: StatusOption) => {
       // Map labels as requested
       if (opt.value.toLowerCase() === 'accepted') return { ...opt, label: 'Approve' };

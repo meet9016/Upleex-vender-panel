@@ -24,7 +24,6 @@ const navItems: NavItem[] = [
   { icon: <DiamondPlus />, name: "Product", path: "/product" },
   { icon: <TaskIcon />, name: "Service", path: "/service" },
   { icon: <BsChatSquareQuote className="w-5 h-5" />, name: "Quote", path: "/quote" },
-  // { icon: <DollarLineIcon />, name: "Purchased", path: "/purchasedplan" },
   { icon: <ListIcon />, name: "Orders", path: "/order" },
   { icon: <WalletIcon />, name: "Wallet", path: "/wallet" },
   { icon: <DocsIcon />, name: "Drafts", path: "/draft" },
@@ -48,7 +47,6 @@ const AppSidebar: React.FC = () => {
     if (isMobileOpen) {
       toggleMobileSidebar();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
 
