@@ -105,10 +105,8 @@ interface StatusOption {
 
 const OrderList = () => {
   const router = useRouter();
-  // const [paymentOrders, setPaymentOrders] = useState<PaymentOrder[]>([]);
   const [vendorOrders, setVendorOrders] = useState<VendorOrder[]>([]);
   const [loading, setLoading] = useState(false);
-  // const [activeTab, setActiveTab] = useState<'payments' | 'orders'>('orders');
   const [stats, setStats] = useState<OrderStats>({
     total_orders: 0,
     total_earnings: 0,
@@ -472,25 +470,7 @@ const OrderList = () => {
     }
   ];
 
-  /*
-  const fetchPaymentHistory = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get(`${endPointApi.getVendorPaymentHistory}?page=${page}&limit=20`);
 
-      if (response.data.success) {
-        const paymentHistory = response.data.data.payment_history || [];
-        setPaymentOrders(paymentHistory);
-        setTotalPages(response.data.data.pagination?.pages || 1);
-      }
-    } catch (error: any) {
-      console.error('Error fetching payment history:', error);
-      toast.error(error?.response?.data?.message || 'Failed to fetch payment history');
-    } finally {
-      setLoading(false);
-    }
-  };
-  */
 
   const fetchVendorOrders = async () => {
     try {
@@ -509,7 +489,6 @@ const OrderList = () => {
         setTotalPages(response.data.data.pagination?.pages || 1);
       }
     } catch (error: any) {
-      console.error('Error fetching vendor orders:', error);
       toast.error(error?.response?.data?.message || 'Failed to fetch orders');
     } finally {
       setLoading(false);
@@ -536,7 +515,6 @@ const OrderList = () => {
 
     if (!order) {
       toast.error('Order data is missing');
-      console.error('Order is null or undefined');
       return;
     }
 
@@ -544,12 +522,7 @@ const OrderList = () => {
     const orderId = order._id || order.id;
     if (!orderId) {
       toast.error('Order ID is missing');
-      console.error('Order object missing both _id and id:', order);
       return;
-    }
-
-    if (!order.order_id) {
-      console.warn('Order missing order_id:', order);
     }
 
     // Create normalized order with _id
@@ -572,16 +545,10 @@ const OrderList = () => {
 
     if (!selectedOrder._id) {
       toast.error('Order ID is missing');
-      console.error('Order object:', selectedOrder);
       return;
     }
 
-    // Restriction: Cannot update to delivery-related statuses if payment is on hold
-    // const deliveryStatuses = ['picked_up', 'out_for_delivery', 'delivered'];
-    // if (selectedOrder.payment_status === 'hold' && deliveryStatuses.includes(newStatus)) {
-    //   toast.error('Cannot proceed with delivery. Customer has only paid 30% advance. Remaining payment is pending.');
-    //   return;
-    // }
+
 
     try {
       setLoading(true);
@@ -599,7 +566,6 @@ const OrderList = () => {
         fetchStats(); // Refresh stats
       }
     } catch (error: any) {
-      console.error('Error updating status:', error);
       toast.error(error?.response?.data?.message || 'Failed to update status');
     } finally {
       setLoading(false);
@@ -1116,10 +1082,7 @@ const OrderList = () => {
                               src={productImage}
                               alt={productName || 'Product'}
                               className="w-12 h-12 object-cover rounded"
-                            // onError={(e) => {
-                            //   e.currentTarget.style.display = 'none';
-                            //   e.currentTarget.nextElementSibling.style.display = 'flex';
-                            // }}
+                            
                             />
                           ) : null}
                           <div className={`w-12 h-12 bg-gray-200 dark:bg-gray-500 rounded flex items-center justify-center ${productImage ? 'hidden' : 'flex'}`}>

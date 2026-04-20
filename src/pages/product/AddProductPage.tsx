@@ -66,7 +66,6 @@ export default function AddProductPage() {
     const productId = searchParams?.get("id") ?? null;
     const isEditMode = !!productId;
 
-    // Safely use wallet hook - may not be available during build
     let balance = 0;
     let refreshBalance = async () => { };
     try {
@@ -74,7 +73,6 @@ export default function AddProductPage() {
         balance = walletContext.balance;
         refreshBalance = walletContext.refreshBalance;
     } catch (error) {
-        // Wallet context not available (e.g., during build)
         console.warn("Wallet context not available");
     }
 
@@ -208,7 +206,6 @@ export default function AddProductPage() {
                 setVendorBusinessName("Vendor"); // Fallback
             }
         } catch (error) {
-            console.error("Error fetching vendor profile:", error);
             // Try localStorage as final fallback
             try {
                 const userInfo = localStorage.getItem('user_info');
@@ -216,7 +213,6 @@ export default function AddProductPage() {
                     const user = JSON.parse(userInfo);
                     const businessName = user.business_name;
                     if (businessName) {
-                        console.log("Using localStorage business name as fallback:", businessName);
                         setVendorBusinessName(businessName);
                         return;
                     }
@@ -264,7 +260,6 @@ export default function AddProductPage() {
                 setFreeProductCount(freeCount);
             }
         } catch (error) {
-            console.error("Error fetching SKU counter:", error);
             setSkuCounter(1); // Fallback to 1
         }
     };
@@ -433,13 +428,8 @@ export default function AddProductPage() {
 
         setPricingType(isChecked ? "paid" : "free");
 
-        // if (isChecked) {
-        //     toast.info("This product will be marked as Base (Paid listing). ₹10 will be deducted from your wallet.");
-        // } else {
-        //     toast.info("This product is now set as Free listing");
-        // }
+        
     };
-    /* <!-- ============================================ handle select rent time ============================================ --> */
 
     const handleRadioChange = (value: "day" | "month" | "hourly") => {
         setBillingType(value);
@@ -462,7 +452,6 @@ export default function AddProductPage() {
                     months: [{ month: "", price: "", productMonthsId: "", cancelPrice: "" }],
                 };
             }
-            // value === "month"
             return {
                 ...prev,
                 dayPrice: "",
@@ -587,7 +576,6 @@ export default function AddProductPage() {
                     toast.error(res?.data?.message || "Failed to fetch product details");
                 }
             } catch (err) {
-                console.error("Error fetching product details:", err);
                 toast.error("Error loading product details");
             }
         };
@@ -995,7 +983,6 @@ export default function AddProductPage() {
             }
 
         } catch (error) {
-            console.error("Save product error", error);
             const anyErr: any = error;
             const backendMsg = anyErr?.response?.data?.message;
             if (backendMsg) {

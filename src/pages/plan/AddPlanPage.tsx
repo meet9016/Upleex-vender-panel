@@ -68,7 +68,6 @@ export default function AddPlanPage() {
                             <Input
                                 placeholder="Enter Price"
                                 type="text"
-                            // value={data.dayPrice} 
                             />
                         </div>
                     </div>
@@ -94,7 +93,6 @@ export default function AddPlanPage() {
                             <Input
                                 placeholder="Enter Price"
                                 type="text"
-                            // value={data.dayPrice} 
                             />
                         </div>
                     </div>
@@ -184,7 +182,6 @@ export default function AddPlanPage() {
             </ComponentCard >
             <div className="flex items-center gap-5">
                 <Button size="sm" variant="primary"
-                // onClick={handleSave}
                 >
                     Save
                 </Button>

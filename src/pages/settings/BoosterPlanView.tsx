@@ -49,7 +49,6 @@ const BoosterPlanView: React.FC = () => {
       setPriorityCount(nonBoostedPriority.length);
 
     } catch (error) {
-      console.error("Error fetching booster data:", error);
       toast.error("Failed to load booster data");
     } finally {
       setLoading(false);
@@ -96,7 +95,6 @@ const BoosterPlanView: React.FC = () => {
         setShowConfirmModal(false);
       }
     } catch (error: any) {
-      console.error("Bulk boost error:", error);
       toast.error(error?.response?.data?.message || "Failed to apply bulk boost");
     } finally {
       setIsPurchasing(false);

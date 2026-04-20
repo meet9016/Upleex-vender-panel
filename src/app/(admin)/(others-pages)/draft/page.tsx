@@ -137,7 +137,6 @@ export default function DraftPage() {
       setSelected([]);
       setShowFreeDialog(false);
     } catch (error: any) {
-      console.error("Error activating free products:", error);
       const errorMessage = error?.response?.data?.message || "Failed to activate free products";
       toast.error(errorMessage);
     } finally {
@@ -232,7 +231,6 @@ export default function DraftPage() {
       const normalized = data.map((p: any) => ({ ...p, id: p._id || p.id }));
       setRows(normalized);
     } catch (error) {
-      console.error("Error fetching drafts:", error);
       toast.error("Failed to load drafts");
     } finally {
       setLoading(false);
@@ -293,7 +291,6 @@ export default function DraftPage() {
       setSelected([]);
       setShowPlanDialog(false);
     } catch (error: any) {
-      console.error("Error applying plan:", error);
       const errorMessage = error?.response?.data?.message || "Failed to apply plan";
       toast.error(errorMessage);
     } finally {

@@ -56,7 +56,6 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } catch (err) {
-        console.error("FilterContext fetch error:", err);
       } finally {
         if (mounted) {
           setIsLoadingFilter(false);

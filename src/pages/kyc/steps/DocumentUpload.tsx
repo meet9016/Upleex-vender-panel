@@ -84,9 +84,7 @@ export default function DocumentUpload({
       if (selected.size > 0.5 * 1024 * 1024) {
         toast.info("Optimizing large image...");
         finalFile = await compressImage(selected, 0.8);
-        // if (finalFile.size < selected.size) {
-        //     toast.success(`Image optimized: ${(selected.size / 1024 / 1024).toFixed(2)}MB → ${(finalFile.size / 1024 / 1024).toFixed(2)}MB`);
-        // }
+        
       }
     }
 
@@ -200,7 +198,6 @@ export default function DocumentUpload({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Remove button clicked'); // Debug log
                   handleRemoveFile();
                 }}
                 className="p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-xl hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 transition-all duration-200 shadow-sm"

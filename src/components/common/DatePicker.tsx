@@ -19,7 +19,6 @@ export default function DatePicker({
   value,
   onChange,
   min,
-//   label = "Select Date",
   className,
   width,
   disabled = false,

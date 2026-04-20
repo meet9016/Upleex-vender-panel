@@ -21,7 +21,6 @@ export const compressImage = async (file: File, maxSizeMB: number = 0.8): Promis
             lastModified: Date.now() 
         });
     } catch (error) {
-        console.error("Image compression failed:", error);
         return file;
     }
 };

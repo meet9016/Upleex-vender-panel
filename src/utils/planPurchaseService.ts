@@ -40,7 +40,6 @@ class PlanPurchaseService {
       
       throw new Error(response.data.message || "Failed to purchase plan");
     } catch (error: any) {
-      console.error("Error purchasing plan:", error);
       throw new Error(error.response?.data?.message || "Failed to purchase plan");
     }
   }
@@ -50,7 +49,6 @@ class PlanPurchaseService {
       const response = await api.get(endPointApi.getPlanOptions);
       return response.data.data || [];
     } catch (error) {
-      console.error("Error fetching plan options:", error);
       throw new Error("Failed to fetch plan options");
     }
   }
@@ -63,7 +61,6 @@ class PlanPurchaseService {
       });
       return response.data;
     } catch (error: any) {
-      console.error("Error submitting custom plan request:", error);
       throw new Error(error.response?.data?.message || "Failed to submit custom plan request");
     }
   }

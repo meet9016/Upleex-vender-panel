@@ -612,7 +612,6 @@ const QuoteTable = () => {
         setQuoteData(previousData);
       }
     } catch (error) {
-      console.log('Rejection error:', error);
       toast.error("Failed to reject quote");
       setQuoteData(previousData);
     }
@@ -731,7 +730,6 @@ const QuoteTable = () => {
     setShowFilterModal(false);
   };
 
-  // const showInitialLoader = loading && quoteData.length === 0;
 
   // Export functions
   const handleExportExcel = async () => {

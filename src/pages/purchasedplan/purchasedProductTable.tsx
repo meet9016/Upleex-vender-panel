@@ -67,7 +67,6 @@ export default function PurchasedProductsPage() {
           setRows([]);
         }
       } catch (error) {
-        console.error("Error fetching purchased products:", error);
         setRows([]);
       } finally {
         setLoading(false);
