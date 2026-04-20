@@ -359,6 +359,7 @@ const ServiceTable = () => {
         loading={loading}
         rowHeight={52}
         height={"650px"}
+        noRowsMessage='No services found'
       />
 
       <ConfirmDeleteModal

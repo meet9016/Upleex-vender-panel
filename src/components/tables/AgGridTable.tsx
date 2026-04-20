@@ -181,13 +181,28 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
     };
   }, []);
 
+  useEffect(() => {
+    if (gridRef.current?.api) {
+      if (loading) {
+        gridRef.current.api.hideOverlay();
+      } else if (!rowData || rowData.length === 0) {
+        gridRef.current.api.showNoRowsOverlay();
+      } else {
+        gridRef.current.api.hideOverlay();
+      }
+    }
+  }, [loading, rowData]);
+
   const onGridReady = useCallback((params: any) => {
     try {
       params.api.sizeColumnsToFit();
+      if (loading) {
+        params.api.hideOverlay();
+      }
     } catch (err) {
       consoleError('AgGrid sizeColumnsToFit failed', err);
     }
-  }, []);
+  }, [loading]);
 
   const handleAddClick = useCallback(() => {
     router.push(addButtonLink);
@@ -239,7 +254,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             alwaysShowHorizontalScroll={true}
             getRowStyle={getRowStyle}
             suppressNoRowsOverlay={loading}
-            overlayNoRowsTemplate={noRowsMessage ? `<span class="text-gray-500 dark:text-gray-400 font-medium">${noRowsMessage}</span>` : "<span></span>"}
+            overlayNoRowsTemplate={!loading && noRowsMessage ? `<span class="text-gray-500 dark:text-gray-400 font-medium">${noRowsMessage}</span>` : "<span></span>"}
             isRowSelectable={isRowSelectable}
             treeData={treeData}
             getDataPath={getDataPath}
