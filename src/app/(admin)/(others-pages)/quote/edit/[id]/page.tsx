@@ -118,7 +118,6 @@ const QuoteEditPage = () => {
           const days = parseInt(quote.number_of_days || '1');
           const qty = parseInt(quote.qty || '1');
           totalPrice = (parseFloat(unitPrice) * days * qty).toString();
-          console.log('Daily/Hourly calculation:', { unitPrice, days, qty, totalPrice });
         }
 
         // Add calculated fields to transformed quote
@@ -286,7 +285,6 @@ const QuoteEditPage = () => {
         toast.error(res?.data?.message || "Failed to update quote");
       }
     } catch (err) {
-      console.error('Update quote error', err);
       toast.error("Failed to update quote");
     } finally {
       setSubmitting(false); // Set loading false after API call completes

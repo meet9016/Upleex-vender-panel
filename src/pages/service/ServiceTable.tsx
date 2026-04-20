@@ -240,7 +240,6 @@ const ServiceTable = () => {
       setServiceData(res?.data?.data || []);
     } catch (error) {
       console.log("fetch error", error);
-      // toast.error("Failed to fetch services");
     } finally {
       setLoading(false);
     }
@@ -359,6 +358,7 @@ const ServiceTable = () => {
         loading={loading}
         rowHeight={52}
         height={"650px"}
+        noRowsMessage='No services found'
       />
 
       <ConfirmDeleteModal

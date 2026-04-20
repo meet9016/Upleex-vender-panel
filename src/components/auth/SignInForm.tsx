@@ -89,17 +89,6 @@ export default function SignInForm() {
     }
   };
 
-  //   useEffect(() => {
-  //   const params = new URLSearchParams(window.location.search);
-  //   const token = params.get("token");
-
-  //   if (token) {
-  //     saveToken(token)
-  //      const searchParams = new URLSearchParams(window.location.search);
-  //         const redirectTo = searchParams.get('redirect') || '/';
-  //         window.location.href = redirectTo;
-  //   }
-  // }, []);
 
   const verifyOtp = async () => {
     const newErrors: ErrorState = {};

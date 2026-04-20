@@ -1,5 +1,4 @@
 "use client";
-// import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 
 import dynamic from "next/dynamic";
@@ -7,7 +6,6 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { MoreDotIcon } from "@/icons";
 import { useState } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-// Dynamically import the ReactApexChart component
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });

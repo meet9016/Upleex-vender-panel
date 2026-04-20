@@ -69,7 +69,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       await refreshBalance();
       return response.data;
     } catch (error) {
-      console.error("Error adding money:", error);
       throw error;
     }
   };
