@@ -40,6 +40,7 @@ const PayoutHistory: React.FC = () => {
     const [payouts, setPayouts] = useState<PayoutRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<any>(null);
+    const [statsLoading, setStatsLoading] = useState(true);
     const [pagination, setPagination] = useState({
         page: 1,
         limit: 20,
@@ -49,6 +50,7 @@ const PayoutHistory: React.FC = () => {
 
     const fetchPayouts = useCallback(async () => {
         setLoading(true);
+        setPayouts([]); // Clear old data to prevent "N/A" with new columns
         try {
             const response = await api.get(endPointApi.getVendorPaymentHistory, {
                 params: {
@@ -75,6 +77,7 @@ const PayoutHistory: React.FC = () => {
     }, [activeTab, pagination.page, pagination.limit]);
 
     const fetchStats = useCallback(async () => {
+        setStatsLoading(true);
         try {
             const response = await api.get(endPointApi.getVendorPaymentStats, {
                 params: { type: activeTab }
@@ -82,8 +85,8 @@ const PayoutHistory: React.FC = () => {
             if (response.data.success) {
                 setStats(response.data.data.stats);
             }
-        } catch (error) {
-            console.error("Error fetching payout stats:", error);
+        } finally {
+            setStatsLoading(false);
         }
     }, [activeTab]);
 
@@ -159,10 +162,15 @@ const PayoutHistory: React.FC = () => {
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between relative overflow-hidden">
+                    {statsLoading && (
+                        <div className="absolute inset-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+                            <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    )}
                     <div>
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Released</p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                        <p className={`text-2xl font-bold text-gray-900 dark:text-white mt-1 transition-all duration-300 ${statsLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                             ₹{(stats?.released?.amount || 0).toLocaleString('en-IN')}
                         </p>
                     </div>
@@ -171,10 +179,15 @@ const PayoutHistory: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between relative overflow-hidden">
+                    {statsLoading && (
+                        <div className="absolute inset-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+                            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    )}
                     <div>
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Transactions</p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                        <p className={`text-2xl font-bold text-gray-900 dark:text-white mt-1 transition-all duration-300 ${statsLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                             {stats?.released?.count || 0}
                         </p>
                     </div>
@@ -183,10 +196,15 @@ const PayoutHistory: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between">
+                <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between relative overflow-hidden">
+                    {statsLoading && (
+                        <div className="absolute inset-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+                            <div className="w-5 h-5 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    )}
                     <div>
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider text-orange-600">Upcoming Payouts</p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                        <p className={`text-2xl font-bold text-gray-900 dark:text-white mt-1 transition-all duration-300 ${statsLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                             ₹{(stats?.pending?.amount || 0).toLocaleString('en-IN')}
                         </p>
                     </div>
