@@ -783,22 +783,9 @@ const ProductTable = () => {
 
   // Apply filters when search/filters/page/pageSize change
   useEffect(() => {
-    // Only apply search filter automatically
-    if (debouncedSearch && debouncedSearch.trim() !== '') {
-      const params: any = { search: debouncedSearch.trim() };
-      getProductData(params);
-    } else if (debouncedSearch.trim() === '' && searchText === '') {
-      // If search is cleared, check if we have other active filters
-      const hasOtherFilters = Object.entries(filters).some(([, val]: [string, any]) =>
-        Array.isArray(val) ? val.length > 0 : false
-      );
-
-      if (!hasOtherFilters) {
-        // No filters at all, get all data
-        getProductData({});
-      }
-    }
-  }, [debouncedSearch, page, pageSize, activeTab]);
+    const currentParams = getCurrentParams();
+    getProductData(currentParams);
+  }, [debouncedSearch, filters, page, pageSize, activeTab]);
 
   // Handle click outside to close modal
   useEffect(() => {
@@ -817,7 +804,6 @@ const ProductTable = () => {
 
   // Initial data fetch
   useEffect(() => {
-    getProductData();
     fetchCategories();
     fetchDropdownData();
   }, []);
@@ -834,7 +820,13 @@ const ProductTable = () => {
         }
 
         // Fetch free product count
-        const productsRes = await api.get(endPointApi.postAllVendorProductList);
+        const productsParams = new URLSearchParams();
+        if (activeTab === 'rent') {
+          productsParams.append('filter_rent_sell', '1');
+        } else if (activeTab === 'sell') {
+          productsParams.append('filter_rent_sell', '2');
+        }
+        const productsRes = await api.get(`${endPointApi.postAllVendorProductList}?${productsParams.toString()}`);
         if (productsRes?.data?.data && Array.isArray(productsRes.data.data)) {
           const products = productsRes.data.data;
           
@@ -855,7 +847,7 @@ const ProductTable = () => {
     };
 
     fetchVendorDataForValidation();
-  }, []);
+  }, [activeTab]);
 
   // Open delete confirmation modal
   const openDeletePopup = (id: string) => {
