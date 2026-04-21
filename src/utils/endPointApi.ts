@@ -40,6 +40,7 @@ export interface EndPointApi {
     // Payment & Orders
     getVendorOrders: string;
     getVendorPaymentHistory: string;
+    getVendorPaymentStats: string;
     getVendorOrderStatusOptions: string;
     updateVendorOrderStatus: string;
     getVendorOrderDetails: string;
@@ -138,7 +139,8 @@ const endPointApi: EndPointApi = {
 
     // Payment & Orders
     getVendorOrders: 'vendor/orders',
-    getVendorPaymentHistory: 'payment/vendor-payment-history',
+    getVendorPaymentHistory: 'vendor/payments/vendor',
+    getVendorPaymentStats: 'vendor/payments/vendor/stats',
     getVendorOrderStatusOptions: 'vendor/orders/status-options',
     updateVendorOrderStatus: 'vendor/orders',
     getVendorOrderDetails: 'vendor/orders',

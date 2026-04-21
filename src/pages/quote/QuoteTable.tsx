@@ -328,7 +328,7 @@ const QuoteTable = () => {
       },
       {
         field: "payment_status",
-        headerName: "Payment Status",
+        headerName: "Customer Payment",
         minWidth: 140,
         cellStyle: { textAlign: "center" },
         cellRenderer: (params: any) => {
@@ -339,6 +339,26 @@ const QuoteTable = () => {
           );
         }
       },
+      {
+        field: "payment_status_info.payment_status",
+        headerName: "Admin Payment",
+        minWidth: 140,
+        cellStyle: { textAlign: "center" },
+        cellRenderer: (params: any) => {
+          const paymentStatus = params.data.payment_status_info?.payment_status || 'no_payment';
+          return (
+            <div className="flex items-center justify-center h-full">
+              <StatusBadge status={paymentStatus} />
+            </div>
+          );
+        }
+      },
+      // {
+      //   field: "delivery_date",
+      //   headerName: "Delivery Date",
+      //   minWidth: 150,
+      //   cellStyle: { textAlign: "center" }
+      // },
       {
         field: "start_date",
         headerName: "Start Date",
