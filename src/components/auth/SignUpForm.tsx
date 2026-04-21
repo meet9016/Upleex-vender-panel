@@ -176,10 +176,8 @@ export default function SignUpForm() {
       
       const emailPattern = /^[^\s@]+@[^\s@]+\.(com|in|org)$/;
       if (!emailPattern.test(formData.email.trim())) e.email = "Enter a valid email";
-      // if (!emailPattern.test(formData.email.trim())) e.email = "Enter a valid email address";
       if (!/^[6-9]\d{9}$/.test(formData.mobile)) e.mobile = "Enter valid 10-digit Indian mobile number";
       if (!formData.city.trim()) e.city = "City is required";
-      // if (!formData.password.trim() || formData.password.length < 6) e.password = "Password must be at least 6 characters";
       
       if (Object.keys(e).length > 0) {
         setErrors(prev => ({ ...prev, ...e }));
@@ -229,7 +227,6 @@ export default function SignUpForm() {
               vendor.city_name = selectedCity.label;
             }
             localStorage.setItem('user_info', JSON.stringify(vendor));
-            console.log('User info stored successfully with city_name:', vendor.city_name);
           }
           
           toast.success(message);

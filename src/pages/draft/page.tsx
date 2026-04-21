@@ -217,7 +217,6 @@ const DraftsPage = () => {
       setSelectedPlanType('');
       getDraftData();
     } catch (error: any) {
-      console.log("assign plan error", error);
       const errorMessage = error?.response?.data?.message || "Failed to assign plan";
       toast.error(errorMessage);
     }
@@ -239,7 +238,6 @@ const DraftsPage = () => {
       toast.success("Deleted successfully");
       getDraftData();
     } catch (error) {
-      console.log("Delete error:", error);
       toast.error("Delete failed");
     }
   };

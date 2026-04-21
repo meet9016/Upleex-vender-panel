@@ -215,7 +215,6 @@ const ProductTable = () => {
 
       toast.success(message);
     } catch (error: any) {
-      console.error('Error toggling visibility:', error);
       const errorMessage = error?.response?.data?.message || 'Failed to update product visibility';
       toast.error(errorMessage);
       
@@ -409,17 +408,7 @@ const ProductTable = () => {
         ),
         cellStyle: { justifyContent: "left" }
       },
-      // {
-      //   field: "status",
-      //   headerName: "Status",
-      //   minWidth: 100,
-      //   cellRenderer: (params: any) => (
-      //     <div className="flex items-center h-full">
-      //       <StatusBadge status={params.value || 'active'} />
-      //     </div>
-      //   ),
-      //   cellStyle: { justifyContent: "left" }
-      // },
+
       {
         field: "expires_at",
         headerName: "Exp Date",
@@ -854,7 +843,6 @@ const ProductTable = () => {
           setFreeProductCount(freeCount);
         }
       } catch (error) {
-        console.error("Error fetching vendor data for validation:", error);
       }
     };
 
@@ -874,7 +862,6 @@ const ProductTable = () => {
       toast.success("Deleted successfully");
       getProductData(getCurrentParams(), undefined, true);
     } catch (error) {
-      console.log("Delete error:", error);
       toast.error("Delete failed");
     }
   };
@@ -1050,7 +1037,6 @@ const ProductTable = () => {
       setSelectedExpiringProducts([]);
 
     } catch (error: any) {
-      console.error("Error applying plan:", error);
       const errorMessage = error?.response?.data?.message || "Failed to apply plan";
       toast.error(errorMessage);
     }
@@ -1318,7 +1304,6 @@ const ProductTable = () => {
                           params.status = pendingFilters.status.join(',');
                         }
 
-                        console.log('Applying filters with params:', params);
                         getProductData(params, undefined, true);
                         setShowFilterModal(false);
                       }}
@@ -1551,17 +1536,6 @@ const ProductTable = () => {
                           </div>
                         </div>
                       </div>
-                      {/* <Button
-                        onClick={() => {
-                          // stopPropagation();
-                          setSingleProductActivate(p);
-                          setExpiryModalOpen(false);
-                          setShowPlanDialog(true);
-                        }}
-                        className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-                      >
-                        Activate
-                      </Button> */}
                     </div>
                   );
                 })}

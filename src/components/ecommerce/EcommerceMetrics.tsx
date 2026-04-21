@@ -64,15 +64,6 @@ export const EcommerceMetrics = () => {
       color: "brand",
       hoverItems: []
     },
-    // {
-    //   title: "Total Earnings",
-    //   value: "₹4,25,380", // Static as requested
-    //   icon: (className: string) => <DollarLineIcon className={className} />,
-    //   change: "+12.5%",
-    //   isPositive: true,
-    //   color: "success",
-    //   hoverItems: []
-    // },
     {
       title: "Total Orders",
       value: loading ? "..." : (data?.totalOrders || 0).toLocaleString(),
@@ -82,15 +73,6 @@ export const EcommerceMetrics = () => {
       color: "blue-light",
       hoverItems: []
     },
-    // {
-    //   title: "Total Items Sold",
-    //   value: "3,842", // Static as requested
-    //   icon: (className: string) => <GridIcon className={className} />,
-    //   change: "+11.0%",
-    //   isPositive: true,
-    //   color: "orange",
-    //   hoverItems: []
-    // },
     {
       title: "Active Listings",
       value: loading ? "..." : (data?.activeListings || 0).toLocaleString(),

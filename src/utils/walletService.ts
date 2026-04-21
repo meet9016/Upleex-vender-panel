@@ -34,7 +34,6 @@ class WalletService {
       const response = await api.get(`${endPointApi.getWalletBalance}?t=${timestamp}`);
       return response.data.data || { balance: 0, currency: "₹" };
     } catch (error) {
-      console.error("Error fetching wallet balance:", error);
       throw new Error("Failed to fetch wallet balance");
     }
   }
@@ -48,7 +47,6 @@ class WalletService {
       const response = await api.post(endPointApi.addWalletMoney, request);
       return response.data;
     } catch (error: any) {
-      console.error("Error adding money:", error);
       throw new Error(error.response?.data?.message || "Failed to add money");
     }
   }
@@ -58,7 +56,6 @@ class WalletService {
       const response = await api.get(endPointApi.getWalletTransactions);
       return response.data.data || [];
     } catch (error) {
-      console.error("Error fetching transactions:", error);
       throw new Error("Failed to fetch transactions");
     }
   }

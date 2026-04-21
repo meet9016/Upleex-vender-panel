@@ -36,7 +36,6 @@ export function KycProvider({ children }: { children: React.ReactNode }) {
       setKycApproved(isApproved);
       localStorage.setItem('kyc_approved', String(isApproved));
     } catch (error) {
-      console.error("Failed to fetch KYC status:", error);
       if (kycApproved === null) {
         setKycApproved(false);
       }

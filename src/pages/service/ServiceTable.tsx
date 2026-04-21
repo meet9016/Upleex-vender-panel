@@ -240,7 +240,6 @@ const ServiceTable = () => {
       setServiceData(res?.data?.data || []);
     } catch (error) {
       console.log("fetch error", error);
-      // toast.error("Failed to fetch services");
     } finally {
       setLoading(false);
     }

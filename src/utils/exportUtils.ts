@@ -80,7 +80,6 @@ export const exportData = async ({
       message: `${prefix.charAt(0).toUpperCase() + prefix.slice(1)} exported to ${format.toUpperCase()} successfully`,
     };
   } catch (error: any) {
-    console.error(`Export [${prefix}] to [${format}] error:`, error);
     throw new Error(
       error.response?.data?.message || `Failed to export ${prefix} to ${format.toUpperCase()}`
     );

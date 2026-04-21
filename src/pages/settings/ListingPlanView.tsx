@@ -660,16 +660,12 @@ const ListingPlanView: React.FC = () => {
 
                 <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1.5 border border-gray-200 dark:border-gray-700 gap-1.5 ">
                   <button
-                    // variant={activeTab === 'Rent' ? 'primary' : 'ghost'}
-                    // size="sm"
                     onClick={() => setActiveTab('Rent')}
                     className={`px-4 py-1.5 text-xs font-bold rounded-md transition h-auto ${activeTab === 'Rent' ? 'bg-white dark:bg-gray-700 text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   >
                     Rent ({rentProducts.length})
                   </button>
                   <button
-                    // variant={activeTab === 'Sell' ? 'primary' : 'ghost'}
-                    // size="sm"
                     onClick={() => setActiveTab('Sell')}
                     className={`px-4 py-1.5 text-xs font-bold rounded-md transition h-auto ${activeTab === 'Sell' ? 'bg-white dark:bg-gray-700 text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   >

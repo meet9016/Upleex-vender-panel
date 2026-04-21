@@ -46,7 +46,6 @@ const RentalBoostDialog: React.FC<RentalBoostDialogProps> = ({
         else if (res.data.data.length > 0) setSelectedPlanId(res.data.data[0]._id);
       }
     } catch (error) {
-      console.error("Error fetching boost plans:", error);
       toast.error("Failed to load boost plans");
     } finally {
       setLoading(false);
@@ -67,7 +66,6 @@ const RentalBoostDialog: React.FC<RentalBoostDialogProps> = ({
         onClose();
       }
     } catch (error: any) {
-      console.error("Purchase error:", error);
       toast.error(error?.response?.data?.message || "Boost purchase failed");
     } finally {
       setPurchasing(false);

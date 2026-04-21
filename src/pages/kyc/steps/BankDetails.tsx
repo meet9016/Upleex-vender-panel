@@ -33,7 +33,6 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
     setLoading(true);
     try {
       const res = await api.post(endPointApi.postProductDropDownList);
-      console.log('Dropdown API Response:', res.data);
       
       if (res.data.success && res.data.account_type) {
         // Transform the account_type array to Option format
@@ -44,7 +43,6 @@ export default function BankDetails({ setKYCFormData, KYCformData, errors, clear
         setOptions(accountTypeOptions);
       }
     } catch (error) {
-      console.error('Failed to fetch account types:', error);
       toast.error('Failed to load account types');
     } finally {
       setLoading(false);
