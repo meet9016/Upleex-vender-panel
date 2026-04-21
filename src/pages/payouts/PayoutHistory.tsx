@@ -47,25 +47,51 @@ const PayoutHistory: React.FC = () => {
         total: 0,
         pages: 0
     });
+    const [dataCache, setDataCache] = useState<{
+        rent: { payments: PayoutRecord[], pagination: any } | null,
+        sell: { payments: PayoutRecord[], pagination: any } | null
+    }>({ rent: null, sell: null });
+    const [currentDataTab, setCurrentDataTab] = useState(activeTab);
 
-    const fetchPayouts = useCallback(async () => {
+    const fetchPayouts = useCallback(async (isInitial = false) => {
+        // Check cache first if no explicit refresh is needed
+        if (dataCache[activeTab as 'rent' | 'sell'] && !isInitial) {
+            const cached = dataCache[activeTab as 'rent' | 'sell']!;
+            setPayouts(cached.payments);
+            setPagination(prev => ({ ...prev, ...cached.pagination }));
+            setCurrentDataTab(activeTab);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
-        setPayouts([]); // Clear old data to prevent "N/A" with new columns
+        // Only clear if no cache to show, otherwise keep old data under loader
+        if (!dataCache[activeTab as 'rent' | 'sell']) {
+            setPayouts([]);
+        }
+
         try {
             const response = await api.get(endPointApi.getVendorPaymentHistory, {
                 params: {
                     page: pagination.page,
                     limit: pagination.limit,
                     type: activeTab,
-                    status: 'released' // We only show released data per user request
+                    status: 'released'
                 }
             });
 
             if (response.data.success) {
-                setPayouts(response.data.data.payments || []);
-                setPagination(prev => ({
+                const payments = response.data.data.payments || [];
+                const pag = response.data.data.pagination;
+                
+                setPayouts(payments);
+                setPagination(prev => ({ ...prev, ...pag }));
+                setCurrentDataTab(activeTab);
+                
+                // Update cache
+                setDataCache(prev => ({
                     ...prev,
-                    ...response.data.data.pagination
+                    [activeTab]: { payments, pagination: pag }
                 }));
             }
         } catch (error) {
@@ -74,7 +100,7 @@ const PayoutHistory: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [activeTab, pagination.page, pagination.limit]);
+    }, [activeTab, pagination.page, pagination.limit, dataCache]);
 
     const fetchStats = useCallback(async () => {
         setStatsLoading(true);
@@ -93,7 +119,7 @@ const PayoutHistory: React.FC = () => {
     useEffect(() => {
         fetchPayouts();
         fetchStats();
-    }, [fetchPayouts, fetchStats]);
+    }, [activeTab, pagination.page, pagination.limit]);
 
     const handleTabChange = (tab: string) => {
         const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
@@ -104,53 +130,59 @@ const PayoutHistory: React.FC = () => {
 
     const columnDefs: ColDef[] = useMemo(() => [
         {
-            headerName: activeTab === 'rent' ? "Quote ID" : "Order ID",
+            headerName: currentDataTab === 'rent' ? "Quote ID" : "Order ID",
             field: "id",
             valueGetter: (params) => {
-                if (activeTab === 'sell') return params.data.order_id?.order_id || 'N/A';
+                if (currentDataTab === 'sell') return params.data.order_id?.order_id || 'N/A';
                 return params.data.quote_id?._id ? `Q#${params.data.quote_id._id.slice(-6).toUpperCase()}` : 'N/A';
             },
-            width: 150,
+            flex: 1,
+            minWidth: 120,
         },
         {
             headerName: "Customer",
             field: "customerName",
             valueGetter: (params) => {
-                if (activeTab === 'sell') return params.data.order_id?.user_name || 'Unknown';
+                if (currentDataTab === 'sell') return params.data.order_id?.user_name || 'Unknown';
                 return params.data.quote_id?.user_id?.name || params.data.quote_id?.user_id?.first_name || 'Unknown';
             },
-            width: 180,
+            flex: 1.5,
+            minWidth: 150,
         },
         {
             headerName: "Total Amount",
             field: "totalAmount",
             valueGetter: (params) => {
-                const amount = activeTab === 'sell' ? params.data.order_id?.total_amount : params.data.quote_id?.calculated_price;
+                const amount = currentDataTab === 'sell' ? params.data.order_id?.total_amount : params.data.quote_id?.calculated_price;
                 return `₹${(amount || 0).toLocaleString('en-IN')}`;
             },
-            width: 150,
+            flex: 1,
+            minWidth: 130,
             cellStyle: { color: '#059669', fontWeight: '600' }
         },
         {
             headerName: "Your Payout",
             field: "vendor_amount",
             valueFormatter: (params) => `₹${(params.value || 0).toLocaleString('en-IN')}`,
-            width: 150,
+            flex: 1,
+            minWidth: 130,
             cellStyle: { color: '#7c3aed', fontWeight: '700' }
         },
         {
             headerName: "Status",
             field: "payment_status",
             cellRenderer: (params: any) => <StatusBadge status={params.value} />,
-            width: 140,
+            flex: 1,
+            minWidth: 120,
         },
         {
             headerName: "Release Date",
             field: "released_at",
             valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString('en-IN') : 'N/A',
-            width: 140,
+            flex: 1,
+            minWidth: 120,
         }
-    ], [activeTab]);
+    ], [currentDataTab]);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -216,6 +248,17 @@ const PayoutHistory: React.FC = () => {
 
             {/* Tab Switcher */}
             <div className="flex items-center p-1 bg-gray-100 dark:bg-gray-900/50 rounded-2xl w-fit border border-gray-200 dark:border-gray-800">
+                 <button
+                    onClick={() => handleTabChange('rent')}
+                    className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
+                        activeTab === 'rent'
+                            ? "bg-white dark:bg-gray-800 text-indigo-600 shadow-sm ring-1 ring-black/5"
+                            : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                    }`}
+                >
+                    <FileText size={16} />
+                    Rent
+                </button>
                 <button
                     onClick={() => handleTabChange('sell')}
                     className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
@@ -227,19 +270,7 @@ const PayoutHistory: React.FC = () => {
                     <ShoppingBag size={16} />
                     Sell
                 </button>
-                <button
-                    onClick={() => handleTabChange('rent')}
-                    className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
-                        activeTab === 'rent'
-                            ? "bg-white dark:bg-gray-800 text-indigo-600 shadow-sm ring-1 ring-black/5"
-                            : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                    }`}
-                >
-                    <FileText size={16} />
-                    Rent
-                </button>
-            </div>
-
+                    </div>
             {/* Table */}
             <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-xl shadow-gray-200/20 dark:shadow-none">
                 <AgGridTable
