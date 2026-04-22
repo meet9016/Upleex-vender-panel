@@ -848,6 +848,23 @@ span.flatpickr-weekday,
   font-weight: 600;
   font-size: 14px;
   border-right: 1px solid #cbd5e1 !important;
+
+/* Center the header checkbox column */
+.ag-center-aligned-header .ag-header-cell-comp-wrapper,
+.ag-center-aligned-header .ag-cell-label-container {
+  justify-content: center !important;
+  width: 100%;
+}
+
+/* Ensure the selection column has equal padding */
+.ag-selection-checkbox {
+  margin: 0 auto !important;
+}
+
+/* Left-align all other column headers */
+.ag-left-aligned-header .ag-header-cell-comp-wrapper {
+  justify-content: flex-start !important;
+}
 }
 
 .dark .cute-ag-grid .ag-header-cell {
