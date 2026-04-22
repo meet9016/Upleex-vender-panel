@@ -353,15 +353,15 @@ const OrderList = () => {
         const { data } = props;
         if (data?.type === "customer") {
           return (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                <span className="text-indigo-600 font-semibold text-sm">
+            <div className="flex items-center gap-3 py-1">
+              <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200">
+                <span className="text-indigo-600 font-bold text-sm">
                   {data.name?.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <div>
-                <div className="text-sm font-medium text-gray-900 leading-none">{data.name}</div>
-                <div className="text-xs text-gray-500 mt-1">{data.email}</div>
+              <div className="flex flex-col">
+                <div className="text-[13px] font-bold text-gray-900 leading-tight">{data.name}</div>
+                <div className="text-[11px] text-gray-500 font-medium">{data.email}</div>
               </div>
             </div>
           );
@@ -516,18 +516,23 @@ const OrderList = () => {
               <HiOutlineEye size={17} />
             </button>
 
-            {isPaid && isCompleted && (
-              <button
-                onClick={() => {
+            <button
+              onClick={() => {
+                if (isPaid && isCompleted) {
                   handleDownloadInvoice(params.data);
-                }}
-                className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 transition-all shadow-sm"
-                title="Generate Bill"
-                type="button"
-              >
-                <FaFileInvoice size={17} />
-              </button>
-            )}
+                }
+              }}
+              disabled={!isPaid || !isCompleted}
+              className={`p-1.5 rounded-lg border shadow-sm transition-all ${
+                isPaid && isCompleted 
+                ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100" 
+                : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60"
+              }`}
+              title={isPaid && isCompleted ? "Generate Bill" : "Bill available after Payment & Delivery"}
+              type="button"
+            >
+              <FaFileInvoice size={17} />
+            </button>
 
             <ActionButtons
               onEdit={() => handleUpdateStatus(params.data)}
@@ -582,8 +587,21 @@ const OrderList = () => {
     try {
       setInvoiceLoading(true);
       
+      // Filter only Paid & Completed orders for bulk download
+      const validOrders = groupedOrders.filter(order => {
+        const isPaid = order?.payment_status?.toLowerCase() === 'paid';
+        const isCompleted = order?.vendor_status?.toLowerCase() === 'delivered' || order?.vendor_status?.toLowerCase() === 'completed';
+        return isPaid && isCompleted;
+      });
+
+      if (validOrders.length === 0) {
+        toast.warning('No valid Paid & Completed orders selected');
+        setInvoiceLoading(false);
+        return;
+      }
+
       // Download each invoice separately via backend
-      for (const order of groupedOrders) {
+      for (const order of validOrders) {
         const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/invoice/pdf`, {
           method: 'POST',
           headers: {
@@ -624,7 +642,18 @@ const OrderList = () => {
   };
 
   const handleBulkInvoiceDownload = async () => {
-    if (selectedOrders.length === 0) return;
+    // Filter only Paid & Completed orders from selection
+    const validSelection = selectedOrders.filter(order => {
+      if (order?.type === 'customer') return false; 
+      const isPaid = String(order?.payment_status || '').toLowerCase() === 'paid';
+      const isCompleted = ['delivered', 'completed'].includes(String(order?.vendor_status || order?.order_status || '').toLowerCase());
+      return isPaid && isCompleted;
+    });
+
+    if (validSelection.length === 0) {
+      toast.warning('No valid Paid & Completed orders in selection');
+      return;
+    }
     
     try {
       setInvoiceLoading(true);
@@ -656,16 +685,30 @@ const OrderList = () => {
 
       // We need full details for each order to show in invoice
       const detailedOrders = await Promise.all(
-        selectedOrders.map(async (order) => {
-          const orderId = order._id || order.id;
+        validSelection.map(async (order) => {
+          const orderId = order?._id || order?.id;
           const res = await api.get(`${endPointApi.getVendorOrderDetails}/${orderId}`);
           return res.data?.success ? (res.data.data?.order || res.data.data) : order;
         })
       );
 
+      // re-filter detailed orders just in case fresh data changed
+      const finalOrdersToProcess = detailedOrders.filter(order => {
+        const isPaid = String(order?.payment_status || '').toLowerCase() === 'paid';
+        const isCompleted = ['delivered', 'completed'].includes(String(order?.vendor_status || order?.order_status || '').toLowerCase());
+        return isPaid && isCompleted;
+      });
+
+      if (finalOrdersToProcess.length === 0) {
+        toast.warning('None of the fetched orders are currently Paid & Completed');
+        setInvoiceLoading(false);
+        setIsBulkPrinting(false);
+        return;
+      }
+
       // Group orders by user_id
       const groups: { [key: string]: any } = {};
-      detailedOrders.forEach((order: any) => {
+      finalOrdersToProcess.forEach((order: any) => {
         const userId = order.user_id?._id || order.user_id?.id || order.user_id || 'unknown';
         if (!groups[userId]) {
           groups[userId] = {
@@ -1199,7 +1242,7 @@ const OrderList = () => {
                         className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200"
                       >
                         <FaFileInvoice className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
-                        <span>Download Invoices ({selectedOrders.length})</span>
+                        <span>Download Invoices ({selectedOrders.filter(o => o.type !== 'customer' && String(o.payment_status || '').toLowerCase() === 'paid' && ['delivered', 'completed'].includes(String(o.vendor_status || o.order_status || '').toLowerCase())).length})</span>
                       </button>
                     )}
                   </div>
@@ -1219,7 +1262,7 @@ const OrderList = () => {
               getDataPath={(data: any) => data.path}
               autoGroupColumnDef={autoGroupColumnDef}
               groupDefaultExpanded={0}
-              getRowId={(params: any) => params.data.type === 'customer' ? `cust-${params.data.id}` : `order-${params.data._id || params.data.id}`}
+              getRowId={(params: any) => params.data?.type === 'customer' ? `cust-${params.data?.id}` : `order-${params.data?._id || params.data?.id}`}
               loading={loading}
               height={"580px"}
               tableName={'Orders'}
@@ -1463,7 +1506,13 @@ const OrderList = () => {
                   </button>
                 </div>
                 <div className="space-y-8">
-                  {groupedOrders.map((order, idx) => (
+                  {groupedOrders
+                    .filter(order => {
+                      const isPaid = order.payment_status?.toLowerCase() === 'paid';
+                      const isCompleted = order.vendor_status?.toLowerCase() === 'delivered' || order.vendor_status?.toLowerCase() === 'completed';
+                      return isPaid && isCompleted;
+                    })
+                    .map((order, idx) => (
                     <div key={idx} className="break-after-page mb-8">
                       <BillingInvoice 
                         data={order} 
