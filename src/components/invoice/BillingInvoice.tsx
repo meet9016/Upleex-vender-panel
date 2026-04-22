@@ -34,9 +34,23 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
   
   if (!rawData) return null;
   // Normalize data: unwrap nested structures if they exist from the detail APIs
-  const data = rawData.order || rawData.quote || rawData.data || rawData;
-  
   const isQuote = type === 'quote';
+  
+  // Helper to deep camelCase keys (simplified for UI)
+  const toCamel = (obj: any): any => {
+    if (Array.isArray(obj)) return obj.map(v => toCamel(v));
+    if (obj !== null && typeof obj === 'object') {
+      return Object.keys(obj).reduce((acc: any, key: any) => {
+        const camelKey = key.replace(/(_\w)/g, (m: any) => m[1].toUpperCase());
+        acc[camelKey] = toCamel(obj[key]);
+        return acc;
+      }, {});
+    }
+    return obj;
+  };
+
+  const data = toCamel(rawData.order || rawData.quote || rawData.data || rawData);
+  const camelVendorProfile = toCamel(vendorProfile);
   const displayId = isQuote ? (data._id || data.id) : (data.order_id || data._id || data.id);
   const dateStr = data.createdAt;
   const dateObj = new Date(dateStr);
@@ -49,7 +63,10 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
   const subTotal = isQuote ? (data.total_price || data.calculated_price || 0) : (data.total_amount || 0);
   
   // eCommerce specific details (fallback values)
-  const paymentMethod = data.payment_mode || data.payment_method || (data.payment_status?.toLowerCase() === 'paid' ? 'Online/Prepaid' : 'Pending');
+  let paymentMethod = data.payment_mode || data.payment_method || (data.payment_status?.toLowerCase() === 'paid' ? 'Online / Prepaid' : 'Pending');
+  if (paymentMethod.toLowerCase() === 'razorpay') {
+    paymentMethod = 'Online / Prepaid';
+  }
   const gstRate = 18; // Default to 18% for display
   const totalGst = (subTotal * gstRate) / (100 + gstRate); // Assuming inclusive
   const subtotalExclGst = subTotal - totalGst;
@@ -75,7 +92,8 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
         body: JSON.stringify({
           data: rawData,
           vendorProfile,
-          type
+          type,
+          isCustomerView: false
         })
       });
       
@@ -96,11 +114,11 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
   };
 
   return (
-    <div className="max-w-[750px] mx-auto p-6 bg-white font-sans text-gray-800 leading-tight shadow-xl rounded-xl border border-gray-100 relative overflow-hidden">
+    <div className="max-w-6xl mx-auto p-6 bg-white font-sans text-gray-800 leading-tight shadow-xl rounded-xl border border-gray-100 relative overflow-hidden">
       {onClose && (
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 text-gray-300 hover:text-gray-500 transition-colors no-print z-10 p-2 hover:bg-gray-50 rounded-full"
+          className="absolute top-1 right-2 text-gray-600 hover:text-gray-500 transition-colors no-print z-10 p-2 rounded-full"
           aria-label="Close"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,7 +138,7 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
               (e.target as HTMLImageElement).src = "/images/logo/logo.webp";
             }} />
             <div className="text-xl font-black text-gray-900 tracking-tight leading-none">
-              {vendorProfile?.business_name || '-'}
+              {camelVendorProfile?.businessName || '-'}
             </div>
             <div className="text-[10px] font-bold text-gray-400 mt-1 flex items-center gap-2">
                <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded text-[8px]  ">Verified Vendor</span>
@@ -150,22 +168,22 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
         {/* Info Bars */}
         <div className="grid grid-cols-4 gap-3 mb-4">
            <div className="bg-gray-50/50 p-2.5 rounded-lg border border-gray-100/50">
-              <span className="block text-[10px] font-black text-gray-400 ">Place of Supply</span>
-              <span className="text-[10px] font-bold text-gray-700">{vendorProfile?.city || 'N/A'}, {vendorProfile?.state || 'N/A'}</span>
+               <span className="block text-[10px] font-black text-gray-400 ">Place of Supply</span>
+               <span className="text-[10px] font-bold text-gray-700">{camelVendorProfile?.city || '-'} {camelVendorProfile?.state || ''}</span>
            </div>
            <div className="bg-gray-50/50 p-2.5 rounded-lg border border-gray-100/50">
-              <span className="block text-[10px] font-black text-gray-400 ">Payment Method</span>
+               <span className="block text-[10px] font-black text-gray-400 ">Payment Method</span>
               <span className="text-[10px] font-bold text-gray-700 ">{paymentMethod}</span>
            </div>
            <div className="bg-gray-50/50 p-2.5 rounded-lg border border-gray-100/50">
-              <span className="block text-[10px] font-black text-gray-400 ">Customer Payment</span>
-              <span className={`text-[10px] font-black  ${data.payment_status?.toLowerCase() === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                {data.payment_status || 'Pending'}
-              </span>
+               <span className="block text-[10px] font-black text-gray-400 ">Customer Payment</span>
+               <span className={`text-[10px] font-black capitalize ${data.paymentStatus?.toLowerCase() === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                 {data.paymentStatus || 'Pending'}
+               </span>
            </div>
            {!isCustomerView && (
              <div className="bg-gray-50/50 p-2.5 rounded-lg border border-gray-100/50">
-                <span className="block text-[10px] font-black text-gray-400 ">Admin Payout</span>
+                 <span className="block text-[10px] font-black text-gray-400 ">Admin Payout</span>
                 <div className="flex flex-col">
                   <span className={`text-[10px] font-black capitalize ${adminPaymentStatus.toLowerCase() === 'completed' || adminPaymentStatus.toLowerCase() === 'paid' || adminPaymentStatus.toLowerCase() === 'released' ? 'text-emerald-600' : 'text-gray-400'}`}>
                     {adminPaymentStatus === 'no_payment' ? 'Unprocessed' : adminPaymentStatus}
@@ -183,17 +201,17 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
           <div className="space-y-3">
             <h3 className="text-[10px] font-black text-gray-400   border-b border-gray-100 pb-1 w-fit pr-8 ">Seller / Sold By</h3>
             <div className="text-[12px] space-y-0.5 leading-snug">
-              <p className="font-bold text-gray-900 text-[13px]">{vendorProfile?.business_name}</p>
-              <p className='text-gray-500 font-medium'>{vendorProfile?.email}</p>
-              <p className='text-gray-500 font-medium'>+91 {vendorProfile?.mobile}</p>
-              <p className="text-gray-500 font-medium">{vendorProfile?.address}</p>
+              <p className="font-bold text-gray-900 text-[13px]">{camelVendorProfile?.businessName}</p>
+              <p className='text-gray-500 font-medium'>{camelVendorProfile?.email}</p>
+              <p className='text-gray-500 font-medium'>+91 {camelVendorProfile?.mobile}</p>
+              <p className="text-gray-500 font-medium">{camelVendorProfile?.address}</p>
               <p className="text-gray-500 font-medium">
-                {vendorProfile?.city}{vendorProfile?.city && vendorProfile?.state ? ', ' : ''}{vendorProfile?.state} - {vendorProfile?.pincode}
+                {camelVendorProfile?.city}{camelVendorProfile?.city && camelVendorProfile?.state ? ', ' : ''}{camelVendorProfile?.state} - {camelVendorProfile?.pincode}
               </p>
-              {vendorProfile?.gst_number && (
+              {camelVendorProfile?.gstNumber && (
                 <div className="pt-1.5 flex items-center gap-1.5">
                   <span className="text-[9px] font-black bg-gray-100 px-1 py-0.5 rounded text-gray-500 ">GSTIN</span>
-                  <span className="font-mono text-gray-700 font-bold tracking-tight">{vendorProfile.gst_number}</span>
+                  <span className="font-mono text-gray-700 font-bold tracking-tight">{camelVendorProfile.gstNumber}</span>
                 </div>
               )}
             </div>
@@ -201,11 +219,11 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
           <div className="space-y-3 text-right flex flex-col items-end">
             <h3 className="text-[10px] font-black text-gray-400   border-b border-gray-100 pb-1 w-fit pl-8 ">Buyer / Ship To</h3>
             <div className="text-[12px] space-y-0.5 leading-snug text-right">
-              <p className="font-bold text-gray-900 text-[13px]">{customer?.name || data?.user_name || 'Customer'}</p>
-              <p className="text-gray-500 font-medium">{customer?.email || data?.user_email || 'N/A'}</p>
-              <p className="text-gray-500 font-medium">{customer?.phone || customer?.mobile || data?.user_phone || 'N/A'}</p>
-              {data.shipping_address ? (
-                <p className="text-blue-500 pt-1 text-[11px] font-medium leading-tight max-w-[200px]">{data.shipping_address}</p>
+              <p className="font-bold text-gray-900 text-[13px]">{customer?.name || data?.userName || 'Customer'}</p>
+              <p className="text-gray-500 font-medium">{customer?.email || data?.userEmail || 'N/A'}</p>
+              <p className="text-gray-500 font-medium">{customer?.phone || customer?.mobile || data?.userPhone || 'N/A'}</p>
+              {data.shippingAddress ? (
+                <p className="text-blue-500 pt-1 text-[11px] font-medium leading-tight max-w-[200px]">{data.shippingAddress}</p>
               ) : (
                 <p className="text-gray-400 pt-1 text-[10px] ">No secondary shipping address provided</p>
               )}
