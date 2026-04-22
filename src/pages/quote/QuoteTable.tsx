@@ -144,7 +144,18 @@ const QuoteTable = () => {
   };
 
   const handleBulkInvoiceDownload = async () => {
-    if (selectedQuotes.length === 0) return;
+    // Filter valid quotes from selection
+    const validSelection = selectedQuotes.filter(quote => {
+      if (quote?.type === 'customer') return false;
+      // For quotes, we might not have a "Completed" status in the same way, 
+      // but we filter based on existence and type
+      return quote?._id || quote?.id;
+    });
+
+    if (validSelection.length === 0) {
+      toast.warning('No valid items in selection');
+      return;
+    }
     
     try {
       setInvoiceLoading(true);
@@ -174,7 +185,7 @@ const QuoteTable = () => {
       }
 
       const detailedQuotes = await Promise.all(
-        selectedQuotes.map(async (quote) => {
+        validSelection.map(async (quote) => {
           const quoteId = quote._id;
           const res = await api.get(`${endPointApi.getQuoteById}/${quoteId}`);
           return res.data?.success ? (res.data.data?.quote || res.data.data) : quote;
@@ -404,15 +415,15 @@ const QuoteTable = () => {
         const { data } = props;
         if (data?.type === "customer") {
           return (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                <span className="text-indigo-600 font-semibold text-sm">
+            <div className="flex items-center gap-3 py-1">
+              <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200">
+                <span className="text-indigo-600 font-bold text-sm">
                   {data.name?.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <div>
-                <div className="text-sm font-medium text-gray-900 leading-none">{data.name}</div>
-                <div className="text-xs text-gray-500 mt-1">{data.email}</div>
+              <div className="flex flex-col">
+                <div className="text-[13px] font-bold text-gray-900 leading-tight">{data.name}</div>
+                <div className="text-[11px] text-gray-500 font-medium">{data.email}</div>
               </div>
             </div>
           );
@@ -1293,15 +1304,15 @@ const QuoteTable = () => {
                     {pdfLoading && <Loader className="ml-auto text-rose-600 w-3.5 h-3.5" />}
                   </button>
 
-                  {selectedQuotes.length > 0 && (
-                    <button
-                      onClick={handleBulkInvoiceDownload}
-                      className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200"
-                    >
-                      <FaFileInvoice className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
-                      <span>Download Invoices ({selectedQuotes.length})</span>
-                    </button>
-                  )}
+                    {selectedQuotes.length > 0 && (
+                      <button
+                        onClick={handleBulkInvoiceDownload}
+                        className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200"
+                      >
+                        <FaFileInvoice className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
+                        <span>Download Invoices ({selectedQuotes.filter(q => q.type !== 'customer').length})</span>
+                      </button>
+                    )}
                 </div>
               </div>
             )}
