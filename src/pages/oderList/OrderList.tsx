@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { ColDef } from 'ag-grid-community';
 import AgGridTable from '@/components/tables/AgGridTable';
 import { api } from '@/utils/axiosInstance';
@@ -19,6 +19,8 @@ import { useRouter } from 'next/navigation';
 import StatusBadge from '../../components/common/StatusBadge';
 import { exportOrdersToExcel, exportOrdersToPDF } from '@/utils/exportUtils';
 import Loader from '@/components/common/Loader';
+import { FaFileInvoice } from 'react-icons/fa';
+import BillingInvoice from '@/components/invoice/BillingInvoice';
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -120,6 +122,7 @@ const OrderList = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [statusOptions, setStatusOptions] = useState<StatusOption[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<VendorOrder | null>(null);
+  const [selectedOrders, setSelectedOrders] = useState<VendorOrder[]>([]);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [newStatus, setNewStatus] = useState('');
@@ -132,6 +135,10 @@ const OrderList = () => {
   const actionsMenuRef = React.useRef<HTMLDivElement>(null);
   const filterModalRef = React.useRef<HTMLDivElement>(null);
   const filterButtonRef = React.useRef<HTMLButtonElement>(null);
+
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [vendorProfile, setVendorProfile] = useState<any>(null);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
 
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState({
@@ -305,48 +312,88 @@ const OrderList = () => {
   ];
   */
 
+  // Flatten Data for Tree Data Structure
+  const rowDataFlat = React.useMemo(() => {
+    const flat: any[] = [];
+    const groups: { [key: string]: any } = {};
+
+    vendorOrders.forEach((order: any) => {
+      const customer = order.user_id || {};
+      const customerId = customer._id || customer.id || customer || 'unknown';
+      const customerName = customer.name || 'Unknown Customer';
+      const customerEmail = customer.email || '';
+
+      if (!groups[customerId]) {
+         groups[customerId] = {
+           id: customerId,
+           type: 'customer',
+           name: customerName,
+           email: customerEmail,
+           path: [customerId.toString()],
+         };
+         flat.push(groups[customerId]);
+      }
+      
+      flat.push({
+        ...order,
+        type: 'order',
+        path: [customerId.toString(), (order._id || order.id || '').toString()]
+      });
+    });
+
+    return flat;
+  }, [vendorOrders]);
+
+  const autoGroupColumnDef = React.useMemo(() => ({
+    headerName: "Customer / Order ID",
+    field: "name",
+    cellRendererParams: {
+      suppressCount: true,
+      innerRenderer: (props: any) => {
+        const { data } = props;
+        if (data?.type === "customer") {
+          return (
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                <span className="text-indigo-600 font-semibold text-sm">
+                  {data.name?.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-900 leading-none">{data.name}</div>
+                <div className="text-xs text-gray-500 mt-1">{data.email}</div>
+              </div>
+            </div>
+          );
+        }
+        
+        return (
+          <div className="font-mono text-blue-600 font-semibold ml-2">
+            #{data?.order_id || '-'}
+          </div>
+        );
+      },
+    },
+    minWidth: 350,
+  }), []);
+
   // Vendor Orders Columns
   const vendorColumns: ColDef[] = [
-    {
-      headerName: "Order ID",
-      field: "order_id",
-      minWidth: 150,
-      flex: 1,
-      cellRenderer: (params: any) => (
-        <div className="font-mono text-blue-600 font-semibold">
-          #{params.value}
-        </div>
-      ),
-    },
-    {
-      headerName: "Customer",
-      field: "user_id",
-      minWidth: 200,
-      flex: 1.5,
-      cellRenderer: (params: any) => (
-        <div className="flex flex-col justify-center h-full leading-tight py-0.5">
-          <span className="text-[13px] font-medium text-gray-800 dark:text-white truncate block">
-            {params.value?.name || '-'}
-          </span>
-          <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate block mt-0.5">
-            {params.value?.email || '-'}
-          </span>
-        </div>
-      ),
-    },
     {
       headerName: "Items",
       field: "items",
       minWidth: 80,
       flex: 0.2,
-      cellRenderer: (params: any) => (
-        <div className="flex items-center justify-center h-full">
-          <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-            {params.value?.length || 0}
-          </span>
-        </div>
-      ),
-      cellStyle: { textAlign: "center" }
+      cellRenderer: (params: any) => {
+        if (params.data?.type === 'customer') return null;
+        return (
+          <div className="flex items-center justify-center h-full">
+            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+              {params.value?.length || 0}
+            </span>
+          </div>
+        );
+      },
     },
     {
       headerName: "Product Name",
@@ -354,6 +401,7 @@ const OrderList = () => {
       minWidth: 200,
       flex: 1.5,
       cellRenderer: (params: any) => {
+        if (params.data?.type === 'customer') return null;
         const items = params.value || [];
         const productNames = items.map((item: any) => item.product_id?.name || item.product_name || item.name || '-').join(', ');
         return (
@@ -369,6 +417,7 @@ const OrderList = () => {
       minWidth: 150,
       flex: 1,
       cellRenderer: (params: any) => {
+        if (params.data?.type === 'customer') return null;
         const items = params.value || [];
         const skus = items.map((item: any) => item.product_id?.sku || item.sku || '-').join(', ');
         return (
@@ -383,33 +432,38 @@ const OrderList = () => {
       field: "total_amount",
       minWidth: 100,
       flex: 1,
-      cellRenderer: (params: any) => (
-        <div className="font-semibold text-green-600 text-center">
-          ₹{Number(params.value || 0).toLocaleString('en-IN')}
-        </div>
-      ),
-      cellStyle: { textAlign: "center" }
+      cellRenderer: (params: any) => {
+        if (params.data?.type === 'customer') return null;
+        return (
+          <div className="font-semibold text-green-600 text-center">
+            ₹{Number(params.value || 0).toLocaleString('en-IN')}
+          </div>
+        );
+      },
     },
     {
       headerName: "Order Status",
       field: "vendor_status",
       minWidth: 120,
       flex: 1.2,
-      cellRenderer: (params: any) => <StatusBadge status={params.value} />,
-      cellStyle: { textAlign: "center" }
+      cellRenderer: (params: any) => {
+        if (params.data?.type === 'customer') return null;
+        return <StatusBadge status={params.value} />;
+      },
     },
     {
       headerName: "Customer Payment",
       field: "payment_status",
       minWidth: 150,
       flex: 1,
-      cellRenderer: (params: any) => (
-        <div className="flex flex-col gap-1 items-center">
-          <StatusBadge status={params.value} />
-          {/* {params.data.payment_type && <StatusBadge status={params.data.payment_type} />} */}
-        </div>
-      ),
-      cellStyle: { textAlign: "center" }
+      cellRenderer: (params: any) => {
+        if (params.data?.type === 'customer') return null;
+        return (
+          <div className="flex flex-col gap-1 items-left">
+            <StatusBadge status={params.value} />
+          </div>
+        );
+      },
     },
     {
       headerName: "Admin Payment",
@@ -417,10 +471,10 @@ const OrderList = () => {
       minWidth: 120,
       flex: 1,
       cellRenderer: (params: any) => {
+        if (params.data?.type === 'customer') return null;
         const paymentStatus = params.data.payment_status_info?.payment_status || '-';
         return <StatusBadge status={paymentStatus} />;
       },
-      cellStyle: { textAlign: "center" }
     },
     {
       headerName: "Date",
@@ -428,23 +482,27 @@ const OrderList = () => {
       minWidth: 120,
       flex: 1,
       valueFormatter: (params) => {
-        return new Date(params.value).toLocaleDateString('en-GB', {
+        if (params.data?.type === 'customer') return '';
+        return params.value ? new Date(params.value).toLocaleDateString('en-GB', {
           day: '2-digit',
           month: '2-digit',
           year: 'numeric'
-        });
+        }) : '';
       },
-      cellStyle: { textAlign: "center" }
     },
     {
       headerName: "Actions",
       field: "actions",
-      width: 90,
-      maxWidth: 90,
+      width: 140,
+      maxWidth: 140,
       suppressSizeToFit: true,
       pinned: "right",
       suppressHeaderMenuButton: true,
       cellRenderer: (params: any) => {
+        if (params.data?.type === 'customer') return null;
+        const isPaid = params.data.payment_status?.toLowerCase() === 'paid';
+        const isCompleted = params.data.vendor_status?.toLowerCase() === 'delivered' || params.data.vendor_status?.toLowerCase() === 'completed';
+        
         return (
           <div className="flex items-center justify-left gap-2 h-full">
             <button
@@ -457,6 +515,19 @@ const OrderList = () => {
             >
               <HiOutlineEye size={17} />
             </button>
+
+            {isPaid && isCompleted && (
+              <button
+                onClick={() => {
+                  handleDownloadInvoice(params.data);
+                }}
+                className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 transition-all shadow-sm"
+                title="Generate Bill"
+                type="button"
+              >
+                <FaFileInvoice size={17} />
+              </button>
+            )}
 
             <ActionButtons
               onEdit={() => handleUpdateStatus(params.data)}
@@ -500,6 +571,190 @@ const OrderList = () => {
       }
     } catch (error) {
       console.error('Error fetching status options:', error);
+    }
+  };
+
+
+  const [isBulkPrinting, setIsBulkPrinting] = useState(false);
+  const [groupedOrders, setGroupedOrders] = useState<any[]>([]);
+
+  const handleBulkDownloadPdf = async () => {
+    try {
+      setInvoiceLoading(true);
+      
+      // Download each invoice separately via backend
+      for (const order of groupedOrders) {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/invoice/pdf`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify({
+            data: order,
+            vendorProfile,
+            type: 'order'
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to generate PDF');
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const orderId = order.order_id || order._id || 'invoice';
+        link.download = `Invoice-${orderId.slice(-8).toUpperCase()}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        // Small delay between downloads
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      toast.success('All invoices downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating bulk PDF:', error);
+      toast.error('Failed to generate bulk PDF');
+    } finally {
+      setInvoiceLoading(false);
+    }
+  };
+
+  const handleBulkInvoiceDownload = async () => {
+    if (selectedOrders.length === 0) return;
+    
+    try {
+      setInvoiceLoading(true);
+      setIsBulkPrinting(true);
+      
+      // Fetch vendor profile if not already fetched
+      if (!vendorProfile) {
+        const profileRes = await api.get(endPointApi.postFetchVendorKYCFormData as string);
+        if (profileRes.data?.status == "200") {
+          const data = profileRes.data.data;
+          const getFirstIfArray = (val: any) => Array.isArray(val) ? val[0] : val;
+          const contact = getFirstIfArray(data.ContactDetails) || {};
+          const identity = getFirstIfArray(data.Identity) || {};
+          const documents = getFirstIfArray(data.Documents) || {};
+          
+          setVendorProfile({
+            business_name: identity.business_name || data.business_name || '',
+            gst_number: identity.gst_number || data.gst_number || '',
+            business_logo_image: documents.business_logo_image || data.business_logo_image || '',
+            address: contact.address || data.address || '',
+            city: contact.city_name || data.city_name || '',
+            state: contact.state_name || data.state_name || '',
+            pincode: contact.pincode || data.pincode || '',
+            mobile: contact.mobile || data.mobile || '',
+            email: contact.email || data.email || ''
+          });
+        }
+      }
+
+      // We need full details for each order to show in invoice
+      const detailedOrders = await Promise.all(
+        selectedOrders.map(async (order) => {
+          const orderId = order._id || order.id;
+          const res = await api.get(`${endPointApi.getVendorOrderDetails}/${orderId}`);
+          return res.data?.success ? (res.data.data?.order || res.data.data) : order;
+        })
+      );
+
+      // Group orders by user_id
+      const groups: { [key: string]: any } = {};
+      detailedOrders.forEach((order: any) => {
+        const userId = order.user_id?._id || order.user_id?.id || order.user_id || 'unknown';
+        if (!groups[userId]) {
+          groups[userId] = {
+            ...order,
+            items: [...(order.items || [])],
+            total_amount: Number(order.total_amount || 0)
+          };
+          // If it's a grouped order, we might want to clear specific order IDs or show multiple
+          groups[userId].order_id = order.order_id; 
+        } else {
+          // Append items to existing group
+          groups[userId].items = [...groups[userId].items, ...(order.items || [])];
+          groups[userId].total_amount += Number(order.total_amount || 0);
+          // Combine order IDs if they are different
+          if (!groups[userId].order_id.includes(order.order_id)) {
+            groups[userId].order_id += `, ${order.order_id}`;
+          }
+        }
+      });
+
+      const finalGroupedOrders = Object.values(groups);
+      setGroupedOrders(finalGroupedOrders);
+      setShowInvoiceModal(true);
+      
+      // We don't trigger print automatically now, user can see preview first
+      setTimeout(() => {
+        setInvoiceLoading(false);
+      }, 500);
+
+    } catch (error) {
+      console.error('Error in bulk download:', error);
+      toast.error('Failed to prepare bulk invoices');
+      setIsBulkPrinting(false);
+      setInvoiceLoading(false);
+    }
+  };
+
+  const handleDownloadInvoice = async (order: VendorOrder) => {
+    const orderId = order._id || order.id;
+    if (!orderId) {
+      toast.error('Order ID is missing. Cannot generate bill.');
+      return;
+    }
+
+    try {
+      setInvoiceLoading(true);
+      setShowInvoiceModal(true); // Show modal immediately with loading state
+
+      // Fetch full order details and vendor profile concurrently
+      const [orderRes, profileRes] = await Promise.all([
+        api.get(`${endPointApi.getVendorOrderDetails}/${orderId}`),
+        vendorProfile ? Promise.resolve(null) : api.get(endPointApi.postFetchVendorKYCFormData as string)
+      ]);
+      if (orderRes.data?.success) {
+        const rawData = orderRes.data.data;
+        // Handle potential nesting in single-fetch response
+        const orderData = rawData?.order || rawData?.data || rawData;
+        setSelectedOrder(orderData);
+      } else {
+        throw new Error(orderRes.data?.message || 'Failed to fetch order details');
+      }
+
+      if (profileRes && profileRes.data?.status == "200") {
+        const data = profileRes.data.data;
+        // Extract KYC details robustly (can be array or single object)
+        const getFirstIfArray = (val: any) => Array.isArray(val) ? val[0] : val;
+        
+        const contact = getFirstIfArray(data.ContactDetails) || {};
+        const identity = getFirstIfArray(data.Identity) || {};
+        const documents = getFirstIfArray(data.Documents) || {};
+        
+        setVendorProfile({
+          business_name: identity.business_name  || data.business_name || '',
+          gst_number: identity.gst_number || data.gst_number || '',
+          business_logo_image: documents.business_logo_image || data.business_logo_image || '',
+          address: contact.address || data.address || '',
+          city: contact.city_name || data.city_name || '',
+          state: contact.state_name || data.state_name || '',
+          pincode: contact.pincode || data.pincode || '',
+          mobile: contact.mobile || data.mobile || '',
+          email: contact.email || data.email || ''
+        });
+      }
+    } catch (error: any) {
+      console.error('Error generating bill:', error);
+      toast.error(error.message || 'Error generating bill. Please try again.');
+      setShowInvoiceModal(false);
+    } finally {
+      setInvoiceLoading(false);
     }
   };
 
@@ -937,6 +1192,16 @@ const OrderList = () => {
                       <span>Export to PDF</span>
                       {pdfLoading && <Loader className="ml-auto text-rose-600 w-3.5 h-3.5" />}
                     </button>
+
+                    {selectedOrders.length > 0 && (
+                      <button
+                        onClick={handleBulkInvoiceDownload}
+                        className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200"
+                      >
+                        <FaFileInvoice className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
+                        <span>Download Invoices ({selectedOrders.length})</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -949,12 +1214,18 @@ const OrderList = () => {
           <div className="inline-block min-w-full align-middle">
             <AgGridTable
               columns={vendorColumns}
-              rowData={vendorOrders}
+              rowData={rowDataFlat}
+              treeData={true}
+              getDataPath={(data: any) => data.path}
+              autoGroupColumnDef={autoGroupColumnDef}
+              groupDefaultExpanded={0}
+              getRowId={(params: any) => params.data.type === 'customer' ? `cust-${params.data.id}` : `order-${params.data._id || params.data.id}`}
               loading={loading}
               height={"580px"}
               tableName={'Orders'}
               filter={false}
-              showCheckboxes={false}
+              showCheckboxes={true}
+              onSelectionChange={(selected) => setSelectedOrders(selected)}
               rowHeight={55}
               noRowsMessage='no Order found'
             />
@@ -1118,6 +1389,15 @@ const OrderList = () => {
               </button>
               <button
                 onClick={() => {
+                  handleDownloadInvoice(selectedOrder);
+                }}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center gap-2"
+              >
+                <FaFileInvoice size={16} />
+                Generate Bill
+              </button>
+              <button
+                onClick={() => {
                   setShowOrderModal(false);
                   handleUpdateStatus(selectedOrder);
                 }}
@@ -1126,6 +1406,90 @@ const OrderList = () => {
                 Update Status
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invoice Modal */}
+      {showInvoiceModal && (
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowInvoiceModal(false);
+              setIsBulkPrinting(false);
+            }
+          }}
+        >
+          <div className="relative w-full max-w-4xl my-8">
+            {invoiceLoading ? (
+              <div className="bg-white dark:bg-gray-800 p-20 rounded-xl flex flex-col items-center justify-center relative">
+                <button
+                  onClick={() => {
+                    setShowInvoiceModal(false);
+                    setIsBulkPrinting(false);
+                  }}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <Loader className="w-10 h-10 text-blue-600 mb-4" />
+                <p className="text-gray-600 dark:text-gray-400">Preparing your invoice{isBulkPrinting ? 's' : ''}...</p>
+              </div>
+            ) : isBulkPrinting ? (
+              <div className="space-y-8 bg-gray-100 p-4 rounded-xl relative">
+                <div className="sticky top-4 right-4 z-20 flex justify-end mb-4 h-0">
+                  <button
+                    onClick={() => {
+                      setShowInvoiceModal(false);
+                      setIsBulkPrinting(false);
+                    }}
+                    className="bg-white rounded-full p-2 shadow-lg text-gray-400 hover:text-gray-600 transition-colors no-print"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex justify-center mb-4 no-print">
+                  <button 
+                    onClick={handleBulkDownloadPdf}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg transition-all"
+                  >
+                    <FaFileInvoice size={18} />
+                    Download All Invoices (PDF)
+                  </button>
+                </div>
+                <div className="space-y-8">
+                  {groupedOrders.map((order, idx) => (
+                    <div key={idx} className="break-after-page mb-8">
+                      <BillingInvoice 
+                        data={order} 
+                        vendorProfile={vendorProfile} 
+                        type="order"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="relative">
+                <BillingInvoice 
+                  data={selectedOrder} 
+                  vendorProfile={vendorProfile} 
+                  type="order"
+                  onDownloadPdf={() => {
+                    window.print();
+                  }}
+                  onClose={() => {
+                    setShowInvoiceModal(false);
+                    setIsBulkPrinting(false);
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

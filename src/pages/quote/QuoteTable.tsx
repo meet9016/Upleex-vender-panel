@@ -18,6 +18,8 @@ import { FaFileExcel, FaFilePdf, FaDownload } from 'react-icons/fa';
 import { FiEdit3, FiCheck, FiX, FiMoreVertical, FiTruck } from 'react-icons/fi';
 import ActionButtons from "@/components/common/ActionButtons";
 import Loader from "@/components/common/Loader";
+import { FaFileInvoice } from 'react-icons/fa';
+import BillingInvoice from '@/components/invoice/BillingInvoice';
 
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -88,6 +90,133 @@ const QuoteTable = () => {
   const [hoveredImage, setHoveredImage] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [vendorProfile, setVendorProfile] = useState<any>(null);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState<any>(null);
+  const [selectedQuotes, setSelectedQuotes] = useState<any[]>([]);
+  const [groupedQuotes, setGroupedQuotes] = useState<any[]>([]);
+  const [isBulkPrinting, setIsBulkPrinting] = useState(false);
+
+  const handleBulkDownloadPdf = async () => {
+    try {
+      setInvoiceLoading(true);
+      
+      // Download each quote invoice separately via backend
+      for (const quote of groupedQuotes) {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/invoice/pdf`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify({
+            data: quote,
+            vendorProfile,
+            type: 'quote'
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to generate PDF');
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const quoteId = quote._id || quote.id || 'quote';
+        link.download = `Quotation-${quoteId.slice(-8).toUpperCase()}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        // Small delay between downloads
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      toast.success('All quotations downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating bulk PDF:', error);
+      toast.error('Failed to generate bulk PDF');
+    } finally {
+      setInvoiceLoading(false);
+    }
+  };
+
+  const handleBulkInvoiceDownload = async () => {
+    if (selectedQuotes.length === 0) return;
+    
+    try {
+      setInvoiceLoading(true);
+      setIsBulkPrinting(true);
+      
+      if (!vendorProfile) {
+        const profileRes = await api.get(endPointApi.postFetchVendorKYCFormData as string);
+        if (profileRes.data?.status == "200") {
+          const data = profileRes.data.data;
+          const getFirstIfArray = (val: any) => Array.isArray(val) ? val[0] : val;
+          const contact = getFirstIfArray(data.ContactDetails) || {};
+          const identity = getFirstIfArray(data.Identity) || {};
+          const documents = getFirstIfArray(data.Documents) || {};
+          
+          setVendorProfile({
+            business_name: identity?.business_name || data.business_name || data.businessName || '',
+            gst_number: identity?.gst_number || data.gst_number || '',
+            business_logo_image: documents?.business_logo_image || data.business_logo_image || '',
+            address: contact?.address || data.address || '',
+            city: contact?.city_name || data.city_name || data.city || '',
+            state: contact?.state_name || data.state_name || data.state || '',
+            pincode: contact?.pincode || data.pincode || '',
+            mobile: contact.mobile || data.mobile || '',
+            email: contact.email || data.email || ''
+          });
+        }
+      }
+
+      const detailedQuotes = await Promise.all(
+        selectedQuotes.map(async (quote) => {
+          const quoteId = quote._id;
+          const res = await api.get(`${endPointApi.getQuoteById}/${quoteId}`);
+          return res.data?.success ? (res.data.data?.quote || res.data.data) : quote;
+        })
+      );
+
+      // Group quotes by user_id
+      const groups: { [key: string]: any } = {};
+      detailedQuotes.forEach((quote: any) => {
+        const userId = quote.user_id?._id || quote.user_id?.id || quote.user_id || 'unknown';
+        if (!groups[userId]) {
+          groups[userId] = {
+            ...quote,
+            items: [quote], // Quotes are usually single product, but we treat them as items
+            total_price: Number(quote.total_price || quote.calculated_price || 0)
+          };
+          groups[userId].quote_id = quote._id; 
+        } else {
+          // Append as another item
+          groups[userId].items = [...groups[userId].items, quote];
+          groups[userId].total_price += Number(quote.total_price || quote.calculated_price || 0);
+          // Combine IDs
+          if (!groups[userId].quote_id.includes(quote._id)) {
+            groups[userId].quote_id += `, ${quote._id}`;
+          }
+        }
+      });
+
+      const finalGroupedQuotes = Object.values(groups);
+      setGroupedQuotes(finalGroupedQuotes);
+      setShowInvoiceModal(true);
+      setTimeout(() => {
+        setInvoiceLoading(false);
+      }, 500);
+
+    } catch (error) {
+      console.error('Error in bulk download:', error);
+      toast.error('Failed to prepare bulk quotations');
+      setIsBulkPrinting(false);
+      setInvoiceLoading(false);
+    }
+  };
 
   // Robustly clear hover when mouse is NOT over a trigger
   useEffect(() => {
@@ -216,18 +345,83 @@ const QuoteTable = () => {
     });
   };
 
-  const columns = useMemo((): ColDef[] => {
-    return [
-      {
-        headerName: "Product",
-        field: "product_name",
-        minWidth: 300,
-        sortable: true,
-        cellRenderer: (params: any) => {
-          const imageUrl = params.data?.product_main_image;
-          const productName = params.data?.product_name;
+  // Flatten Data for Tree Data Structure
+  const rowDataFlat = useMemo(() => {
+    const flat: any[] = [];
+    const groups: { [key: string]: any } = {};
 
+    quoteData.forEach((quote: any) => {
+      let customerId = 'unknown';
+      let customerName = 'Unknown Customer';
+      let customerEmail = '';
+
+      // Check if user_id is populated
+      if (typeof quote.user_id === 'object' && quote.user_id !== null && quote.user_id.name) {
+        customerId = quote.user_id._id || quote.user_id.id || 'unknown';
+        customerName = quote.user_id.name;
+        customerEmail = quote.user_id.email || '';
+      } 
+      // Fallback to review_details.user_id if populated
+      else if (quote.review_details?.user_id && typeof quote.review_details.user_id === 'object') {
+        customerId = quote.review_details.user_id._id || quote.review_details.user_id.id || quote.user_id;
+        customerName = quote.review_details.user_id.name || 'Unknown Customer';
+        customerEmail = quote.review_details.user_id.email || '';
+      } 
+      // Fallback for string user_id
+      else {
+        customerId = typeof quote.user_id === 'string' ? quote.user_id : (quote.user_id?._id || 'unknown');
+      }
+
+      console.log("customer fallback resolved:", customerName);
+      if (!groups[customerId]) {
+
+         groups[customerId] = {
+           id: customerId,
+           type: 'customer',
+           name: customerName,
+           email: customerEmail,
+           path: [customerId.toString()],
+         };
+         flat.push(groups[customerId]);
+      }
+      
+      flat.push({
+        ...quote,
+        type: 'quote',
+        path: [customerId.toString(), (quote._id || quote.id || '').toString()]
+      });
+    });
+
+    return flat;
+  }, [quoteData]);
+
+  const autoGroupColumnDef = useMemo(() => ({
+    headerName: "Customer / Product",
+    field: "product_name",
+    cellRendererParams: {
+      suppressCount: true,
+      innerRenderer: (props: any) => {
+        const { data } = props;
+        if (data?.type === "customer") {
           return (
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                <span className="text-indigo-600 font-semibold text-sm">
+                  {data.name?.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-900 leading-none">{data.name}</div>
+                <div className="text-xs text-gray-500 mt-1">{data.email}</div>
+              </div>
+            </div>
+          );
+        }
+        
+        const imageUrl = data?.product_main_image;
+        const productName = data?.product_name;
+
+      return (
             <div className="flex items-center gap-3 h-full">
               <div className="flex-shrink-0 relative">
                 {imageUrl ? (
@@ -248,26 +442,31 @@ const QuoteTable = () => {
                     onError={(e: any) => {
                       e.target.src =
                         "https://via.placeholder.com/60x60?text=No+Image";
-                    }}
-                  />
-                ) : (
-                  <div className="w-9 h-9 flex items-center justify-center bg-gray-100 text-gray-400 text-[10px] rounded-lg border">
-                    No
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="font-medium text-[13px] text-gray-800 dark:text-white truncate" title={productName}>
-                  {productName || "N/A"}
-                </span>
-                <span className="text-[10px] text-gray-500 truncate">
-                  {params.data?.category_name || ''}
-                </span>
-              </div>
+                  }}
+                />
+              ) : (
+                <div className="w-9 h-9 flex items-center justify-center bg-gray-100 text-gray-400 text-[10px] rounded-lg border">
+                  No
+                </div>
+              )}
             </div>
-          );
-        },
+            <div className="flex flex-col min-w-0">
+              <span className="font-medium text-[13px] text-gray-800 dark:text-white truncate" title={productName}>
+                {productName || "N/A"}
+              </span>
+              <span className="text-[10px] text-gray-500 truncate">
+                {data?.category_name || ''}
+              </span>
+            </div>
+          </div>
+        );
       },
+    },
+    minWidth: 300,
+  }), []);
+
+  const columns = useMemo((): ColDef[] => {
+    return [
       {
         field: "product_type_name",
         headerName: "Product Type",
@@ -278,20 +477,17 @@ const QuoteTable = () => {
         field: "product_listing_type_name",
         headerName: "Product Listing Type",
         minWidth: 220,
-        cellStyle: { textAlign: "center" }
       },
 
       {
         field: "month_name",
         headerName: "Month",
         minWidth: 120,
-        cellStyle: { textAlign: "center" }
       },
       {
         field: "qty",
         headerName: "Qty",
         minWidth: 100,
-        cellStyle: { textAlign: "center" },
       },
       {
         field: "price",
@@ -302,7 +498,6 @@ const QuoteTable = () => {
           if (!value || value === '0') return "₹0";
           return `₹${Number(value).toLocaleString('en-IN')}`;
         },
-        cellStyle: { textAlign: "center" },
       },
       {
         field: "total_price",
@@ -320,11 +515,14 @@ const QuoteTable = () => {
         headerName: "Status",
         minWidth: 130,
         cellStyle: { textAlign: "left" },
-        cellRenderer: (params: any) => (
-          <div className="flex items-center h-full">
-            <StatusBadge status={params.value || 'pending'} />
-          </div>
-        ),
+        cellRenderer: (params: any) => {
+          if (params.data?.type === 'customer') return null;
+          return (
+            <div className="flex items-center h-full">
+               <StatusBadge status={params.value || 'pending'} />
+            </div>
+          );
+        },
       },
       {
         field: "payment_status",
@@ -332,8 +530,9 @@ const QuoteTable = () => {
         minWidth: 140,
         cellStyle: { textAlign: "center" },
         cellRenderer: (params: any) => {
+          if (params.data?.type === 'customer') return null;
           return (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-start h-full">
               <StatusBadge status={params.value || 'pending'} />
             </div>
           );
@@ -345,9 +544,10 @@ const QuoteTable = () => {
         minWidth: 140,
         cellStyle: { textAlign: "center" },
         cellRenderer: (params: any) => {
+          if (params.data?.type === 'customer') return null;
           const paymentStatus = params.data.payment_status_info?.payment_status || 'no_payment';
           return (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-start h-full">
               <StatusBadge status={paymentStatus} />
             </div>
           );
@@ -363,14 +563,13 @@ const QuoteTable = () => {
         field: "start_date",
         headerName: "Start Date",
         minWidth: 150,
-        cellStyle: { textAlign: "center" }
       },
       {
         field: "start_time",
         headerName: "Start Time",
         minWidth: 130,
-        cellStyle: { textAlign: "center" },
         valueFormatter: (params) => {
+          if (params.data?.type === 'customer') return '';
           return params.data?.product_listing_type_name === 'HOURLY' ? (params.value || '-') : '-';
         }
       },
@@ -378,14 +577,13 @@ const QuoteTable = () => {
         field: "end_date",
         headerName: "End Date",
         minWidth: 150,
-        cellStyle: { textAlign: "center" }
       },
       {
         field: "end_time",
         headerName: "End Time",
         minWidth: 130,
-        cellStyle: { textAlign: "center" },
         valueFormatter: (params) => {
+          if (params.data?.type === 'customer') return '';
           return params.data?.product_listing_type_name === 'HOURLY' ? (params.value || '-') : '-';
         }
       },
@@ -394,6 +592,7 @@ const QuoteTable = () => {
         headerName: "Payment Link",
         minWidth: 160,
         cellRenderer: (params: any) => {
+          if (params.data?.type === 'customer') return null;
           const link = params.value;
           const isPaid = String(params.data?.payment_status || '').toLowerCase() === 'paid';
 
@@ -430,21 +629,23 @@ const QuoteTable = () => {
 
       {
         headerName: "Action",
-        width: 150,
-        minWidth: 150,
+        width: 180,
+        minWidth: 180,
         pinned: 'right',
         suppressHeaderMenuButton: true,
 
         cellRenderer: (params: any) => {
+          if (params.data?.type === 'customer') return null;
           const status = params.data?.status?.toLowerCase();
           const isApproved = status === 'approval' || status === 'approved';
           const isRejected = status === 'reject' || status === 'rejected';
           const isCompleted = status === 'complete' || status === 'completed' || status === 'successful' || status === 'success';
           const isDelivery = status === 'delivery';
           const isDisabled = isApproved || isRejected || isCompleted || isDelivery;
+          const isPaid = params.data?.payment_status?.toLowerCase() === 'paid';
 
           return (
-            <div className="flex items-center justify-center gap-2 h-full">
+            <div className="flex items-center justify-start gap-2 h-full">
               {/* Approve */}
               <button
                 onClick={() => handleApproval(params.data._id)}
@@ -494,6 +695,21 @@ const QuoteTable = () => {
               </button>
             )} */}
 
+
+             <button
+              onClick={() => handleGenerateBill(params.data)}
+              disabled={!(isPaid && isCompleted)}
+              className={`w-8 h-8 flex items-center justify-center rounded-xl shadow-sm transition-all duration-200
+                ${
+                  isPaid && isCompleted
+                    ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:shadow"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                }`}
+              title="Generate Bill"
+              type="button"
+            >
+              <FaFileInvoice className="text-base" />
+            </button>
               <ActionButtons
                 onEdit={() => router.push(`/quote/edit/${params.data._id || params.data.id}`)}
                 showDelete={false}
@@ -504,6 +720,65 @@ const QuoteTable = () => {
       }
     ];
   }, [quoteData]);
+
+
+  const handleGenerateBill = async (quote: Quote) => {
+    const quoteId = quote._id;
+    if (!quoteId) {
+      toast.error('Quote ID is missing. Cannot generate bill.');
+      return;
+    }
+
+    try {
+      setInvoiceLoading(true);
+      setShowInvoiceModal(true);
+
+      // Fetch full quote details and vendor profile concurrently
+      const [quoteRes, profileRes] = await Promise.all([
+        api.get(`${endPointApi.getQuoteById}/${quoteId}`),
+        vendorProfile ? Promise.resolve(null) : api.get(endPointApi.postFetchVendorKYCFormData as string)
+      ]);
+      console.log("quoteRes--", quoteRes);
+      console.log("profileRes--", profileRes);
+      if (quoteRes.data?.success) {
+        const rawData = quoteRes.data.data;
+        // Handle potential nesting in single-fetch response
+        const quoteData = rawData?.quote || rawData?.data || rawData;
+        setSelectedQuote(quoteData);
+      } else {
+        throw new Error(quoteRes.data?.message || 'Failed to fetch quote details');
+      }
+
+      if (profileRes && profileRes.data?.status == "200") {
+        const data = profileRes.data.data;
+        // Extract KYC details robustly (can be array or single object)
+        const getFirstIfArray = (val: any) => Array.isArray(val) ? val[0] : val;
+        
+        const contact = getFirstIfArray(data.ContactDetails) || {};
+        const identity = getFirstIfArray(data.Identity) || {};
+        const documents = getFirstIfArray(data.Documents) || {};
+        console.log("contact--", contact);
+        console.log("identity--", identity);
+        setVendorProfile({
+          business_name: identity?.business_name  || data.business_name || data.businessName || '',
+          gst_number: identity?.gst_number || data.gst_number || '',
+          business_logo_image: documents?.business_logo_image || data.business_logo_image || '',
+          address: contact?.address || data.address || '',
+          city: contact?.city_name || data.city_name || data.city || '',
+          state: contact?.state_name || data.state_name || data.state || '',
+          pincode: contact?.pincode || data.pincode || '',
+          mobile: contact.mobile || data.mobile || '',
+          email: contact.email || data.email || ''
+        });
+      }
+    } catch (error: any) {
+      console.error('Error generating bill:', error);
+      toast.error(error.message || 'Error generating bill. Please try again.');
+      setShowInvoiceModal(false);
+    } finally {
+      setInvoiceLoading(false);
+    }
+  };
 
   const getQuoteData = async (filterParams: any = {}) => {
     try {
@@ -1017,6 +1292,16 @@ const QuoteTable = () => {
                     <span className="group-hover:translate-x-0.5 transition-transform duration-200">Export to PDF</span>
                     {pdfLoading && <Loader className="ml-auto text-rose-600 w-3.5 h-3.5" />}
                   </button>
+
+                  {selectedQuotes.length > 0 && (
+                    <button
+                      onClick={handleBulkInvoiceDownload}
+                      className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200"
+                    >
+                      <FaFileInvoice className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
+                      <span>Download Invoices ({selectedQuotes.length})</span>
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -1028,12 +1313,17 @@ const QuoteTable = () => {
         <div className="inline-block min-w-full align-middle">
           <AgGridTable
             columns={columns}
-            rowData={quoteData}
+            rowData={rowDataFlat}
+            treeData={true}
+            getDataPath={(data: any) => data.path}
+            autoGroupColumnDef={autoGroupColumnDef}
+            groupDefaultExpanded={0}
+            getRowId={(params: any) => params.data.type === 'customer' ? `cust-${params.data.id}` : `quote-${params.data._id || params.data.id}`}
             filter={false}
             tableName="Quotes"
-            onSelectionChange={setSelectedRows}
+            onSelectionChange={(selected) => setSelectedQuotes(selected)}
             rowHeight={60}
-            showCheckboxes={false}
+            showCheckboxes={true}
             loading={loading}
             height={"650px"}
             getRowStyle={getRowStyle}
@@ -1057,6 +1347,81 @@ const QuoteTable = () => {
               alt="Preview"
               className="w-48 h-48 object-cover rounded-xl"
             />
+          </div>
+        </div>
+      )}
+
+      {/* Invoice Modal */}
+      {showInvoiceModal && (
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowInvoiceModal(false);
+              setIsBulkPrinting(false);
+            }
+          }}
+        >
+          <div className="relative w-full max-w-4xl my-8 cursor-default">
+            {invoiceLoading ? (
+              <div className="bg-white dark:bg-gray-800 p-20 rounded-xl flex flex-col items-center justify-center shadow-2xl relative">
+                <button
+                  onClick={() => {
+                    setShowInvoiceModal(false);
+                    setIsBulkPrinting(false);
+                  }}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <Loader className="w-10 h-10 text-blue-600 mb-4" />
+                <p className="text-gray-900 dark:text-white font-medium">Preparing your quotation{isBulkPrinting ? 's' : ''}...</p>
+              </div>
+            ) : isBulkPrinting ? (
+                <div className="space-y-8 relative">
+                   <div className="sticky top-0 z-20 flex justify-end pr-4 pt-4 h-0">
+                      <button
+                        onClick={() => {
+                          setShowInvoiceModal(false);
+                          setIsBulkPrinting(false);
+                        }}
+                        className="bg-white rounded-full p-2 shadow-lg text-gray-400 hover:text-gray-600 transition-colors no-print"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                   </div>
+                <div className="space-y-8">
+                  {groupedQuotes.map((quote, idx) => (
+                    <div key={idx} className="break-after-page mb-8">
+                      <BillingInvoice 
+                        data={quote} 
+                        vendorProfile={vendorProfile} 
+                        type="quote"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="relative">
+                <BillingInvoice 
+                  data={selectedQuote} 
+                  vendorProfile={vendorProfile} 
+                  type="quote"
+                  onDownloadPdf={() => {
+                    window.print();
+                  }}
+                  onClose={() => {
+                    setShowInvoiceModal(false);
+                    setIsBulkPrinting(false);
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

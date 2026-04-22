@@ -128,31 +128,79 @@ const PayoutHistory: React.FC = () => {
         router.push(`${pathname}?${params.toString()}`);
     };
 
+    const rowDataFlat = useMemo(() => {
+        const flat: any[] = [];
+        const groups: { [key: string]: any } = {};
+
+        payouts.forEach((payout) => {
+            let customerName = 'Unknown';
+            if (currentDataTab === 'sell') {
+                customerName = payout.order_id?.user_name || 'Unknown';
+            } else {
+                customerName = payout.quote_id?.user_id?.name || payout.quote_id?.user_id?.first_name || 'Unknown';
+            }
+
+            const customerId = customerName;
+
+            if (!groups[customerId]) {
+                groups[customerId] = {
+                    id: customerId,
+                    type: 'customer',
+                    name: customerName,
+                    path: [customerId.toString()]
+                };
+                flat.push(groups[customerId]);
+            }
+
+            flat.push({
+                ...payout,
+                type: 'payout',
+                path: [customerId.toString(), payout._id.toString()]
+            });
+        });
+
+        return flat;
+    }, [payouts, currentDataTab]);
+
+    const autoGroupColumnDef = useMemo(() => ({
+        headerName: currentDataTab === 'rent' ? "Customer / Quote ID" : "Customer / Order ID",
+        field: "name",
+        cellRendererParams: {
+            suppressCount: true,
+            innerRenderer: (props: any) => {
+                const { data } = props;
+                if (data?.type === "customer") {
+                    return (
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                                <span className="text-indigo-600 font-semibold text-sm">
+                                    {data.name?.charAt(0).toUpperCase()}
+                                </span>
+                            </div>
+                            <div className="text-sm font-medium text-gray-900 leading-none">{data.name}</div>
+                        </div>
+                    );
+                }
+                
+                const rawId = currentDataTab === 'sell' ? data?.order_id?.order_id : data?.quote_id?._id;
+                const displayId = currentDataTab === 'sell' ? rawId : (rawId ? `Q#${rawId.slice(-6).toUpperCase()}` : 'N/A');
+
+                return (
+                    <div className="font-mono text-blue-600 font-semibold ml-2">
+                        #{displayId || '-'}
+                    </div>
+                );
+            },
+        },
+        minWidth: 350,
+    }), [currentDataTab]);
+
     const columnDefs: ColDef[] = useMemo(() => [
-        {
-            headerName: currentDataTab === 'rent' ? "Quote ID" : "Order ID",
-            field: "id",
-            valueGetter: (params) => {
-                if (currentDataTab === 'sell') return params.data.order_id?.order_id || 'N/A';
-                return params.data.quote_id?._id ? `Q#${params.data.quote_id._id.slice(-6).toUpperCase()}` : 'N/A';
-            },
-            flex: 1,
-            minWidth: 120,
-        },
-        {
-            headerName: "Customer",
-            field: "customerName",
-            valueGetter: (params) => {
-                if (currentDataTab === 'sell') return params.data.order_id?.user_name || 'Unknown';
-                return params.data.quote_id?.user_id?.name || params.data.quote_id?.user_id?.first_name || 'Unknown';
-            },
-            flex: 1.5,
-            minWidth: 150,
-        },
         {
             headerName: "Total Amount",
             field: "totalAmount",
             valueGetter: (params) => {
+                if (params.data?.type === 'customer') return null;
                 const amount = currentDataTab === 'sell' ? params.data.order_id?.total_amount : params.data.quote_id?.calculated_price;
                 return `₹${(amount || 0).toLocaleString('en-IN')}`;
             },
@@ -163,7 +211,10 @@ const PayoutHistory: React.FC = () => {
         {
             headerName: "Your Payout",
             field: "vendor_amount",
-            valueFormatter: (params) => `₹${(params.value || 0).toLocaleString('en-IN')}`,
+            valueFormatter: (params) => {
+                if (params.data?.type === 'customer') return '';
+                return `₹${(params.value || 0).toLocaleString('en-IN')}`;
+            },
             flex: 1,
             minWidth: 130,
             cellStyle: { color: '#7c3aed', fontWeight: '700' }
@@ -171,14 +222,20 @@ const PayoutHistory: React.FC = () => {
         {
             headerName: "Status",
             field: "payment_status",
-            cellRenderer: (params: any) => <StatusBadge status={params.value} />,
+            cellRenderer: (params: any) => {
+                if (params.data?.type === 'customer') return null;
+                return <StatusBadge status={params.value} />;
+            },
             flex: 1,
             minWidth: 120,
         },
         {
             headerName: "Release Date",
             field: "released_at",
-            valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString('en-IN') : 'N/A',
+            valueFormatter: (params) => {
+                if (params.data?.type === 'customer') return '';
+                return params.value ? new Date(params.value).toLocaleDateString('en-IN') : 'N/A';
+            },
             flex: 1,
             minWidth: 120,
         }
@@ -274,7 +331,12 @@ const PayoutHistory: React.FC = () => {
             {/* Table */}
             <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-xl shadow-gray-200/20 dark:shadow-none">
                 <AgGridTable
-                    rowData={payouts}
+                    rowData={rowDataFlat}
+                    treeData={true}
+                    getDataPath={(data: any) => data.path}
+                    autoGroupColumnDef={autoGroupColumnDef}
+                    groupDefaultExpanded={0}
+                    getRowId={(params: any) => params.data.type === 'customer' ? `cust-${params.data.id}` : `payout-${params.data._id}`}
                     columns={columnDefs}
                     loading={loading}
                     height={500}

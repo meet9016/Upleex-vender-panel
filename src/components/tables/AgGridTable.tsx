@@ -164,19 +164,21 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
       headerCheckbox: true,
       enableSelectAll: true,
       enableSelectionWithoutKeys: true,
+      groupSelects: treeData ? 'descendants' : 'self',
     }),
-    []
+    [treeData]
   );
 
   const selectionColumnDef = useMemo<ColDef>(() => {
     return {
-      width: 50,
-      maxWidth: 50,
+      width: 60,
+      maxWidth: 60,
+      minWidth: 60,
       suppressHeaderMenuButton: true,
       suppressHeaderContextMenu: true,
       pinned: 'left',
       lockPosition: 'left',
-      cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 },
+      cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 8px' },
       headerClass: 'ag-center-aligned-header',
     };
   }, []);
@@ -260,6 +262,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             getDataPath={getDataPath}
             autoGroupColumnDef={autoGroupColumnDef}
             groupDefaultExpanded={groupDefaultExpanded}
+            groupSelectsChildren={true}
             getRowId={getRowId}
             animateRows={true}
           />
