@@ -21,6 +21,8 @@ import Loader from "@/components/common/Loader";
 import { FaFileInvoice } from 'react-icons/fa';
 import BillingInvoice from '@/components/invoice/BillingInvoice';
 
+const DEFAULT_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Crect width='60' height='60' fill='%23f0f0f0'/%3E%3Ctext x='30' y='30' font-family='Arial' font-size='8' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
+
 function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -451,8 +453,8 @@ const QuoteTable = () => {
                       setHoveredImage(null);
                     }}
                     onError={(e: any) => {
-                      e.target.src =
-                        "https://via.placeholder.com/60x60?text=No+Image";
+                      e.target.onerror = null;
+                      e.target.src = DEFAULT_PLACEHOLDER;
                   }}
                 />
               ) : (
