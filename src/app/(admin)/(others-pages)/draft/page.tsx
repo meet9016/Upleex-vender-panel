@@ -160,7 +160,10 @@ export default function DraftPage() {
               src={imageUrl}
               alt={name}
               className="w-9 h-9 object-cover rounded border"
-              onError={(e: any) => { if (e.target.src !== DEFAULT_PLACEHOLDER) e.target.src = DEFAULT_PLACEHOLDER; }}
+                             onError={(e: any) => { 
+                 e.target.onerror = null;
+                 if (e.target.src !== DEFAULT_PLACEHOLDER) e.target.src = DEFAULT_PLACEHOLDER; 
+               }}
               loading="lazy"
             />
             <div className="flex flex-col justify-center h-full leading-tight py-0.5">

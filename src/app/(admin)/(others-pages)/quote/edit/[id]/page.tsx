@@ -10,6 +10,8 @@ import Loader from "@/components/common/Loader";
 import PageLoader from "@/components/common/PageLoader";
 import DatePicker from "@/components/common/DatePicker"; // Import your DatePicker component
 
+const DEFAULT_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%23f0f0f0'/%3E%3Ctext x='48' y='48' font-family='Arial' font-size='12' fill='%23999' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
+
 const QuoteEditPage = () => {
   const params = useParams();
   const router = useRouter();
@@ -432,7 +434,8 @@ const QuoteEditPage = () => {
                   alt={quoteData.product_name}
                   className="w-24 h-24 object-cover rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm"
                   onError={(e: any) => {
-                    e.target.src = "https://via.placeholder.com/96x96?text=No+Image";
+                    e.target.onerror = null;
+                    e.target.src = DEFAULT_PLACEHOLDER;
                   }}
                 />
               )}
