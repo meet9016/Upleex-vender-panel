@@ -50,6 +50,7 @@ interface PaymentOrder {
 interface VendorOrder {
   _id?: string;
   id?: string;
+  type?: string;
   order_id: string;
   user_id: {
     name: string;
