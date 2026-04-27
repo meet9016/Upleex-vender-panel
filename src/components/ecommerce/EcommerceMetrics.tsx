@@ -176,9 +176,9 @@ export const EcommerceMetrics = () => {
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">
                     {metric.title}
                   </span>
-                  <span className={`flex items-center text-[10px] font-bold ${metric.isPositive ? 'text-success-600' : 'text-error-600'} flex-shrink-0`}>
+                  {/* <span className={`flex items-center text-[10px] font-bold ${metric.isPositive ? 'text-success-600' : 'text-error-600'} flex-shrink-0`}>
                     {metric.change}
-                  </span>
+                  </span> */}
                 </div>
                 <h4 className="text-xl font-bold text-gray-800 dark:text-white/90 leading-tight">
                   {metric.value}
