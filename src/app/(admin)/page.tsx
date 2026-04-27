@@ -32,14 +32,14 @@ export default function Ecommerce() {
       </div>
 
       {/* Row 3: Orders Chart */}
-      <div className="col-span-12 xl:col-span-8">
+      <div className="col-span-12 xl:col-span-12">
         <MonthlySalesChart />
       </div>
 
       {/* Row 4: Monthly Target & Other components */}
-      <div className="col-span-12 xl:col-span-4">
+      {/* <div className="col-span-12 xl:col-span-4">
         <MonthlyTarget />
-      </div>
+      </div> */}
 
     </div>
   );
