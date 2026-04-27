@@ -12,6 +12,7 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { BreadcrumbProvider, useBreadcrumb } from "@/context/BreadcrumbContext";
 import { KycGuard } from "@/components/common/KycGuard";
 import { KycProvider } from "@/context/KycContext";
+import SocketHandler from "@/components/common/SocketHandler";
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
@@ -43,6 +44,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-slate-900 dark:text-slate-100">
+      <SocketHandler />
       <AppSidebar />
       <Backdrop />
       <div className={`flex flex-col min-h-screen transition-all duration-300 ease-in-out ${mainContentMargin}`}>

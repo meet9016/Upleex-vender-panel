@@ -88,6 +88,13 @@ export default function NotificationDropdown() {
   useEffect(() => {
     // Sirf mount pe fetch karo — no polling
     fetchNotifications();
+
+    // Listen for socket notifications to refresh
+    const handleNewNotif = () => {
+      fetchNotifications();
+    };
+    window.addEventListener('new_notification', handleNewNotif);
+    return () => window.removeEventListener('new_notification', handleNewNotif);
   }, [fetchNotifications]);
 
   // Jab dropdown open ho tab fresh fetch karo
@@ -194,22 +201,15 @@ export default function NotificationDropdown() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-semibold truncate ${isReject ? "text-red-600" : !notif.is_read ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"}`}>
+                      <p 
+                        title={notif.title}
+                        className={`text-sm font-semibold truncate ${isReject ? "text-red-600" : !notif.is_read ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"}`}>
                         {notif.title}
                       </p>
-                      <p className={`text-xs mt-0.5 line-clamp-2 ${isReject ? "text-red-500" : "text-gray-500 dark:text-gray-400"}`}>
-                        {(() => {
-                          const body = notif.body;
-                          const patterns = [
-                            /^(.*?")(.*?)(".*)$/,
-                            /^(.*?for\s"?)(.*?)("?\s(?:has|have).*)$/,
-                          ];
-                          for (const pat of patterns) {
-                            const m = body.match(pat);
-                            if (m) return <span>{m[1]}<strong className={isReject ? 'text-red-700' : 'text-gray-900 dark:text-white'}>{m[2]}</strong>{m[3]}</span>;
-                          }
-                          return body;
-                        })()}
+                      <p 
+                        title={notif.body?.replace(/<[^>]*>?/gm, '')}
+                        className={`text-xs mt-0.5 line-clamp-2 ${isReject ? "text-red-500" : "text-gray-500 dark:text-gray-400"}`}>
+                        <span dangerouslySetInnerHTML={{ __html: notif.body }} />
                       </p>
                       <p className="text-[11px] text-gray-400 mt-1">{formatDate(notif.createdAt)}</p>
                     </div>
