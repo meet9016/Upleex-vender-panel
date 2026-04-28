@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { Rocket, History, TrendingUp, Sparkles, AlertCircle, Loader2, CheckCircle2, ShieldCheck, Zap, Package } from "lucide-react";
+import { Rocket, History, TrendingUp, Sparkles, AlertCircle, Loader2, CheckCircle2, ShieldCheck, Zap, Package, Search } from "lucide-react";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import Button from "@/components/ui/button/Button";
@@ -17,13 +17,18 @@ const BoosterPlanView: React.FC = () => {
   const { currency, refreshBalance, balance } = useWallet();
   const [plans, setPlans] = useState<any[]>([]);
   const [purchases, setPurchases] = useState<any[]>([]);
-  const [priorityCount, setPriorityCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedPlanForBoost, setSelectedPlanForBoost] = useState<any>(null);
-  const [priorityProducts, setPriorityProducts] = useState<any[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
   const [historyTab, setHistoryTab] = useState<"rent" | "sell">("rent");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
+  const [gridSearch, setGridSearch] = useState("");
+
+  const DEFAULT_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Crect width=\'48\' height=\'48\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'24\' y=\'24\' font-family=\'Arial\' font-size=\'10\' fill=\'%23999\' text-anchor=\'middle\' dominant-baseline=\'middle\'%3ENo Image%3C/text%3E%3C/svg%3E';
 
   const fetchData = async () => {
     try {
@@ -36,7 +41,7 @@ const BoosterPlanView: React.FC = () => {
         api.get(endPointApi.getAllRentalBoostPlans, { params: { status: "active" } }),
         api.get(endPointApi.getVendorRentalBoostPurchases),
         api.get(endPointApi.postAllVendorProductList, {
-          params: { vendor_id, is_priority: true, approval_status: "approved", limit: 1000 }
+          params: { vendor_id, approval_status: "approved", limit: 1000 }
         })
       ]);
 
@@ -44,9 +49,11 @@ const BoosterPlanView: React.FC = () => {
       if (purchasesRes?.data?.success) setPurchases(purchasesRes.data.data);
 
       const products = productsRes?.data?.data || [];
-      setPriorityProducts(products);
-      const nonBoostedPriority = products.filter((p: any) => p.is_priority === true && !p.is_boosted);
-      setPriorityCount(nonBoostedPriority.length);
+      const normalizedProducts = products.map((p: any) => ({
+        ...p,
+        id: p.id || p._id,
+      }));
+      setAllProducts(normalizedProducts);
 
     } catch (error) {
       toast.error("Failed to load booster data");
@@ -59,67 +66,198 @@ const BoosterPlanView: React.FC = () => {
     fetchData();
   }, []);
 
-  const activeBooster = useMemo(() => {
-    const now = new Date();
-    return purchases.find(p => p.payment_status === 'completed' && new Date(p.expiry_date) > now);
-  }, [purchases]);
+  const rentProducts = useMemo(() => allProducts.filter(p => p.product_type_name?.toLowerCase() === "rent"), [allProducts]);
+  const sellProducts = useMemo(() => allProducts.filter(p => p.product_type_name?.toLowerCase() === "sell"), [allProducts]);
 
   const handleOpenConfirm = (plan: any) => {
-    if (priorityCount === 0) {
-      toast.warning("You don't have any products with an active Priority Plan to boost.");
+    setSelectedPlanForBoost(plan);
+    setSelectedProductIds([]);
+    setIsModalOpen(true);
+  };
+
+  const handleSelectProduct = () => {
+    if (selectedProductIds.length === 0) {
+      toast.warning("Please select at least one product to boost.");
       return;
     }
-    setSelectedPlanForBoost(plan);
+    setIsModalOpen(false);
     setShowConfirmModal(true);
   };
 
   const handleBulkBoost = async () => {
-    if (!selectedPlanForBoost) return;
+    if (!selectedPlanForBoost || selectedProductIds.length === 0) return;
 
-    const priceToPay = activeBooster ? 0 : selectedPlanForBoost.price;
-    if (priceToPay > balance) {
-      toast.error("Insufficient wallet balance.");
+    const totalPrice = selectedPlanForBoost.price * selectedProductIds.length;
+    if (totalPrice > balance) {
+      toast.error(`Insufficient wallet balance. Required: ${currency}${totalPrice}`);
       return;
     }
 
     try {
       setIsPurchasing(true);
-      const res = await api.post(endPointApi.purchaseRentalBoostPlan, {
+      const res = await api.post(endPointApi.purchaseBulkRentalBoostPlan, {
         plan_id: selectedPlanForBoost.id || selectedPlanForBoost._id,
+        product_ids: selectedProductIds,
       });
 
       if (res?.data?.success) {
-        toast.success(res.data.message || "Priority products boosted successfully!");
+        toast.success(res.data.message || `${selectedProductIds.length} product(s) boosted successfully!`);
         refreshBalance();
         fetchData();
         setShowConfirmModal(false);
       }
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to apply bulk boost");
+      toast.error(error?.response?.data?.message || "Failed to apply boost");
     } finally {
       setIsPurchasing(false);
     }
   };
 
-  const rentProducts = useMemo(() => priorityProducts.filter(p => p.product_type_name?.toLowerCase() === "rent"), [priorityProducts]);
-  const sellProducts = useMemo(() => priorityProducts.filter(p => p.product_type_name?.toLowerCase() === "sell"), [priorityProducts]);
+  const currentTabProducts = activeTab === "Rent" ? rentProducts : sellProducts;
+  const filteredProducts = useMemo(() => {
+    return currentTabProducts.filter(p =>
+      p.product_name.toLowerCase().includes(gridSearch.toLowerCase()) ||
+      p.category_name?.toLowerCase().includes(gridSearch.toLowerCase())
+    );
+  }, [currentTabProducts, gridSearch]);
+
+  const isProductBoosted = (product: any) => {
+    return product.is_boosted && product.boost_expiry && new Date(product.boost_expiry) > new Date();
+  };
+
+  const productColumns: ColDef[] = [
+    {
+      headerName: "Product",
+      field: "product_name",
+      minWidth: 240,
+      flex: 1,
+      cellRenderer: (params: any) => {
+        const product = params.data;
+        const imageUrl = product.product_main_image || product.image || DEFAULT_PLACEHOLDER;
+        const isBoosted = isProductBoosted(product);
+        
+        return (
+          <div className="flex items-center gap-3 h-full">
+            <div className="flex-shrink-0 relative group">
+              <img
+                src={imageUrl}
+                className={`w-9 h-9 rounded-lg object-cover border group-hover:scale-105 transition-transform ${isBoosted ? 'border-green-300 opacity-60' : 'border-gray-100'}`}
+                onError={(e: any) => e.target.src = DEFAULT_PLACEHOLDER}
+              />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className={`font-bold text-[13px] truncate ${isBoosted ? 'text-gray-400' : 'text-gray-800 dark:text-gray-100'}`}>
+                {product.product_name}
+              </span>
+            
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      headerName: "Category",
+      field: "category_name",
+      width: 140,
+      cellRenderer: (params: any) => {
+        const isBoosted = isProductBoosted(params.data);
+        return (
+          <span className={`font-medium ${isBoosted ? 'text-gray-400' : 'text-gray-600'}`}>{params.value || "-"}</span>
+        );
+      }
+    },
+    {
+      headerName: "Subcategory",
+      field: "sub_category_name",
+      width: 140,
+      cellRenderer: (params: any) => {
+        const isBoosted = isProductBoosted(params.data);
+        return (
+          <span className={`font-medium ${isBoosted ? 'text-gray-400' : 'text-gray-500'}`}>{params.value || "-"}</span>
+        );
+      }
+    },
+    {
+      headerName: "Pricing",
+      field: "pricing_type",
+      width: 100,
+      cellRenderer: (params: any) => (
+        <div className="flex items-center h-full">
+          <StatusBadge status={(params.value || 'paid').toLowerCase() === 'free' ? 'free' : 'paid'} />
+        </div>
+      )
+    },
+    {
+      headerName: "Status",
+      field: "status",
+      width: 110,
+      cellRenderer: (params: any) => (
+        <StatusBadge status={params.value} />
+      )
+    },
+    {
+      headerName: "Booster Expiry",
+      field: "boost_expiry",
+      width: 150,
+      cellRenderer: (params: any) => {
+        const expiryDate = params.value;
+        if (!expiryDate) {
+          return <span className="text-gray-400 text-sm">Not boosted</span>;
+        }
+        const isExpired = new Date(expiryDate) < new Date();
+        const dateStr = new Date(expiryDate).toLocaleDateString('en-GB');
+        return (
+          <div className="flex flex-col">
+            <span className={`text-sm font-semibold ${isExpired ? 'text-red-600' : 'text-green-600'}`}>
+              {dateStr}
+            </span>
+            <span className={`text-xs ${isExpired ? 'text-red-500' : 'text-green-500'}`}>
+              {isExpired ? 'Expired' : 'Active'}
+            </span>
+          </div>
+        );
+      }
+    },
+  ];
 
   const flattenedBoosterHistory = useMemo(() => {
+    console.log('=== BOOSTER HISTORY DEBUG ===');
+    console.log('Raw Purchases from API:', purchases);
+    console.log('Number of purchase records:', purchases.length);
+    
     const rows: any[] = [];
-    purchases.forEach(purchase => {
-      const product = priorityProducts.find(p => p._id === purchase.product_id || p.id === purchase.product_id);
-      rows.push({
-        ...purchase,
-        product_name: purchase.product_name || product?.product_name || "All Priority Products",
-        category_name: product?.category_name || "-",
-        sub_category_name: product?.sub_category_name || "-",
-        product_type_name: product?.product_type_name || "-",
+    purchases.forEach((purchase, index) => {
+      console.log(`\nPurchase #${index + 1}:`, {
+        _id: purchase._id,
+        product_id: purchase.product_id,
+        product_name: purchase.product_name,
+        plan_name: purchase.plan_name,
       });
+      
+      // The backend now populates product_id with product details
+      const populatedProduct = purchase.product_id;
+      
+      const rowData = {
+        ...purchase,
+        product_name: populatedProduct?.product_name || purchase.product_name || "Product",
+        category_name: populatedProduct?.category_name || purchase.category_name || "-",
+        sub_category_name: populatedProduct?.sub_category_name || purchase.sub_category_name || "-",
+        product_type_name: populatedProduct?.product_type_name || purchase.product_type_name || "-",
+      };
+      
+      console.log(`Processed Row #${index + 1}:`, rowData);
+      rows.push(rowData);
     });
-    const sorted = rows.sort((a, b) => new Date(b.expiry_date).getTime() - new Date(a.expiry_date).getTime());
+    
+    console.log('\n=== FINAL RESULT ===');
+    console.log('Total rows to display:', rows.length);
+    console.log('All rows:', rows);
+    console.log('=======================\n');
+    
+    const sorted = rows.sort((a, b) => new Date(b.expiry_date || b.createdAt).getTime() - new Date(a.expiry_date || a.createdAt).getTime());
     if (historyTab === "sell") return sorted.filter(r => r.product_type_name?.toLowerCase() === "sell");
     return sorted.filter(r => r.product_type_name?.toLowerCase() === "rent");
-  }, [purchases, priorityProducts, historyTab]);
+  }, [purchases, allProducts, historyTab]);
 
   const columns: ColDef[] = [
     {
@@ -232,20 +370,19 @@ const BoosterPlanView: React.FC = () => {
             </div>
 
             {/* Price block */}
-            <div className={`mb-8 p-5 rounded-2xl dark:bg-black ${activeBooster ? 'bg-green-50' : 'bg-indigo-50'}`}>
+            <div className={`mb-8 p-5 rounded-2xl dark:bg-black bg-indigo-50`}>
               <div className="flex items-baseline justify-center gap-1">
-                <span className={`text-4xl font-extrabold ${activeBooster ? 'text-green-600' : 'text-indigo-900'}`}>
-                  {activeBooster ? 'FREE' : `${currency}${plan.price}`}
+                <span className="text-4xl font-extrabold text-indigo-900">
+                  {currency}{plan.price}
                 </span>
-                {!activeBooster && <span className="text-indigo-500 font-medium">/ plan</span>}
-                {activeBooster && <span className="text-green-600 font-bold text-sm ml-2">Active</span>}
+                <span className="text-indigo-500 font-medium">/ product</span>
               </div>
               <div className="mt-2 flex items-center justify-center gap-2">
                 <span className="text-xs font-semibold text-indigo-600 bg-indigo-100 px-2.5 py-1 rounded-full dark:bg-indigo-900/40">
                   {plan.days} days duration
                 </span>
                 <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full dark:bg-slate-800">
-                  {priorityCount} products eligible
+                  Per product pricing
                 </span>
               </div>
             </div>
@@ -269,15 +406,13 @@ const BoosterPlanView: React.FC = () => {
               <Button
                 onClick={() => handleOpenConfirm(plan)}
                 disabled={isPurchasing}
-                className={`w-full !py-4 rounded-xl font-bold btn-primary dark:bg-[#1c2938] ${activeBooster ? 'shadow-green-100' : 'shadow-indigo-100'}`}
+                className={`w-full !py-4 rounded-xl font-bold btn-primary dark:bg-[#1c2938] shadow-indigo-100`}
                 variant="primary"
               >
-                {isPurchasing ? "Processing..." : (activeBooster ? "Sync New Products" : `Boost All Products for ${currency}${plan.price}`)}
+                {isPurchasing ? "Processing..." : `Boost Selected Products - ${currency}${plan.price}/product`}
               </Button>
               <p className="text-center text-[10px] text-gray-400 font-medium px-4 leading-relaxed">
-                {activeBooster
-                  ? "This will apply the current active boost expiry to any new products for free."
-                  : `Apply this ${plan.days}-day boost to all ${priorityCount} priority products simultaneously.`}
+                Select multiple products to boost. Each product costs {currency}{plan.price}.
               </p>
             </div>
           </div>
@@ -301,23 +436,123 @@ const BoosterPlanView: React.FC = () => {
 
       {/* Confirmation Modal */}
       <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        className="max-w-6xl w-full"
+      >
+        <div className="bg-white dark:bg-gray-900 rounded-2xl p-6">
+          <div className="px-6 py-4 border-b bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Select Product for {selectedPlanForBoost?.name || 'Booster'} Plan
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Choose one or more products to boost for {selectedPlanForBoost?.days} days
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={gridSearch}
+                    onChange={(e) => setGridSearch(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none"
+                  />
+                </div>
+
+                <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1.5 border border-gray-200 dark:border-gray-700 gap-1.5 ">
+                  <button
+                    onClick={() => setActiveTab('Rent')}
+                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition h-auto ${activeTab === 'Rent' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Rent ({rentProducts.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('Sell')}
+                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition h-auto ${activeTab === 'Sell' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Sell ({sellProducts.length})
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 px-6 overflow-hidden">
+            <AgGridTable
+              columns={productColumns}
+              rowData={filteredProducts}
+              showCheckboxes={true}
+              height={500}
+              rowHeight={50}
+              onSelectionChange={(rows) => {
+                const ids = rows
+                  .filter((row: any) => !isProductBoosted(row))
+                  .map((row: any) => row.id || row._id)
+                  .filter(Boolean);
+                setSelectedProductIds(ids);
+              }}
+              isRowSelectable={(params) => {
+                const product = params.data;
+                const isBoosted = product.is_boosted && product.boost_expiry && new Date(product.boost_expiry) > new Date();
+                return !isBoosted; // Disable selection for already boosted products
+              }}
+              getRowStyle={(params) => {
+                const product = params.data;
+                const isBoosted = product.is_boosted && product.boost_expiry && new Date(product.boost_expiry) > new Date();
+                if (isBoosted) {
+                  return {
+                    opacity: 0.5,
+                    background: 'rgba(0,0,0,0.02)',
+                  };
+                }
+                return undefined;
+              }}
+              noRowsMessage="no products found"
+            />
+          </div>
+
+          <div className="px-6 py-4 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsModalOpen(false)}
+              className="px-6 py-2.5 rounded-xl font-bold"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSelectProduct}
+              disabled={selectedProductIds.length === 0}
+              className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-100/50"
+            >
+              Continue
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Confirmation Modal */}
+      <Modal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
         className="max-w-md w-full"
       >
         <div className="p-8 text-center space-y-6">
-          <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center animate-bounce ${activeBooster ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-indigo-600'}`}>
-            {activeBooster ? <Zap size={36} /> : <Rocket size={36} />}
+          <div className="w-20 h-20 mx-auto rounded-3xl flex items-center justify-center animate-bounce bg-indigo-100 text-indigo-600">
+            <Rocket size={36} />
           </div>
 
           <div className="space-y-2">
             <h3 className="text-2xl font-black text-gray-900 dark:text-gray-200">
-              {activeBooster ? "Sync Active Boost" : "Activate Booster Plan"}
+              Activate Booster Plan
             </h3>
             <p className="text-gray-500 text-sm leading-relaxed px-4">
-              {activeBooster
-                ? `You have an active booster subscription. This will boost all your ${priorityCount} priority products until ${new Date(activeBooster.expiry_date).toLocaleDateString()} for free.`
-                : `Are you sure you want to boost all ${priorityCount} priority products for ${currency}${selectedPlanForBoost?.price}? This boost will be active for ${selectedPlanForBoost?.days} days.`}
+              {`Are you sure you want to boost ${selectedProductIds.length} product(s) for ${selectedPlanForBoost?.days} days?`}
             </p>
           </div>
 
@@ -327,13 +562,17 @@ const BoosterPlanView: React.FC = () => {
               <span className="font-bold text-gray-900 dark:text-gray-200">{selectedPlanForBoost?.name || `${selectedPlanForBoost?.days}-Day Boost`}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500 dark:text-gray-200">Products to Boost</span>
-              <span className="font-bold text-gray-900 dark:text-gray-200">{priorityCount} Items</span>
+              <span className="text-gray-500 dark:text-gray-200">Price per Product</span>
+              <span className="font-bold text-gray-900 dark:text-gray-200">{currency}{selectedPlanForBoost?.price}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-500 dark:text-gray-200">Products Selected</span>
+              <span className="font-bold text-gray-900 dark:text-gray-200">{selectedProductIds.length} Item(s)</span>
             </div>
             <div className="flex justify-between items-center text-sm font-black border-t pt-2 border-gray-200 dark:border-gray-700 dark:text-gray-200">
               <span className="text-gray-900 dark:text-gray-200 uppercase text-xs">Total Payable</span>
-              <span className={`text-lg ${activeBooster ? 'text-green-600' : 'text-indigo-600'}`}>
-                {activeBooster ? 'FREE' : `${currency}${selectedPlanForBoost?.price}`}
+              <span className="text-lg text-indigo-600">
+                {currency}{selectedPlanForBoost?.price * selectedProductIds.length}
               </span>
             </div>
           </div>
@@ -345,7 +584,7 @@ const BoosterPlanView: React.FC = () => {
               onClick={handleBulkBoost}
               disabled={isPurchasing}
             >
-              {isPurchasing ? "Processing..." : (activeBooster ? "Confirm Free Boost" : "Confirm & Pay")}
+              {isPurchasing ? "Processing..." : "Confirm & Pay"}
             </Button>
             <Button
               variant="outline"

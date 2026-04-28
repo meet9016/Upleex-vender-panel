@@ -330,7 +330,7 @@ const ServicePlanView: React.FC = () => {
         {plans.map((plan) => (
           <div
             key={plan._id}
-            className="relative p-8 rounded-3xl border border-gray-200 transition-all duration-500 flex flex-col h-full bg-white group dark:bg-[#0d111c] hover:border-blue-300 hover:shadow-xl shadow-sm"
+            className="relative p-8 rounded-3xl border-2 border-gray-200 transition-all duration-500 flex flex-col h-full bg-white group dark:bg-[#0d111c] hover:border-blue-500 hover:shadow-2xl hover:scale-[1.02] shadow-sm"
           >
             <div className="mb-3 text-center">
               <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform dark:bg-[#1c2938]">
@@ -428,28 +428,37 @@ const ServicePlanView: React.FC = () => {
               columns={serviceSelectionColumns}
               rowData={filteredServices}
               onSelectionChange={(rows) => {
-                const selectableRows = rows.filter((r: any) => !r.active_plan_name && (r.pricing_type || 'paid').toLowerCase() !== 'free');
-                const ids = selectableRows.map((r: any) => r._id || r.id).filter((id: any) => !!id);
-                if (selectedPlan?.max_services !== 0 && ids.length > (selectedPlan?.max_services || 0)) {
-                  toast.error(`You can only select up to ${selectedPlan?.max_services} services for this plan.`);
-                  // Optionally, you can revert the selection or take other actions
-                  return;
+                // Filter out services that already have an active plan
+                const selectableRows = rows.filter((r: any) => !r.active_plan_name);
+                
+                // Check service limit
+                if (selectedPlan?.max_services && selectedPlan.max_services > 0) {
+                  const agg = selectedPlan ? planAggregates[selectedPlan.plan_name] : null;
+                  const remainingSlots = agg && agg.total > 0 ? Math.max(0, agg.total - agg.used) : selectedPlan.max_services;
+                  
+                  // If selecting more than available slots, limit the selection silently
+                  if (selectableRows.length > remainingSlots) {
+                    // Take only the first 'remainingSlots' services
+                    const limitedRows = selectableRows.slice(0, remainingSlots);
+                    const ids = limitedRows.map((r: any) => r._id || r.id).filter((id: any) => !!id);
+                    setSelectedServiceIds(ids);
+                    return;
+                  }
                 }
+                
+                const ids = selectableRows.map((r: any) => r._id || r.id).filter((id: any) => !!id);
                 setSelectedServiceIds(ids);
               }}
               showCheckboxes={true}
               height={500}
               isRowSelectable={(params) => {
                 const isAlreadyActive = params.data.active_plan_name;
-                const isFree = (params.data.pricing_type || 'paid').toLowerCase() === 'free';
                 const isMaxServicesReached = selectedPlan?.max_services !== 0 && selectedServiceIds.length >= (selectedPlan?.max_services || 0);
-                if (isFree) return false;
                 // Disable if already active or if max services reached and this service is not already selected
                 return !isAlreadyActive && !(isMaxServicesReached && !selectedServiceIds.includes(params.data._id || params.data.id));
               }}
               getRowStyle={(params) => {
-                const isFree = (params.data.pricing_type || 'paid').toLowerCase() === 'free';
-                if (params.data.active_plan_name || isFree)
+                if (params.data.active_plan_name)
                   return {
                       opacity: 0.5,
                       pointerEvents: 'none',

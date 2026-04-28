@@ -27,8 +27,8 @@ const navItems: NavItem[] = [
   { icon: <ListIcon />, name: "Orders", path: "/order" },
   { icon: <WalletIcon />, name: "Wallet", path: "/wallet" },
   { icon: <DocsIcon />, name: "Drafts", path: "/draft" },
-
-];
+  { icon: <BoxIcon />, name: "Settings", path: "/settings" },
+  ];
 
 // KYC only nav items for initial render
 const kycOnlyItems: NavItem[] = [
