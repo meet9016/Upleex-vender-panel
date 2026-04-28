@@ -13,6 +13,8 @@ import { BreadcrumbProvider, useBreadcrumb } from "@/context/BreadcrumbContext";
 import { KycGuard } from "@/components/common/KycGuard";
 import { KycProvider } from "@/context/KycContext";
 import SocketHandler from "@/components/common/SocketHandler";
+import Loader from "@/components/common/Loader";
+import PageLoader from "@/components/common/PageLoader";
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
@@ -21,6 +23,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   const { breadcrumbs } = useBreadcrumb();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   const mainContentMargin = useMemo(() => {
     if (isMobileOpen) return "ml-0";
@@ -35,11 +38,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       router.push("/signin");
     } else {
       setIsAuthenticated(true);
+      setIsChecking(false);
     }
   }, [router]);
 
-  if (!isAuthenticated) {
-    return null;
+  if (isChecking || !isAuthenticated) {
+    return <PageLoader />;
   }
 
   return (

@@ -14,6 +14,7 @@ import { toast } from "react-toastify";
 import OtpInput from "react-otp-input";
 import Loader from "@/components/common/Loader";
 import { useRouter } from "next/navigation";
+import PageLoader from "../common/PageLoader";
 
 type FormData = {
   mobile: string;
@@ -30,13 +31,78 @@ export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // Added loading state for button
+  const [isChecking, setIsChecking] = useState(true); // Added to prevent flicker
   const [formData, setFormData] = useState<FormData>({
     mobile: "",
     otp: "",
   });
   const [otpSent, setOtpSent] = useState(false);
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (typeof window !== 'undefined') {
+        const searchParams = new URLSearchParams(window.location.search);
+        const urlToken = searchParams.get('token');
+        const userInfoStr = searchParams.get('user_info');
+        const localToken = localStorage.getItem("auth_token");
+        
+        // 1. Check for URL params (Auto-login)
+        if (urlToken && userInfoStr) {
+          try {
+            const userInfo = JSON.parse(decodeURIComponent(userInfoStr));
+            saveToken(urlToken);
+            localStorage.setItem("user_info", JSON.stringify(userInfo));
+            
+            toast.success("Welcome back!");
+            
+            // Check KYC status and redirect
+            try {
+              const kycRes = await api.post(endPointApi.postFetchVendorKYCFormData as string);
+              const kycStatus = kycRes?.data?.data?.status || "";
+              if (String(kycStatus).toLowerCase() === "approved") {
+                router.push('/');
+              } else {
+                router.push('/kyc');
+              }
+            } catch {
+              router.push('/kyc');
+            }
+            return; // Stay in checking mode until redirected
+          } catch (e) {
+            console.error("Failed to auto-login:", e);
+          }
+        } 
+        
+        // 2. Check for existing local session
+        if (localToken) {
+          try {
+            const kycRes = await api.post(endPointApi.postFetchVendorKYCFormData as string);
+            const kycStatus = kycRes?.data?.data?.status || "";
+            if (String(kycStatus).toLowerCase() === "approved") {
+              router.push('/');
+            } else {
+              router.push('/kyc');
+            }
+            return; // Stay in checking mode until redirected
+          } catch {
+            // If token is invalid or kyc check fails, maybe clear it? 
+            // For now, let's just allow signin
+          }
+        }
+        
+        // No auto-login or existing session found
+        setIsChecking(false);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
   const [error, setError] = useState<ErrorState>({});
+
+  if (isChecking) {
+    return <PageLoader />;
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

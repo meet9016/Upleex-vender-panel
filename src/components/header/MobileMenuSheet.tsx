@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { getUser, clearToken } from '@/utils/tokenManager';
 import { useRouter } from 'next/navigation';
+import { api } from "@/utils/axiosInstance";
 import NotificationList from './NotificationList'; // Import the list
+import endPointApi from '@/utils/endPointApi';
 
 interface MobileMenuSheetProps {
   isOpen: boolean;
@@ -20,16 +22,42 @@ export const MobileMenuSheet: React.FC<MobileMenuSheetProps> = ({
   const router = useRouter();
   const [user, setUser] = useState<{ full_name: string; email: string } | null>(null);
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const isFetchingRef = useRef(false);
+
+  const fetchUnreadCount = useCallback(async () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+    if (!token || isFetchingRef.current) return;
+    isFetchingRef.current = true;
+    try {
+      const res = await api.get(endPointApi.getNotifications);
+      if (res.data.success) {
+        const count = res.data.data.filter((n: any) => !n.is_read).length;
+        setUnreadCount(count);
+      }
+    } catch {
+      // silent fail
+    } finally {
+      isFetchingRef.current = false;
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && isOpen) {
       const loggedInUser = getUser();
       setUser(loggedInUser || null);
+      fetchUnreadCount();
     } else {
       // Reset notification state when sheet closes
       setNotificationsOpen(false);
     }
-  }, [isOpen]);
+
+    const handleNewNotif = () => {
+      fetchUnreadCount();
+    };
+    window.addEventListener('new_notification', handleNewNotif);
+    return () => window.removeEventListener('new_notification', handleNewNotif);
+  }, [isOpen, fetchUnreadCount]);
 
   useEffect(() => {
     if (isOpen) {
@@ -83,7 +111,11 @@ export const MobileMenuSheet: React.FC<MobileMenuSheetProps> = ({
                   >
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Notifications</h3>
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-orange-100 text-orange-600 text-[10px] font-bold rounded-full">4 New</span>
+                      {unreadCount > 0 && (
+                        <span className="px-2 py-0.5 bg-orange-100 text-orange-600 text-[10px] font-bold rounded-full">
+                          {unreadCount} New
+                        </span>
+                      )}
                       <svg className={`w-5 h-5 text-gray-400 transition-transform ${isNotificationsOpen ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>

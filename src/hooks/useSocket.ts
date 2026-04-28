@@ -34,6 +34,7 @@ export const useSocket = (vendorId: string | undefined, type: 'vendor' = 'vendor
 
     console.log(`Connecting to Socket server: ${SOCKET_URL} for vendor ${vendorId}`);
     socketRef.current = io(SOCKET_URL, {
+       path : '/api/socket.io',
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 5,
