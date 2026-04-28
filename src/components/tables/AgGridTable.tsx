@@ -244,7 +244,26 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             rowSelection={showCheckboxes ? rowSelection : undefined}
             onSelectionChanged={() => {
               if (showCheckboxes) {
-                const rows = gridRef.current?.api?.getSelectedRows() || [];
+                let rows = gridRef.current?.api?.getSelectedRows() || [];
+                
+                // Filter out rows that are not selectable based on isRowSelectable
+                if (isRowSelectable) {
+                  rows = rows.filter((row: any) => {
+                    return isRowSelectable({ data: row });
+                  });
+                  
+                  // Deselect the unselectable rows that were auto-selected
+                  const allSelectedNodes = gridRef.current?.api?.getSelectedNodes() || [];
+                  allSelectedNodes.forEach((node: any) => {
+                    if (!isRowSelectable({ data: node.data })) {
+                      node.setSelected(false);
+                    }
+                  });
+                  
+                  // Re-fetch the filtered rows after deselecting
+                  rows = gridRef.current?.api?.getSelectedRows() || [];
+                }
+                
                 if (typeof onSelectionChange === 'function') {
                   onSelectionChange(rows);
                 }

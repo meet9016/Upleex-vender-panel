@@ -33,6 +33,9 @@ interface Product {
   image?: string;
   expires_at?: string;
   status: string;
+  pricing_type?: 'free' | 'paid';
+  free_listing_expires_at?: string | null;
+  free_listing_remaining_days?: number;
 }
 
 const DEFAULT_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Crect width=\'48\' height=\'48\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'24\' y=\'24\' font-family=\'Arial\' font-size=\'10\' fill=\'%23999\' text-anchor=\'middle\' dominant-baseline=\'middle\'%3ENo Image%3C/text%3E%3C/svg%3E';
@@ -51,9 +54,11 @@ const ListingPlanView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
   const [gridSearch, setGridSearch] = useState("");
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean } | null>(null);
+  const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean; isFreeListing?: boolean; remainingFreeDays?: number; freeProductsInfo?: Array<{name: string, days: number, freeExpiry: string}> } | null>(null);
 
   const [historyTab, setHistoryTab] = useState<"rent" | "sell">("rent");
+  const [freeListingDays, setFreeListingDays] = useState<number>(30); // Default 30 days for free listings
+  const [hasShownLimitToast, setHasShownLimitToast] = useState(false); // Track if limit toast was shown
 
   const planAggregates = useMemo(() => {
     const aggregates: Record<string, { total: number; used: number; productIds: Set<string> }> = {};
@@ -136,6 +141,8 @@ const ListingPlanView: React.FC = () => {
           ...p,
           id: p.id || p._id,
           price: Number(price) || 0,
+          free_listing_expires_at: p.free_listing_expires_at || null,
+          free_listing_remaining_days: p.free_listing_remaining_days || 0,
         };
       });
 
@@ -195,10 +202,49 @@ const ListingPlanView: React.FC = () => {
     }
 
     if (!isConfirmed) {
+      // Calculate potential remaining free days AFTER the paid plan expires
+      const freeProductsInfo = selectedProductIds
+        .map(id => {
+          const product = products.find(p => p.id === id);
+          if (product && product.pricing_type === 'free' && product.free_listing_expires_at) {
+            const freeExpiry = new Date(product.free_listing_expires_at);
+            const now = new Date();
+            
+            // Calculate when product was created (30 days before free_listing_expires_at)
+            const productCreatedAt = new Date(freeExpiry);
+            productCreatedAt.setDate(productCreatedAt.getDate() - 30);
+            
+            // Calculate how many free days were USED before plan starts
+            const daysUsed = Math.ceil((now.getTime() - productCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
+            const totalFreeDays = 30;
+            const remainingFreeDays = Math.max(0, totalFreeDays - daysUsed);
+            
+            // Calculate when the paid plan will expire
+            const planStartDate = now;
+            const planEndDate = new Date(planStartDate);
+            planEndDate.setMonth(planEndDate.getMonth() + (selectedPlan?.duration_months || 1));
+            
+            // Calculate new expiry after plan (plan expiry + remaining free days)
+            const newExpiryAfterPlan = new Date(planEndDate);
+            newExpiryAfterPlan.setDate(newExpiryAfterPlan.getDate() + remainingFreeDays);
+            
+            if (remainingFreeDays > 0) {
+              return {
+                name: product.product_name,
+                days: remainingFreeDays,
+                freeExpiry: newExpiryAfterPlan.toISOString()
+              };
+            }
+          }
+          return null;
+        })
+        .filter(Boolean) as Array<{name: string, days: number, freeExpiry: string}>;
+
       setPurchaseSummary({
         count: selectedProductIds.length,
         amount: finalPrice,
-        isRefill: isRefillAvailable || isAddonRefill
+        isRefill: isRefillAvailable || isAddonRefill,
+        freeProductsInfo: freeProductsInfo.length > 0 ? freeProductsInfo : undefined
       });
       setIsConfirmModalOpen(true);
       return;
@@ -348,6 +394,66 @@ const ListingPlanView: React.FC = () => {
       }
     },
     {
+      headerName: "Free Days Remaining",
+      field: "free_listing_remaining_days",
+      width: 180,
+      cellRenderer: (params: any) => {
+        const product = params.data;
+        const remainingDays = product.free_listing_remaining_days || 0;
+        const freeExpiry = product.free_listing_expires_at;
+        const currentExpiry = product.expires_at;
+        
+        // Only show for free products
+        if (product.pricing_type !== 'free') {
+          return <span className="text-gray-400">-</span>;
+        }
+        
+        const now = new Date();
+        const freeExpiryDate = freeExpiry ? new Date(freeExpiry) : null;
+        const currentExpiryDate = currentExpiry ? new Date(currentExpiry) : null;
+        
+        // If product is currently on a paid plan and has remaining free days after plan
+        if (currentExpiryDate && currentExpiryDate > now && remainingDays > 0) {
+          return (
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg dark:bg-emerald-900/20">
+                {remainingDays} days after plan
+              </span>
+              <span className="text-[10px] text-gray-500">
+                Until: {freeExpiryDate?.toLocaleDateString('en-GB')}
+              </span>
+            </div>
+          );
+        }
+        
+        // If free listing is currently active (no paid plan yet)
+        if (freeExpiryDate && freeExpiryDate > now && (!currentExpiryDate || currentExpiryDate.getTime() === freeExpiryDate.getTime())) {
+          const productCreatedAt = new Date(freeExpiryDate);
+          productCreatedAt.setDate(productCreatedAt.getDate() - 30);
+          const daysUsed = Math.ceil((now.getTime() - productCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
+          const daysLeft = Math.max(0, 30 - daysUsed);
+          
+          return (
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg dark:bg-amber-900/20">
+                {daysLeft} days left (active)
+              </span>
+              <span className="text-[10px] text-gray-500">
+                Used: {daysUsed}/30 days
+              </span>
+            </div>
+          );
+        }
+        
+        // If free listing has expired
+        if (freeExpiryDate && freeExpiryDate < now) {
+          return <span className="text-gray-400 text-xs">Expired</span>;
+        }
+        
+        return <span className="text-gray-400">-</span>;
+      }
+    },
+    {
       headerName: "Active Plan",
       field: "assigned_plan",
       width: 120,
@@ -375,11 +481,38 @@ const ListingPlanView: React.FC = () => {
   }, [currentTabProducts, gridSearch]);
 
   const handleSelectionChange = (rows: Product[]) => {
-    // Exclude free products from selection
-    const ids = rows
-      .filter((p) => (p as any).pricing_type !== 'free')
-      .map((p) => p.id);
+    // Filter out products that are already in ANY active listing plan
+    const selectableRows = rows.filter((row) => {
+      for (const agg of Object.values(planAggregates)) {
+        if (agg.productIds.has(String(row.id))) return false;
+      }
+      return true;
+    });
+    
+    // Check plan limit
+    if (selectedPlan) {
+      const agg = planAggregates[selectedPlan.key] || { total: 0, used: 0, productIds: new Set() };
+      const remainingSlots = agg.total > 0 ? Math.max(0, agg.total - agg.used) : selectedPlan.product_limit;
+      
+      // If selecting more than available slots, limit the selection and show toast
+      if (selectableRows.length > remainingSlots) {
+        const limitedRows = selectableRows.slice(0, remainingSlots);
+        const ids = limitedRows.map((p) => p.id);
+        setSelectedProductIds(ids);
+        
+        // Show toast only once
+        if (!hasShownLimitToast) {
+          toast.warning(`You can only select up to ${remainingSlots} product(s) for this plan.`);
+          setHasShownLimitToast(true);
+        }
+        return;
+      }
+    }
+    
+    const ids = selectableRows.map((p) => p.id);
     setSelectedProductIds(ids);
+    // Reset toast flag when valid selection is made
+    setHasShownLimitToast(false);
   };
 
   const flattenedPurchaseHistory = useMemo(() => {
@@ -683,10 +816,9 @@ const ListingPlanView: React.FC = () => {
               onSelectionChange={handleSelectionChange}
               showCheckboxes={true}
               height={500}
-              rowHeight={50}
+              rowHeight={65}
               isRowSelectable={(params) => {
-                // Disable free products — they don't need a Listing plan
-                if ((params.data.pricing_type || 'paid').toLowerCase() === 'free') return false;
+                // Allow free products to be selected for listing plans
                 // Disable if product is already in ANY active listing plan
                 for (const agg of Object.values(planAggregates)) {
                   if (agg.productIds.has(String(params.data.id))) return false;
@@ -694,8 +826,7 @@ const ListingPlanView: React.FC = () => {
                 return true;
               }}
               getRowStyle={(params) => {
-                const isFree = (params.data.pricing_type || 'paid').toLowerCase() === 'free';
-                // Visual feedback for products already in a plan or free
+                // Visual feedback for products already in a plan
                 let hasPlan = false;
                 for (const agg of Object.values(planAggregates)) {
                   if (agg.productIds.has(String(params.data.id))) {
@@ -704,7 +835,7 @@ const ListingPlanView: React.FC = () => {
                   }
                 }
 
-                if (hasPlan || isFree) {
+                if (hasPlan) {
                   return { opacity: 0.4, pointerEvents: 'none', background: 'rgba(0,0,0,0.03)' };
                 }
                 return undefined;
@@ -724,7 +855,7 @@ const ListingPlanView: React.FC = () => {
             <Button
               variant="primary"
               onClick={handlePurchase}
-              disabled={isPurchasing || selectedProductIds.length === 0}
+              disabled={isPurchasing || selectedProductIds.length === 0 || hasShownLimitToast}
               className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-100/50"
             >
               {isPurchasing ? 'Processing...' : (
@@ -766,6 +897,39 @@ const ListingPlanView: React.FC = () => {
               <span className="text-gray-500 font-medium">Selected Products</span>
               <span className="font-bold text-gray-900 dark:text-white">{purchaseSummary?.count} Items</span>
             </div>
+            
+            {/* Free Products Information */}
+            {purchaseSummary?.freeProductsInfo && purchaseSummary.freeProductsInfo.length > 0 && (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl dark:bg-amber-900/10 dark:border-amber-800">
+                <div className="flex items-start gap-2 mb-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-xs font-bold text-amber-700 uppercase tracking-wider dark:text-amber-400">
+                    Free Listing Days Will Activate After Plan
+                  </span>
+                </div>
+                <p className="text-xs text-amber-600 mb-3 dark:text-amber-300">
+                  After your {selectedPlan?.duration_months}-month plan expires, these products will continue with their remaining free days:
+                </p>
+                <div className="space-y-2">
+                  {purchaseSummary.freeProductsInfo.map((fp, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-2 bg-white rounded-lg dark:bg-gray-800">
+                      <span className="text-sm font-medium text-gray-700 truncate dark:text-gray-300" title={fp.name}>
+                        {fp.name}
+                      </span>
+                      <div className="flex items-center gap-2 ml-2">
+                        <span className="text-[10px] text-gray-500">
+                          Until {new Date(fp.freeExpiry).toLocaleDateString('en-GB')}
+                        </span>
+                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg whitespace-nowrap dark:bg-emerald-900/20">
+                          {fp.days} days after plan
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-xl border border-emerald-100 dark:bg-emerald-900/10">
               <span className="text-emerald-600 font-bold uppercase text-xs tracking-wider">Total Amount</span>
               <span className="text-2xl font-black text-emerald-600">{currency}{purchaseSummary?.amount?.toLocaleString()}</span>
