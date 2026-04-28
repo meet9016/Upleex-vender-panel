@@ -230,8 +230,8 @@ export default function SignUpForm() {
           }
           
           toast.success(message);
-          // Now redirect to KYC page with proper authentication
-          router.push("/kyc");
+          // Redirect to login page after successful registration
+          router.push("/");
         } else {
           toast.error(message);
         }

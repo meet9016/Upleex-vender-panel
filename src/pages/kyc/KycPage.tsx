@@ -15,6 +15,8 @@ import endPointApi from "@/utils/endPointApi";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useFilter } from "@/context/FilterContext";
 import { useBreadcrumb } from "@/context/BreadcrumbContext";
+import { Modal } from "@/components/ui/modal";
+import { CheckCircle2 } from "lucide-react";
 
 const ALL_STEPS = [
   "Contact Details",
@@ -83,6 +85,8 @@ export default function KYCPage() {
   const [errors, setErrors] = useState<ErrorType>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [kycStatus, setKycStatus] = useState<string>("");
   const { filters, setFilters, canFilter, setCanFilter } = useFilter();
 
   // Mode is locked once canFilter is false (edit mode)
@@ -508,6 +512,7 @@ export default function KYCPage() {
         }
 
         await fetchKYCFormdata();
+        setIsSubmitting(false);
 
         if (currentStep < steps.length - 1) {
           // Not last step - Show page saved message and move to next step
@@ -522,16 +527,15 @@ export default function KYCPage() {
           toast.success(`${currentPageName} saved successfully!`);
           setCurrentStep((s) => s + 1);
         } else {
-          // Last step (Declaration) - Show only KYC Submitted Successfully
-          toast.success("KYC Submitted Successfully!");
-          setTimeout(() => setCurrentStep(0), 1800);
+          // Last step (Declaration) - Show Success Modal
+          setShowSuccessModal(true);
         }
       } else {
         toast.error(res.data.message || "Server error");
+        setIsSubmitting(false);
       }
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to save data");
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -579,6 +583,7 @@ export default function KYCPage() {
       const res = await api.get(`${endPointApi.postFetchVendorKYCFormData}`);
       if (res.status === 200 && res.data?.data) {
         const data = res.data.data;
+        setKycStatus(data.status || "");
         const contact = (data.ContactDetails && data.ContactDetails[0]) || data.ContactDetails || {};
         const identity = (data.Identity && data.Identity[0]) || data.Identity || {};
         const bank = (data.Bank && data.Bank[0]) || data.Bank || {};
@@ -635,11 +640,12 @@ export default function KYCPage() {
         }
       }
     } catch (err) {
-      console.error("Fetch KYC error:", err);
+      // silently ignore fetch errors
     } finally {
       setIsDataLoading(false);
     }
   };
+
 
   return (
     <div className="relative mt-2">
@@ -722,6 +728,41 @@ export default function KYCPage() {
           </button>
         </div>
       </div>
+
+      {/* Success Modal */}
+      <Modal 
+        isOpen={showSuccessModal} 
+        onClose={() => {
+          setShowSuccessModal(false);
+          setCurrentStep(0);
+        }}
+        className="max-w-[450px] p-8"
+      >
+        <div className="flex flex-col items-center text-center">
+          <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-6">
+            <CheckCircle2 className="w-12 h-12 text-green-600 dark:text-green-400" />
+          </div>
+          
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            KYC Submitted Successfully!
+          </h2>
+          
+          <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+            Your KYC verification request has been submitted successfully and is currently under review. <br />
+            Our admin team will notify you once it has been approved.
+          </p>
+          
+          <button 
+            onClick={() => {
+              setShowSuccessModal(false);
+              setCurrentStep(0);
+            }}
+            className="btn-primary w-full py-3 text-base font-semibold"
+          >
+            Got it, thanks!
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
