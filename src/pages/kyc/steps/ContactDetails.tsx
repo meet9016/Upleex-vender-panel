@@ -499,7 +499,6 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         <div>
           <Label required>Email</Label>
           <Input
-            disabled
             className="py-3"
             error={!!errors?.email}
             placeholder="Enter your email address"

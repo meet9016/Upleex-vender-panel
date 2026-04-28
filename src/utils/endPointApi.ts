@@ -87,6 +87,10 @@ export interface EndPointApi {
     getServicePriorityPlanOptions: string;
     postCreateServicePriorityPlan: string;
     getPurchasedServicePriorityPlans: string;
+    // Notifications
+    getNotifications: string;
+    markNotificationRead: string;
+    markAllNotificationsRead: string;
 }
 
 // Define and export the API endpoint object
@@ -189,6 +193,10 @@ const endPointApi: EndPointApi = {
     getServicePriorityPlanOptions: 'service-priority-plans/getall',
     postCreateServicePriorityPlan: 'service-priority-purchases/create',
     getPurchasedServicePriorityPlans: 'service-priority-purchases/getall',
+    // Notifications
+    getNotifications: 'vendor/auth/notifications',
+    markNotificationRead: 'vendor/auth/notifications',
+    markAllNotificationsRead: 'vendor/auth/notifications/read-all',
 };
 
 export default endPointApi;
