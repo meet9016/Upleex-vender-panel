@@ -79,6 +79,7 @@ export interface EndPointApi {
     getVendorPriorityPurchases: string;
     getAllRentalBoostPlans: string;
     purchaseRentalBoostPlan: string;
+    purchaseBulkRentalBoostPlan: string;
     getVendorRentalBoostPurchases: string;
     getServicePlanOptions: string;
     postCreateServiceListingPlan: string;
@@ -175,7 +176,8 @@ const endPointApi: EndPointApi = {
     getVendorDashboardMetrics: 'vendor/dashboard/metrics',
     // Rental Boost Plans
     getAllRentalBoostPlans: 'rental-boost-plans/getall',
-    purchaseRentalBoostPlan: 'rental-boost-plans/purchase-bulk',
+    purchaseRentalBoostPlan: 'rental-boost-plans/purchase',
+    purchaseBulkRentalBoostPlan: 'rental-boost-plans/purchase-bulk',
     getVendorRentalBoostPurchases: 'rental-boost-plans/vendor/purchases',
 
     // Service Plans

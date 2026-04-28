@@ -46,6 +46,7 @@ interface Product {
   is_priority?: boolean;
   priority_expiry?: string;
   active_plan_name?: string;
+  pricing_type?: 'free' | 'paid';
 }
 
 interface PriorityPurchase {
@@ -85,6 +86,7 @@ const SettingsPage: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean } | null>(null);
   const [priorityHistoryTab, setPriorityHistoryTab] = useState<"rent" | "sell">("rent");
+  const [hasShownLimitToast, setHasShownLimitToast] = useState(false); // Track if limit toast was shown
   const { balance, currency, refreshBalance } = useWallet();
   const { filters, isLoadingFilter } = useFilter();
 
@@ -490,8 +492,14 @@ const SettingsPage: React.FC = () => {
   }, [currentTabProducts, gridSearch]);
 
   const handleSelectionChange = (rows: Product[]) => {
-    // Filter out disabled rows (already assigned to a plan) so "Select All"
-    const selectableRows = rows.filter((p) => !p.active_plan_name);
+    // Filter out products that already have priority plans
+    const selectableRows = rows.filter((p) => {
+      const pid = p.id || (p as any)._id;
+      const hasPriorityPlan = vendorPurchases.some(vp => 
+        vp.product_ids?.some((id: any) => String(id) === String(pid))
+      );
+      return !hasPriorityPlan;
+    });
     const ids = selectableRows.map((p) => p.id || (p as any)._id);
     setSelectedProductIds(ids);
   };
@@ -725,11 +733,47 @@ const SettingsPage: React.FC = () => {
               rowData={filteredProducts}
               onSelectionChange={(rows) => {
                 if (isAddonModalOpen) {
-                  const ids = rows.map(p => p.id || (p as any)._id);
+                  // For Addon: Filter out products that already have listing plans
+                  const selectableRows = rows.filter((p) => {
+                    const hasListing = listingPurchases.some(lp => lp.product_ids?.some((pr: any) => String(pr.id || pr._id || pr) === String(p.id || (p as any)._id)));
+                    return !hasListing;
+                  });
+                  const ids = selectableRows.map(p => p.id || (p as any)._id);
                   setAddonProductIds(ids);
                 } else {
-                  const ids = rows.filter(p => !p.active_plan_name).map(p => p.id || (p as any)._id);
+                  // For Priority Plan: Filter out products that already have priority plans
+                  const selectableRows = rows.filter((p) => {
+                    const pid = p.id || (p as any)._id;
+                    const hasPriorityPlan = vendorPurchases.some(vp => 
+                      vp.product_ids?.some((id: any) => String(id) === String(pid))
+                    );
+                    return !hasPriorityPlan;
+                  });
+                  
+                  // Check priority plan slot limit
+                  if (selectedPlan) {
+                    const totalSlots = selectedPlan.product_slots || 0;
+                    const currentRemaining = remainingSlots || totalSlots;
+                    
+                    // If selecting more than available slots, limit the selection and show toast
+                    if (selectableRows.length > currentRemaining) {
+                      const limitedRows = selectableRows.slice(0, currentRemaining);
+                      const ids = limitedRows.map(p => p.id || (p as any)._id);
+                      setSelectedProductIds(ids);
+                      
+                      // Show toast only once
+                      if (!hasShownLimitToast) {
+                        toast.warning(`You can only select up to ${currentRemaining} product(s) for this plan.`);
+                        setHasShownLimitToast(true);
+                      }
+                      return;
+                    }
+                  }
+                  
+                  const ids = selectableRows.map(p => p.id || (p as any)._id);
                   setSelectedProductIds(ids);
+                  // Reset toast flag when valid selection is made
+                  setHasShownLimitToast(false);
                 }
               }}
               showCheckboxes={true}
@@ -737,19 +781,34 @@ const SettingsPage: React.FC = () => {
               rowHeight={45}
               isRowSelectable={(params) => {
                 if (isAddonModalOpen) {
+                  // For Addon: Block if already has listing plan
                   const hasListing = listingPurchases.some(lp => lp.product_ids?.some((pr: any) => String(pr.id || pr._id || pr) === String(params.data.id || params.data._id)));
                   return !hasListing;
                 }
-                // Disable free products — they don't need a Priority plan
-                if ((params.data.pricing_type || 'paid').toLowerCase() === 'free') return false;
-                return !params.data.active_plan_name;
+                // For Priority Plan: Block if already has priority plan
+                // Allow free products (same as Booster and Listing plans)
+                const pid = params.data.id || params.data._id;
+                const hasPriorityPlan = vendorPurchases.some(vp => 
+                  vp.product_ids?.some((id: any) => String(id) === String(pid))
+                );
+                return !hasPriorityPlan;
               }}
               getRowStyle={(params) => {
-                const hasCurrentPlan = params.data.active_plan_name;
-                const isFree = (params.data.pricing_type || 'paid').toLowerCase() === 'free';
-                const hasListing = listingPurchases.some(lp => lp.product_ids?.some((pr: any) => String(pr.id || pr._id || pr) === String(params.data.id || params.data._id)));
-                if ((!isAddonModalOpen && (hasCurrentPlan || isFree)) || (isAddonModalOpen && hasListing)) {
-                  return { opacity: 0.4, pointerEvents: 'none', background: 'rgba(0,0,0,0.03)' };
+                if (isAddonModalOpen) {
+                  // For Addon: Disable if already has listing plan
+                  const hasListing = listingPurchases.some(lp => lp.product_ids?.some((pr: any) => String(pr.id || pr._id || pr) === String(params.data.id || params.data._id)));
+                  if (hasListing) {
+                    return { opacity: 0.4, pointerEvents: 'none', background: 'rgba(0,0,0,0.03)' };
+                  }
+                } else {
+                  // For Priority Plan: Disable if already has priority plan
+                  const pid = params.data.id || params.data._id;
+                  const hasPriorityPlan = vendorPurchases.some(vp => 
+                    vp.product_ids?.some((id: any) => String(id) === String(pid))
+                  );
+                  if (hasPriorityPlan) {
+                    return { opacity: 0.4, pointerEvents: 'none', background: 'rgba(0,0,0,0.03)' };
+                  }
                 }
                 return undefined;
               }}
@@ -783,8 +842,10 @@ const SettingsPage: React.FC = () => {
               disabled={
                 isPurchasing ||
                 (isAddonModalOpen ? addonProductIds.length === 0 : selectedProductIds.length === 0) ||
-                (!isAddonModalOpen && selectedProductIds.length > remainingSlots && activePurchasesForPlan.length === 0 && selectedProductIds.length > (selectedPlan?.product_slots || 0)) ||
-                (isAddonModalOpen && addonProductIds.length > (selectedPlan?.addon_max_slots || 0))
+                (!isAddonModalOpen && activePurchasesForPlan.length === 0 && selectedProductIds.length > (selectedPlan?.product_slots || 0)) ||
+                (!isAddonModalOpen && activePurchasesForPlan.length > 0 && selectedProductIds.length > remainingSlots) ||
+                (isAddonModalOpen && addonProductIds.length > (selectedPlan?.addon_max_slots || 0)) ||
+                hasShownLimitToast
               }
               className={`px-5 sm:px-8 py-2 sm:py-2.5 rounded-xl font-bold transition-all shadow-lg text-sm ${includeAddon && !isAddonModalOpen ? 'bg-indigo-600 hover:bg-indigo-700' : ''}`}
             >
