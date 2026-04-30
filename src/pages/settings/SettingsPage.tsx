@@ -1170,7 +1170,7 @@ const SettingsPage: React.FC = () => {
   <div className="space-y-2 sm:space-y-3 md:space-y-4 mb-5 sm:mb-6 md:mb-8 flex-grow">
     <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
       <div className="mt-0.5 sm:mt-1 bg-green-100 p-1 sm:p-1.5 rounded-full flex-shrink-0">
-        <Check className="text-green-600" size={12} />
+        <Check className="text-green-600" size={10} />
       </div>
       <div>
         <p className="text-gray-900 font-bold text-xs sm:text-sm dark:text-gray-300">
@@ -1183,18 +1183,19 @@ const SettingsPage: React.FC = () => {
     </div>
     
     {/* Other Dynamic Features from Backend */}
-    {(plan.features || []).map((feature, fIdx) => (
-      <div key={fIdx} className="flex items-start gap-2 sm:gap-3 md:gap-4">
-        <div className="mt-0.5 sm:mt-1 bg-green-100 p-1 sm:p-1.5 rounded-full flex-shrink-0">
-          <Check className="text-green-600" size={10} />
-        </div>
-        <div>
-          <p className="text-gray-900 text-xs sm:text-sm dark:text-gray-300">
-            {feature}
-          </p>
-        </div>
-      </div>
-    ))}
+  {(plan.features || []).map((feature, fIdx) => (
+  <div key={fIdx} className="flex items-center gap-2 sm:gap-3 md:gap-4">
+    
+    <div className="bg-green-100 p-1 sm:p-1.5 rounded-full flex-shrink-0 flex items-center justify-center">
+      <Check className="text-green-600" size={10} />
+    </div>
+
+    <p className="text-gray-900 text-xs sm:text-sm dark:text-gray-300 leading-tight">
+      {feature}
+    </p>
+
+  </div>
+))}
   </div>
     
   {/* Button - Responsive */}
