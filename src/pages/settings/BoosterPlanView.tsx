@@ -388,18 +388,30 @@ const BoosterPlanView: React.FC = () => {
             </div>
 
             <div className="space-y-4 mb-8 flex-grow">
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-3 h-3 text-indigo-600" />
+              {(plan.features || []).map((feature: string, fIdx: number) => (
+                <div key={fIdx} className="flex items-center gap-3">
+                  <div className="w-5 h-5 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <CheckCircle2 className="w-3 h-3 text-indigo-600" />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{feature}</span>
                 </div>
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">10x Visibility Boost</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <TrendingUp className="w-3 h-3 text-indigo-600" />
-                </div>
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Priority Search Ranking</span>
-              </div>
+              ))}
+              {(!plan.features || plan.features.length === 0) && (
+                <>
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <Sparkles className="w-3 h-3 text-indigo-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">10x Visibility Boost</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <TrendingUp className="w-3 h-3 text-indigo-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Priority Search Ranking</span>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="space-y-4">
