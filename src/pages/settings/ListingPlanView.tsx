@@ -19,6 +19,7 @@ interface ListingPlan {
   price: number;
   duration_months: number;
   product_limit: number;
+  features?: string[];
 }
 
 interface Product {
@@ -123,6 +124,7 @@ const ListingPlanView: React.FC = () => {
         price: p.amount,
         duration_months: p.months,
         product_limit: p.max_products,
+        features: p.features || [],
       }));
 
       const rawProducts = productsRes.data.data || [];
@@ -659,12 +661,15 @@ const ListingPlanView: React.FC = () => {
                 </div>
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Up to {plan.product_limit} Products</span>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center">
-                  <Check className="w-3 h-3 text-emerald-600" />
+
+              {(plan.features || []).map((feature, fIdx) => (
+                <div key={fIdx} className="flex items-center gap-3">
+                  <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <Check className="w-3 h-3 text-emerald-600" />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{feature}</span>
                 </div>
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Active for {plan.duration_months} Months</span>
-              </div>
+              ))}
             </div>
 
             <Button

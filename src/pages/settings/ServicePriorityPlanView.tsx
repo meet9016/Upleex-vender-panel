@@ -19,6 +19,7 @@ interface PriorityPlan {
   monthly_price: number;
   yearly_price: number;
   addon_price: number;
+  features?: string[];
 }
 
 const ServicePriorityPlanView: React.FC = () => {
@@ -184,9 +185,18 @@ const ServicePriorityPlanView: React.FC = () => {
               </div>
               <div className="text-3xl font-black mb-6 text-center">{currency}{plan.monthly_price} <span className="text-sm font-normal text-gray-500">/ month</span></div>
               <ul className="space-y-3 mb-8 flex-grow">
-                <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> Top Placement</li>
-                <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> Verified Badge</li>
-                <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> All services (Paid + Free)</li>
+                {(plan.features || []).map((feature, fIdx) => (
+                  <li key={fIdx} className="flex items-center gap-2 text-sm">
+                    <Check size={16} className="text-green-500"/> {feature}
+                  </li>
+                ))}
+                {(!plan.features || plan.features.length === 0) && (
+                  <>
+                    <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> Top Placement</li>
+                    <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> Verified Badge</li>
+                    <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> All services (Paid + Free)</li>
+                  </>
+                )}
               </ul>
               <Button onClick={() => handleOpenPurchase("monthly")} className="btn-primary !py-3.5">Select Monthly</Button>
             </div>
@@ -203,10 +213,19 @@ const ServicePriorityPlanView: React.FC = () => {
               </div>
               <div className="text-3xl font-black mb-6 text-center">{currency}{plan.yearly_price} <span className="text-sm font-normal text-gray-500">/ year</span></div>
               <ul className="space-y-3 mb-8 flex-grow">
-                <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> Top Placement</li>
-                <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> Verified Badge</li>
-                <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> All services (Paid + Free)</li>
-                <li className="flex items-center gap-2 text-sm font-bold text-brand-600"><Sparkles size={16}/> Annual Exclusive Addon</li>
+                {(plan.features || []).map((feature, fIdx) => (
+                  <li key={fIdx} className="flex items-center gap-2 text-sm">
+                    <Check size={16} className="text-green-500"/> {feature}
+                  </li>
+                ))}
+                {(!plan.features || plan.features.length === 0) && (
+                  <>
+                    <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> Top Placement</li>
+                    <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> Verified Badge</li>
+                    <li className="flex items-center gap-2 text-sm"><Check size={16} className="text-green-500"/> All services (Paid + Free)</li>
+                    <li className="flex items-center gap-2 text-sm font-bold text-brand-600"><Sparkles size={16}/> Annual Exclusive Addon</li>
+                  </>
+                )}
               </ul>
               <Button onClick={() => handleOpenPurchase("yearly")} className="btn-primary bg-brand-600 hover:bg-brand-700 !py-3.5">Select Yearly</Button>
             </div>

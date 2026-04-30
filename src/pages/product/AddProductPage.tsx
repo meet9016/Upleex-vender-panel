@@ -1061,6 +1061,9 @@ export default function AddProductPage() {
                                 setSelectedSubCategory(null);
                             }}
                         />
+                        <p className="mt-2 text-xs md:text-sm text-gray-500 dark:text-gray-400">
+                            Don't see your category? Email us at <a href="mailto:partners@upleex.com" className="text-blue-600 hover:underline font-medium">partners@upleex.com</a> to request it.
+                        </p>
                         {validationErrors.category && (
                             <p className="error-message">{validationErrors.category}</p>
                         )}

@@ -14,11 +14,13 @@ import { useFilter } from "@/context/FilterContext";
 import AgGridTable from "@/components/tables/AgGridTable";
 import { ColDef } from "ag-grid-community";
 import StatusBadge from "@/components/common/StatusBadge";
+import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 import BoosterPlanView from "./BoosterPlanView";
 import ListingPlanView from "./ListingPlanView";
 import ServicePlanView from "./ServicePlanView";
 import ServicePriorityPlanView from "./ServicePriorityPlanView";
 import { Briefcase, Zap } from "lucide-react";
+import { MdDelete } from "react-icons/md";
 
 interface PriorityPlan {
   id: string;
@@ -31,6 +33,7 @@ interface PriorityPlan {
   addon_available_for_yearly?: boolean;
   addon_price_per_year?: number;
   addon_max_slots?: number;
+  features?: string[];
 }
 
 interface Product {
@@ -87,6 +90,10 @@ const SettingsPage: React.FC = () => {
   const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean } | null>(null);
   const [priorityHistoryTab, setPriorityHistoryTab] = useState<"rent" | "sell">("rent");
   const [hasShownLimitToast, setHasShownLimitToast] = useState(false); // Track if limit toast was shown
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
+  const [uploadedVideos, setUploadedVideos] = useState<string[]>([]);
+  const [uploadVideo, setUploadVideo] = useState<File | null>(null);
+  const [videoToDelete, setVideoToDelete] = useState<string | null>(null);
   const { balance, currency, refreshBalance } = useWallet();
   const { filters, isLoadingFilter } = useFilter();
 
@@ -96,16 +103,20 @@ const SettingsPage: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [plansRes, productsRes, purchasesRes, listingRes] = await Promise.all([
+      const [plansRes, productsRes, purchasesRes, listingRes, videosRes] = await Promise.all([
         api.get(endPointApi.getAllPriorityPlans),
         api.get(endPointApi.postAllVendorProductList, { params: { limit: 1000 } }),
         api.get(endPointApi.getVendorPriorityPurchases),
-        api.get(endPointApi.getPurchasedPlans)
+        api.get(endPointApi.getPurchasedPlans),
+        api.get('vendor-store-video').catch(() => ({ data: { videos: [] } }))
       ]);
 
       const plansData = plansRes.data.data || [];
       const rawProducts = productsRes.data.data || [];
       const activePurchases: PriorityPurchase[] = purchasesRes.data.data || [];
+      const vids = videosRes.data?.videos || [];
+      
+      setUploadedVideos(vids);
 
       setVendorPurchases(activePurchases);
 
@@ -268,6 +279,69 @@ const SettingsPage: React.FC = () => {
       toast.error(error?.response?.data?.message || "Action failed");
     } finally {
       setIsPurchasing(false);
+    }
+  };
+
+  const handleVideoUpload = async () => {
+    if (!uploadVideo) return;
+
+    if (uploadedVideos.length >= 4) {
+      toast.error("You can upload a maximum of 4 promotional videos.");
+      return;
+    }
+    
+    setIsVideoUploading(true);
+    const toastId = toast.loading("Uploading store video...");
+    try {
+      const formData = new FormData();
+      formData.append('video', uploadVideo);
+      const res = await api.post('vendor-store-video', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.dismiss(toastId);
+      if (res.data.success) {
+        toast.success("Store promotional video uploaded successfully!");
+        setUploadVideo(null);
+        
+        // Reset file input visually
+        const fileInput = document.getElementById('promotional-video-upload') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+
+        if (res.data.video_url) {
+          setUploadedVideos(prev => [...prev, res.data.video_url]);
+        }
+      } else {
+        toast.error("Failed to upload video");
+      }
+    } catch (error: any) {
+      toast.dismiss(toastId);
+      toast.error(error?.response?.data?.message || "Failed to upload video");
+    } finally {
+      setIsVideoUploading(false);
+    }
+  };
+
+  const handleDeleteVideoClick = (videoUrl: string) => {
+    setVideoToDelete(videoUrl);
+  };
+
+  const confirmDeleteVideo = async () => {
+    if (!videoToDelete) return;
+    const toastId = toast.loading("Deleting video...");
+    try {
+      const res = await api.delete('vendor-store-video', { data: { video_url: videoToDelete } });
+      toast.dismiss(toastId);
+      if (res.data.success) {
+        toast.success("Video deleted successfully!");
+        setUploadedVideos(prev => prev.filter(url => url !== videoToDelete));
+      } else {
+        toast.error("Failed to delete video");
+      }
+    } catch (error: any) {
+      toast.dismiss(toastId);
+      toast.error(error?.response?.data?.message || "Failed to delete video");
+    } finally {
+      setVideoToDelete(null);
     }
   };
 
@@ -913,11 +987,71 @@ const SettingsPage: React.FC = () => {
             {/* Priority Plan Content */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="md:col-span-3">
-                {/* <div className="mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2 dark:text-gray-100">
-                    Priority Visibility Plans
-                  </h3>
-                </div> */}
+
+                {/* Video Upload Section (Outside Modal) */}
+                <div className="mb-6 bg-white border border-gray-100 rounded-2xl p-5 shadow-sm flex flex-col gap-4 dark:bg-[#0d111c] dark:border-gray-800">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shrink-0 dark:bg-indigo-900/30 dark:text-indigo-400">
+                        <Zap size={24} />
+                      </div>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">Store Promotional Video</h3>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                          Upload up to 4 videos to showcase on your public store profile. Attract more customers!
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-3">
+                        <input 
+                          id="promotional-video-upload"
+                          type="file" 
+                          accept="video/*" 
+                          disabled={isVideoUploading || uploadedVideos.length >= 4}
+                          onChange={(e) => setUploadVideo(e.target.files?.[0] || null)}
+                          className="text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 disabled:opacity-50 dark:file:bg-brand-900/30 dark:file:text-brand-400"
+                        />
+                        <Button
+                          variant="primary"
+                          onClick={handleVideoUpload}
+                          disabled={isVideoUploading || !uploadVideo || uploadedVideos.length >= 4}
+                          className="px-6 py-2.5 rounded-xl whitespace-nowrap btn-primary font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isVideoUploading ? "Uploading..." : (uploadedVideos.length >= 4 ? "Limit Reached" : "Upload Video")}
+                        </Button>
+                      </div>
+                      <span className="text-[10px] sm:text-xs font-semibold text-gray-400">
+                        {uploadedVideos.length}/4 videos uploaded
+                      </span>
+                    </div>
+                  </div>
+
+                 {uploadedVideos.length > 0 && (
+  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 overflow-x-auto">
+    <div className="flex gap-6 pb-2 min-w-max">
+      {uploadedVideos.map((video, idx) => (
+        <div
+          key={idx}
+          className="relative w-85 aspect-video bg-gray-100 rounded-2xl overflow-hidden group border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex-shrink-0"
+        >
+          <video src={video} controls className="w-full h-full object-cover" />
+
+          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <button
+              onClick={() => handleDeleteVideoClick(video)}
+              className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg transition-transform hover:scale-110"
+              title="Delete Video"
+            >
+              <MdDelete size={20} />
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
                   {plans.map((plan) => {
@@ -1036,7 +1170,7 @@ const SettingsPage: React.FC = () => {
   <div className="space-y-2 sm:space-y-3 md:space-y-4 mb-5 sm:mb-6 md:mb-8 flex-grow">
     <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
       <div className="mt-0.5 sm:mt-1 bg-green-100 p-1 sm:p-1.5 rounded-full flex-shrink-0">
-        <Check className="text-green-600" size={12} />
+        <Check className="text-green-600" size={10} />
       </div>
       <div>
         <p className="text-gray-900 font-bold text-xs sm:text-sm dark:text-gray-300">
@@ -1047,21 +1181,23 @@ const SettingsPage: React.FC = () => {
         </p>
       </div>
     </div>
-    <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
-      <div className="mt-0.5 sm:mt-1 bg-green-100 p-1 sm:p-1.5 rounded-full flex-shrink-0">
-        <Check className="text-green-600" size={12} />
-      </div>
-      <div>
-        <p className="text-gray-900 font-bold text-xs sm:text-sm dark:text-gray-300">
-          Top Feed Priority
-        </p>
-        <p className="text-[10px] sm:text-xs text-gray-500">
-          Show above standard listings
-        </p>
-      </div>
+    
+    {/* Other Dynamic Features from Backend */}
+  {(plan.features || []).map((feature, fIdx) => (
+  <div key={fIdx} className="flex items-center gap-2 sm:gap-3 md:gap-4">
+    
+    <div className="bg-green-100 p-1 sm:p-1.5 rounded-full flex-shrink-0 flex items-center justify-center">
+      <Check className="text-green-600" size={10} />
     </div>
-  </div>
 
+    <p className="text-gray-900 text-xs sm:text-sm dark:text-gray-300 leading-tight">
+      {feature}
+    </p>
+
+  </div>
+))}
+  </div>
+    
   {/* Button - Responsive */}
   <Button
     onClick={() => handleSelectPlan(plan)}
@@ -1175,8 +1311,26 @@ const SettingsPage: React.FC = () => {
                             </div>
                           )}
                           <div className="space-y-3 sm:space-y-4 mb-5 sm:mb-8 flex-grow">
-                            <div className="flex items-start gap-3"><div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0"><Check className="text-green-600" size={14} /></div><div><p className="text-gray-900 font-bold text-sm dark:text-gray-300">{plan.product_slots} Product Slots</p><p className="text-xs text-gray-500">Add up to {plan.product_slots} items</p></div></div>
-                            <div className="flex items-start gap-3"><div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0"><Check className="text-green-600" size={14} /></div><div><p className="text-gray-900 font-bold text-sm dark:text-gray-300">Top Feed Priority</p><p className="text-xs text-gray-500">Show above standard listings</p></div></div>
+                            <div className="flex items-start gap-3">
+                              <div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0">
+                                <Check className="text-green-600" size={14} />
+                              </div>
+                              <div>
+                                <p className="text-gray-900 font-bold text-sm dark:text-gray-300">{plan.product_slots} Product Slots</p>
+                                <p className="text-xs text-gray-500">Add up to {plan.product_slots} items</p>
+                              </div>
+                            </div>
+                            
+                            {(plan.features || []).map((feature, fIdx) => (
+                              <div key={fIdx} className="flex items-start gap-3">
+                                <div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0">
+                                  <Check className="text-green-600" size={14} />
+                                </div>
+                                <div>
+                                  <p className="text-gray-900 font-bold text-sm dark:text-gray-300">{feature}</p>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                           <Button onClick={() => handleSelectPlan(plan)} variant={plan.is_popular ? 'primary' : 'outline'} className="w-full !py-3.5 rounded-xl font-bold btn-primary">{isDurationActive ? 'Add More Products' : 'Select Plan'}</Button>
                         </div>
@@ -1218,6 +1372,14 @@ const SettingsPage: React.FC = () => {
           currentServiceTab === "listing" ? <ServicePlanView /> : <ServicePriorityPlanView />
         )
       ) : null}
+      {/* Video Delete Confirm Modal */}
+      <ConfirmDeleteModal
+        open={!!videoToDelete}
+        onCancel={() => setVideoToDelete(null)}
+        onConfirm={confirmDeleteVideo}
+        title="Delete Promotional Video"
+        message="Are you sure you want to delete this video from your store profile? This action cannot be undone."
+      />
     </div>
   )
 };
