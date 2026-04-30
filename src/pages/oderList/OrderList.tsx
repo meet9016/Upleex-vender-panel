@@ -348,6 +348,8 @@ const OrderList = () => {
   const autoGroupColumnDef = React.useMemo(() => ({
     headerName: "Customer / Order ID",
     field: "name",
+    minWidth: 280,
+    cellStyle: { textAlign: "left" },
     cellRendererParams: {
       suppressCount: true,
       innerRenderer: (props: any) => {
@@ -355,13 +357,13 @@ const OrderList = () => {
         if (data?.type === "customer") {
           return (
             <div className="flex items-center gap-3 py-1">
-              <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200">
+              <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200 ">
                 <span className="text-indigo-600 font-bold text-sm">
                   {data.name?.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <div className="flex flex-col">
-                <div className="text-[13px] font-bold text-gray-900 leading-tight">{data.name}</div>
+              <div className="flex flex-col justify-center leading-tight py-0.5">
+                <div className="text-[13px] font-bold text-gray-900 leading-tight dark:text-white ">{data.name}</div>
                 <div className="text-[11px] text-gray-500 font-medium">{data.email}</div>
               </div>
             </div>
@@ -375,7 +377,6 @@ const OrderList = () => {
         );
       },
     },
-    minWidth: 350,
   }), []);
 
   // Vendor Orders Columns
@@ -385,10 +386,11 @@ const OrderList = () => {
       field: "items",
       minWidth: 80,
       flex: 0.2,
+      cellStyle: { textAlign: "left" },
       cellRenderer: (params: any) => {
         if (params.data?.type === 'customer') return null;
         return (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex items-center h-full">
             <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
               {params.value?.length || 0}
             </span>
@@ -401,6 +403,7 @@ const OrderList = () => {
       field: "items",
       minWidth: 200,
       flex: 1.5,
+      cellStyle: { textAlign: "left" },
       cellRenderer: (params: any) => {
         if (params.data?.type === 'customer') return null;
         const items = params.value || [];
@@ -417,6 +420,7 @@ const OrderList = () => {
       field: "items",
       minWidth: 150,
       flex: 1,
+      cellStyle: { textAlign: "left" },
       cellRenderer: (params: any) => {
         if (params.data?.type === 'customer') return null;
         const items = params.value || [];
@@ -433,10 +437,11 @@ const OrderList = () => {
       field: "total_amount",
       minWidth: 100,
       flex: 1,
+      cellStyle: { textAlign: "left" },
       cellRenderer: (params: any) => {
         if (params.data?.type === 'customer') return null;
         return (
-          <div className="font-semibold text-green-600 text-center">
+          <div className="font-semibold text-green-600">
             ₹{Number(params.value || 0).toLocaleString('en-IN')}
           </div>
         );
@@ -447,6 +452,7 @@ const OrderList = () => {
       field: "vendor_status",
       minWidth: 120,
       flex: 1.2,
+      cellStyle: { textAlign: "left" },
       cellRenderer: (params: any) => {
         if (params.data?.type === 'customer') return null;
         return <StatusBadge status={params.value} />;
@@ -457,13 +463,10 @@ const OrderList = () => {
       field: "payment_status",
       minWidth: 150,
       flex: 1,
+      cellStyle: { textAlign: "left" },
       cellRenderer: (params: any) => {
         if (params.data?.type === 'customer') return null;
-        return (
-          <div className="flex flex-col gap-1 items-left">
-            <StatusBadge status={params.value} />
-          </div>
-        );
+        return <StatusBadge status={params.value} />;
       },
     },
     {
@@ -471,6 +474,7 @@ const OrderList = () => {
       field: "payment_status_info.payment_status",
       minWidth: 120,
       flex: 1,
+      cellStyle: { textAlign: "left" },
       cellRenderer: (params: any) => {
         if (params.data?.type === 'customer') return null;
         const paymentStatus = params.data.payment_status_info?.payment_status || '-';
@@ -482,6 +486,7 @@ const OrderList = () => {
       field: "createdAt",
       minWidth: 120,
       flex: 1,
+      cellStyle: { textAlign: "left" },
       valueFormatter: (params) => {
         if (params.data?.type === 'customer') return '';
         return params.value ? new Date(params.value).toLocaleDateString('en-GB', {
