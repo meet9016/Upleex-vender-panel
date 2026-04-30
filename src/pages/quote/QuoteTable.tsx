@@ -411,6 +411,8 @@ const QuoteTable = () => {
   const autoGroupColumnDef = useMemo(() => ({
     headerName: "Customer / Product",
     field: "product_name",
+    minWidth: 280,
+    cellStyle: { textAlign: "left" },
     cellRendererParams: {
       suppressCount: true,
       innerRenderer: (props: any) => {
@@ -423,8 +425,8 @@ const QuoteTable = () => {
                   {data.name?.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <div className="flex flex-col">
-                <div className="text-[13px] font-bold text-gray-900 leading-tight">{data.name}</div>
+              <div className="flex flex-col justify-center leading-tight py-0.5">
+                <div className="text-[13px] font-bold text-gray-900 leading-tight dark:text-white">{data.name}</div>
                 <div className="text-[11px] text-gray-500 font-medium">{data.email}</div>
               </div>
             </div>
@@ -475,7 +477,6 @@ const QuoteTable = () => {
         );
       },
     },
-    minWidth: 300,
   }), []);
 
   const columns = useMemo((): ColDef[] => {
@@ -484,28 +485,32 @@ const QuoteTable = () => {
         field: "product_type_name",
         headerName: "Product Type",
         minWidth: 120,
-        cellStyle: { textAlign: "center" }
+        cellStyle: { textAlign: "left" }
       },
       {
         field: "product_listing_type_name",
         headerName: "Product Listing Type",
         minWidth: 220,
+        cellStyle: { textAlign: "left" }
       },
 
       {
         field: "month_name",
         headerName: "Month",
         minWidth: 120,
+        cellStyle: { textAlign: "left" }
       },
       {
         field: "qty",
         headerName: "Qty",
         minWidth: 100,
+        cellStyle: { textAlign: "left" }
       },
       {
         field: "price",
         headerName: "Unit Price",
         minWidth: 120,
+        cellStyle: { textAlign: "left" },
         valueFormatter: (params) => {
           const value = params.value;
           if (!value || value === '0') return "₹0";
@@ -541,11 +546,11 @@ const QuoteTable = () => {
         field: "payment_status",
         headerName: "Customer Payment",
         minWidth: 140,
-        cellStyle: { textAlign: "center" },
+        cellStyle: { textAlign: "left" },
         cellRenderer: (params: any) => {
           if (params.data?.type === 'customer') return null;
           return (
-            <div className="flex items-center justify-start h-full">
+            <div className="flex items-center h-full">
               <StatusBadge status={params.value || 'pending'} />
             </div>
           );
@@ -555,32 +560,28 @@ const QuoteTable = () => {
         field: "payment_status_info.payment_status",
         headerName: "Admin Payment",
         minWidth: 140,
-        cellStyle: { textAlign: "center" },
+        cellStyle: { textAlign: "left" },
         cellRenderer: (params: any) => {
           if (params.data?.type === 'customer') return null;
           const paymentStatus = params.data.payment_status_info?.payment_status || 'no_payment';
           return (
-            <div className="flex items-center justify-start h-full">
+            <div className="flex items-center h-full">
               <StatusBadge status={paymentStatus} />
             </div>
           );
         }
       },
-      // {
-      //   field: "delivery_date",
-      //   headerName: "Delivery Date",
-      //   minWidth: 150,
-      //   cellStyle: { textAlign: "center" }
-      // },
       {
         field: "start_date",
         headerName: "Start Date",
         minWidth: 150,
+        cellStyle: { textAlign: "left" }
       },
       {
         field: "start_time",
         headerName: "Start Time",
         minWidth: 130,
+        cellStyle: { textAlign: "left" },
         valueFormatter: (params) => {
           if (params.data?.type === 'customer') return '';
           return params.data?.product_listing_type_name === 'HOURLY' ? (params.value || '-') : '-';
@@ -590,11 +591,13 @@ const QuoteTable = () => {
         field: "end_date",
         headerName: "End Date",
         minWidth: 150,
+        cellStyle: { textAlign: "left" }
       },
       {
         field: "end_time",
         headerName: "End Time",
         minWidth: 130,
+        cellStyle: { textAlign: "left" },
         valueFormatter: (params) => {
           if (params.data?.type === 'customer') return '';
           return params.data?.product_listing_type_name === 'HOURLY' ? (params.value || '-') : '-';
