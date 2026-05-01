@@ -1210,3 +1210,69 @@ span.flatpickr-weekday,
 .ag-center-aligned-header{
   margin-left: 6px !important;
 }
+
+/* ==================== Mobile Responsive - AG Grid ==================== */
+@media (max-width: 767px) {
+  .ag-theme-alpine,
+  .ag-theme-alpine-dark,
+  .cute-ag-grid {
+    font-size: 12px !important;
+  }
+
+  .cute-ag-grid .ag-header-cell,
+  .ag-theme-alpine .ag-header-cell,
+  .ag-theme-alpine-dark .ag-header-cell {
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+  }
+
+  .cute-ag-grid .ag-cell,
+  .ag-theme-alpine .ag-cell,
+  .ag-theme-alpine-dark .ag-cell {
+    padding-left: 8px !important;
+    padding-right: 4px !important;
+    font-size: 12px !important;
+  }
+
+  .cute-ag-grid .ag-paging-panel,
+  .ag-theme-alpine .ag-paging-panel,
+  .ag-theme-alpine-dark .ag-paging-panel {
+    padding: 8px 10px !important;
+    font-size: 11px !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    justify-content: center !important;
+  }
+
+  .ag-paging-page-summary-panel {
+    margin: 0 4px !important;
+  }
+
+  /* Enable horizontal scroll on mobile for center viewport */
+  .cute-ag-grid .ag-center-cols-viewport,
+  .cute-ag-grid .ag-body-viewport {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Make the horizontal scrollbar more visible on mobile */
+  .ag-body-horizontal-scroll-viewport {
+    height: 10px !important;
+  }
+
+  .ag-body-horizontal-scroll {
+    min-height: 10px !important;
+    height: 10px !important;
+  }
+}
+
+/* ==================== Mobile Responsive - General ==================== */
+@media (max-width: 639px) {
+  /* Fix flatpickr calendar on mobile */
+  .flatpickr-calendar.static {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    right: auto !important;
+    margin-right: 0 !important;
+  }
+}

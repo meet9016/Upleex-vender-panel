@@ -117,6 +117,7 @@ const AppSidebar: React.FC = () => {
               toggleMobileSidebar();
             }
           }}
+          className="hidden lg:block"
         >
           {showExpanded ? (
             <>
@@ -141,6 +142,9 @@ const AppSidebar: React.FC = () => {
             <Image src="/images/logo/small-logo.webp" alt="Upleex" width={32} height={32} priority />
           )}
         </Link>
+        <div 
+          className={`lg:hidden ${showExpanded ? "w-[150px] h-[40px]" : "w-8 h-8"}`}
+        ></div>
       </div>
 
       <nav className="flex flex-col overflow-y-auto duration-300 custom-scrollbar">

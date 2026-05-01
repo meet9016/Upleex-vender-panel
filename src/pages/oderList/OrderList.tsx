@@ -1010,7 +1010,7 @@ const OrderList = () => {
       </div> */}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {statsCards.map((stat, index) => {
           const IconComponent = stat.icon;
           return (
@@ -1276,7 +1276,7 @@ const OrderList = () => {
               showCheckboxes={true}
               onSelectionChange={(selected) => setSelectedOrders(selected)}
               rowHeight={55}
-              noRowsMessage='no orders found'
+              noRowsMessage='No orders found'
             />
           </div>
         </div>
@@ -1308,14 +1308,14 @@ const OrderList = () => {
       {/* Order Details Modal */}
       {showOrderModal && selectedOrder && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-9999"
+          className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-9999 p-0 sm:p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowOrderModal(false);
             }
           }}
         >
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-lg p-4 sm:p-6 w-full sm:max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                 Order Details : {selectedOrder.order_id}
@@ -1462,7 +1462,7 @@ const OrderList = () => {
       {/* Invoice Modal */}
       {showInvoiceModal && (
         <div
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] p-4 overflow-y-auto"
+          className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4 overflow-y-auto"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowInvoiceModal(false);
@@ -1552,14 +1552,14 @@ const OrderList = () => {
       {/* Status Update Modal */}
       {showStatusModal && selectedOrder && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-9999"
+          className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-9999 p-0 sm:p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowStatusModal(false);
             }
           }}
         >
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md shadow-xl">
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-lg p-4 sm:p-6 w-full sm:max-w-md max-h-[85vh] sm:max-h-[90vh] overflow-y-auto shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                 Update Order Status
