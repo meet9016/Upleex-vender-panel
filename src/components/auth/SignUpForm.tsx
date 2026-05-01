@@ -292,7 +292,7 @@ export default function SignUpForm() {
                   name="fname"
                   value={formData.fname}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/[^a-zA-Z\s]/g, ''); // Only allow letters and spaces
+                    const value = e.target.value.replace(/[^a-zA-Z0-9\s]/g, ''); // Allow letters, numbers, and spaces
                     setFormData(prev => ({ ...prev, fname: value }));
                     if (value.trim()) setErrors(prev => ({ ...prev, fname: '' }));
                   }}
@@ -310,7 +310,7 @@ export default function SignUpForm() {
                   name="lname"
                   value={formData.lname}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/[^a-zA-Z\s]/g, ''); // Only allow letters and spaces
+                    const value = e.target.value.replace(/[^a-zA-Z0-9\s]/g, ''); // Allow letters, numbers, and spaces
                     setFormData(prev => ({ ...prev, lname: value }));
                     if (value.trim()) setErrors(prev => ({ ...prev, lname: '' }));
                   }}
