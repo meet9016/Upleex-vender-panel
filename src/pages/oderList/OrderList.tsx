@@ -1276,7 +1276,7 @@ const OrderList = () => {
               showCheckboxes={true}
               onSelectionChange={(selected) => setSelectedOrders(selected)}
               rowHeight={55}
-              noRowsMessage='no Order found'
+              noRowsMessage='no orders found'
             />
           </div>
         </div>
