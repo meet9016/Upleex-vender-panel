@@ -453,8 +453,8 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             value={KYCformData?.full_name}
             onChange={(e) => {
               const value = e.target.value;
-              // Only allow letters and spaces
-              if (/^[a-zA-Z\s]*$/.test(value)) {
+              // Allow letters, numbers, and spaces
+              if (/^[a-zA-Z0-9\s]*$/.test(value)) {
                 clearError("full_name");
                 setKYCFormData(prevData => ({
                   ...prevData,
