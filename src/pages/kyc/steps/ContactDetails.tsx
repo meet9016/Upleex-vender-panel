@@ -445,7 +445,6 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         <div>
           <Label required>Full Name</Label>
           <Input
-            disabled
             placeholder="Enter your full name"
             className="py-3"
             error={!!errors?.full_name}
@@ -453,14 +452,11 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             value={KYCformData?.full_name}
             onChange={(e) => {
               const value = e.target.value;
-              // Allow letters, numbers, and spaces
-              if (/^[a-zA-Z0-9\s]*$/.test(value)) {
-                clearError("full_name");
-                setKYCFormData(prevData => ({
-                  ...prevData,
-                  full_name: value,
-                }));
-              }
+              clearError("full_name");
+              setKYCFormData(prevData => ({
+                ...prevData,
+                full_name: value,
+              }));
             }}
           />
           {errors?.full_name && (
@@ -548,7 +544,7 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
             value={KYCformData?.address}
             infoTooltip="This address will be shown to users."
             onChange={(e) => {
-              clearError("address")
+              clearError("address");
               setKYCFormData(prevData => ({
                 ...prevData,
                 address: e.target.value,

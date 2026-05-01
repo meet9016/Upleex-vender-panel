@@ -114,7 +114,7 @@ export default function Identity({ setKYCFormData, KYCformData, errors, clearErr
               onChange={(e) => {
                 clearError("business_name");
                 setKYCFormData((prevData) => ({
-                  ...prevData, 
+                  ...prevData,
                   business_name: e.target.value,
                 }));
               }}
