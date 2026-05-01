@@ -222,7 +222,7 @@ export default function KYCPage() {
     const newErrors: ErrorType = {};
 
     const isEmpty = (val: string | undefined | null) => !val || !val.trim();
-    const isOnlyLetters = (val: string) => /^[a-zA-Z\s]+$/.test(val);
+    const isOnlyLetters = (val: string) => /^[a-zA-Z0-9\s]+$/.test(val);
     const isOnlyDigits = (val: string) => /^\d+$/.test(val);
     const isEmailValid = (val: string) =>
       /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.(com|in|org)$/i.test(val);
