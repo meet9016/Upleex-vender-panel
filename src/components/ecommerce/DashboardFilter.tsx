@@ -76,10 +76,10 @@ const DashboardFilter = () => {
   }, [pathname, router, searchParams]);
 
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
       <div className="flex items-center gap-3">
         <div className="h-8 w-1 bg-brand-500 rounded-full"></div>
-        <h2 className="text-xl font-bold text-gray-800 dark:text-white/90">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white/90">
           Overview
         </h2>
       </div>

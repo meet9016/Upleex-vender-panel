@@ -77,6 +77,14 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   const router = useRouter();
   const gridRef = useRef<any>(null);
   const [isDark, setIsDark] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -227,7 +235,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
           </div>
         )}
         <div className={`${isDark ? 'ag-theme-alpine-dark cute-ag-grid ' : 'ag-theme-alpine '}`}
-          style={{ width: "100%", height: autoHeight ? 'auto' : (height || '80vh'), minHeight: autoHeight ? 240 : 'auto' }}>
+          style={{ width: "100%", height: autoHeight ? 'auto' : (height || (isMobile ? '55vh' : '80vh')), minHeight: autoHeight ? 240 : (isMobile ? 200 : 'auto') }}>
           <AgGridReact
             headerHeight={48}
             rowHeight={typeof rowHeight === 'function' ? undefined : rowHeight}

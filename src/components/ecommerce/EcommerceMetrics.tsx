@@ -192,9 +192,9 @@ export const EcommerceMetrics = () => {
             </div>
           </div>
 
-          {/* Main Detail Card - Opens on Right/Left Side to avoid overflow */}
+          {/* Main Detail Card - Responsive positioning */}
           {openCardIndex === index && metric.hoverItems.length > 0 && (
-            <div className={`absolute z-[100] ${index % 4 === 3 ? 'right-full mr-2' : 'left-50 ml-2'} top-0 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-2xl p-3 space-y-1 min-w-[220px] animate-in fade-in slide-in-from-${index % 4 === 3 ? 'right' : 'left'}-2 duration-200`}>
+            <div className={`fixed sm:absolute z-[100] left-4 right-4 bottom-4 sm:left-auto sm:right-auto sm:bottom-auto ${index % 4 === 3 ? 'sm:right-full sm:mr-2' : 'sm:left-full sm:ml-2'} sm:top-0 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-2xl p-3 space-y-1 min-w-[220px]`}>
               {metric.hoverItems.map((item: any, i: number) => (
                 <div
                   key={i}
@@ -209,9 +209,9 @@ export const EcommerceMetrics = () => {
                     {item.value.toLocaleString("en-IN")}
                   </span>
 
-                  {/* Secondary Nested Card - Opens on the opposite side of primary if needed, but usually right is fine if primary is left */}
+                  {/* Sub-items - show inline on mobile, absolute on desktop */}
                   {openSubItem === item.label && item.subItems?.length > 0 && (
-                    <div className={`absolute ${index % 4 === 3 ? 'right-full mr-2' : 'left-full ml-2'} top-0 min-w-[180px] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-2xl p-3 space-y-2 animate-in fade-in slide-in-from-${index % 4 === 3 ? 'right' : 'left'}-2 duration-200`}>
+                    <div className={`absolute left-0 right-0 top-full mt-1 sm:left-auto sm:right-auto sm:top-0 ${index % 4 === 3 ? 'sm:right-full sm:mr-2' : 'sm:left-full sm:ml-2'} min-w-[180px] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-2xl p-3 space-y-2`}>
                       <p className="text-[9px] font-black text-slate-400 mb-1 whitespace-nowrap border-b border-slate-100 dark:border-slate-800 pb-1">{item.label} Breakdown</p>
                       {item.subItems.map((sub: any, si: number) => (
                         <div key={si} className="flex items-center justify-between text-[11px] font-bold">

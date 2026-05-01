@@ -349,8 +349,8 @@ const SettingsPage: React.FC = () => {
     {
       headerName: "Product",
       field: "product_name",
-      minWidth: 240,
-      flex: 1,
+      minWidth: 180,
+      flex: 2,
       cellRenderer: (params: any) => {
         const product = params.data;
         const imageUrl = product.product_main_image || product.image || DEFAULT_PLACEHOLDER;
@@ -359,12 +359,12 @@ const SettingsPage: React.FC = () => {
             <div className="flex-shrink-0 relative group">
               <img
                 src={imageUrl}
-                className="w-9 h-9 rounded-lg object-cover border border-gray-100 group-hover:scale-105 transition-transform"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg object-cover border border-gray-100 group-hover:scale-105 transition-transform"
                 onError={(e: any) => e.target.src = DEFAULT_PLACEHOLDER}
               />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-bold text-[13px] text-gray-800 dark:text-gray-100 truncate">
+              <span className="font-bold text-[12px] sm:text-[13px] text-gray-800 dark:text-gray-100 truncate">
                 {product.product_name}
               </span>
             </div>
@@ -376,15 +376,17 @@ const SettingsPage: React.FC = () => {
     {
       headerName: "Category",
       field: "category_name",
-      width: 150,
+      minWidth: 100,
+      flex: 1,
       cellRenderer: (params: any) => (
-        <span className="text-gray-600 font-medium">{params.value || "-"}</span>
+        <span className="text-gray-600 font-medium text-xs sm:text-sm">{params.value || "-"}</span>
       )
     },
     {
       headerName: "Pricing",
       field: "pricing_type",
-      width: 100,
+      minWidth: 80,
+      flex: 1,
       cellRenderer: (params: any) => (
         <div className="flex items-center h-full">
           <StatusBadge status={(params.value || 'paid').toLowerCase() === 'free' ? 'free' : 'paid'} />
@@ -394,7 +396,8 @@ const SettingsPage: React.FC = () => {
     {
       headerName: "Plan",
       field: "active_plan_name",
-      width: 120,
+      minWidth: 90,
+      flex: 1,
       cellRenderer: (params: any) => (
         params.value ? (
           <StatusBadge status={params.value} />
@@ -405,18 +408,20 @@ const SettingsPage: React.FC = () => {
     {
       headerName: "Price",
       field: "price",
-      width: 100,
+      minWidth: 80,
+      flex: 1,
       valueFormatter: (params) => `${currency}${params.value?.toLocaleString()}`
     },
     {
       headerName: "Stock",
       field: "available_quantity",
-      width: 100,
+      minWidth: 70,
+      flex: 1,
       cellRenderer: (params: any) => {
         const qty = params.value || 0;
         return (
           <div className="flex items-center h-full">
-            <span className={`text-xs font-bold ${qty <= 0 ? 'text-red-500' : 'text-gray-700 dark:text-gray-200'}`}>
+            <span className={`text-xs sm:text-sm font-bold ${qty <= 0 ? 'text-red-500' : 'text-gray-700 dark:text-gray-200'}`}>
               {qty} {qty <= 0 && "(OOS)"}
             </span>
           </div>
@@ -425,9 +430,10 @@ const SettingsPage: React.FC = () => {
     },
 
     {
-      headerName: "Expiry Date",
+      headerName: "Expiry",
       field: "priority_expiry",
-      width: 130,
+      minWidth: 90,
+      flex: 1,
       valueFormatter: (params) => {
         if (!params.value) return "-";
         return new Date(params.value).toLocaleDateString('en-GB');
@@ -439,8 +445,8 @@ const SettingsPage: React.FC = () => {
     {
       headerName: "Product",
       field: "product_name",
-      minWidth: 200,
-      flex: 1,
+      minWidth: 160,
+      flex: 2,
       cellRenderer: (params: any) => {
         const product = params.data;
         const imageUrl = product.product_main_image || product.image || DEFAULT_PLACEHOLDER;
@@ -448,10 +454,10 @@ const SettingsPage: React.FC = () => {
           <div className="flex items-center gap-3 h-full">
             <img
               src={imageUrl}
-              className="w-8 h-8 rounded object-cover border"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded object-cover border"
               onError={(e: any) => e.target.src = DEFAULT_PLACEHOLDER}
             />
-            <span className="font-bold text-[13px] truncate">{product.product_name}</span>
+            <span className="font-bold text-[12px] sm:text-[13px] truncate">{product.product_name}</span>
           </div>
         );
       }
@@ -459,18 +465,21 @@ const SettingsPage: React.FC = () => {
     {
       headerName: "Stock",
       field: "available_quantity",
-      width: 90,
+      minWidth: 70,
+      flex: 1,
     },
     {
       headerName: "Expiry",
       field: "expires_at",
-      width: 110,
+      minWidth: 80,
+      flex: 1,
       valueFormatter: (p) => p.value ? new Date(p.value).toLocaleDateString('en-GB') : "-"
     },
     {
-      headerName: "Active Plan",
+      headerName: "Plan",
       field: "id",
-      width: 120,
+      minWidth: 90,
+      flex: 1,
       cellRenderer: (p: any) => {
         const hasListing = listingPurchases.some(lp => lp.product_ids?.some((pr: any) => String(pr.id || pr._id || pr) === String(p.value)));
         return hasListing ? <StatusBadge status="Listing Active" /> : <span className="text-gray-400">-</span>;
@@ -513,43 +522,48 @@ const SettingsPage: React.FC = () => {
     {
       headerName: "Product",
       field: "product_name",
-      minWidth: 200,
-      flex: 1,
+      minWidth: 150,
+      flex: 2,
       cellRenderer: (params: any) => (
-        <span className="font-bold text-gray-900 dark:text-gray-100">{params.value}</span>
+        <span className="font-bold text-gray-900 dark:text-gray-100 text-xs sm:text-sm">{params.value}</span>
       )
     },
     {
       headerName: "Category",
       field: "category_name",
-      width: 150,
+      minWidth: 100,
+      flex: 1,
     },
     {
       headerName: "Subcategory",
       field: "sub_category_name",
-      width: 150,
+      minWidth: 100,
+      flex: 1,
     },
     {
-      headerName: "Plan Name",
+      headerName: "Plan",
       field: "plan_name",
-      width: 150,
+      minWidth: 100,
+      flex: 1,
     },
     {
-      headerName: "Expiry Date",
+      headerName: "Expiry",
       field: "expire_at",
-      width: 130,
+      minWidth: 90,
+      flex: 1,
       cellRenderer: (params: any) => {
         if (!params.value) return "-";
         const date = new Date(params.value);
         return (
-          <span>{date.toLocaleDateString('en-GB')}</span>
+          <span className="text-xs sm:text-sm">{date.toLocaleDateString('en-GB')}</span>
         );
       }
     },
     {
       headerName: "Status",
       field: "expire_at",
-      width: 120,
+      minWidth: 80,
+      flex: 1,
       cellRenderer: (params: any) => {
         const isExpired = new Date(params.value) < new Date();
         return <StatusBadge status={isExpired ? "expired" : "active"} />;
@@ -615,14 +629,14 @@ const SettingsPage: React.FC = () => {
   return (
     <div className="space-y-5 animate-in fade-in duration-500">
       {/* Top Scope + Tab Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm mb-4 sm:mb-6 dark:bg-black">
+      <div className="flex flex-col gap-4 bg-white p-4 sm:p-4 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm mb-4 sm:mb-6 dark:bg-black">
         {/* Left: Scope switcher - only show if both types active */}
         {(showProduct || showService) && (
-          <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 w-full sm:w-fit dark:bg-[#1c2938]">
+          <div className="flex bg-gray-100 p-1.5 rounded-xl border border-gray-200 w-full dark:bg-[#1c2938]">
             {showProduct && (
               <button
                 onClick={() => setPlanScope("product")}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "product"
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "product"
                   ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
                   : "text-gray-500 hover:text-gray-700"
                   }`}
@@ -634,7 +648,7 @@ const SettingsPage: React.FC = () => {
             {showService && (
               <button
                 onClick={() => setPlanScope("service")}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "service"
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "service"
                   ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
                   : "text-gray-500 hover:text-gray-700"
                   }`}
@@ -648,11 +662,11 @@ const SettingsPage: React.FC = () => {
 
         {/* Right: Sub-tab switcher */}
         {planScope === "product" && (
-          <div className="flex p-1 sm:p-1.5 bg-gray-100/80 rounded-xl sm:rounded-2xl w-full sm:w-auto dark:bg-[#1c2938] gap-1 sm:gap-1.5">
+          <div className="flex flex-col p-1.5 sm:p-1.5 bg-gray-100/80 rounded-xl sm:rounded-2xl w-full dark:bg-[#1c2938] gap-1.5">
             <Button
               variant={currentTab === "priority" ? "secondary" : "ghost"}
               onClick={() => setCurrentTab("priority")}
-              className={`flex-1 px-2 sm:px-6 py-2 sm:py-3 cursor-pointer rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "priority"
+              className={`flex-1 px-3 py-2.5 cursor-pointer rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "priority"
                 ? "bg-white text-brand-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
@@ -663,7 +677,7 @@ const SettingsPage: React.FC = () => {
             <Button
               variant={currentTab === "booster" ? "secondary" : "ghost"}
               onClick={() => setCurrentTab("booster")}
-              className={`flex-1 px-2 sm:px-6 py-2 sm:py-3 cursor-pointer rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "booster"
+              className={`flex-1 px-3 py-2.5 cursor-pointer rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "booster"
                 ? "bg-white text-indigo-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
@@ -674,7 +688,7 @@ const SettingsPage: React.FC = () => {
             <Button
               variant={currentTab === "listing" ? "secondary" : "ghost"}
               onClick={() => setCurrentTab("listing")}
-              className={`flex-1 px-2 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "listing"
+              className={`flex-1 px-3 py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "listing"
                 ? "bg-white text-emerald-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
@@ -686,12 +700,12 @@ const SettingsPage: React.FC = () => {
         )}
 
         {planScope === "service" && (
-          <div className="flex p-1 bg-gray-100/80 rounded-2xl w-fit dark:bg-[#1c2938] gap-2">
+          <div className="flex flex-col p-1.5 bg-gray-100/80 rounded-2xl w-full dark:bg-[#1c2938] gap-1.5">
 
             <Button
               variant={currentServiceTab === "listing" ? "secondary" : "ghost"}
               onClick={() => setCurrentServiceTab("listing")}
-              className={`px-6 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap min-w-[140px] h-auto ${currentServiceTab === "listing"
+              className={`flex-1 px-6 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap h-auto ${currentServiceTab === "listing"
                 ? "bg-white text-emerald-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
@@ -702,7 +716,7 @@ const SettingsPage: React.FC = () => {
             <Button
               variant={currentServiceTab === "priority" ? "secondary" : "ghost"}
               onClick={() => setCurrentServiceTab("priority")}
-              className={`px-6 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap min-w-[140px] h-auto ${currentServiceTab === "priority"
+              className={`flex-1 px-6 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap h-auto ${currentServiceTab === "priority"
                 ? "bg-white text-brand-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
@@ -886,7 +900,7 @@ const SettingsPage: React.FC = () => {
                 }
                 return undefined;
               }}
-              noRowsMessage="no priority purchases yet"
+              noRowsMessage="No priority purchases yet"
             />
           </div>
           {/* Footer Actions */}
@@ -1002,21 +1016,21 @@ const SettingsPage: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-stretch sm:items-end gap-2 w-full sm:w-auto">
+                      <div className="flex flex-col sm:flex-row items-stretch gap-2 sm:gap-3 w-full">
                         <input 
                           id="promotional-video-upload"
                           type="file" 
                           accept="video/*" 
                           disabled={isVideoUploading || uploadedVideos.length >= 4}
                           onChange={(e) => setUploadVideo(e.target.files?.[0] || null)}
-                          className="text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 disabled:opacity-50 dark:file:bg-brand-900/30 dark:file:text-brand-400"
+                          className="flex-1 text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 disabled:opacity-50 dark:file:bg-brand-900/30 dark:file:text-brand-400"
                         />
                         <Button
                           variant="primary"
                           onClick={handleVideoUpload}
                           disabled={isVideoUploading || !uploadVideo || uploadedVideos.length >= 4}
-                          className="px-6 py-2.5 rounded-xl whitespace-nowrap btn-primary font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-6 py-2.5 rounded-xl whitespace-nowrap btn-primary font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                         >
                           {isVideoUploading ? "Uploading..." : (uploadedVideos.length >= 4 ? "Limit Reached" : "Upload Video")}
                         </Button>
@@ -1029,11 +1043,11 @@ const SettingsPage: React.FC = () => {
 
                  {uploadedVideos.length > 0 && (
   <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 overflow-x-auto">
-    <div className="flex gap-6 pb-2 min-w-max">
+    <div className="flex gap-4 sm:gap-6 pb-2 min-w-max">
       {uploadedVideos.map((video, idx) => (
         <div
           key={idx}
-          className="relative w-85 aspect-video bg-gray-100 rounded-2xl overflow-hidden group border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex-shrink-0"
+          className="relative w-64 sm:w-80 aspect-video bg-gray-100 rounded-2xl overflow-hidden group border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex-shrink-0"
         >
           <video src={video} controls className="w-full h-full object-cover" />
 
@@ -1213,18 +1227,18 @@ const SettingsPage: React.FC = () => {
               </div>
 
               {/* Priority Purchase History */}
-              <div className="space-y-2 md:col-span-3">
-                <div className="flex items-center justify-between">
+              <div className="space-y-3 md:col-span-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <Package className="w-6 h-6 text-brand-600" />
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Plan History</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Plan History</h2>
                   </div>
-                  <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 gap-1">
+                  <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 gap-1 w-full sm:w-auto">
                     {(["rent", "sell"] as const).map((tab) => (
                       <button
                         key={tab}
                         onClick={() => setPriorityHistoryTab(tab)}
-                        className={`px-3 py-1 text-xs font-bold rounded-md transition capitalize ${
+                        className={`flex-1 px-3 py-2 text-xs font-bold rounded-md transition capitalize ${
                           priorityHistoryTab === tab
                             ? 'bg-white dark:bg-gray-700 text-brand-600 shadow-sm'
                             : 'text-gray-500 hover:text-gray-700'
@@ -1242,7 +1256,7 @@ const SettingsPage: React.FC = () => {
                   showCheckboxes={false}
                   height={400}
                   rowHeight={52}
-                  noRowsMessage="no priority purchases yet"
+                  noRowsMessage="No priority purchases yet"
                 />
               </div>
 
@@ -1338,13 +1352,13 @@ const SettingsPage: React.FC = () => {
                     })}
                   </div>
                 </div>
-                <div className="space-y-2 md:col-span-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3"><Package className="w-6 h-6 text-brand-600" /><h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Plan History</h2></div>
-                    <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 gap-1">
+                <div className="space-y-3 md:col-span-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3"><Package className="w-6 h-6 text-brand-600" /><h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-200">Priority Plan History</h2></div>
+                    <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 gap-1 w-full sm:w-auto">
                       {(["rent", "sell"] as const).map((tab) => (
                         <button key={tab} onClick={() => setPriorityHistoryTab(tab)}
-                          className={`px-3 py-1 text-xs font-bold rounded-md transition capitalize ${
+                          className={`flex-1 px-3 py-2 text-xs font-bold rounded-md transition capitalize ${
                             priorityHistoryTab === tab ? 'bg-white dark:bg-gray-700 text-brand-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                           }`}>
                           {tab === 'rent' ? 'Rent' : 'Sell'}
@@ -1358,7 +1372,7 @@ const SettingsPage: React.FC = () => {
                     showCheckboxes={false} 
                     height={400} 
                     rowHeight={52} 
-                    noRowsMessage="no priority purchases yet"
+                    noRowsMessage="No priority purchases yet"
                     />
                 </div>
               </div>

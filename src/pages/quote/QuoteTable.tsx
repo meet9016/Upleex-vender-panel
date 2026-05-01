@@ -1370,7 +1370,7 @@ const QuoteTable = () => {
       {/* Invoice Modal */}
       {showInvoiceModal && (
         <div
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] p-4 overflow-y-auto"
+          className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4 overflow-y-auto"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowInvoiceModal(false);

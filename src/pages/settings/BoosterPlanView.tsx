@@ -129,8 +129,8 @@ const BoosterPlanView: React.FC = () => {
     {
       headerName: "Product",
       field: "product_name",
-      minWidth: 240,
-      flex: 1,
+      minWidth: 160,
+      flex: 2,
       cellRenderer: (params: any) => {
         const product = params.data;
         const imageUrl = product.product_main_image || product.image || DEFAULT_PLACEHOLDER;
@@ -141,12 +141,12 @@ const BoosterPlanView: React.FC = () => {
             <div className="flex-shrink-0 relative group">
               <img
                 src={imageUrl}
-                className={`w-9 h-9 rounded-lg object-cover border group-hover:scale-105 transition-transform ${isBoosted ? 'border-green-300 opacity-60' : 'border-gray-100'}`}
+                className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-lg object-cover border group-hover:scale-105 transition-transform ${isBoosted ? 'border-green-300 opacity-60' : 'border-gray-100'}`}
                 onError={(e: any) => e.target.src = DEFAULT_PLACEHOLDER}
               />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className={`font-bold text-[13px] truncate ${isBoosted ? 'text-gray-400' : 'text-gray-800 dark:text-gray-100'}`}>
+              <span className={`font-bold text-[11px] sm:text-[12px] md:text-[13px] truncate ${isBoosted ? 'text-gray-400' : 'text-gray-800 dark:text-gray-100'}`}>
                 {product.product_name}
               </span>
             
@@ -158,29 +158,32 @@ const BoosterPlanView: React.FC = () => {
     {
       headerName: "Category",
       field: "category_name",
-      width: 140,
+      minWidth: 90,
+      flex: 1,
       cellRenderer: (params: any) => {
         const isBoosted = isProductBoosted(params.data);
         return (
-          <span className={`font-medium ${isBoosted ? 'text-gray-400' : 'text-gray-600'}`}>{params.value || "-"}</span>
+          <span className={`font-medium text-xs sm:text-sm ${isBoosted ? 'text-gray-400' : 'text-gray-600'}`}>{params.value || "-"}</span>
         );
       }
     },
     {
       headerName: "Subcategory",
       field: "sub_category_name",
-      width: 140,
+      minWidth: 90,
+      flex: 1,
       cellRenderer: (params: any) => {
         const isBoosted = isProductBoosted(params.data);
         return (
-          <span className={`font-medium ${isBoosted ? 'text-gray-400' : 'text-gray-500'}`}>{params.value || "-"}</span>
+          <span className={`font-medium text-xs sm:text-sm ${isBoosted ? 'text-gray-400' : 'text-gray-500'}`}>{params.value || "-"}</span>
         );
       }
     },
     {
       headerName: "Pricing",
       field: "pricing_type",
-      width: 100,
+      minWidth: 70,
+      flex: 1,
       cellRenderer: (params: any) => (
         <div className="flex items-center h-full">
           <StatusBadge status={(params.value || 'paid').toLowerCase() === 'free' ? 'free' : 'paid'} />
@@ -190,28 +193,30 @@ const BoosterPlanView: React.FC = () => {
     {
       headerName: "Status",
       field: "status",
-      width: 110,
+      minWidth: 80,
+      flex: 1,
       cellRenderer: (params: any) => (
         <StatusBadge status={params.value} />
       )
     },
     {
-      headerName: "Booster Expiry",
+      headerName: "Expiry",
       field: "boost_expiry",
-      width: 150,
+      minWidth: 90,
+      flex: 1,
       cellRenderer: (params: any) => {
         const expiryDate = params.value;
         if (!expiryDate) {
-          return <span className="text-gray-400 text-sm">Not boosted</span>;
+          return <span className="text-gray-400 text-xs sm:text-sm">Not boosted</span>;
         }
         const isExpired = new Date(expiryDate) < new Date();
         const dateStr = new Date(expiryDate).toLocaleDateString('en-GB');
         return (
           <div className="flex flex-col">
-            <span className={`text-sm font-semibold ${isExpired ? 'text-red-600' : 'text-green-600'}`}>
+            <span className={`text-xs sm:text-sm font-semibold ${isExpired ? 'text-red-600' : 'text-green-600'}`}>
               {dateStr}
             </span>
-            <span className={`text-xs ${isExpired ? 'text-red-500' : 'text-green-500'}`}>
+            <span className={`text-[10px] sm:text-xs ${isExpired ? 'text-red-500' : 'text-green-500'}`}>
               {isExpired ? 'Expired' : 'Active'}
             </span>
           </div>
@@ -263,46 +268,51 @@ const BoosterPlanView: React.FC = () => {
     {
       headerName: "Product",
       field: "product_name",
-      minWidth: 200,
-      flex: 1,
+      minWidth: 140,
+      flex: 2,
       cellRenderer: (params: any) => (
-        <span className="font-bold text-gray-900 dark:text-gray-100">{params.value}</span>
+        <span className="font-bold text-gray-900 dark:text-gray-100 text-xs sm:text-sm">{params.value}</span>
       )
     },
     {
       headerName: "Category",
       field: "category_name",
-      width: 140,
+      minWidth: 90,
+      flex: 1,
     },
     {
       headerName: "Subcategory",
       field: "sub_category_name",
-      width: 140,
+      minWidth: 90,
+      flex: 1,
     },
     {
       headerName: "Plan",
       field: "plan_name",
-      width: 150,
+      minWidth: 90,
+      flex: 1,
       cellRenderer: (params: any) => (
-        <span className=" text-xs font-semibold">{params.value}</span>
+        <span className="text-xs sm:text-sm font-semibold">{params.value}</span>
       )
     },
     {
-      headerName: "Expiry Date",
+      headerName: "Expiry",
       field: "expiry_date",
-      width: 130,
+      minWidth: 80,
+      flex: 1,
       cellRenderer: (params: any) => {
         if (!params.value) return "-";
         const date = new Date(params.value);
         return (
-          <span>{date.toLocaleDateString('en-GB')}</span>
+          <span className="text-xs sm:text-sm">{date.toLocaleDateString('en-GB')}</span>
         );
       }
     },
     {
       headerName: "Status",
       field: "expiry_date",
-      width: 120,
+      minWidth: 70,
+      flex: 1,
       cellRenderer: (params: any) => {
         const isExpired = new Date(params.value) < new Date();
         return <StatusBadge status={isExpired ? "expired" : "active"} />;
@@ -524,7 +534,7 @@ const BoosterPlanView: React.FC = () => {
                 }
                 return undefined;
               }}
-              noRowsMessage="no products found"
+              noRowsMessage="No products found"
             />
           </div>
 
@@ -641,7 +651,7 @@ const BoosterPlanView: React.FC = () => {
             showCheckboxes={false}
             height={400}
             rowHeight={52}
-            noRowsMessage="no booster purchases yet"
+            noRowsMessage="No booster purchases yet"
           />
         {/* </div> */}
       </div>
