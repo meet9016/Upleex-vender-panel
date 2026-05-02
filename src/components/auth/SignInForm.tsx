@@ -209,8 +209,8 @@ export default function SignInForm() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#EEF2FF] via-white to-[#E0F2FE] dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 px-4">
-      <div className="relative w-full max-w-md">
+    <div className="min-h-screen w-full flex bg-gradient-to-br from-[#EEF2FF] via-white to-[#E0F2FE] dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 px-4 py-8">
+      <div className="relative w-full max-w-md m-auto">
         {/* Soft glow background */}
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute -top-24 -right-24 h-40 w-40 rounded-full bg-gradient-to-br from-[#4F46E5]/30 to-[#22D3EE]/40 blur-3xl" />
@@ -296,11 +296,11 @@ export default function SignInForm() {
                       }}
                       numInputs={6}
                       shouldAutoFocus
-                      renderSeparator={<span className="mx-2 text-slate-300">•</span>}
+                      renderSeparator={<span className="mx-1 sm:mx-2 text-slate-300"><span className="hidden sm:inline">•</span></span>}
                       renderInput={(props) => (
                         <input
                           {...props}
-                          className={`border ${error.otp ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:border-[#4F46E5] focus:ring-[#4F46E5]/20'} h-10.5 !w-10.5 rounded-lg bg-slate-50 dark:bg-gray-800 text-center text-base font-medium text-slate-900 dark:text-white outline-none transition-all focus:bg-white dark:focus:bg-gray-700`}
+                          className={`border ${error.otp ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:border-[#4F46E5] focus:ring-[#4F46E5]/20'} h-10 !w-10 sm:h-12 sm:!w-12 rounded-lg bg-slate-50 dark:bg-gray-800 text-center text-base font-medium text-slate-900 dark:text-white outline-none transition-all focus:bg-white dark:focus:bg-gray-700`}
                         />
                       )}
                     />
