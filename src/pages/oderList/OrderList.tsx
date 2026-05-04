@@ -1040,21 +1040,20 @@ const OrderList = () => {
       {/* Main Table Section */}
       <div className="">
         {/* Header with Filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-1">
-          {/* Tab Navigation */}
-          <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-full sm:w-fit">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex items-center justify-between gap-3 w-full sm:w-auto">
             <button
-              /*
+             /*
               onClick={() => {
                 setActiveTab('orders');
                 setPage(1);
               }}
               */
-              className={`px-4 py-2 rounded-md text-sm font-medium bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm`}
+              className={`px-4 py-2 rounded-md text-sm font-medium bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm border border-gray-100 dark:border-gray-700`}
             >
               Orders
             </button>
-            {/*
+             {/*
             <button
               onClick={() => {
                 setActiveTab('payments');
@@ -1066,15 +1065,16 @@ const OrderList = () => {
             </button>
             */}
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
+
+          <div className="flex items-center gap-4 flex-1 w-full sm:w-auto">
             {/* Search Input */}
-            <div className="relative w-full sm:w-auto">
+            <div className="relative flex-1">
               <input
                 type="text"
                 placeholder="Search orders..."
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                className="pl-10 pr-10 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
+                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white flex-1 min-w-[120px] text-sm h-10 w-full"
               />
               <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               {searchText && (
@@ -1095,11 +1095,11 @@ const OrderList = () => {
                   setPendingFilters(filters);
                   setShowFilterModal(!showFilterModal);
                 }}
-                className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md border-gray-300 border-1 hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
+                className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300"
               >
                 <CiFilter size={20} />
                 {activeFilterCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
                     {activeFilterCount}
                   </span>
                 )}
@@ -1169,10 +1169,20 @@ const OrderList = () => {
                           className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                         />
                       </div>
+
+                      {/* Status Filter */}
+                      <div className="space-y-1.5">
+                        <Label className="text-[13px] font-semibold text-gray-700 dark:text-gray-300">Status</Label>
+                        <MultiSelectDropdown
+                          options={statusOptions.map(s => ({ label: s.label, value: s.value }))}
+                          selectedValues={pendingFilters.status}
+                          onChange={(vals) => setPendingFilters(prev => ({ ...prev, status: vals }))}
+                          placeholder="Select Status"
+                        />
+                      </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-2 mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <div className="flex gap-2 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
                       <button
                         onClick={() => {
                           setPendingFilters({ customer_name: '', product_name: '', sku: '', status: [] });
@@ -1200,9 +1210,9 @@ const OrderList = () => {
               )}
             </div>
             <button
-              onClick={fetchOrders}
+              onClick={fetchVendorOrders}
               disabled={loading}
-              className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md border-gray-300 border-1 hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
+              className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300"
               title="Refresh"
             >
               <FiRefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -1212,7 +1222,7 @@ const OrderList = () => {
             <div className="relative" ref={actionsMenuRef}>
               <button
                 onClick={() => setShowActionsMenu((v) => !v)}
-                className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
+                className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300"
                 title="Export options"
               >
                 <FiMoreVertical className="text-xl" />

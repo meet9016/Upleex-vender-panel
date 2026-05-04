@@ -1141,17 +1141,15 @@ const QuoteTable = () => {
 
   return (
     <div className="">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-2 mt-5 !justify-end">
-        {/* <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-white">Quotes</h2> */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 ">
-              <ColorLegend />
-          <div className="relative w-full sm:w-auto">
+      <div className="flex flex-wrap items-center justify-between mb-4 mt-5 gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative">
             <input
               type="text"
               placeholder="Search quotes..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full sm:w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-48 sm:w-64 text-sm"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             {searchText && (
@@ -1164,15 +1162,17 @@ const QuoteTable = () => {
               </button>
             )}
           </div>
+        </div>
 
+        <div className="flex items-center gap-2">
+          {/* Filter Button */}
           <div className="relative">
             <button
               ref={filterButtonRef}
               onClick={() => setShowFilterModal(!showFilterModal)}
-              className="w-full sm:w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md border-gray-300 border-1 hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
+              className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300"
             >
               <CiFilter size={20} />
-              {/* <span className="hidden sm:inline">Filter </span> */}
               {activeFilterCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
                   {activeFilterCount}
@@ -1271,11 +1271,11 @@ const QuoteTable = () => {
             )}
           </div>
 
-          {/* Actions Menu (3-dots) - Ultra Sophisticated Design */}
+          {/* Actions Menu (3-dots) */}
           <div className="relative" ref={actionsMenuRef}>
             <button
               onClick={() => setShowActionsMenu((v) => !v)}
-              className="w-full sm:w-10 h-10 flex items-center justify-center  bg-white dark:bg-gray-800  border-gray-300 border-1 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
+              className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300"
               title="Export options"
             >
               <FiMoreVertical className="text-xl" />
@@ -1283,11 +1283,7 @@ const QuoteTable = () => {
 
             {showActionsMenu && (
               <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-auto mt-3 w-auto sm:w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
-                {/* Export Section */}
-
-
                 <div className="py-1">
-                  {/* Export to Excel */}
                   <button
                     onClick={handleExportExcel}
                     disabled={excelLoading || pdfLoading}
@@ -1298,7 +1294,6 @@ const QuoteTable = () => {
                     {excelLoading && <Loader className="ml-auto text-emerald-600 w-3.5 h-3.5" />}
                   </button>
 
-                  {/* Export to PDF */}
                   <button
                     onClick={handleExportPDF}
                     disabled={excelLoading || pdfLoading}
@@ -1309,20 +1304,24 @@ const QuoteTable = () => {
                     {pdfLoading && <Loader className="ml-auto text-rose-600 w-3.5 h-3.5" />}
                   </button>
 
-                    {selectedQuotes.length > 0 && (
-                      <button
-                        onClick={handleBulkInvoiceDownload}
-                        className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200"
-                      >
-                        <FaFileInvoice className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
-                        <span>Download Invoices ({selectedQuotes.filter(q => q.type !== 'customer').length})</span>
-                      </button>
-                    )}
+                  {selectedQuotes.length > 0 && (
+                    <button
+                      onClick={handleBulkInvoiceDownload}
+                      className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-200"
+                    >
+                      <FaFileInvoice className="text-lg text-emerald-600 group-hover:scale-110 transition-transform duration-200" />
+                      <span>Download Invoices ({selectedQuotes.filter(q => q.type !== 'customer').length})</span>
+                    </button>
+                  )}
                 </div>
               </div>
             )}
           </div>
         </div>
+      </div>
+
+      <div className="mb-4 overflow-x-auto no-scrollbar">
+        <ColorLegend />
       </div>
 
       <div className="overflow-x-auto -mx-2 sm:mx-0">
@@ -1448,18 +1447,18 @@ const QuoteTable = () => {
 export default QuoteTable;
 
 const ColorLegend = () => (
-  <div className="flex flex-wrap items-center text-xs sm:text-sm">
-    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-full">
-      <span className="w-2.5 h-2.5 rounded-full bg-[#e1f4ee] border border-green-300  shadow-sm shadow-green-200"></span>
-      <span className="text-gray-700 dark:text-gray-300 font-medium">Due Today</span>
+  <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs">
+    <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+      <span className="w-2 h-2 rounded-full bg-[#e1f4ee] border border-green-300"></span>
+      <span className="text-gray-600 dark:text-gray-400 font-medium">Due Today</span>
     </div>
-    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-full">
-      <span className="w-2.5 h-2.5 rounded-full bg-[#fef6d0] border border-yellow-300 shadow-sm shadow-yellow-200"></span>
-      <span className="text-gray-700 dark:text-gray-300 font-medium">New Quote</span>
+    <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+      <span className="w-2 h-2 rounded-full bg-[#fef6d0] border border-yellow-300"></span>
+      <span className="text-gray-600 dark:text-gray-400 font-medium">New Quote</span>
     </div>
-    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-full">
-      <span className="w-2.5 h-2.5 rounded-full bg-[#fee3e7] border border-red-300 shadow-sm shadow-red-200"></span>
-      <span className="text-gray-700 dark:text-gray-300 font-medium">Late Return</span>
+    <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+      <span className="w-2 h-2 rounded-full bg-[#fee3e7] border border-red-300"></span>
+      <span className="text-gray-600 dark:text-gray-400 font-medium">Late Return</span>
     </div>
   </div>
 );

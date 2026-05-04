@@ -270,20 +270,17 @@ const ServiceTable = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-2 mt-5 justify-end">
-        {/* <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Services</h2> */}
-        <div className="flex items-center gap-3 justify-between">
-          
+      <div className="flex flex-wrap items-center justify-between mb-4 mt-5 gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
-          
             onClick={() => {
-               if (balance <= 0) {
+              if (balance <= 0) {
                 toast.error("Insufficient wallet balance. Please add money to your wallet before adding a Service.");
                 return;
               }
-            router.push('/service/addService')
-          }}
-            className="px-4 py-2 btn-primary font-medium"
+              router.push('/service/addService')
+            }}
+            className="px-4 py-2 btn-primary font-medium text-sm whitespace-nowrap"
           >
             + Add Service
           </button>
@@ -293,7 +290,7 @@ const ServiceTable = () => {
               placeholder="Search services..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-48 sm:w-64 text-sm"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             {searchText && (
@@ -306,12 +303,14 @@ const ServiceTable = () => {
               </button>
             )}
           </div>
+        </div>
 
+        <div className="flex items-center gap-2">
           {/* Actions Menu (3-dots) */}
           <div className="relative" ref={actionsMenuRef}>
             <button
               onClick={() => setShowActionsMenu((v) => !v)}
-              className="w-11 h-11 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300 shadow-sm"
+              className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300"
               title="Export options"
             >
               <FiMoreVertical className="text-xl" />

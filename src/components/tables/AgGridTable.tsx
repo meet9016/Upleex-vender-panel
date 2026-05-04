@@ -220,7 +220,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4 dark:text-gray-200">
+      <div className="flex flex-wrap justify-between items-center mb-4 dark:text-gray-200 gap-2">
         {buttonName && (
           <button onClick={handleAddClick} className="btn-primary" aria-label={`Add ${buttonName}`}>
             + Add {buttonName}

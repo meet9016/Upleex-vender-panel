@@ -209,7 +209,7 @@ export default function SignInForm() {
   }
 
   return (
-    <div className="min-h-screen w-full flex bg-gradient-to-br from-[#EEF2FF] via-white to-[#E0F2FE] dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 px-4 py-8">
+    <div className="min-h-screen w-full flex bg-gradient-to-br from-[#EEF2FF] via-white to-[#E0F2FE] dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 px-4 py-8 overflow-x-hidden">
       <div className="relative w-full max-w-md m-auto">
         {/* Soft glow background */}
         <div className="pointer-events-none absolute inset-0 -z-10">

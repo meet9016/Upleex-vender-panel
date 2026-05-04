@@ -629,14 +629,14 @@ const SettingsPage: React.FC = () => {
   return (
     <div className="space-y-5 animate-in fade-in duration-500">
       {/* Top Scope + Tab Bar */}
-      <div className="flex flex-col gap-4 bg-white p-4 sm:p-4 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm mb-4 sm:mb-6 dark:bg-black">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm mb-4 sm:mb-6 dark:bg-black">
         {/* Left: Scope switcher - only show if both types active */}
         {(showProduct || showService) && (
-          <div className="flex bg-gray-100 p-1.5 rounded-xl border border-gray-200 w-full dark:bg-[#1c2938]">
+          <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 w-fit dark:bg-[#1c2938]">
             {showProduct && (
               <button
                 onClick={() => setPlanScope("product")}
-                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "product"
+                className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "product"
                   ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
                   : "text-gray-500 hover:text-gray-700"
                   }`}
@@ -648,7 +648,7 @@ const SettingsPage: React.FC = () => {
             {showService && (
               <button
                 onClick={() => setPlanScope("service")}
-                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "service"
+                className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${planScope === "service"
                   ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800"
                   : "text-gray-500 hover:text-gray-700"
                   }`}
@@ -662,11 +662,11 @@ const SettingsPage: React.FC = () => {
 
         {/* Right: Sub-tab switcher */}
         {planScope === "product" && (
-          <div className="flex flex-col p-1.5 sm:p-1.5 bg-gray-100/80 rounded-xl sm:rounded-2xl w-full dark:bg-[#1c2938] gap-1.5">
+          <div className="flex p-1 sm:p-1.5 bg-gray-100/80 rounded-xl sm:rounded-2xl w-fit sm:w-auto dark:bg-[#1c2938] gap-1 sm:gap-1.5">
             <Button
               variant={currentTab === "priority" ? "secondary" : "ghost"}
               onClick={() => setCurrentTab("priority")}
-              className={`flex-1 px-3 py-2.5 cursor-pointer rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "priority"
+              className={`px-3 py-2.5 cursor-pointer rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "priority"
                 ? "bg-white text-brand-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
@@ -677,7 +677,7 @@ const SettingsPage: React.FC = () => {
             <Button
               variant={currentTab === "booster" ? "secondary" : "ghost"}
               onClick={() => setCurrentTab("booster")}
-              className={`flex-1 px-3 py-2.5 cursor-pointer rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "booster"
+              className={`px-3 py-2.5 cursor-pointer rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "booster"
                 ? "bg-white text-indigo-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
@@ -688,7 +688,7 @@ const SettingsPage: React.FC = () => {
             <Button
               variant={currentTab === "listing" ? "secondary" : "ghost"}
               onClick={() => setCurrentTab("listing")}
-              className={`flex-1 px-3 py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "listing"
+              className={`px-3 py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "listing"
                 ? "bg-white text-emerald-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
@@ -700,12 +700,12 @@ const SettingsPage: React.FC = () => {
         )}
 
         {planScope === "service" && (
-          <div className="flex flex-col p-1.5 bg-gray-100/80 rounded-2xl w-full dark:bg-[#1c2938] gap-1.5">
+          <div className="flex p-1 bg-gray-100/80 rounded-2xl w-fit dark:bg-[#1c2938] gap-2">
 
             <Button
               variant={currentServiceTab === "listing" ? "secondary" : "ghost"}
               onClick={() => setCurrentServiceTab("listing")}
-              className={`flex-1 px-6 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap h-auto ${currentServiceTab === "listing"
+              className={`px-6 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap h-auto ${currentServiceTab === "listing"
                 ? "bg-white text-emerald-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
@@ -716,7 +716,7 @@ const SettingsPage: React.FC = () => {
             <Button
               variant={currentServiceTab === "priority" ? "secondary" : "ghost"}
               onClick={() => setCurrentServiceTab("priority")}
-              className={`flex-1 px-6 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap h-auto ${currentServiceTab === "priority"
+              className={`px-6 py-3 cursor-pointer rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap h-auto ${currentServiceTab === "priority"
                 ? "bg-white text-brand-600 shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
@@ -785,7 +785,7 @@ const SettingsPage: React.FC = () => {
                   </div>
                 )}
               {/* Search + Tab row */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                 <div className="relative flex-1 sm:flex-none sm:w-56">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
                   <input
@@ -1016,8 +1016,8 @@ const SettingsPage: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex flex-col items-stretch sm:items-end gap-2 w-full sm:w-auto">
-                      <div className="flex flex-col sm:flex-row items-stretch gap-2 sm:gap-3 w-full">
+                    <div className="flex flex-col items-start sm:items-end gap-2 w-full sm:w-auto">
+                      <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-3">
                         <input 
                           id="promotional-video-upload"
                           type="file" 
