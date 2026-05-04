@@ -1244,7 +1244,7 @@ const ProductTable = () => {
                 </button>
 
                 {showActionsMenu && (
-                  <div className="fixed left-4 right-4 top-20 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden">
+                  <div className="absolute right-0 top-full mt-2 w-56 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden origin-top-right">
                     <div className="py-1">
                       <button onClick={() => { setShowActionsMenu(false); openBulkAction("deactivate"); }} className="group w-full flex items-center justify-between px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-amber-500 hover:bg-amber-50/50 transition-all">
                         <div className="flex items-center gap-3"><FiPauseCircle className="text-lg text-amber-500" /><span>Deactivate</span></div>
@@ -1456,7 +1456,7 @@ const ProductTable = () => {
             </button>
 
             {showActionsMenu && (
-              <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-auto mt-3 w-auto sm:w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+              <div className="absolute right-0 top-full mt-3 w-56 sm:w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300 origin-top-right">
                 {/* Bulk Actions Section */}
                 {/* <div className="px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100/30 dark:border-gray-800/30">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Bulk Operations</span>

@@ -512,23 +512,24 @@ export default function SignUpForm() {
                     </button>
                   )}
                 </div>
-                <div className="mt-2 flex justify-center">
+                <div className="mt-2 w-full">
                   <OtpInput
                     value={formData.otp}
                     onChange={(val) => {
                       const clean = val.replace(/\D/g, '').slice(0, 6);
                       setFormData(prev => ({ ...prev, otp: clean }));
-                      if (clean.length >= 4) setErrors(prev => ({ ...prev, otp: '' }));
+                      if (clean.length >= 6) setErrors(prev => ({ ...prev, otp: '' }));
                     }}
                     numInputs={6}
                     shouldAutoFocus
-                    renderSeparator={<span className="mx-1 sm:mx-2 text-slate-300"><span className="hidden sm:inline">•</span></span>}
+                    containerStyle={{ display: 'flex', width: '100%', gap: '8px' }}
                     renderInput={(props) => (
                       <input
                         {...props}
+                        style={{ width: '100%' }}
                         inputMode="numeric"
                         pattern="\d*"
-                        className={`${errors.otp ? 'border-2 border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-2 border-slate-300 focus:border-[#4F46E5] focus:ring-[#4F46E5]/20'} h-10 !w-10 sm:h-12 sm:!w-12 rounded-lg bg-slate-50 dark:bg-gray-800 text-center text-base font-medium text-slate-900 dark:text-white outline-none transition-all`}
+                        className={`${errors.otp ? 'border-2 border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-2 border-slate-300 focus:border-[#4F46E5] focus:ring-[#4F46E5]/20'} aspect-square h-auto rounded-lg bg-slate-50 dark:bg-gray-800 text-center text-lg font-semibold text-slate-900 dark:text-white outline-none transition-all`}
                       />
                     )}
                   />

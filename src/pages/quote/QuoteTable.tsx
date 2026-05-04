@@ -1239,7 +1239,7 @@ const QuoteTable = () => {
               </button>
 
               {showActionsMenu && (
-                <div className="fixed left-4 right-4 top-20 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden">
+                <div className="absolute right-0 top-full mt-2 w-56 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden origin-top-right">
                   <div className="py-1">
                     <button onClick={handleExportExcel} disabled={excelLoading || pdfLoading} className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 transition-all disabled:opacity-50">
                       <FaFileExcel className="text-lg text-emerald-600" /><span>Export to Excel</span>{excelLoading && <Loader className="ml-auto text-emerald-600 w-3.5 h-3.5" />}
@@ -1377,7 +1377,7 @@ const QuoteTable = () => {
             </button>
 
             {showActionsMenu && (
-              <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-20 sm:top-auto mt-3 w-auto sm:w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+              <div className="absolute right-0 top-full mt-3 w-56 sm:w-64 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-300 origin-top-right">
                 <div className="py-1">
                   <button
                     onClick={handleExportExcel}

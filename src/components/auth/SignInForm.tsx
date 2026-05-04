@@ -285,24 +285,25 @@ export default function SignInForm() {
                   <Label>
                     OTP <span className="text-error-500">*</span>
                   </Label>
-                  <div className="mt-2 flex justify-center">
+                  <div className="mt-2 w-full">
                     <OtpInput
                       value={formData.otp}
                       onChange={(otp) => {
                         setFormData((prev) => ({ ...prev, otp }));
-                        if (otp.replace(/\D/g, '').length >= 4) {
+                        if (otp.replace(/\D/g, '').length >= 6) {
                           setError((prev) => ({ ...prev, otp: '' }));
                         }
                       }}
                       numInputs={6}
                       shouldAutoFocus
-                      renderSeparator={<span className="mx-1 sm:mx-2 text-slate-300"><span className="hidden sm:inline">•</span></span>}
+                      containerStyle={{ display: 'flex', width: '100%', gap: '8px' }}
                       renderInput={(props) => (
                         <input
                           {...props}
+                          style={{ width: '100%' }}
                           inputMode="numeric"
                           pattern="\d*"
-                          className={`border ${error.otp ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:border-[#4F46E5] focus:ring-[#4F46E5]/20'} h-10 !w-10 sm:h-12 sm:!w-12 rounded-lg bg-slate-50 dark:bg-gray-800 text-center text-base font-medium text-slate-900 dark:text-white outline-none transition-all focus:bg-white dark:focus:bg-gray-700`}
+                          className={`border ${error.otp ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:border-[#4F46E5] focus:ring-[#4F46E5]/20'} aspect-square h-auto rounded-lg bg-slate-50 dark:bg-gray-800 text-center text-lg font-semibold text-slate-900 dark:text-white outline-none transition-all focus:bg-white dark:focus:bg-gray-700`}
                         />
                       )}
                     />
