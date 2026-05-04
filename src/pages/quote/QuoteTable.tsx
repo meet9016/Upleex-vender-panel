@@ -1169,7 +1169,7 @@ const QuoteTable = () => {
           </div>
 
           <div className="flex items-center gap-2 sm:hidden">
-            {/* Filter Button */}
+            {/* Mobile Filter Button with modal */}
             <div className="relative">
               <button
                 ref={filterButtonRef}
@@ -1183,9 +1183,52 @@ const QuoteTable = () => {
                   </span>
                 )}
               </button>
+
+              {showFilterModal && (
+                <div ref={dropdownRef} className="fixed left-4 right-4 top-20 bg-white dark:bg-gray-900 rounded-xl shadow-2xl z-50 border border-gray-200 dark:border-gray-700 max-h-[calc(100vh-120px)] overflow-y-auto">
+                  <div className="p-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">Filter Quotes</h3>
+                      <button onClick={() => setShowFilterModal(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
+                        <MdClose size={20} className="text-gray-500" />
+                      </button>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Product Type</label>
+                        <SearchableDropdown options={productTypes.map((t: any) => ({ label: t.product_type, value: String(t.id) }))} value={pendingFilters.product_type[0] || null} onChange={(value) => handleFilterChange('product_type', value ? [value] : [])} placeholder="Select Product Type" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Listing Type</label>
+                        <MultiSelectDropdown options={listingTypes.map((lt: any) => ({ label: lt.name, value: String(lt.id) }))} selectedValues={pendingFilters.listing_type} onChange={(values) => handleFilterChange('listing_type', values)} placeholder="Select Listing Types" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
+                        <DatePicker value={pendingFilters.delivery_start_date} onChange={(date) => handleFilterChange("delivery_start_date", date)} width="100%" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">End Date</label>
+                        <DatePicker value={pendingFilters.delivery_end_date} min={pendingFilters.delivery_start_date} onChange={(date) => handleFilterChange("delivery_end_date", date)} width="100%" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Month</label>
+                        <MultiSelectDropdown options={months.map((m: any) => ({ label: m.month_name, value: String(m.id) }))} selectedValues={pendingFilters.month} onChange={(values) => handleFilterChange('month', values)} placeholder="Select Months" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                        <MultiSelectDropdown options={statusList.map((s: any) => ({ label: s.name, value: String(s.id) }))} selectedValues={pendingFilters.status} onChange={(values) => handleFilterChange('status', values)} placeholder="Select Status" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <button onClick={clearFilters} className="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium">Clear All</button>
+                      <button onClick={applyFilters} className="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">Apply</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Actions Menu (3-dots) */}
+            {/* Mobile Actions Menu */}
             <div className="relative" ref={actionsMenuRef}>
               <button
                 onClick={() => setShowActionsMenu((v) => !v)}
@@ -1194,6 +1237,24 @@ const QuoteTable = () => {
               >
                 <FiMoreVertical className="text-xl" />
               </button>
+
+              {showActionsMenu && (
+                <div className="fixed left-4 right-4 top-20 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden">
+                  <div className="py-1">
+                    <button onClick={handleExportExcel} disabled={excelLoading || pdfLoading} className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 transition-all disabled:opacity-50">
+                      <FaFileExcel className="text-lg text-emerald-600" /><span>Export to Excel</span>{excelLoading && <Loader className="ml-auto text-emerald-600 w-3.5 h-3.5" />}
+                    </button>
+                    <button onClick={handleExportPDF} disabled={excelLoading || pdfLoading} className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-rose-500 hover:bg-rose-50/50 transition-all disabled:opacity-50">
+                      <FaFilePdf className="text-lg text-rose-600" /><span>Export to PDF</span>{pdfLoading && <Loader className="ml-auto text-rose-600 w-3.5 h-3.5" />}
+                    </button>
+                    {selectedQuotes.length > 0 && (
+                      <button onClick={handleBulkInvoiceDownload} className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 transition-all">
+                        <FaFileInvoice className="text-lg text-emerald-600" /><span>Download Invoices ({selectedQuotes.filter(q => q.type !== 'customer').length})</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

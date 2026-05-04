@@ -1180,23 +1180,93 @@ const ProductTable = () => {
             </div>
             
             <div className="flex items-center gap-2 sm:hidden order-2">
-              <button
-                onClick={() => setShowFilterModal(!showFilterModal)}
-                className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300"
-              >
-                <CiFilter size={20} />
-                {activeFilterCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                    {activeFilterCount}
-                  </span>
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setPendingFilters(filters);
+                    setPendingCategory(selectedCategory);
+                    setPendingSubCategory(selectedSubCategory);
+                    setPendingSubCategoryOptions(subCategoryOptions);
+                    setShowFilterModal(!showFilterModal);
+                  }}
+                  className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300"
+                >
+                  <CiFilter size={20} />
+                  {activeFilterCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Mobile Filter Modal */}
+                {showFilterModal && (
+                  <div
+                    ref={filterModalRef}
+                    className="fixed left-4 right-4 top-20 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 border border-gray-200 dark:border-gray-700 max-h-[calc(100vh-120px)] overflow-y-auto"
+                  >
+                    <div className="p-5">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">Filter Products</h3>
+                        <button onClick={() => setShowFilterModal(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                          <MdClose size={18} className="text-gray-500" />
+                        </button>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="font-semibold mb-2">Category</Label>
+                          <MultiSelectDropdown options={categoryOptions} selectedValues={pendingCategory} onChange={(values) => setPendingCategory(values)} placeholder="Select Categories" maxSelections={pendingSubCategory.length > 0 ? 1 : undefined} />
+                        </div>
+                        <div>
+                          <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Sub Category</Label>
+                          <MultiSelectDropdown options={pendingSubCategoryOptions} selectedValues={pendingSubCategory} onChange={(values) => { setPendingSubCategory(values); setPendingFilters(prev => ({ ...prev, sub_category_id: values })); }} placeholder={pendingCategory.length === 1 ? "Select Sub Categories" : "Select category first"} disabled={pendingCategory.length !== 1} />
+                        </div>
+                        <div>
+                          <Label className="font-semibold mb-2">Listing Type</Label>
+                          <MultiSelectDropdown options={listingTypes.map((type: any) => ({ label: type.name, value: String(type.id || type._id) }))} selectedValues={pendingFilters.filter_tenure} onChange={(values) => setPendingFilters(prev => ({ ...prev, filter_tenure: values }))} placeholder="Select Listing Types" />
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button onClick={() => { setPendingCategory([]); setPendingSubCategory([]); setPendingSubCategoryOptions([]); setPendingFilters({ category_id: [], sub_category_id: [], filter_rent_sell: [], filter_tenure: [], status: [] }); setSelectedCategory([]); setSelectedSubCategory([]); setSubCategoryOptions([]); setFilters({ category_id: [], sub_category_id: [], filter_rent_sell: [], filter_tenure: [], status: [] }); setSearchText(''); getProductData({}, undefined, true); setShowFilterModal(false); }} className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Clear All</button>
+                        <button onClick={() => { setSelectedCategory(pendingCategory); setSelectedSubCategory(pendingSubCategory); setSubCategoryOptions(pendingSubCategoryOptions); setFilters(pendingFilters); getProductData(pendingFilters, undefined, true); setShowFilterModal(false); }} className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors">Apply</button>
+                      </div>
+                    </div>
+                  </div>
                 )}
-              </button>
-              <button
-                onClick={() => setShowActionsMenu((v) => !v)}
-                className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300"
-              >
-                <FiMoreVertical className="text-xl" />
-              </button>
+              </div>
+
+              <div className="relative" ref={actionsMenuRef}>
+                <button
+                  onClick={() => setShowActionsMenu((v) => !v)}
+                  className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300"
+                >
+                  <FiMoreVertical className="text-xl" />
+                </button>
+
+                {showActionsMenu && (
+                  <div className="fixed left-4 right-4 top-20 backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 border border-gray-100/50 dark:border-gray-800/50 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 overflow-hidden">
+                    <div className="py-1">
+                      <button onClick={() => { setShowActionsMenu(false); openBulkAction("deactivate"); }} className="group w-full flex items-center justify-between px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-amber-500 hover:bg-amber-50/50 transition-all">
+                        <div className="flex items-center gap-3"><FiPauseCircle className="text-lg text-amber-500" /><span>Deactivate</span></div>
+                        <span className="px-2 py-0.5 bg-amber-100 text-amber-600 text-[10px] font-bold rounded-full">{selectedRows.length}</span>
+                      </button>
+                      <button onClick={() => { setShowActionsMenu(false); openBulkAction("delete"); }} className="group w-full flex items-center justify-between px-4 py-3 text-[13px] font-medium text-rose-600 border-l-4 border-transparent hover:border-rose-500 hover:bg-rose-50/50 transition-all">
+                        <div className="flex items-center gap-3"><FiTrash2 className="text-lg" /><span>Delete Selected</span></div>
+                        <span className="px-2 py-0.5 bg-rose-100 text-rose-600 text-[10px] font-bold rounded-full">{selectedRows.length}</span>
+                      </button>
+                      <button onClick={() => { setShowActionsMenu(false); router.push("/draft"); }} className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-indigo-500 hover:bg-indigo-50/50 transition-all">
+                        <FiFileText className="text-lg text-indigo-500" /><span>View Drafts</span>
+                      </button>
+                      <button onClick={handleExportExcel} disabled={excelLoading || pdfLoading} className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-emerald-500 hover:bg-emerald-50/50 transition-all disabled:opacity-50">
+                        <FaFileExcel className="text-lg text-emerald-600" /><span>Export to Excel</span>{excelLoading && <Loader className="ml-auto text-emerald-600 w-3.5 h-3.5" />}
+                      </button>
+                      <button onClick={handleExportPDF} disabled={excelLoading || pdfLoading} className="group w-full flex items-center gap-3 px-4 py-3 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-rose-500 hover:bg-rose-50/50 transition-all disabled:opacity-50">
+                        <FaFilePdf className="text-lg text-rose-600" /><span>Export to PDF</span>{pdfLoading && <Loader className="ml-auto text-rose-600 w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

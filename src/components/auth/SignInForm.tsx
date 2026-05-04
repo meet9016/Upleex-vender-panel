@@ -300,6 +300,8 @@ export default function SignInForm() {
                       renderInput={(props) => (
                         <input
                           {...props}
+                          inputMode="numeric"
+                          pattern="\d*"
                           className={`border ${error.otp ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:border-[#4F46E5] focus:ring-[#4F46E5]/20'} h-10 !w-10 sm:h-12 sm:!w-12 rounded-lg bg-slate-50 dark:bg-gray-800 text-center text-base font-medium text-slate-900 dark:text-white outline-none transition-all focus:bg-white dark:focus:bg-gray-700`}
                         />
                       )}
