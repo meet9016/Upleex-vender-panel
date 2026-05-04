@@ -1066,7 +1066,7 @@ const ProductTable = () => {
     <div className="w-full">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6 mt-5">
         {/* Left Side: Tabs and Add Product Button */}
-        <div className="flex items-center justify-between gap-3 w-full sm:w-auto">
+        <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
           <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 shadow-sm min-w-max">
             <button
               onClick={() => setActiveTab('rent')}
@@ -1084,7 +1084,7 @@ const ProductTable = () => {
             <button
               onClick={() => setActiveTab('sell')}
               className={`group flex items-center gap-2 px-4 sm:px-6 py-2 rounded-lg text-xs font-bold transition-all duration-200 whitespace-nowrap ${activeTab === 'sell'
-                ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-md ring-1 ring-black/[0.04]'
+                ? 'bg-white dark:bg-orange-700 text-orange-600 dark:text-orange-400 shadow-md ring-1 ring-black/[0.04]'
                 : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
                 }`}
             >
@@ -1093,6 +1093,46 @@ const ProductTable = () => {
               </svg>
               <span>Sell</span>
             </button>
+          </div>
+
+          {/* Add Product Button for Mobile only - in the same row as tabs */}
+          <button
+            onClick={() => {
+              const freeLimit = hasGst ? 3 : 1;
+              const hasWalletBalance = balance > 0;
+              const canAddFreeProduct = freeProductCount < freeLimit;
+              if (!canAddFreeProduct && !hasWalletBalance) {
+                toast.error("Your wallet balance is 0. Please add money to your wallet to add paid products.");
+                return;
+              }
+              if (freeProductCount >= freeLimit && !hasWalletBalance) {
+                toast.error(`Free listing limit reached (${freeProductCount}/${freeLimit}). Please select 'Base (Paid listing)' or add money to your wallet.`);
+                return;
+              }
+              router.push('/product/addProduct');
+            }}
+            className="sm:hidden px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-100 flex items-center gap-2 h-10 text-[11px] whitespace-nowrap"
+          >
+            <span>+ Add Product</span>
+          </button>
+        </div>
+
+        {/* Right Side: Search, Filter, and Actions */}
+        <div className="flex items-center justify-between sm:justify-end gap-4 flex-1 w-full sm:w-auto sm:flex-initial">
+          {/* Legend for Free Products - Integrated for LG screens */}
+          <div className="hidden lg:flex items-center gap-4 mr-2 px-1">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800"></div>
+              <span className="text-[12px] font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                Free Listing
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded border border-gray-200 bg-gray-100 dark:bg-gray-800 dark:border-gray-700"></div>
+              <span className="text-[12px] font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                Draft
+              </span>
+            </div>
           </div>
 
           <button
@@ -1113,21 +1153,19 @@ const ProductTable = () => {
 
               router.push('/product/addProduct');
             }}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-100 dark:shadow-none flex items-center gap-2 h-10 text-sm whitespace-nowrap"
+            className="hidden sm:flex px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-100 dark:shadow-none items-center gap-2 h-10 text-sm whitespace-nowrap"
           >
             <span>+ Add Product</span>
           </button>
-        </div>
-
-        {/* Right Side: Search, Filter, and Actions */}
-        <div className="flex items-center gap-4 flex-1 w-full sm:w-auto">
-          <div className="relative flex-1">
+          
+          <div className="flex items-center gap-2 flex-1 sm:flex-initial order-1 sm:order-none">
+            <div className="relative flex-1 sm:flex-initial">
             <input
               type="text"
               placeholder="Search products..."
               value={searchText}
               onChange={handleSearchChange}
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white flex-1 min-w-[120px] text-sm h-10"
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white flex-1 sm:w-64 min-w-[120px] text-sm h-10 w-full"
             />
             <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             {searchText && (
@@ -1139,10 +1177,31 @@ const ProductTable = () => {
                 <MdClose size={18} />
               </button>
             )}
+            </div>
+            
+            <div className="flex items-center gap-2 sm:hidden order-2">
+              <button
+                onClick={() => setShowFilterModal(!showFilterModal)}
+                className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300"
+              >
+                <CiFilter size={20} />
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setShowActionsMenu((v) => !v)}
+                className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md transition-all duration-300"
+              >
+                <FiMoreVertical className="text-xl" />
+              </button>
+            </div>
           </div>
 
           {/* Filter Button */}
-          <div className="relative">
+          <div className="hidden sm:block relative order-2 sm:order-none">
             <button
               ref={filterButtonRef}
               onClick={() => {
@@ -1317,7 +1376,7 @@ const ProductTable = () => {
           </div>
 
           {/* Actions Menu (3-dots) - Ultra Sophisticated Design */}
-          <div className="relative" ref={actionsMenuRef}>
+          <div className="hidden sm:block relative order-3 sm:order-none" ref={actionsMenuRef}>
             <button
               onClick={() => setShowActionsMenu((v) => !v)}
               className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all duration-300"
@@ -1419,21 +1478,22 @@ const ProductTable = () => {
         </div>
       </div>
 
-      {/* Legend for Free Products */}
-      <div className="flex items-center gap-4 mb-4 px-1">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800"></div>
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-            Free Listing Product
+      {/* Legend for mobile - Perfected spacing */}
+      <div className="lg:hidden flex items-center gap-3 mb-5 px-1 overflow-x-auto no-scrollbar pb-1">
+        <div className="flex items-center gap-2 bg-emerald-50/60 dark:bg-emerald-900/10 px-2.5 py-1.5 rounded-xl border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
+          <div className="w-2.5 h-2.5 rounded-full border border-emerald-300 bg-emerald-100 dark:bg-emerald-900"></div>
+          <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+            Free Listing
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded border border-gray-200 bg-gray-100 dark:bg-gray-800 dark:border-gray-700"></div>
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-            Draft Product
+        <div className="flex items-center gap-2 bg-gray-50/60 dark:bg-gray-800/50 px-2.5 py-1.5 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm">
+          <div className="w-2.5 h-2.5 rounded-full border border-gray-300 bg-gray-200 dark:bg-gray-700"></div>
+          <span className="text-[11px] font-bold text-gray-600 dark:text-gray-400 whitespace-nowrap">
+            Draft
           </span>
         </div>
       </div>
+
 
       {/* Products Table */}
       <div className="overflow-x-auto -mx-4 sm:mx-0">

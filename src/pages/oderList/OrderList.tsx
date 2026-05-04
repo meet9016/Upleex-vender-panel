@@ -1041,7 +1041,7 @@ const OrderList = () => {
       <div className="">
         {/* Header with Filters */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div className="flex items-center justify-between gap-3 w-full sm:w-auto">
+          <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
             <button
              /*
               onClick={() => {
@@ -1066,15 +1066,15 @@ const OrderList = () => {
             */}
           </div>
 
-          <div className="flex items-center gap-4 flex-1 w-full sm:w-auto">
+          <div className="flex items-center gap-4 flex-1 w-full sm:w-auto sm:flex-initial">
             {/* Search Input */}
-            <div className="relative flex-1">
+            <div className="relative flex-1 sm:flex-initial">
               <input
                 type="text"
                 placeholder="Search orders..."
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white flex-1 min-w-[120px] text-sm h-10 w-full"
+                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white flex-1 sm:w-64 min-w-[120px] text-sm h-10 w-full"
               />
               <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               {searchText && (
