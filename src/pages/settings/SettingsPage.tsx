@@ -1003,6 +1003,12 @@ const SettingsPage: React.FC = () => {
               <div className="md:col-span-3">
 
                 {/* Video Upload Section (Outside Modal) */}
+                {/* Video Upload Section - Only for Yearly Priority Plan */}
+                {vendorPurchases.some(p =>
+                  p.plan_duration === 'yearly' &&
+                  p.status === 'active' &&
+                  new Date(p.expire_at) > new Date()
+                ) ? (
                 <div className="mb-6 bg-white border border-gray-100 rounded-2xl p-5 shadow-sm flex flex-col gap-4 dark:bg-[#0d111c] dark:border-gray-800">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
@@ -1066,6 +1072,18 @@ const SettingsPage: React.FC = () => {
   </div>
 )}
                 </div>
+                ) : (
+                  <div className="mb-6 bg-white border border-dashed border-amber-300 rounded-2xl p-5 shadow-sm flex items-center gap-4 dark:bg-[#0d111c] dark:border-amber-700">
+                    <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center shrink-0 dark:bg-amber-900/30">
+                      <Zap size={24} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Store Promotional Video</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">This feature is available exclusively for vendors with an active <strong>Yearly Priority Plan</strong>.</p>
+                    </div>
+                    <span className="text-xs font-bold px-3 py-1.5 bg-amber-100 text-amber-700 rounded-full dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap">Yearly Plan Required</span>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
                   {plans.map((plan) => {

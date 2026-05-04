@@ -270,7 +270,7 @@ const ServiceTable = () => {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between mb-4 mt-5 gap-3">
+      <div className="flex flex-wrap items-center justify-end mb-4 mt-5 gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => {

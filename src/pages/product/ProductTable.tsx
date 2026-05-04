@@ -795,11 +795,16 @@ const ProductTable = () => {
   // Handle click outside to close modal
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (filterModalRef.current && !filterModalRef.current.contains(event.target as Node) &&
-        filterButtonRef.current && !filterButtonRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      // Check if click is inside any open dropdown/portal (z-50 elements)
+      const isInsideDropdown = (target as Element)?.closest?.('[class*="z-50"], [class*="z-[50]"]');
+      if (isInsideDropdown) return;
+
+      if (filterModalRef.current && !filterModalRef.current.contains(target) &&
+        filterButtonRef.current && !filterButtonRef.current.contains(target)) {
         setShowFilterModal(false);
       }
-      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(target)) {
         setShowActionsMenu(false);
       }
     };
@@ -1203,6 +1208,7 @@ const ProductTable = () => {
                 {showFilterModal && (
                   <div
                     ref={filterModalRef}
+                    onMouseDown={(e) => e.stopPropagation()}
                     className="fixed left-4 right-4 top-20 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 border border-gray-200 dark:border-gray-700 max-h-[calc(100vh-120px)] overflow-y-auto"
                   >
                     <div className="p-5">

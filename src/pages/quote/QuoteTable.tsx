@@ -1077,12 +1077,16 @@ const QuoteTable = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
-        filterButtonRef.current && !filterButtonRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isInsideDropdown = (target as Element)?.closest?.('[class*="z-50"], [class*="z-[50]"]');
+      if (isInsideDropdown) return;
+
+      if (dropdownRef.current && !dropdownRef.current.contains(target) &&
+        filterButtonRef.current && !filterButtonRef.current.contains(target)) {
         setOpenDropdown(null);
         setShowFilterModal(false);
       }
-      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(target)) {
         setShowActionsMenu(false);
       }
     };
@@ -1185,7 +1189,7 @@ const QuoteTable = () => {
               </button>
 
               {showFilterModal && (
-                <div ref={dropdownRef} className="fixed left-4 right-4 top-20 bg-white dark:bg-gray-900 rounded-xl shadow-2xl z-50 border border-gray-200 dark:border-gray-700 max-h-[calc(100vh-120px)] overflow-y-auto">
+                <div ref={dropdownRef} onMouseDown={(e) => e.stopPropagation()} className="fixed left-4 right-4 top-20 bg-white dark:bg-gray-900 rounded-xl shadow-2xl z-50 border border-gray-200 dark:border-gray-700 max-h-[calc(100vh-120px)] overflow-y-auto">
                   <div className="p-4">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-bold text-gray-900 dark:text-white">Filter Quotes</h3>

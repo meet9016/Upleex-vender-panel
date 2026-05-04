@@ -91,6 +91,11 @@ export interface EndPointApi {
     getNotifications: string;
     markNotificationRead: string;
     markAllNotificationsRead: string;
+    // Store Videos
+    uploadStoreVideo: string;
+    getStoreVideos: string;
+    deleteStoreVideo: string;
+    checkVideoAccess: string;
 }
 
 // Define and export the API endpoint object
@@ -197,6 +202,11 @@ const endPointApi: EndPointApi = {
     getNotifications: 'vendor/auth/notifications',
     markNotificationRead: 'vendor/auth/notifications',
     markAllNotificationsRead: 'vendor/auth/notifications/read-all',
+    // Store Videos
+    uploadStoreVideo: 'vendor-store-video',
+    getStoreVideos: 'vendor-store-video',
+    deleteStoreVideo: 'vendor-store-video',
+    checkVideoAccess: 'priority-plans/vendor/purchases',
 };
 
 export default endPointApi;
