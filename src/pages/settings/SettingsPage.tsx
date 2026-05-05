@@ -1073,15 +1073,19 @@ const SettingsPage: React.FC = () => {
 )}
                 </div>
                 ) : (
-                  <div className="mb-6 bg-white border border-dashed border-amber-300 rounded-2xl p-5 shadow-sm flex items-center gap-4 dark:bg-[#0d111c] dark:border-amber-700">
-                    <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center shrink-0 dark:bg-amber-900/30">
-                      <Zap size={24} />
+                  <div className="mb-6 bg-white border border-dashed border-amber-300 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 dark:bg-[#0d111c] dark:border-amber-700">
+                    <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center shrink-0 dark:bg-amber-900/30 mt-1 sm:mt-0">
+                        <Zap className="w-5 h-5 sm:w-6 sm:h-6" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100">Store Promotional Video</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">This feature is available exclusively for vendors with an active <strong>Yearly Priority Plan</strong>.</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Store Promotional Video</h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">This feature is available exclusively for vendors with an active <strong>Yearly Priority Plan</strong>.</p>
+                    <div className="ml-[52px] sm:ml-0 self-start sm:self-auto">
+                      <span className="text-[10px] sm:text-xs font-bold px-3 py-1.5 bg-amber-100 text-amber-700 rounded-full dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap">Yearly Plan Required</span>
                     </div>
-                    <span className="text-xs font-bold px-3 py-1.5 bg-amber-100 text-amber-700 rounded-full dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap">Yearly Plan Required</span>
                   </div>
                 )}
 

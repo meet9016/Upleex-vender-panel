@@ -7,6 +7,10 @@ import { useRouter } from 'next/navigation';
 import { api } from "@/utils/axiosInstance";
 import NotificationList from './NotificationList'; // Import the list
 import endPointApi from '@/utils/endPointApi';
+import Link from 'next/link';
+import { GoPeople } from 'react-icons/go';
+import { IoSettingsOutline } from 'react-icons/io5';
+import { MdOutlinePayments } from 'react-icons/md';
 
 interface MobileMenuSheetProps {
   isOpen: boolean;
@@ -22,6 +26,7 @@ export const MobileMenuSheet: React.FC<MobileMenuSheetProps> = ({
   const router = useRouter();
   const [user, setUser] = useState<{ full_name: string; email: string } | null>(null);
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
+  const [isProfileOpen, setProfileOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const isFetchingRef = useRef(false);
 
@@ -50,6 +55,7 @@ export const MobileMenuSheet: React.FC<MobileMenuSheetProps> = ({
     } else {
       // Reset notification state when sheet closes
       setNotificationsOpen(false);
+      setProfileOpen(false);
     }
 
     const handleNewNotif = () => {
@@ -143,18 +149,70 @@ export const MobileMenuSheet: React.FC<MobileMenuSheetProps> = ({
 
               {/* User Profile Section - Moved to bottom */}
               {user && (
-                <div className="mt-8 flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-lg font-bold shadow-md">
-                    {user.full_name?.charAt(0)?.toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-gray-800 dark:text-white truncate">
-                      {user.full_name}
-                    </h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                      {user.email}
-                    </p>
-                  </div>
+                <div className="mt-8 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                  <button 
+                    onClick={() => setProfileOpen(!isProfileOpen)}
+                    className="w-full flex items-center gap-4 p-4 text-left"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-lg font-bold shadow-md">
+                      {user.full_name?.charAt(0)?.toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-gray-800 dark:text-white truncate">
+                        {user.full_name}
+                      </h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                    <svg className={`w-5 h-5 text-gray-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+
+                  <AnimatePresence>
+                    {isProfileOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50"
+                      >
+                        <ul className="flex flex-col p-2 gap-1">
+                          <li>
+                            <Link
+                              href="/profile"
+                              onClick={onClose}
+                              className="flex items-center gap-3 px-4 py-3 font-medium text-gray-700 rounded-lg group text-sm hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                            >
+                              <GoPeople size={20} className="text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300" />
+                              Edit profile
+                            </Link>
+                          </li>
+                          <li>
+                            <Link
+                              href="/settings"
+                              onClick={onClose}
+                              className="flex items-center gap-3 px-4 py-3 font-medium text-gray-700 rounded-lg group text-sm hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                            >
+                              <IoSettingsOutline size={22} className="text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300" />
+                              Settings
+                            </Link>
+                          </li>
+                          <li>
+                            <Link
+                              href="/payouts"
+                              onClick={onClose}
+                              className="flex items-center gap-3 px-4 py-3 font-medium text-gray-700 rounded-lg group text-sm hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                            >
+                              <MdOutlinePayments size={22} className="text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300" />
+                              Payment Release
+                            </Link>
+                          </li>
+                        </ul>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
             </div>
