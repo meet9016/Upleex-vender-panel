@@ -102,15 +102,19 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     return () => window.removeEventListener('walletUpdated', handleWalletUpdate);
   }, [mounted, refreshBalance]);
 
-  // Auto-refresh balance every 30 seconds
+  // Refresh balance when user comes back to the tab (visibility change)
+  // This replaces the 30-second polling - much more efficient
   useEffect(() => {
     if (!mounted) return;
-    
-    const interval = setInterval(() => {
-      refreshBalance();
-    }, 30000);
 
-    return () => clearInterval(interval);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshBalance();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [mounted, refreshBalance]);
 
   const value: WalletContextType = {
