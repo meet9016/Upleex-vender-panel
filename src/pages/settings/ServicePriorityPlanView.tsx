@@ -33,6 +33,7 @@ const ServicePriorityPlanView: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [historyTab, setHistoryTab] = useState<"free" | "paid">("paid");
+  const fetchedRef = React.useRef(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -54,7 +55,10 @@ const ServicePriorityPlanView: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    if (!fetchedRef.current) {
+      fetchData();
+      fetchedRef.current = true;
+    }
   }, []);
 
   const handleOpenPurchase = (duration: "monthly" | "yearly") => {

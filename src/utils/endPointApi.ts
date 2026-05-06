@@ -77,6 +77,7 @@ export interface EndPointApi {
     getAllPriorityPlans: string;
     purchasePriorityPlan: string;
     getVendorPriorityPurchases: string;
+    getVendorListingPurchases: string;
     getAllRentalBoostPlans: string;
     purchaseRentalBoostPlan: string;
     purchaseBulkRentalBoostPlan: string;
@@ -139,6 +140,7 @@ const endPointApi: EndPointApi = {
     getAllPriorityPlans: 'priority-plans/getall',
     purchasePriorityPlan: 'priority-plans/purchase',
     getVendorPriorityPurchases: 'priority-plans/vendor/purchases',
+    getVendorListingPurchases: 'listing-plans/vendor/purchases',
 
     // Quote
     postGetQuote: 'quote/getall',

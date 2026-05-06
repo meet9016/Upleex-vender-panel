@@ -17,6 +17,8 @@ const BoosterPlanView: React.FC = () => {
   const { currency, refreshBalance, balance } = useWallet();
   const [plans, setPlans] = useState<any[]>([]);
   const [purchases, setPurchases] = useState<any[]>([]);
+  const [boosterRentCount, setBoosterRentCount] = useState<number>(0);
+  const [boosterSellCount, setBoosterSellCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -24,47 +26,84 @@ const BoosterPlanView: React.FC = () => {
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [historyTab, setHistoryTab] = useState<"rent" | "sell">("rent");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([""]);
   const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
-  const [gridSearch, setGridSearch] = useState("");
+  const [gridSearch, setGridSearch] = useState("")
+  const historyCacheRef = React.useRef<Record<string, any[]>>({});
+  const initialDataFetchedRef = React.useRef(false);
+  const isFetchingRef = React.useRef(false);
 
   const DEFAULT_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Crect width=\'48\' height=\'48\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'24\' y=\'24\' font-family=\'Arial\' font-size=\'10\' fill=\'%23999\' text-anchor=\'middle\' dominant-baseline=\'middle\'%3ENo Image%3C/text%3E%3C/svg%3E';
 
-  const fetchData = async () => {
+  const fetchData = async (forceRefresh = false) => {
+    if (isFetchingRef.current && !forceRefresh) return;
+    isFetchingRef.current = true;
     try {
       setLoading(true);
       const userInfoStr = localStorage.getItem("user_info");
       const vendor = userInfoStr ? JSON.parse(userInfoStr) : null;
       const vendor_id = vendor?.id || vendor?._id;
 
-      const [plansRes, purchasesRes, productsRes] = await Promise.all([
-        api.get(endPointApi.getAllRentalBoostPlans, { params: { status: "active" } }),
-        api.get(endPointApi.getVendorRentalBoostPurchases),
-        api.get(endPointApi.postAllVendorProductList, {
+      const promises: any[] = [];
+      
+      // Always fetch rent/sell booster history for counts and cache
+      promises.push(api.get(endPointApi.getVendorRentalBoostPurchases, { params: { filter_rent_sell: '1' } }).catch(() => ({ data: { total: 0, data: [] } })));
+      promises.push(api.get(endPointApi.getVendorRentalBoostPurchases, { params: { filter_rent_sell: '2' } }).catch(() => ({ data: { total: 0, data: [] } })));
+
+      if (!initialDataFetchedRef.current || forceRefresh) {
+        promises.push(api.get(endPointApi.getAllRentalBoostPlans, { params: { status: "active" } }));
+        promises.push(api.get(endPointApi.postAllVendorProductList, {
           params: { vendor_id, approval_status: "approved", limit: 1000 }
-        })
-      ]);
+        }));
+      }
 
-      if (plansRes?.data?.success) setPlans(plansRes.data.data);
-      if (purchasesRes?.data?.success) setPurchases(purchasesRes.data.data);
+      const results = await Promise.all(promises);
+      const rentRes = results[0];
+      const sellRes = results[1];
 
-      const products = productsRes?.data?.data || [];
-      const normalizedProducts = products.map((p: any) => ({
-        ...p,
-        id: p.id || p._id,
-      }));
-      setAllProducts(normalizedProducts);
+      // Update counts and cache
+      setBoosterRentCount(rentRes.data.total || 0);
+      setBoosterSellCount(sellRes.data.total || 0);
+      historyCacheRef.current['rent'] = rentRes.data.data || [];
+      historyCacheRef.current['sell'] = sellRes.data.data || [];
 
+      if (!initialDataFetchedRef.current || forceRefresh) {
+        const [plansRes, productsRes] = results.slice(2);
+
+        if (plansRes?.data?.success) setPlans(plansRes.data.data);
+
+        const products = productsRes?.data?.data || [];
+        const normalizedProducts = products.map((p: any) => ({
+          ...p,
+          id: p.id || p._id,
+        }));
+        setAllProducts(normalizedProducts);
+        initialDataFetchedRef.current = true;
+      }
     } catch (error) {
       toast.error("Failed to load booster data");
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const cachedData = historyCacheRef.current[historyTab];
+    if (cachedData) {
+      setPurchases(cachedData);
+    }
+    if (!cachedData) {
+      fetchData();
+    }
+  }, [historyTab]);
+
+  useEffect(() => {
+    const cachedData = historyCacheRef.current[historyTab];
+    if (cachedData) {
+      setPurchases(cachedData);
+    }
+  }, [loading]);
 
   const rentProducts = useMemo(() => allProducts.filter(p => p.product_type_name?.toLowerCase() === "rent"), [allProducts]);
   const sellProducts = useMemo(() => allProducts.filter(p => p.product_type_name?.toLowerCase() === "sell"), [allProducts]);
@@ -103,7 +142,10 @@ const BoosterPlanView: React.FC = () => {
       if (res?.data?.success) {
         toast.success(res.data.message || `${selectedProductIds.length} product(s) boosted successfully!`);
         refreshBalance();
-        fetchData();
+        // Clear cache and force refresh
+        historyCacheRef.current = {};
+        initialDataFetchedRef.current = false;
+        fetchData(true);
         setShowConfirmModal(false);
       }
     } catch (error: any) {
@@ -226,10 +268,7 @@ const BoosterPlanView: React.FC = () => {
   ];
 
   const flattenedBoosterHistory = useMemo(() => {
-    console.log('=== BOOSTER HISTORY DEBUG ===');
-    console.log('Raw Purchases from API:', purchases);
-    console.log('Number of purchase records:', purchases.length);
-    
+
     const rows: any[] = [];
     purchases.forEach((purchase, index) => {
       console.log(`\nPurchase #${index + 1}:`, {
@@ -249,16 +288,10 @@ const BoosterPlanView: React.FC = () => {
         sub_category_name: populatedProduct?.sub_category_name || purchase.sub_category_name || "-",
         product_type_name: populatedProduct?.product_type_name || purchase.product_type_name || "-",
       };
-      
-      console.log(`Processed Row #${index + 1}:`, rowData);
+
       rows.push(rowData);
     });
-    
-    console.log('\n=== FINAL RESULT ===');
-    console.log('Total rows to display:', rows.length);
-    console.log('All rows:', rows);
-    console.log('=======================\n');
-    
+
     const sorted = rows.sort((a, b) => new Date(b.expiry_date || b.createdAt).getTime() - new Date(a.expiry_date || a.createdAt).getTime());
     if (historyTab === "sell") return sorted.filter(r => r.product_type_name?.toLowerCase() === "sell");
     return sorted.filter(r => r.product_type_name?.toLowerCase() === "rent");
@@ -632,27 +665,26 @@ const BoosterPlanView: React.FC = () => {
               <button
                 key={tab}
                 onClick={() => setHistoryTab(tab)}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition capitalize ${
-                  historyTab === tab
+                className={`px-3 py-1 text-xs font-bold rounded-md transition capitalize ${historyTab === tab
                     ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
-                }`}
+                  }`}
               >
-                {tab === 'rent' ? 'Rent' : 'Sell'}
+                {tab === 'rent' ? 'Rent' : 'Sell'} ({tab === 'rent' ? boosterRentCount : boosterSellCount})
               </button>
             ))}
           </div>
         </div>
 
         {/* <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl overflow-hidden"> */}
-          <AgGridTable
-            rowData={flattenedBoosterHistory}
-            columns={columns}
-            showCheckboxes={false}
-            height={400}
-            rowHeight={52}
-            noRowsMessage="No booster purchases yet"
-          />
+        <AgGridTable
+          rowData={flattenedBoosterHistory}
+          columns={columns}
+          showCheckboxes={false}
+          height={400}
+          rowHeight={52}
+          noRowsMessage="No booster purchases yet"
+        />
         {/* </div> */}
       </div>
     </div>

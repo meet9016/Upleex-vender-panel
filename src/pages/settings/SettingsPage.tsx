@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
@@ -71,6 +71,8 @@ const SettingsPage: React.FC = () => {
   const [plans, setPlans] = useState<PriorityPlan[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [vendorPurchases, setVendorPurchases] = useState<PriorityPurchase[]>([]);
+  const [priorityRentCount, setPriorityRentCount] = useState<number>(0);
+  const [prioritySellCount, setPrioritySellCount] = useState<number>(0);
   const [listingPurchases, setListingPurchases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<PriorityPlan | null>(null);
@@ -94,71 +96,133 @@ const SettingsPage: React.FC = () => {
   const [uploadedVideos, setUploadedVideos] = useState<string[]>([]);
   const [uploadVideo, setUploadVideo] = useState<File | null>(null);
   const [videoToDelete, setVideoToDelete] = useState<string | null>(null);
+  const [pendingVideos, setPendingVideos] = useState<File[]>([]); // Videos waiting to be uploaded when rendering starts
   const { balance, currency, refreshBalance } = useWallet();
   const { filters, isLoadingFilter } = useFilter();
-
+  const historyCacheRef = useRef<Record<string, any[]>>({});
+  const initialDataFetchedRef = useRef(false);
+  const isFetchingRef = useRef(false);
   const showProduct = !isLoadingFilter && (filters.vendor || (!filters.vendor && !filters.service));
   const showService = !isLoadingFilter && (filters.service || (!filters.vendor && !filters.service));
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [plansRes, productsRes, purchasesRes, listingRes, videosRes] = await Promise.all([
-        api.get(endPointApi.getAllPriorityPlans),
-        api.get(endPointApi.postAllVendorProductList, { params: { limit: 1000 } }),
-        api.get(endPointApi.getVendorPriorityPurchases),
-        api.get(endPointApi.getPurchasedPlans),
-        api.get('vendor-store-video').catch(() => ({ data: { videos: [] } }))
-      ]);
+  // Lazy load videos ONLY when needed (render hone vala h to hi)
+  useEffect(() => {
+    const hasYearlyPlan = vendorPurchases.some(p => 
+      p.plan_duration === 'yearly' && 
+      p.status === 'active' && 
+      new Date(p.expire_at) > new Date()
+    );
 
-      const plansData = plansRes.data.data || [];
-      const rawProducts = productsRes.data.data || [];
-      const activePurchases: PriorityPurchase[] = purchasesRes.data.data || [];
-      const vids = videosRes.data?.videos || [];
-      
-      setUploadedVideos(vids);
-
-      setVendorPurchases(activePurchases);
-
-      const normalizedProducts = rawProducts.map((p: any) => {
-        let price = p.price;
-        if (
-          p.product_type_name?.toLowerCase() === 'rent' &&
-          p.product_listing_type_name?.toLowerCase() === 'monthly' &&
-          Array.isArray(p.month_arr) &&
-          p.month_arr.length
-        ) {
-          price = p.month_arr[0]?.price ?? price;
+    if (hasYearlyPlan && currentTab === "priority" && initialDataFetchedRef.current) {
+      const fetchVideos = async () => {
+        try {
+          const res = await api.get('vendor-store-video');
+          setUploadedVideos(res.data?.videos || []);
+        } catch (error) {
+          console.error("Failed to fetch videos", error);
         }
+      };
+      fetchVideos();
+    }
+  }, [vendorPurchases, currentTab, initialDataFetchedRef.current]);
 
-        const pid = p.id || p._id;
-        const assocPurchase = activePurchases.find(purchase =>
-          purchase.product_ids.some(id => String(id) === String(pid))
-        );
+  const fetchData = async (forceRefresh = false) => {
+    if (isFetchingRef.current && !forceRefresh) return;
+    isFetchingRef.current = true;
+    setLoading(true);
 
-        return {
-          ...p,
-          price: Number(price) || 0,
-          id: pid,
-          is_priority: p.is_priority || false,
-          priority_expiry: p.priority_expiry || null,
-          active_plan_name: assocPurchase?.plan_name
-        };
-      });
+    try {
+      const promises: any[] = [];
+      
+      // We always need rent/sell data for counts and history
+      promises.push(api.get(endPointApi.getVendorPriorityPurchases, { params: { filter_rent_sell: '1' } }).catch(() => ({ data: { total: 0, data: [] } })));
+      promises.push(api.get(endPointApi.getVendorPriorityPurchases, { params: { filter_rent_sell: '2' } }).catch(() => ({ data: { total: 0, data: [] } })));
 
-      setPlans(plansData);
-      setProducts(normalizedProducts);
-      setListingPurchases(listingRes.data.data || []);
+      // Fetch shared data only if not already fetched OR if forcing refresh
+      if (!initialDataFetchedRef.current || forceRefresh) {
+        promises.push(api.get(endPointApi.getAllPriorityPlans));
+        promises.push(api.get(endPointApi.postAllVendorProductList, { params: { limit: 1000 } }));
+        promises.push(api.get(endPointApi.getPurchasedPlans));
+      }
+
+      const results = await Promise.all(promises);
+      const rentRes = results[0];
+      const sellRes = results[1];
+
+      const rentData = rentRes.data.data || [];
+      const sellData = sellRes.data.data || [];
+      console.log("rentData", rentData);
+      console.log("sellData", sellData);
+      // Calculate total slots sum for the counts
+      const rentTotalSlots = rentData.reduce((acc: number, p: any) => acc + (p.total_slots || 0), 0);
+      const sellTotalSlots = sellData.reduce((acc: number, p: any) => acc + (p.total_slots || 0), 0);
+
+      setPriorityRentCount(rentTotalSlots);
+      setPrioritySellCount(sellTotalSlots);
+
+      // Cache the history data
+      historyCacheRef.current['rent'] = rentData;
+      historyCacheRef.current['sell'] = sellData;
+
+      if (!initialDataFetchedRef.current || forceRefresh) {
+        const [plansRes, productsRes, listingRes] = results.slice(2);
+
+        const plansData = plansRes.data.data || [];
+        const rawProducts = productsRes.data.data || [];
+        setListingPurchases(listingRes.data.data || []);
+
+        const normalizedProducts = rawProducts.map((p: any) => {
+          let price = p.price;
+          if (p.product_type_name?.toLowerCase() === 'rent' && p.product_listing_type_name?.toLowerCase() === 'monthly' && Array.isArray(p.month_arr) && p.month_arr.length) {
+            price = p.month_arr[0]?.price ?? price;
+          }
+          const pid = p.id || p._id;
+          // Use the fetched history to find priority status
+          const allHistory = [...(historyCacheRef.current['rent']), ...(historyCacheRef.current['sell'])];
+          const assocPurchase = allHistory.find(purchase => purchase.product_ids?.some((id: any) => String(id) === String(pid)));
+          
+          return {
+            ...p,
+            price: Number(price) || 0,
+            id: pid,
+            is_priority: p.is_priority || false,
+            priority_expiry: p.priority_expiry || null,
+            active_plan_name: assocPurchase?.plan_name
+          };
+        });
+
+        setPlans(plansData);
+        setProducts(normalizedProducts);
+        initialDataFetchedRef.current = true;
+      }
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to load data");
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    // Always sync the state with whatever is in the cache for the current tab
+    const cachedData = historyCacheRef.current[priorityHistoryTab];
+    if (cachedData) {
+      setVendorPurchases(cachedData);
+    }
+    
+    // If not in cache, trigger a fetch
+    if (!cachedData) {
+      fetchData();
+    }
+  }, [priorityHistoryTab]);
+
+  // Handle forcing updates to the state after a fetch finishes
+  useEffect(() => {
+    const cachedData = historyCacheRef.current[priorityHistoryTab];
+    if (cachedData) {
+      setVendorPurchases(cachedData);
+    }
+  }, [loading]); // When loading becomes false, sync from cache again
 
   useEffect(() => {
     if (!isLoadingFilter) {
@@ -270,7 +334,10 @@ const SettingsPage: React.FC = () => {
         setIsAddonModalOpen(false);
         setIsConfirmModalOpen(false);
         refreshBalance();
-        fetchData();
+        // Clear cache and force refresh
+        historyCacheRef.current = {};
+        initialDataFetchedRef.current = false;
+        fetchData(true);
         setSelectedProductIds([]);
         setAddonProductIds([]);
         setIncludeAddon(false);
@@ -289,7 +356,8 @@ const SettingsPage: React.FC = () => {
       toast.error("You can upload a maximum of 4 promotional videos.");
       return;
     }
-    
+
+    // Upload immediately
     setIsVideoUploading(true);
     const toastId = toast.loading("Uploading store video...");
     try {
@@ -302,7 +370,7 @@ const SettingsPage: React.FC = () => {
       if (res.data.success) {
         toast.success("Store promotional video uploaded successfully!");
         setUploadVideo(null);
-        
+
         // Reset file input visually
         const fileInput = document.getElementById('promotional-video-upload') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
@@ -490,7 +558,12 @@ const SettingsPage: React.FC = () => {
   const flattenedPriorityHistory = useMemo(() => {
     const rows: any[] = [];
     vendorPurchases.forEach(purchase => {
-      if (!purchase.product_ids || purchase.product_ids.length === 0) {
+      const allProductRefs = [
+        ...(purchase.product_ids || []).map(p => ({ p, type: 'Priority' })),
+        ...(purchase.addon_product_ids || []).map(p => ({ p, type: 'Add-on' }))
+      ];
+
+      if (allProductRefs.length === 0) {
         rows.push({
           ...purchase,
           product_name: "-",
@@ -502,11 +575,16 @@ const SettingsPage: React.FC = () => {
         return;
       }
 
-      purchase.product_ids.forEach(pId => {
-        const product = products.find(p => String(p.id) === String(pId));
+      allProductRefs.forEach(({ p: pRef, type: slotType }) => {
+        // Handle both populated objects and ID strings
+        const isPopulated = typeof pRef === 'object' && pRef !== null;
+        const pId = isPopulated ? (pRef._id || pRef.id) : pRef;
+        const product = products.find(p => String(p.id) === String(pId)) || (isPopulated ? pRef : null);
+
         rows.push({
           ...purchase,
-          product_name: product?.product_name || `Product ID: ${pId}`,
+          plan_name: slotType === 'Add-on' ? `${purchase.plan_name} (Benefit)` : purchase.plan_name,
+          product_name: product?.product_name || `Product: ${pId}`,
           category_name: product?.category_name || "-",
           sub_category_name: (product as any)?.sub_category_name || "-",
           product_type_name: product?.product_type_name || "-",
@@ -545,6 +623,15 @@ const SettingsPage: React.FC = () => {
       field: "plan_name",
       minWidth: 100,
       flex: 1,
+    },
+    {
+      headerName: "Duration",
+      field: "plan_duration",
+      minWidth: 100,
+      flex: 1,
+      cellRenderer: (params: any) => (
+        <span className="capitalize">{params.value || "Monthly"}</span>
+      )
     },
     {
       headerName: "Expiry",
@@ -678,7 +765,7 @@ const SettingsPage: React.FC = () => {
               variant={currentTab === "booster" ? "secondary" : "ghost"}
               onClick={() => setCurrentTab("booster")}
               className={`px-3 py-2.5 cursor-pointer rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "booster"
-                ? "bg-white text-indigo-600 shadow-md ring-1 ring-black/[0.04]"
+                ? "bg-white  shadow-md ring-1 ring-black/[0.04]"
                 : "text-gray-500 hover:text-gray-900"
                 }`}
             >
@@ -876,7 +963,7 @@ const SettingsPage: React.FC = () => {
                 // For Priority Plan: Block if already has priority plan
                 // Allow free products (same as Booster and Listing plans)
                 const pid = params.data.id || params.data._id;
-                const hasPriorityPlan = vendorPurchases.some(vp => 
+                const hasPriorityPlan = vendorPurchases.some(vp =>
                   vp.product_ids?.some((id: any) => String(id) === String(pid))
                 );
                 return !hasPriorityPlan;
@@ -891,7 +978,7 @@ const SettingsPage: React.FC = () => {
                 } else {
                   // For Priority Plan: Disable if already has priority plan
                   const pid = params.data.id || params.data._id;
-                  const hasPriorityPlan = vendorPurchases.some(vp => 
+                  const hasPriorityPlan = vendorPurchases.some(vp =>
                     vp.product_ids?.some((id: any) => String(id) === String(pid))
                   );
                   if (hasPriorityPlan) {
@@ -1260,13 +1347,13 @@ const SettingsPage: React.FC = () => {
                       <button
                         key={tab}
                         onClick={() => setPriorityHistoryTab(tab)}
-                        className={`flex-1 px-3 py-2 text-xs font-bold rounded-md transition capitalize ${
-                          priorityHistoryTab === tab
+                        className={`flex-1 px-4 py-2 text-xs font-bold rounded-md transition capitalize whitespace-nowrap flex items-center justify-center gap-1 ${priorityHistoryTab === tab
                             ? 'bg-white dark:bg-gray-700 text-brand-600 shadow-sm'
                             : 'text-gray-500 hover:text-gray-700'
-                        }`}
+                          }`}
                       >
-                        {tab === 'rent' ? 'Rent' : 'Sell'}
+                        <span>{tab === 'rent' ? 'Rent' : 'Sell'}</span>
+                        <span className="opacity-70 text-[10px]">({tab === 'rent' ? priorityRentCount : prioritySellCount})</span>
                       </button>
                     ))}
                   </div>
@@ -1380,10 +1467,10 @@ const SettingsPage: React.FC = () => {
                     <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 gap-1 w-full sm:w-auto">
                       {(["rent", "sell"] as const).map((tab) => (
                         <button key={tab} onClick={() => setPriorityHistoryTab(tab)}
-                          className={`flex-1 px-3 py-2 text-xs font-bold rounded-md transition capitalize ${
-                            priorityHistoryTab === tab ? 'bg-white dark:bg-gray-700 text-brand-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                          }`}>
-                          {tab === 'rent' ? 'Rent' : 'Sell'}
+                          className={`flex-1 px-4 py-2 text-xs font-bold rounded-md transition capitalize whitespace-nowrap flex items-center justify-center gap-1 ${priorityHistoryTab === tab ? 'bg-white dark:bg-gray-700 text-brand-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                            }`}>
+                          <span>{tab === 'rent' ? 'Rent' : 'Sell'}</span>
+                          <span className="opacity-70 text-[10px]">({tab === 'rent' ? priorityRentCount : prioritySellCount})</span>
                         </button>
                       ))}
                     </div>

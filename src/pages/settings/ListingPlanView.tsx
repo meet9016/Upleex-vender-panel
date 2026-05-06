@@ -46,6 +46,9 @@ const ListingPlanView: React.FC = () => {
   const [plans, setPlans] = useState<ListingPlan[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [purchasedPlans, setPurchasedPlans] = useState<any[]>([]);
+  const [allPurchasedPlans, setAllPurchasedPlans] = useState<any[]>([]);
+  const [listingRentCount, setListingRentCount] = useState<number>(0);
+  const [listingSellCount, setListingSellCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<ListingPlan | null>(null);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
@@ -55,17 +58,19 @@ const ListingPlanView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
   const [gridSearch, setGridSearch] = useState("");
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean; isFreeListing?: boolean; remainingFreeDays?: number; freeProductsInfo?: Array<{name: string, days: number, freeExpiry: string}> } | null>(null);
+  const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean; isFreeListing?: boolean; remainingFreeDays?: number; freeProductsInfo?: Array<{ name: string, days: number, freeExpiry: string }> } | null>(null);
 
   const [historyTab, setHistoryTab] = useState<"rent" | "sell">("rent");
-  const [freeListingDays, setFreeListingDays] = useState<number>(30); // Default 30 days for free listings
   const [hasShownLimitToast, setHasShownLimitToast] = useState(false); // Track if limit toast was shown
+  const historyCacheRef = React.useRef<Record<string, any[]>>({});
+  const initialDataFetchedRef = React.useRef(false);
+  const isFetchingRef = React.useRef(false);
 
   const planAggregates = useMemo(() => {
     const aggregates: Record<string, { total: number; used: number; productIds: Set<string> }> = {};
     const now = new Date();
 
-    const activePurchases = purchasedPlans.filter(p => {
+    const activePurchases = allPurchasedPlans.filter(p => {
       const isNotExpired = new Date(p.expire_at) > now;
       return isNotExpired;
     });
@@ -105,17 +110,39 @@ const ListingPlanView: React.FC = () => {
     });
 
     return aggregates;
-  }, [purchasedPlans, priorityAddons]);
+  }, [allPurchasedPlans, priorityAddons]);
 
-  const fetchData = async () => {
+  const fetchData = async (forceRefresh = false) => {
+    if (isFetchingRef.current && !forceRefresh) return;
+    isFetchingRef.current = true;
     setLoading(true);
+
     try {
-      const [plansRes, productsRes, purchasesRes, priorityRes] = await Promise.all([
-        api.get(endPointApi.getPlanOptions),
-        api.get(endPointApi.postAllVendorProductList, { params: { limit: 1000 } }),
-        api.get(endPointApi.getPurchasedPlans),
-        api.get(endPointApi.getVendorPriorityPurchases)
-      ]);
+      const promises: any[] = [];
+      
+      // Always fetch rent/sell history for counts and cache
+      promises.push(api.get(endPointApi.getVendorListingPurchases, { params: { filter_rent_sell: '1' } }).catch(() => ({ data: { total: 0, data: [] } })));
+      promises.push(api.get(endPointApi.getVendorListingPurchases, { params: { filter_rent_sell: '2' } }).catch(() => ({ data: { total: 0, data: [] } })));
+
+      if (!initialDataFetchedRef.current || forceRefresh) {
+        promises.push(api.get(endPointApi.getPlanOptions));
+        promises.push(api.get(endPointApi.postAllVendorProductList, { params: { limit: 1000 } }));
+        promises.push(api.get(endPointApi.getVendorPriorityPurchases));
+      }
+
+      const results = await Promise.all(promises);
+      const rentRes = results[0];
+      const sellRes = results[1];
+
+      // Update counts and cache
+      setListingRentCount(rentRes.data.total || 0);
+      setListingSellCount(sellRes.data.total || 0);
+      historyCacheRef.current['rent'] = rentRes.data.data || [];
+      historyCacheRef.current['sell'] = sellRes.data.data || [];
+      setAllPurchasedPlans([...(rentRes.data.data || []), ...(sellRes.data.data || [])]);
+
+      if (!initialDataFetchedRef.current || forceRefresh) {
+        const [plansRes, productsRes, priorityRes] = results.slice(2);
 
       const rawPlans = plansRes.data.data || [];
       const normalizedPlans = rawPlans.map((p: any) => ({
@@ -127,41 +154,53 @@ const ListingPlanView: React.FC = () => {
         features: p.features || [],
       }));
 
-      const rawProducts = productsRes.data.data || [];
-      const normalizedProducts = rawProducts.map((p: any) => {
-        let price = p.price;
-        // Normalizing price for Rent items if it's in month_arr
-        if (
-          p.product_type_name?.toLowerCase() === 'rent' &&
-          Array.isArray(p.month_arr) &&
-          p.month_arr.length
-        ) {
-          price = p.month_arr[0]?.price ?? price;
-        }
+        const rawProducts = productsRes.data.data || [];
+        const normalizedProducts = rawProducts.map((p: any) => {
+          let price = p.price;
+          if (p.product_type_name?.toLowerCase() === 'rent' && Array.isArray(p.month_arr) && p.month_arr.length) {
+            price = p.month_arr[0]?.price ?? price;
+          }
+          return {
+            ...p,
+            id: p.id || p._id,
+            price: Number(price) || 0,
+            free_listing_expires_at: p.free_listing_expires_at || null,
+            free_listing_remaining_days: p.free_listing_remaining_days || 0,
+          };
+        });
 
-        return {
-          ...p,
-          id: p.id || p._id,
-          price: Number(price) || 0,
-          free_listing_expires_at: p.free_listing_expires_at || null,
-          free_listing_remaining_days: p.free_listing_remaining_days || 0,
-        };
-      });
-
-      setPlans(normalizedPlans);
-      setProducts(normalizedProducts);
-      setPurchasedPlans(purchasesRes.data.data || []);
-      setPriorityAddons((priorityRes.data.data || []).filter((p: any) => p.is_addon_purchased));
+        setPlans(normalizedPlans);
+        setProducts(normalizedProducts);
+        setPriorityAddons((priorityRes.data.data || []).filter((p: any) => p.is_addon_purchased));
+        initialDataFetchedRef.current = true;
+      }
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to load listing plan data");
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    // Always sync state with whatever is in cache for the current tab
+    const cachedData = historyCacheRef.current[historyTab];
+    if (cachedData) {
+      setPurchasedPlans(cachedData);
+    }
+
+    if (!cachedData) {
+      fetchData();
+    }
+  }, [historyTab]);
+
+  // Sync when loading finishes to catch background updates
+  useEffect(() => {
+    const cachedData = historyCacheRef.current[historyTab];
+    if (cachedData) {
+      setPurchasedPlans(cachedData);
+    }
+  }, [loading]);
 
   const handleSelectPlan = (plan: ListingPlan) => {
     setSelectedPlan(plan);
@@ -240,7 +279,7 @@ const ListingPlanView: React.FC = () => {
           }
           return null;
         })
-        .filter(Boolean) as Array<{name: string, days: number, freeExpiry: string}>;
+        .filter(Boolean) as Array<{ name: string, days: number, freeExpiry: string }>;
 
       setPurchaseSummary({
         count: selectedProductIds.length,
@@ -290,7 +329,10 @@ const ListingPlanView: React.FC = () => {
         setIsModalOpen(false);
         setIsConfirmModalOpen(false);
         refreshBalance();
-        fetchData();
+        // Clear cache and force refresh to get latest status
+        historyCacheRef.current = {};
+        initialDataFetchedRef.current = false;
+        fetchData(true);
       }
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Operation failed");
@@ -636,7 +678,7 @@ const ListingPlanView: React.FC = () => {
 
             <div className="space-y-2 mb-8 flex-grow">
               {(() => {
-                const myActive = purchasedPlans.find(p => p.plan_type === plan.key);
+                const myActive = allPurchasedPlans.find(p => p.plan_type === plan.key && new Date(p.expire_at) > new Date());
                 if (myActive) {
                   const used = myActive.product_ids?.length || 0;
                   const total = myActive.max_products || plan.product_limit;
@@ -738,13 +780,12 @@ const ListingPlanView: React.FC = () => {
               <button
                 key={tab}
                 onClick={() => setHistoryTab(tab)}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition capitalize ${
-                  historyTab === tab
+                className={`px-3 py-1 text-xs font-bold rounded-md transition capitalize ${historyTab === tab
                     ? 'bg-white dark:bg-gray-700 text-emerald-600 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                {tab === 'rent' ? 'Rent' : 'Sell'}
+                {tab === 'rent' ? 'Rent' : 'Sell'} ({tab === 'rent' ? listingRentCount : listingSellCount})
               </button>
             ))}
           </div>

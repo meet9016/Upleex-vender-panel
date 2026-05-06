@@ -49,6 +49,7 @@ const ServicePlanView: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [gridSearch, setGridSearch] = useState("");
+  const fetchedRef = React.useRef(false);
 
   const planAggregates = useMemo(() => {
     const aggregates: Record<string, { total: number; used: number; serviceIds: Set<string>; planName: string }> = {};
@@ -121,7 +122,10 @@ const ServicePlanView: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    if (!fetchedRef.current) {
+      fetchData();
+      fetchedRef.current = true;
+    }
   }, []);
 
   const handleSelectPlan = (plan: ServiceListingPlan) => {
