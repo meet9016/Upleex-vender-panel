@@ -840,15 +840,10 @@ const ProductTable = () => {
         if (productsRes?.data?.data && Array.isArray(productsRes.data.data)) {
           const products = productsRes.data.data;
           
-          // Count active free products for current month
-          const startOfMonth = new Date();
-          startOfMonth.setHours(0, 0, 0, 0);
-          startOfMonth.setDate(1);
-
+          // Count all free products (no month filter - GST determines limit)
           const freeCount = products.filter((p: any) =>
             p.pricing_type === 'free' &&
-            p.status === 'active' &&
-            new Date(p.createdAt || p.updatedAt) >= startOfMonth
+            ['active', 'draft'].includes(p.status)
           ).length;
           setFreeProductCount(freeCount);
         }

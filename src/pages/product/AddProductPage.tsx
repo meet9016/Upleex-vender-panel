@@ -248,16 +248,10 @@ export default function AddProductPage() {
                 setSkuCounter(maxCounter + 1);
 
                 // Count active free products for current month (aligning with backend monthly limit)
-                const startOfMonth = new Date();
-                startOfMonth.setHours(0, 0, 0, 0);
-                startOfMonth.setDate(1);
-
                 const freeCount = products.filter((p: any) =>
                     p.pricing_type === 'free' &&
-                    p.status === 'active' &&
-                    new Date(p.createdAt || p.updatedAt) >= startOfMonth
+                    ['active', 'draft'].includes(p.status)
                 ).length;
-                setFreeProductCount(freeCount);
             }
         } catch (error) {
             setSkuCounter(1); // Fallback to 1
