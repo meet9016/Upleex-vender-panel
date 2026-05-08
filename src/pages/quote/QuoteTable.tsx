@@ -369,9 +369,9 @@ const QuoteTable = () => {
       let customerEmail = '';
 
       // Check if user_id is populated
-      if (typeof quote.user_id === 'object' && quote.user_id !== null && quote.user_id.name) {
+      if (typeof quote.user_id === 'object' && quote.user_id !== null) {
         customerId = quote.user_id._id || quote.user_id.id || 'unknown';
-        customerName = quote.user_id.name;
+        customerName = quote.user_id.name || 'Unknown Customer';
         customerEmail = quote.user_id.email || '';
       } 
       // Fallback to review_details.user_id if populated
@@ -1423,13 +1423,13 @@ const QuoteTable = () => {
         </div>
       </div>
 
-      {/* Mobile Legend - Perfected */}
+      {/* Mobile Legend */}
       <div className="sm:hidden mb-5 overflow-x-auto no-scrollbar pb-1">
         <ColorLegend />
       </div>
 
-
-      <div className="overflow-x-auto -mx-2 sm:mx-0">
+      {/* Desktop Table */}
+      <div className="hidden sm:block overflow-x-auto -mx-2 sm:mx-0">
         <div className="inline-block min-w-full align-middle">
           <AgGridTable
             columns={columns}
@@ -1450,6 +1450,130 @@ const QuoteTable = () => {
             noRowsMessage="No quote found"
           />
         </div>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="sm:hidden">
+        {loading ? (
+          <div className="flex justify-center py-16"><div className="w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
+        ) : quoteData.length === 0 ? (
+          <div className="text-center py-16 text-gray-400 text-sm">No quotes found</div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {quoteData.map((quote: any) => {
+              const status = (quote.status || '').toLowerCase();
+              const isCompleted = status.includes('complet') || status.includes('success');
+              const isDisabled = ['approval','approved','reject','rejected','complete','completed','delivery'].includes(status);
+              const isPaid = (quote.payment_status || '').toLowerCase() === 'paid';
+              const adminPayment = quote.payment_status_info?.payment_status || 'no_payment';
+              const hasPaymentLink = !!quote.razorpay_payment_link;
+              return (
+                <div key={quote._id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                  {/* Header */}
+                  <div className="flex items-start gap-3 p-3">
+                    {quote.product_main_image ? (
+                      <img src={quote.product_main_image} alt={quote.product_name} className="w-14 h-14 rounded-lg object-cover border border-gray-100 flex-shrink-0" onError={(e: any) => { e.target.src = DEFAULT_PLACEHOLDER; }} />
+                    ) : (
+                      <div className="w-14 h-14 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-[10px] flex-shrink-0">No Img</div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-[13px] text-gray-900 dark:text-white truncate">{quote.product_name || '-'}</p>
+                      <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                        {quote.product_type_name && quote.product_type_name !== '-' && (
+                          <span className="text-[10px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">{quote.product_type_name}</span>
+                        )}
+                        {quote.product_listing_type_name && quote.product_listing_type_name !== '-' && (
+                          <span className="text-[10px] font-medium bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">{quote.product_listing_type_name}</span>
+                        )}
+                        {quote.month_name && quote.month_name !== '-' && (
+                          <span className="text-[10px] font-medium bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{quote.month_name}</span>
+                        )}
+                      </div>
+                      {/* Customer email */}
+                      {quote.user_id?.email && (
+                        <p className="text-[10px] text-gray-400 mt-0.5 truncate"><b>{quote.user_id.name || 'Customer'} </b>({quote.user_id.email} )</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Status Row */}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 pb-2">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] text-gray-400 font-medium">Status:</span>
+                      <StatusBadge status={quote.status || 'pending'} />
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] text-gray-400 font-medium">Payment:</span>
+                      <StatusBadge status={quote.payment_status || 'pending'} />
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] text-gray-400 font-medium">Admin:</span>
+                      <StatusBadge status={adminPayment} />
+                    </div>
+                  </div>
+
+                  {/* Price + Dates Grid */}
+                  <div className="grid grid-cols-3 gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/40 border-t border-gray-100 dark:border-gray-700">
+                    <div>
+                      <p className="text-[9px] text-gray-400 uppercase tracking-wide">Unit Price</p>
+                      <p className="text-[12px] font-semibold text-gray-800 dark:text-white">{quote.price && quote.price !== '0' ? `₹${Number(quote.price).toLocaleString('en-IN')}` : '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-gray-400 uppercase tracking-wide">Total</p>
+                      <p className="text-[12px] font-bold text-green-600">{quote.total_price && quote.total_price !== '0' ? `₹${Number(quote.total_price).toLocaleString('en-IN')}` : '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-gray-400 uppercase tracking-wide">Qty</p>
+                      <p className="text-[12px] font-semibold text-gray-700 dark:text-gray-300">{quote.qty || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-gray-400 uppercase tracking-wide">Start</p>
+                      <p className="text-[11px] text-gray-600 dark:text-gray-300">{quote.start_date && quote.start_date !== '-' ? quote.start_date : '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-gray-400 uppercase tracking-wide">End</p>
+                      <p className="text-[11px] text-gray-600 dark:text-gray-300">{quote.end_date && quote.end_date !== '-' ? quote.end_date : '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-gray-400 uppercase tracking-wide">
+                        {quote.product_listing_type_name === 'HOURLY' ? 'Time' : 'Month'}
+                      </p>
+                      <p className="text-[11px] text-gray-600 dark:text-gray-300">
+                        {quote.product_listing_type_name === 'HOURLY'
+                          ? (quote.start_time && quote.start_time !== '-' ? quote.start_time : '-')
+                          : (quote.month_name && quote.month_name !== '-' ? quote.month_name : '-')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Payment Link */}
+                  {hasPaymentLink && (
+                    <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-700">
+                      {isPaid ? (
+                        <span className="text-[11px] text-gray-400 bg-gray-100 px-2 py-1 rounded-full">Payment Completed</span>
+                      ) : (
+                        <a href={quote.razorpay_payment_link} target="_blank" rel="noopener noreferrer"
+                          className="text-[11px] text-blue-600 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full font-medium hover:bg-blue-100 transition-colors inline-block"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          🔗 Copy Payment Link
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-end gap-2 px-3 py-2 border-t border-gray-100 dark:border-gray-700">
+                    <button onClick={() => handleApproval(quote._id)} disabled={isDisabled} className={`w-8 h-8 flex items-center justify-center rounded-xl text-xs font-bold ${isDisabled ? 'bg-gray-100 text-gray-400 opacity-50' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`} title="Approve"><FiCheck size={14} /></button>
+                    <button onClick={() => handleRejected(quote._id)} disabled={isDisabled} className={`w-8 h-8 flex items-center justify-center rounded-xl ${isDisabled ? 'bg-gray-100 text-gray-400 opacity-50' : 'bg-rose-50 text-rose-600 border border-rose-100'}`} title="Reject"><FiX size={14} /></button>
+                    <button onClick={() => handleGenerateBill(quote)} disabled={!(isPaid && isCompleted)} className={`w-8 h-8 flex items-center justify-center rounded-xl ${isPaid && isCompleted ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-gray-100 text-gray-400 opacity-50'}`} title="Generate Bill"><FaFileInvoice size={13} /></button>
+                    <button onClick={() => router.push(`/quote/edit/${quote._id}`)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100"><MdModeEdit size={15} /></button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
       {/* Floating Image Preview */}
       {hoveredImage && (

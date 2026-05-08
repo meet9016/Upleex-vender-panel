@@ -55,9 +55,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       <div className={`flex flex-col min-h-screen transition-all duration-300 ease-in-out ${mainContentMargin}`}>
         <AppHeader />
         <main className="flex-1 p-4 mx-auto w-full max-w-(--breakpoint-2xl) md:p-6 pb-24 lg:pb-6">
-          {/* Common Top Row for Breadcrumbs (Hidden on Dashboard) */}
+          {/* Breadcrumb - Hidden on mobile */}
           {pathname !== "/" && pathname !== null && pathname !== "" && (
-            <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="hidden sm:block animate-in fade-in slide-in-from-top-4 duration-500">
               <PageBreadcrumb breadcrumbs={displayBreadcrumbs || undefined} />
             </div>
           )}

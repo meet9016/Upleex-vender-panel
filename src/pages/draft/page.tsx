@@ -314,13 +314,64 @@ const DraftsPage = () => {
         </div>
       </div>
 
-      <AgGridTable
-        columns={columns}
-        rowData={draftData}
-        filter={false}
-        tableName={activeScope === 'product' ? "Product Drafts" : "Service Drafts"}
-        onSelectionChange={setSelectedRows}
-      />
+      {/* Desktop Table */}
+      <div className="hidden sm:block">
+        <AgGridTable
+          columns={columns}
+          rowData={draftData}
+          filter={false}
+          tableName={activeScope === 'product' ? "Product Drafts" : "Service Drafts"}
+          onSelectionChange={setSelectedRows}
+        />
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="sm:hidden">
+        {loading ? (
+          <div className="flex justify-center py-16"><div className="w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
+        ) : draftData.length === 0 ? (
+          <div className="text-center py-16 text-gray-400 text-sm">No drafts found</div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {(draftData as any[]).map((item: any) => {
+              const id = item._id || item.id;
+              const name = item.product_name || item.service_name || '-';
+              const image = item.product_main_image || item.image || '';
+              return (
+                <div key={id} className="bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    {image ? (
+                      <img src={image} alt={name} className="w-14 h-14 rounded-lg object-cover border border-gray-200 flex-shrink-0" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-lg bg-gray-200 flex items-center justify-center text-gray-400 text-[10px] flex-shrink-0">No Img</div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-[13px] text-gray-900 dark:text-white truncate">{name}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{item.category_name || '-'}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] font-bold text-gray-500 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">Draft</span>
+                        {item.price && <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300">₹{item.price}</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-gray-200 dark:border-gray-700">
+                    <p className="text-[11px] text-gray-400">{item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB') : '-'}</p>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => openPlanModal(item)} className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-semibold">Dedraft</button>
+                      <button onClick={() => router.push(activeScope === 'product' ? `/product/addProduct?id=${id}` : `/service/edit/${id}`)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                      </button>
+                      <button onClick={() => openDeletePopup(id)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 border border-red-100">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Enhanced Plan Selection Modal */}
       {showPlanModal && (

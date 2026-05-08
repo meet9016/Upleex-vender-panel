@@ -173,7 +173,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
 
             {multiple && preview && (
               <div className={`
-                grid gap-4 w-full flex flex-row
+                hidden md:grid gap-4 w-full
                 ${smallPreview
                   ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4"
                   : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2"
@@ -195,9 +195,6 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 
                 opacity-0 group-hover/image:opacity-100 transition-all duration-300">
                       <div className="absolute top-2 left-2 right-2 flex justify-end items-center">
-                        {/* <span className="text-white text-xs font-medium bg-black/40 px-2 py-1 rounded">
-                          #{index + 1}
-                        </span> */}
                         <button
                           type="button"
                           onClick={(e) => {
@@ -215,7 +212,39 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
                         </button>
                       </div>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
+            {/* Mobile horizontal scroll for sub images */}
+            {multiple && preview && (
+              <div className="flex md:hidden gap-3 overflow-x-auto pb-1 w-full">
+                {preview?.filter((img: any) => img && img.image && img.image !== "").map((img: any, index: any) => (
+                  <div
+                    key={index}
+                    className="relative flex-shrink-0 w-20 h-20 overflow-hidden rounded-xl
+                             bg-gray-100 shadow-md"
+                  >
+                    <img
+                      src={img.image}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeImage(img.product_image_id);
+                      }}
+                      className="absolute top-1 right-1 bg-[rgb(58,140,237)] text-white
+                       p-0.5 rounded-md shadow"
+                      aria-label="Remove image"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
                 ))}
               </div>

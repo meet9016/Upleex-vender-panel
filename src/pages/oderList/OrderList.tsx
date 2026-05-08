@@ -319,8 +319,8 @@ const OrderList = () => {
     const groups: { [key: string]: any } = {};
 
     vendorOrders.forEach((order: any) => {
-      const customer = order.user_id || {};
-      const customerId = customer._id || customer.id || customer || 'unknown';
+      const customer = typeof order.user_id === 'object' && order.user_id !== null ? order.user_id : {};
+      const customerId = customer._id || customer.id || (typeof order.user_id === 'string' ? order.user_id : 'unknown');
       const customerName = customer.name || 'Unknown Customer';
       const customerEmail = customer.email || '';
 
@@ -1040,19 +1040,19 @@ const OrderList = () => {
       {/* Main Table Section */}
       <div className="">
         {/* Header with Filters */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-2  ">
           <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
-            <button
-             /*
+            {/* <button
+             
               onClick={() => {
                 setActiveTab('orders');
                 setPage(1);
               }}
-              */
+              
               className={`px-4 py-2 rounded-md text-sm font-medium bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm border border-gray-100 dark:border-gray-700`}
             >
               Orders
-            </button>
+            </button> */}
              {/*
             <button
               onClick={() => {
@@ -1268,8 +1268,8 @@ const OrderList = () => {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto -mx-2 sm:mx-0">
+        {/* Table - Desktop */}
+        <div className="hidden sm:block overflow-x-auto -mx-2 sm:mx-0">
           <div className="inline-block min-w-full align-middle">
             <AgGridTable
               columns={vendorColumns}
@@ -1289,6 +1289,86 @@ const OrderList = () => {
               noRowsMessage='No orders found'
             />
           </div>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="sm:hidden">
+          {loading ? (
+            <div className="flex justify-center py-16"><div className="w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
+          ) : vendorOrders.length === 0 ? (
+            <div className="text-center py-16 text-gray-400 text-sm">No orders found</div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              {vendorOrders.map((order: any) => {
+                const isPaid = (order.payment_status || '').toLowerCase() === 'paid';
+                const isCompleted = ['delivered','completed'].includes((order.vendor_status || '').toLowerCase());
+                const items = order.items || [];
+                const productName = items.map((i: any) => i.product_id?.name || i.product_name || i.name || '-').join(', ');
+                const productImg = items[0]?.product_image || items[0]?.image || '';
+                const skus = items.map((i: any) => i.product_id?.sku || i.sku || '').filter(Boolean).join(', ');
+                const adminPayment = order.payment_status_info?.payment_status || 'no_payment';
+                return (
+                  <div key={order._id || order.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-start gap-3 p-3">
+                      {productImg ? (
+                        <img src={productImg} alt={productName} className="w-14 h-14 rounded-lg object-cover border border-gray-100 flex-shrink-0" onError={(e: any) => { e.target.src = ''; }} />
+                      ) : (
+                        <div className="w-14 h-14 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-[10px] flex-shrink-0">No Img</div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-1">
+                          <p className="font-semibold text-[13px] text-gray-900 dark:text-white truncate flex-1">{productName}</p>
+                          <span className="text-[10px] font-mono text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex-shrink-0">#{order.order_id}</span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 mt-0.5"><b>{order.user_id?.name || 'Customer'} </b>({order.user_id?.email || 'N/A'})</p>
+                        {skus && <p className="text-[10px] text-gray-400 font-mono mt-0.5">SKU: {skus}</p>}
+                      </div>
+                    </div>
+
+                    {/* Status Row */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 pb-2">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] text-gray-400 font-medium">Order:</span>
+                        <StatusBadge status={order.vendor_status || 'pending'} />
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] text-gray-400 font-medium">Payment:</span>
+                        <StatusBadge status={order.payment_status || 'pending'} />
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] text-gray-400 font-medium">Admin:</span>
+                        <StatusBadge status={adminPayment} />
+                      </div>
+                    </div>
+
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-3 gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/40 border-t border-gray-100 dark:border-gray-700">
+                      <div>
+                        <p className="text-[9px] text-gray-400 uppercase tracking-wide">Amount</p>
+                        <p className="text-[12px] font-bold text-green-600">₹{Number(order.total_amount || 0).toLocaleString('en-IN')}</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-gray-400 uppercase tracking-wide">Items</p>
+                        <p className="text-[12px] font-semibold text-gray-700 dark:text-gray-300">{items.length}</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-gray-400 uppercase tracking-wide">Date</p>
+                        <p className="text-[11px] text-gray-600 dark:text-gray-300">{order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB') : '-'}</p>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-end gap-2 px-3 py-2 border-t border-gray-100 dark:border-gray-700">
+                      <button onClick={() => handleViewOrder(order)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100"><HiOutlineEye size={15} /></button>
+                      <button onClick={() => { if (isPaid && isCompleted) handleDownloadInvoice(order); }} disabled={!isPaid || !isCompleted} className={`w-8 h-8 flex items-center justify-center rounded-lg border ${isPaid && isCompleted ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-gray-100 text-gray-400 border-gray-200 opacity-60'}`} title="Generate Bill"><FaFileInvoice size={13} /></button>
+                      <button onClick={() => handleUpdateStatus(order)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100"><FaEdit size={13} /></button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Pagination */}

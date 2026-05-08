@@ -1193,16 +1193,11 @@ export default function AddProductPage() {
                                     {validationErrors.sku}
                                 </span>
                             )}
-                            {/* {!isEditMode && (
-                                <span className="text-xs text-gray-500 mt-1">
-                                    Format: Category(3)-BusinessName(3)-Number(3)
-                                </span>
-                            )} */}
                         </div>
                     </div>
 
                     {/* New Product Checkbox */}
-                    <div className="flex items-center gap-3 mt-7 h-[40px]">
+                    <div className="flex items-center gap-3 lg:mt-7 h-[40px]">
                         <Checkbox
                             label="New Product"
                             checked={formData.isNew}
@@ -1520,7 +1515,7 @@ export default function AddProductPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
 
                     {/* ================= LEFT – DESCRIPTION EDITOR (FIXED) ================= */}
-                    <div className="h-[400px] flex flex-col">
+                    <div className="h-[250px] md:h-[400px] flex flex-col">
                         <Label required className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
                             Description
                         </Label>
@@ -1582,7 +1577,7 @@ export default function AddProductPage() {
 
                     {/* <!-- ======================================================== Features  ======================================================== -->*/}
 
-                    <div className="h-[400px] flex flex-col">
+                    <div className="h-[250px] md:h-[400px] flex flex-col">
                         <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
                             Key Features
                         </Label>
@@ -1621,8 +1616,8 @@ export default function AddProductPage() {
                                                 />
                                             </div>
 
-                                            {/* DESCRIPTION */}
-                                            <div className="w-1/2">
+                                            {/* DESCRIPTION + DELETE inside */}
+                                            <div className="w-1/2 relative">
                                                 <Input
                                                     type="text"
                                                     placeholder="Description"
@@ -1630,31 +1625,27 @@ export default function AddProductPage() {
                                                     className={`h-9 text-sm w-full border ${validationErrors.featureFields?.[index]?.value
                                                         ? "border-red-500"
                                                         : "border-gray-300"
-                                                        } focus:ring-1 focus:ring-[rgb(53,66,237)]`}
+                                                        } focus:ring-1 focus:ring-[rgb(53,66,237)] ${formData.keyFeatures.length > 1 ? "pr-8" : ""}`}
                                                     onChange={(e) =>
                                                         UpdateFeatureField(index, "value", e.target.value)
                                                     }
                                                 />
-
-                                                {/* Validation message for individual field */}
+                                                {formData.keyFeatures.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeFeature(index)}
+                                                        className="absolute right-1.5 top-1/2 -translate-y-1/2 text-red-500 hover:text-red-600 transition"
+                                                        title="Remove feature"
+                                                    >
+                                                        <MdDelete size={16} />
+                                                    </button>
+                                                )}
                                                 {validationErrors.featureFields?.[index]?.value && (
                                                     <p className="!text-[14px] text-red-500 mt-0.5 ml-1">
                                                         {validationErrors.featureFields[index].value}
                                                     </p>
                                                 )}
                                             </div>
-
-                                            {/* DELETE */}
-                                            {formData.keyFeatures.length > 1 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeFeature(index)}
-                                                    className="h-9 w-10 flex items-center justify-center rounded-md text-red-600 hover:text-red-500 transition mt-0.5"
-                                                    title="Remove feature"
-                                                >
-                                                    <MdDelete size={20} />
-                                                </button>
-                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -1674,7 +1665,7 @@ export default function AddProductPage() {
                     <div>
                         <Label required>Main Image</Label>
                         <div
-                            className={`h-[300px] rounded-lg border transition-all duration-200 
+                            className={`h-[180px] md:h-[300px] rounded-lg border transition-all duration-200 
                                 flex items-center justify-center overflow-hidden
                                 ${validationErrors.mainImage
                                     ? "border-red-400 focus-within:ring-red-400 focus-within:ring-2"
@@ -1709,7 +1700,7 @@ export default function AddProductPage() {
                     <div>
                         <Label>Sub Images (Max 4)</Label>
 
-                        <div className="h-[300px] rounded-lg border focus-within:ring-blue-500 focus-within:ring-2 border-gray-300 flex items-center justify-center overflow-hidden">
+                        <div className="h-[200px] md:h-[300px] rounded-lg border focus-within:ring-blue-500 focus-within:ring-2 border-gray-300 flex items-center justify-center overflow-hidden">
                             <DropzoneComponent
                                 preview={subPreview}
                                 setPreview={setSubPreview}

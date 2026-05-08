@@ -1566,8 +1566,8 @@ const ProductTable = () => {
       </div>
 
 
-      {/* Products Table */}
-      <div className="overflow-x-auto -mx-4 sm:mx-0">
+      {/* Products Table - Desktop */}
+      <div className="hidden sm:block overflow-x-auto -mx-4 sm:mx-0">
         <div className="inline-block min-w-full align-middle">
           <AgGridTable
             columns={columns}
@@ -1583,6 +1583,121 @@ const ProductTable = () => {
             noRowsMessage='No products found'
           />
         </div>
+      </div>
+
+      {/* Products Cards - Mobile */}
+      <div className="sm:hidden">
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <div className="w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : productData.length === 0 ? (
+          <div className="text-center py-16 text-gray-400 text-sm">No products found</div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {productData.map((product: any) => {
+              const imageUrl = getImageUrl(product);
+              const isApproved = product.approval_status === 'approved';
+              const isVisible = product.is_visible !== false;
+              const isFree = product.pricing_type?.toLowerCase() === 'free';
+              const isDraft = product.status?.toLowerCase() === 'draft';
+              const isOutOfStock = product.is_out_of_stock || (product.available_quantity || 0) <= 0;
+
+              return (
+                <div
+                  key={product._id || product.id}
+                  className={`rounded-xl border shadow-sm overflow-hidden ${
+                    isDraft
+                      ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                      : isFree
+                      ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/50'
+                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                  }`}
+                >
+                  {/* Header */}
+                  <div className="flex items-start gap-3 p-3">
+                    <img
+                      src={imageUrl}
+                      alt={product.product_name}
+                      className="w-14 h-14 rounded-lg object-cover border border-gray-100 dark:border-gray-700 flex-shrink-0"
+                      onError={(e: any) => { e.target.src = DEFAULT_PLACEHOLDER; }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-semibold text-[13px] text-gray-900 dark:text-white truncate flex-1">{product.product_name}</p>
+                        <Switch
+                          checked={isVisible}
+                          onChange={() => { if (isApproved) toggleProductVisibility(product._id || product.id, isVisible); }}
+                          disabled={!isApproved}
+                          size="sm"
+                          className={!isApproved ? 'opacity-50 cursor-not-allowed' : ''}
+                        />
+                      </div>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{product.category_name}{product.sub_category_name ? ` · ${product.sub_category_name}` : ''}</p>
+                      <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                        <span className="text-[10px] text-gray-400 font-medium">Admin:</span>
+                        <StatusBadge status={product.approval_status || 'pending'} />
+                        <span className="text-[10px] text-gray-400 font-medium ml-1">Pricing:</span>
+                        <StatusBadge status={product.pricing_type || 'free'} />
+                        {product.product_listing_type_name && (
+                          <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full border border-indigo-100">{product.product_listing_type_name}</span>
+                        )}
+                        {product.is_new && <StatusBadge status="New" />}
+                        {isOutOfStock && <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full">OOS</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Details Grid */}
+                  <div className="grid grid-cols-5 gap-2 px-3 py-2 bg-gray-50/80 dark:bg-gray-700/40 border-t border-gray-100 dark:border-gray-700">
+                    <div>
+                      <p className="text-[9px] text-gray-400 uppercase tracking-wide">Price</p>
+                      <p className="text-[12px] font-bold text-gray-800 dark:text-white">₹{Number(product.price || 0).toLocaleString('en-IN')}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-gray-400 uppercase tracking-wide">Cancel Price</p>
+                      <p className="text-[12px] font-bold text-gray-800 dark:text-white">₹{Number(product.cancel_price || 0).toLocaleString('en-IN')}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-gray-400 uppercase tracking-wide">Deposit</p>
+                      <p className="text-[12px] font-bold text-gray-800 dark:text-white">₹{Number(product.deposit_amount || 0).toLocaleString('en-IN')}</p>
+                    </div>
+                    {activeTab === 'rent' && (
+                      <div>
+                        <p className="text-[9px] text-gray-400 uppercase tracking-wide">Stock</p>
+                        <p className={`text-[12px] font-bold ${isOutOfStock ? 'text-red-500' : 'text-gray-800 dark:text-white'}`}>{product.available_quantity || 0}</p>
+                      </div>
+                    )}
+                    {product.expires_at && (
+                      <div>
+                        <p className="text-[9px] text-gray-400 uppercase tracking-wide">Expires</p>
+                        <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300">{new Date(product.expires_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-end gap-2 px-3 py-2 border-t border-gray-100 dark:border-gray-700">
+                    <button
+                      onClick={() => router.push(`/product/addProduct?id=${product._id || product.id}`)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100"
+                    >
+                      <MdModeEdit size={16} />
+                    </button>
+                    {!isApproved && (
+                      <button
+                        onClick={() => openDeletePopup(product._id || product.id)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 border border-red-100"
+                      >
+                        <MdDelete size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
