@@ -1037,7 +1037,7 @@ export default function AddProductPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
 
                     {/* ================= Row 1: Category & Sub Category ================= */}
                     <div>
@@ -1269,9 +1269,9 @@ export default function AddProductPage() {
 
                     {/* ================= Row 3: Rent Type ================= */}
                     {selectedListingType === "Rent" && (
-                        <div className="col-span-2 p-4 bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div className="lg:col-span-2 p-4 bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
                             <Label required className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Billing Type</Label>
-                            <div className="flex items-center gap-6">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
                                 <Radio
                                     id="radio-day"
                                     name="billingType"
@@ -1387,7 +1387,7 @@ export default function AddProductPage() {
                     {/* ================= Rent Flow: Month ================= */}
                     {selectedListingType === "Rent" && billingType === "month" && (
                         <div
-                            className={`col-span-2 pb-2 rounded-2xl border backdrop-blur
+                            className={`lg:col-span-2 pb-2 rounded-2xl border backdrop-blur
                                 border-gray-200 dark:border-gray-700
                                 bg-white/70 dark:bg-gray-900/70
                             `}
