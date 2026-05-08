@@ -796,14 +796,11 @@ const QuoteTable = () => {
     }
   };
 
-  const getQuoteData = async (filterParams: any = {}) => {
+  const getQuoteData = async (filterParams: any = {}, skipLoading = false) => {
     try {
-      setLoading(true);
-      // Build query params
+      if (!skipLoading) setLoading(true);
       const params = { ...filterParams };
-
       const res = await api.get(endPointApi.postGetQuote, { params });
-
       if (res?.data?.success && res?.data?.data) {
         const transformedData = transformQuoteData(res.data.data);
         setQuoteData(transformedData);
@@ -811,7 +808,7 @@ const QuoteTable = () => {
     } catch (error) {
       toast.error("Failed to fetch quotes");
     } finally {
-      setLoading(false);
+      if (!skipLoading) setLoading(false);
     }
   };
 
@@ -1009,9 +1006,6 @@ const QuoteTable = () => {
   const applyFilters = () => {
     setFilters(pendingFilters);
     const params = getCurrentParams(pendingFilters);
-    params.page = 1;
-    params.limit = 10;
-
     getQuoteData(params);
     setShowFilterModal(false);
   };
@@ -1067,11 +1061,15 @@ const QuoteTable = () => {
     }
   };
 
+  const isFirstRender = useRef(true);
+
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     // Search automatically triggers a fetch with all current applied filters
     const params = getCurrentParams();
-    params.page = 1;
-    params.limit = 10;
     getQuoteData(params);
   }, [debouncedSearch]);
 
@@ -1095,11 +1093,17 @@ const QuoteTable = () => {
   }, []);
 
   useEffect(() => {
-    getStatusList();
-    getDropdownData();
-    // Load initial data without filters
-    getQuoteData({});
-  }, []);
+    const initData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([getStatusList(), getDropdownData()]);
+        await getQuoteData({}, true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    initData();
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const getRowStyle = (params: any) => {
     // If isNew is true -> Light Yellow 
