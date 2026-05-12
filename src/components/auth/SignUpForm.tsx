@@ -522,14 +522,14 @@ export default function SignUpForm() {
                     }}
                     numInputs={6}
                     shouldAutoFocus
-                    containerStyle={{ display: 'flex', width: '100%', gap: '8px' }}
+                    containerStyle={{ display: 'flex', width: '100%', gap: '8px', justifyContent: 'center' }}
                     renderInput={(props) => (
                       <input
                         {...props}
-                        style={{ width: '100%' }}
+                        style={{ width: '42px', height: '48px' }}
                         inputMode="numeric"
                         pattern="\d*"
-                        className={`${errors.otp ? 'border-2 border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-2 border-slate-300 focus:border-[#4F46E5] focus:ring-[#4F46E5]/20'} aspect-square h-auto rounded-lg bg-slate-50 dark:bg-gray-800 text-center text-lg font-semibold text-slate-900 dark:text-white outline-none transition-all`}
+                        className={`${errors.otp ? 'border-2 border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-2 border-slate-300 focus:border-[#4F46E5] focus:ring-[#4F46E5]/20'} rounded-lg bg-slate-50 dark:bg-gray-800 text-center text-lg font-semibold text-slate-900 dark:text-white outline-none transition-all`}
                       />
                     )}
                   />
@@ -539,7 +539,7 @@ export default function SignUpForm() {
             )}
 
             {/* Checkbox */}
-            <div className="flex items-start gap-3 rounded-2xl bg-slate-50 dark:bg-gray-800 px-3 py-3">
+            <div className="flex items-center gap-2 px-1">
               <Checkbox checked={isChecked} onChange={setIsChecked} />
               <p className="text-xs sm:text-sm text-slate-600 dark:text-gray-400">
                 I agree to the{" "}

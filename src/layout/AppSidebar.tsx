@@ -27,8 +27,8 @@ const navItems: NavItem[] = [
   { icon: <ListIcon />, name: "Orders", path: "/order" },
   { icon: <WalletIcon />, name: "Wallet", path: "/wallet" },
   { icon: <DocsIcon />, name: "Drafts", path: "/draft" },
-  { icon: <BoxIcon />, name: "Settings", path: "/settings" },
-  ];
+
+];
 
 // KYC only nav items for initial render
 const kycOnlyItems: NavItem[] = [
@@ -117,13 +117,12 @@ const AppSidebar: React.FC = () => {
               toggleMobileSidebar();
             }
           }}
-          className="hidden lg:block"
         >
           {showExpanded ? (
             <>
               <Image
                 className="dark:hidden"
-                src="/images/logo/logo.webp"
+                src="/images/logo/upleex-logo-dark.jpg"
                 alt="Upleex Logo"
                 width={150}
                 height={40}
@@ -142,9 +141,6 @@ const AppSidebar: React.FC = () => {
             <Image src="/images/logo/small-logo.webp" alt="Upleex" width={32} height={32} priority />
           )}
         </Link>
-        <div 
-          className={`lg:hidden ${showExpanded ? "w-[150px] h-[40px]" : "w-8 h-8"}`}
-        ></div>
       </div>
 
       <nav className="flex flex-col overflow-y-auto duration-300 custom-scrollbar">

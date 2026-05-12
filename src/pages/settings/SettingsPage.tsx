@@ -37,6 +37,8 @@ interface PriorityPlan {
   extra_product_price_monthly?: number;
   unlimited_amount_yearly?: number;
   extra_product_price_yearly?: number;
+  unlimited_price_monthly?: number;
+  unlimited_price_yearly?: number;
   features?: string[];
 }
 
@@ -1529,32 +1531,66 @@ const SettingsPage: React.FC = () => {
 ))}
 
     {/* Premium Extras (Extra Product / Unlimited) */}
-    {((durationToggle === "monthly" && (plan.extra_product_price_monthly || plan.unlimited_amount_monthly)) || 
-       (durationToggle === "yearly" && (plan.extra_product_price_yearly || plan.unlimited_amount_yearly))) && (
-      <div className="pt-2 mt-2 border-t border-gray-100 dark:border-gray-800">
-        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-2">Premium Benefits</p>
-        <div className="space-y-2">
-          {((durationToggle === "monthly" && plan.extra_product_price_monthly) || (durationToggle === "yearly" && plan.extra_product_price_yearly)) && (
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="bg-amber-100 p-1 rounded-full flex-shrink-0">
-                <Plus size={10} className="text-amber-600" />
+    {(plan.extra_product_price_monthly || plan.unlimited_amount_monthly || plan.unlimited_price_monthly || 
+      plan.extra_product_price_yearly || plan.unlimited_amount_yearly || plan.unlimited_price_yearly) && (
+      <div className=" border-t border-gray-100 dark:border-gray-800 space-y-2 text-left w-full">
+        {/* Monthly Extras Section */}
+        {(plan.extra_product_price_monthly > 0 || plan.unlimited_amount_monthly > 0 || plan.unlimited_price_monthly > 0) && (
+          <div className="space-y-2">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-1 h-1 bg-gray-400 rounded-full"></span> Monthly Extras
+            </p>
+            {plan.extra_product_price_monthly > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+                  <Zap className="w-3 h-3 text-emerald-600" />
+                </div>
+                <span className="text-sm font-bold text-emerald-600">
+                  Extra Product: {currency}{plan.extra_product_price_monthly} / each
+                </span>
               </div>
-              <p className="text-[10px] sm:text-xs font-bold text-gray-700 dark:text-gray-300">
-                Extra Product: {currency}{durationToggle === "monthly" ? plan.extra_product_price_monthly : plan.extra_product_price_yearly}
-              </p>
-            </div>
-          )}
-          {((durationToggle === "monthly" && plan.unlimited_amount_monthly) || (durationToggle === "yearly" && plan.unlimited_amount_yearly)) && (
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="bg-indigo-100 p-1 rounded-full flex-shrink-0">
-                <Rocket size={10} className="text-indigo-600" />
+            )}
+            {(plan.unlimited_amount_monthly > 0 || plan.unlimited_price_monthly > 0) && (
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+                  <Zap className="w-3 h-3 text-amber-600" />
+                </div>
+                <span className="text-sm font-bold text-amber-600">
+                  Unlimited Option: {currency}{plan.unlimited_amount_monthly || plan.unlimited_price_monthly}
+                </span>
               </div>
-              <p className="text-[10px] sm:text-xs font-bold text-gray-700 dark:text-gray-300">
-                Unlimited Upgrade available
-              </p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
+
+        {/* Yearly Extras Section */}
+        {(plan.extra_product_price_yearly > 0 || plan.unlimited_amount_yearly > 0 || plan.unlimited_price_yearly > 0) && (
+          <div className="space-y-2">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-1 h-1 bg-gray-400 rounded-full"></span> Yearly Extras
+            </p>
+            {plan.extra_product_price_yearly > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+                  <Zap className="w-3 h-3 text-emerald-600" />
+                </div>
+                <span className="text-sm font-bold text-emerald-600">
+                  Extra Product: {currency}{plan.extra_product_price_yearly} / each
+                </span>
+              </div>
+            )}
+            {(plan.unlimited_amount_yearly > 0 || plan.unlimited_price_yearly > 0) && (
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+                  <Zap className="w-3 h-3 text-amber-600" />
+                </div>
+                <span className="text-sm font-bold text-amber-600">
+                  Unlimited Option: {currency}{plan.unlimited_amount_yearly || plan.unlimited_price_yearly}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     )}
   </div>
@@ -1679,7 +1715,7 @@ const SettingsPage: React.FC = () => {
                           )}
                           <div className="space-y-3 sm:space-y-4 mb-5 sm:mb-8 flex-grow">
                             <div className="flex items-start gap-3">
-                              <div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0">
+                              <div className="mt-0.5 bg-green-100 p-1.5 rounded-full flex-shrink-0">
                                 <Check className="text-green-600" size={14} />
                               </div>
                               <div>
@@ -1690,7 +1726,7 @@ const SettingsPage: React.FC = () => {
                             
                             {(plan.features || []).map((feature, fIdx) => (
                               <div key={fIdx} className="flex items-start gap-3">
-                                <div className="mt-1 bg-green-100 p-1.5 rounded-full flex-shrink-0">
+                                <div className="mt-0.5 bg-green-100 p-1.5 rounded-full flex-shrink-0">
                                   <Check className="text-green-600" size={14} />
                                 </div>
                                 <div>
@@ -1698,6 +1734,69 @@ const SettingsPage: React.FC = () => {
                                 </div>
                               </div>
                             ))}
+                            {/* Premium Extras (Extra Product / Unlimited) */}
+                            {(plan.extra_product_price_monthly || plan.unlimited_amount_monthly || plan.unlimited_price_monthly || 
+                              plan.extra_product_price_yearly || plan.unlimited_amount_yearly || plan.unlimited_price_yearly) && (
+                              <div className=" border-t border-gray-100 dark:border-gray-800 space-y-2 text-left w-full mb-6">
+                                {/* Monthly Extras Section */}
+                                {(plan.extra_product_price_monthly > 0 || plan.unlimited_amount_monthly > 0 || plan.unlimited_price_monthly > 0) && (
+                                  <div className="space-y-2">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                      <span className="w-1 h-1 bg-gray-400 rounded-full"></span> Monthly Extras
+                                    </p>
+                                    {plan.extra_product_price_monthly > 0 && (
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+                                          <Zap className="w-3 h-3 text-emerald-600" />
+                                        </div>
+                                        <span className="text-sm font-bold text-emerald-600">
+                                          Extra Product: {currency}{plan.extra_product_price_monthly} / each
+                                        </span>
+                                      </div>
+                                    )}
+                                    {(plan.unlimited_amount_monthly > 0 || plan.unlimited_price_monthly > 0) && (
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+                                          <Zap className="w-3 h-3 text-amber-600" />
+                                        </div>
+                                        <span className="text-sm font-bold text-amber-600">
+                                          Unlimited Option: {currency}{plan.unlimited_amount_monthly || plan.unlimited_price_monthly}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Yearly Extras Section */}
+                                {(plan.extra_product_price_yearly > 0 || plan.unlimited_amount_yearly > 0 || plan.unlimited_price_yearly > 0) && (
+                                  <div className="space-y-2">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                      <span className="w-1 h-1 bg-gray-400 rounded-full"></span> Yearly Extras
+                                    </p>
+                                    {plan.extra_product_price_yearly > 0 && (
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+                                          <Zap className="w-3 h-3 text-emerald-600" />
+                                        </div>
+                                        <span className="text-sm font-bold text-emerald-600">
+                                          Extra Product: {currency}{plan.extra_product_price_yearly} / each
+                                        </span>
+                                      </div>
+                                    )}
+                                    {(plan.unlimited_amount_yearly > 0 || plan.unlimited_price_yearly > 0) && (
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+                                          <Zap className="w-3 h-3 text-amber-600" />
+                                        </div>
+                                        <span className="text-sm font-bold text-amber-600">
+                                          Unlimited Option: {currency}{plan.unlimited_amount_yearly || plan.unlimited_price_yearly}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                           <Button onClick={() => handleSelectPlan(plan)} variant={plan.is_popular ? 'primary' : 'outline'} className="w-full !py-3.5 rounded-xl font-bold btn-primary">{isDurationActive ? 'Add More Products' : 'Select Plan'}</Button>
                         </div>
