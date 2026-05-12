@@ -19,7 +19,10 @@ interface ListingPlan {
   price: number;
   duration_months: number;
   product_limit: number;
+  unlimited_amount?: number;
+  extra_product_price?: number;
   features?: string[];
+  free_listing?: boolean;
 }
 
 interface Product {
@@ -53,12 +56,15 @@ const ListingPlanView: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<ListingPlan | null>(null);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
   const [priorityAddons, setPriorityAddons] = useState<any[]>([]);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
   const [gridSearch, setGridSearch] = useState("");
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean; isFreeListing?: boolean; remainingFreeDays?: number; freeProductsInfo?: Array<{ name: string, days: number, freeExpiry: string }> } | null>(null);
+  const [isUnlimited, setIsUnlimited] = useState(false);
+  const [planPreferences, setPlanPreferences] = useState<Record<string, 'extra' | 'unlimited'>>({});
+  const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean; isUnlimited?: boolean; extraCount?: number; extraPrice?: number; isFreeListing?: boolean; remainingFreeDays?: number; freeProductsInfo?: Array<{ name: string, days: number, freeExpiry: string }> } | null>(null);
 
   const [historyTab, setHistoryTab] = useState<"rent" | "sell">("rent");
   const [hasShownLimitToast, setHasShownLimitToast] = useState(false); // Track if limit toast was shown
@@ -145,14 +151,17 @@ const ListingPlanView: React.FC = () => {
         const [plansRes, productsRes, priorityRes] = results.slice(2);
 
       const rawPlans = plansRes.data.data || [];
-      const normalizedPlans = rawPlans.map((p: any) => ({
-        key: p.plan_type,
-        name: p.plan_type?.charAt(0).toUpperCase() + p.plan_type?.slice(1),
-        price: p.amount,
-        duration_months: p.months,
-        product_limit: p.max_products,
-        features: p.features || [],
-      }));
+        const normalizedPlans = rawPlans.map((p: any) => ({
+          key: p.plan_type,
+          name: p.plan_type?.charAt(0).toUpperCase() + p.plan_type?.slice(1),
+          price: p.amount,
+          duration_months: p.months,
+          product_limit: p.max_products,
+          unlimited_amount: p.unlimited_amount || 0,
+          extra_product_price: p.extra_product_price || 0,
+          features: p.features || [],
+          free_listing: p.free_listing !== undefined ? p.free_listing : true,
+        }));
 
         const rawProducts = productsRes.data.data || [];
         const normalizedProducts = rawProducts.map((p: any) => {
@@ -205,6 +214,8 @@ const ListingPlanView: React.FC = () => {
   const handleSelectPlan = (plan: ListingPlan) => {
     setSelectedPlan(plan);
     setSelectedProductIds([]);
+    setIsUnlimited(false);
+    setIsChoiceModalOpen(false);
     setIsModalOpen(true);
   };
 
@@ -220,10 +231,11 @@ const ListingPlanView: React.FC = () => {
       plan_id: addon.plan_id, // Add this to satisfy Joi validation
     } as any);
     setSelectedProductIds([]);
+    setIsChoiceModalOpen(false);
     setIsModalOpen(true);
   };
 
-  const handlePurchase = async (isConfirmed = false) => {
+  const handlePurchase = async (isConfirmed = false, forcedUnlimited?: boolean) => {
     if (!selectedPlan) return;
 
     if (selectedProductIds.length === 0) {
@@ -231,15 +243,45 @@ const ListingPlanView: React.FC = () => {
       return;
     }
 
+    const currentUnlimited = forcedUnlimited !== undefined ? forcedUnlimited : isUnlimited;
     const agg = planAggregates[selectedPlan.key] || { total: 0, used: 0, productIds: new Set() };
     const remainingSlots = Math.max(0, agg.total - agg.used);
-    const trulyNewIds = selectedProductIds.filter(id => !agg.productIds.has(String(id)));
     const isRefillAvailable = remainingSlots > 0 && selectedProductIds.length <= remainingSlots;
     const isAddonRefill = (selectedPlan as any).key === 'Priority Addon' && remainingSlots > 0;
 
+    // Skip Choice Modal and go straight to Confirmation Modal (which now contains both options)
+    const isExceeding = 
+      selectedPlan.free_listing === false || 
+      (agg.total > 0 && selectedProductIds.length > remainingSlots) ||
+      (!agg.total && selectedProductIds.length > (selectedPlan.product_limit || 0));
+
     let finalPrice = selectedPlan.price;
-    if (isRefillAvailable || isAddonRefill) {
+    let extraCount = 0;
+    let extraProductCost = 0;
+    let isExtraAddon = false;
+
+    if (currentUnlimited && selectedPlan.unlimited_amount) {
+      finalPrice = selectedPlan.unlimited_amount;
+    } else if (isRefillAvailable || isAddonRefill) {
       finalPrice = 0;
+    } else if (selectedPlan.free_listing === true) {
+      // For free_listing plans, we always charge the base plan amount (amount: 39)
+      finalPrice = selectedPlan.price;
+      isExtraAddon = false; // It's treated as a bundle purchase
+    } else if (isExceeding) {
+      if (agg.total > 0 || selectedPlan.free_listing === false) {
+        // Case A: Adding to an active plan OR a plan that's already full
+        const baseRemaining = selectedPlan.free_listing === false ? 0 : remainingSlots;
+        extraCount = Math.max(0, selectedProductIds.length - baseRemaining);
+        extraProductCost = extraCount * (selectedPlan.extra_product_price || 0);
+        finalPrice = extraProductCost;
+        isExtraAddon = true;
+      } else {
+        // Case B: New plan but exceeding its base limit
+        extraCount = Math.max(0, selectedProductIds.length - (selectedPlan.product_limit || 0));
+        extraProductCost = extraCount * (selectedPlan.extra_product_price || 0);
+        finalPrice = (selectedPlan.price || 0) + extraProductCost;
+      }
     }
 
     if (!isConfirmed) {
@@ -281,10 +323,37 @@ const ListingPlanView: React.FC = () => {
         })
         .filter(Boolean) as Array<{ name: string, days: number, freeExpiry: string }>;
 
+      // Auto-confirm logic: skip popup if price is 0 (for refills) 
+      // OR if the plan is a free listing plan (always costs amount: 39 but skip popup as requested)
+      // OR if the user has already saved a preference for this plan
+      const activePurchase = allPurchasedPlans.find(p => p.plan_type === selectedPlan.key && new Date(p.expire_at) > new Date());
+      const savedPref = planPreferences[selectedPlan.key] || 
+                       (activePurchase?.is_unlimited ? 'unlimited' : 
+                        activePurchase?.is_extra_per_product ? 'extra' : null);
+      
+      let shouldAutoConfirm = false;
+      let finalUnlimitedValue = currentUnlimited;
+
+      if (!isUnlimited && selectedPlan.free_listing === true) {
+        shouldAutoConfirm = true;
+      } else if (savedPref && !isUnlimited && !isChoiceModalOpen) {
+        // If user already chose a method and isn't currently in the "choice" flow
+        shouldAutoConfirm = true;
+        finalUnlimitedValue = savedPref === 'unlimited';
+      }
+
+      if (!isConfirmed && shouldAutoConfirm) {
+        handlePurchase(true, finalUnlimitedValue);
+        return;
+      }
+
       setPurchaseSummary({
         count: selectedProductIds.length,
         amount: finalPrice,
-        isRefill: isRefillAvailable || isAddonRefill,
+        isRefill: (isRefillAvailable || isAddonRefill) && !isExtraAddon && !currentUnlimited,
+        isUnlimited: currentUnlimited,
+        extraCount: extraCount,
+        extraPrice: selectedPlan.extra_product_price,
         freeProductsInfo: freeProductsInfo.length > 0 ? freeProductsInfo : undefined
       });
       setIsConfirmModalOpen(true);
@@ -322,6 +391,9 @@ const ListingPlanView: React.FC = () => {
       const res = await api.post(endPointApi.postCreateListingPlan, {
         plan_type: selectedPlan.key,
         product_ids: selectedProductIds,
+        is_unlimited: currentUnlimited,
+        is_extra_per_product: isExceeding && !currentUnlimited && selectedPlan.free_listing === false,
+        price: finalPrice, // Passing calculated price just in case
       });
 
       if (res.data.success) {
@@ -329,6 +401,16 @@ const ListingPlanView: React.FC = () => {
         setIsModalOpen(false);
         setIsConfirmModalOpen(false);
         refreshBalance();
+        
+        // Save user's preference for this plan type to skip future popups
+        // ONLY if it was an upgrade choice (exceeding limit)
+        if (selectedPlan.key !== 'Priority Addon' && isExceeding && selectedPlan.free_listing === false) {
+          setPlanPreferences(prev => ({
+            ...prev,
+            [selectedPlan.key]: currentUnlimited ? 'unlimited' : 'extra'
+          }));
+        }
+
         // Clear cache and force refresh to get latest status
         historyCacheRef.current = {};
         initialDataFetchedRef.current = false;
@@ -533,25 +615,25 @@ const ListingPlanView: React.FC = () => {
       return true;
     });
     
-    // Check plan limit
-    if (selectedPlan) {
-      const agg = planAggregates[selectedPlan.key] || { total: 0, used: 0, productIds: new Set() };
-      const remainingSlots = agg.total > 0 ? Math.max(0, agg.total - agg.used) : selectedPlan.product_limit;
-      
-      // If selecting more than available slots, limit the selection and show toast
-      if (selectableRows.length > remainingSlots) {
-        const limitedRows = selectableRows.slice(0, remainingSlots);
-        const ids = limitedRows.map((p) => p.id);
-        setSelectedProductIds(ids);
+      // Check plan limit
+      if (selectedPlan) {
+        const agg = planAggregates[selectedPlan.key] || { total: 0, used: 0, productIds: new Set() };
+        const remainingSlots = agg.total > 0 ? Math.max(0, agg.total - agg.used) : selectedPlan.product_limit;
         
-        // Show toast only once
-        if (!hasShownLimitToast) {
-          toast.warning(`You can only select up to ${remainingSlots} product(s) for this plan.`);
-          setHasShownLimitToast(true);
+        // If selecting more than available slots, check if extra product add-on is available
+        if (selectableRows.length > remainingSlots && !selectedPlan.extra_product_price) {
+          const limitedRows = selectableRows.slice(0, remainingSlots);
+          const ids = limitedRows.map((p) => p.id);
+          setSelectedProductIds(ids);
+          
+          // Show toast only once
+          if (!hasShownLimitToast) {
+            toast.warning(`You can only select up to ${remainingSlots} product(s) for this plan.`);
+            setHasShownLimitToast(true);
+          }
+          return;
         }
-        return;
       }
-    }
     
     const ids = selectableRows.map((p) => p.id);
     setSelectedProductIds(ids);
@@ -666,7 +748,9 @@ const ListingPlanView: React.FC = () => {
               <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform dark:bg-[#1c2938]">
                 <Package className="w-5 h-5 text-emerald-600" />
               </div>
-              <h4 className="text-base font-bold text-gray-900 mb-0.5 dark:text-gray-100">{plan.name}</h4>
+              <div className="flex flex-col items-center gap-1">
+                <h4 className="text-base font-bold text-gray-900 mb-0.5 dark:text-gray-100">{plan.name}</h4>
+              </div>
             </div>
 
             <div className="flex items-baseline justify-center gap-1 mb-8 p-4 bg-emerald-50 rounded-2xl dark:bg-[#1c2938]">
@@ -712,13 +796,42 @@ const ListingPlanView: React.FC = () => {
                   <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{feature}</span>
                 </div>
               ))}
+              
+              {plan.extra_product_price && plan.extra_product_price > 0 ? (
+                <div className="flex items-center gap-3 pt-2 mt-2 border-t border-emerald-50 dark:border-[#1c2938]">
+                  <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <Zap className="w-3 h-3 text-emerald-600" />
+                  </div>
+                  <span className="text-sm font-bold text-emerald-600">
+                    Extra Product: {currency}{plan.extra_product_price} / each
+                  </span>
+                </div>
+              ) : null}
+
+              {plan.unlimited_amount && plan.unlimited_amount > 0 ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center">
+                    <Zap className="w-3 h-3 text-amber-600" />
+                  </div>
+                  <span className="text-sm font-bold text-amber-600">
+                    Unlimited Option: {currency}{plan.unlimited_amount}
+                  </span>
+                </div>
+              ) : null}
             </div>
 
             <Button
-
               onClick={() => handleSelectPlan(plan)}
-              className="w-full !py-4 rounded-xl font-bold shadow-lg shadow-emerald-50 btn-primary"
+              className="w-full !py-4 rounded-xl font-bold shadow-lg shadow-emerald-50 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               variant={planAggregates[plan.key] ? "outline" : "primary"}
+              disabled={
+                (() => {
+                  const agg = planAggregates[plan.key];
+                  if (!agg) return false;
+                  const remaining = Math.max(0, agg.total - agg.used);
+                  return remaining === 0 && !plan.extra_product_price && !plan.unlimited_amount;
+                })()
+              }
             >
               {planAggregates[plan.key] ? 'Add More Products' : 'Select Plan'}
             </Button>
@@ -900,7 +1013,7 @@ const ListingPlanView: React.FC = () => {
             </Button>
             <Button
               variant="primary"
-              onClick={handlePurchase}
+              onClick={() => handlePurchase()}
               disabled={isPurchasing || selectedProductIds.length === 0 || hasShownLimitToast}
               className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-100/50"
             >
@@ -931,60 +1044,126 @@ const ListingPlanView: React.FC = () => {
           </div>
 
           <div className="space-y-4 mb-6">
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
-              <span className="text-gray-500 font-medium">Plan Type</span>
-              <span className="font-bold text-gray-900 dark:text-white capitalize">{selectedPlan?.name}</span>
+            {/* Header Info */}
+            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+              <div>
+                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Active Plan</p>
+                <h4 className="text-lg font-bold text-gray-900 dark:text-white capitalize">{selectedPlan?.name} Plan</h4>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Products</p>
+                <h4 className="text-lg font-bold text-gray-900 dark:text-white">{selectedProductIds.length} Selected</h4>
+              </div>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
-              <span className="text-gray-500 font-medium">Duration</span>
-              <span className="font-bold text-gray-900 dark:text-white">{selectedPlan?.duration_months} Months</span>
+
+            {/* Selection Options (Comparison) */}
+            <div className="grid grid-cols-1 gap-3">
+              {/* Option: Pay per Product */}
+              <div 
+                onClick={() => {
+                  const currentAgg = selectedPlan ? planAggregates[selectedPlan.key] : null;
+                  const isFull = !!currentAgg && (currentAgg.total > 0 || selectedPlan?.free_listing === false);
+                  const extra = isFull ? selectedProductIds.length : Math.max(0, selectedProductIds.length - (selectedPlan?.product_limit || 0));
+                  const basePrice = (isFull && selectedPlan?.free_listing === false) ? 0 : (selectedPlan?.price || 0);
+                  const extraPrice = (selectedPlan?.free_listing === true) ? 0 : (extra * (selectedPlan?.extra_product_price || 0));
+                  const total = basePrice + extraPrice;
+                  
+                  setIsUnlimited(false);
+                  setPurchaseSummary(prev => prev ? ({ ...prev, isUnlimited: false, amount: total, extraCount: extra }) : null);
+                }}
+                className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden ${!isUnlimited ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10' : 'border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 hover:border-emerald-200'}`}
+              >
+                {!isUnlimited && <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">Selected</div>}
+                <div className="flex justify-between items-center mb-2">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${!isUnlimited ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}>
+                      {!isUnlimited && <Check size={14} className="text-white" />}
+                    </div>
+                    <span className="font-bold text-gray-900 dark:text-white">Pay per Extra Product</span>
+                  </div>
+                  <div className="text-right">
+                    {/* Calculate preview price for this option */}
+                    <span className="text-emerald-600 font-black text-lg">
+                      {(() => {
+                         const agg = selectedPlan ? planAggregates[selectedPlan.key] : null;
+                         const isFull = !!agg && (agg.total > 0 || selectedPlan?.free_listing === false);
+                         const extra = isFull ? selectedProductIds.length : Math.max(0, selectedProductIds.length - (selectedPlan?.product_limit || 0));
+                         const basePrice = (isFull && selectedPlan?.free_listing === false) ? 0 : (selectedPlan?.price || 0);
+                         const extraPrice = (selectedPlan?.free_listing === true) ? 0 : (extra * (selectedPlan?.extra_product_price || 0));
+                         return currency + (basePrice + extraPrice);
+                      })()}
+                    </span>
+                  </div>
+                </div>
+                <div className="pl-9 space-y-1">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Charge: <span className="font-bold text-emerald-600">{currency}{selectedPlan?.extra_product_price}</span> per extra product
+                  </p>
+                  
+                </div>
+              </div>
+
+              {/* Option: Unlimited */}
+              {selectedPlan?.unlimited_amount ? (
+                <div 
+                  onClick={() => {
+                    setIsUnlimited(true);
+                    setPurchaseSummary(prev => prev ? ({ ...prev, isUnlimited: true, amount: selectedPlan.unlimited_amount! }) : null);
+                  }}
+                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden ${isUnlimited ? 'border-amber-500 bg-amber-50/30 dark:bg-amber-900/10' : 'border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 hover:border-amber-200'}`}
+                >
+                  {isUnlimited && <div className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">Selected</div>}
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${isUnlimited ? 'border-amber-500 bg-amber-500' : 'border-gray-300'}`}>
+                        {isUnlimited && <Check size={14} className="text-white" />}
+                      </div>
+                      <span className="font-bold text-gray-900 dark:text-white">Upgrade to Unlimited</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-amber-600 font-black text-lg">{currency}{selectedPlan.unlimited_amount}</span>
+                    </div>
+                  </div>
+                  <div className="pl-9">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">List as many products as you want for {selectedPlan.duration_months} months.</p>
+                  </div>
+                </div>
+              ) : null}
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
-              <span className="text-gray-500 font-medium">Selected Products</span>
-              <span className="font-bold text-gray-900 dark:text-white">{purchaseSummary?.count} Items</span>
-            </div>
-            
+
             {/* Free Products Information */}
             {purchaseSummary?.freeProductsInfo && purchaseSummary.freeProductsInfo.length > 0 && (
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl dark:bg-amber-900/10 dark:border-amber-800">
-                <div className="flex items-start gap-2 mb-2">
-                  <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-xs font-bold text-amber-700 uppercase tracking-wider dark:text-amber-400">
-                    Free Listing Days Will Activate After Plan
-                  </span>
+              <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl dark:bg-blue-900/10 dark:border-blue-800">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertCircle className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Free Days Protection</span>
                 </div>
-                <p className="text-xs text-amber-600 mb-3 dark:text-amber-300">
-                  After your {selectedPlan?.duration_months}-month plan expires, these products will continue with their remaining free days:
-                </p>
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 gap-1">
                   {purchaseSummary.freeProductsInfo.map((fp, idx) => (
-                    <div key={idx} className="flex justify-between items-center p-2 bg-white rounded-lg dark:bg-gray-800">
-                      <span className="text-sm font-medium text-gray-700 truncate dark:text-gray-300" title={fp.name}>
-                        {fp.name}
-                      </span>
-                      <div className="flex items-center gap-2 ml-2">
-                        <span className="text-[10px] text-gray-500">
-                          Until {new Date(fp.freeExpiry).toLocaleDateString('en-GB')}
-                        </span>
-                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg whitespace-nowrap dark:bg-emerald-900/20">
-                          {fp.days} days after plan
-                        </span>
-                      </div>
+                    <div key={idx} className="flex justify-between items-center text-[10px] text-blue-600">
+                      <span className="truncate max-w-[180px]">{fp.name}</span>
+                      <span className="font-bold">+{fp.days} days later</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
             
-            <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-xl border border-emerald-100 dark:bg-emerald-900/10">
-              <span className="text-emerald-600 font-bold uppercase text-xs tracking-wider">Total Amount</span>
-              <span className="text-2xl font-black text-emerald-600">{currency}{purchaseSummary?.amount?.toLocaleString()}</span>
+            {/* Grand Total Bar */}
+            <div className="flex justify-between items-center p-5 bg-emerald-600 rounded-2xl shadow-xl shadow-emerald-100 dark:shadow-none mt-2">
+              <span className="text-white font-bold uppercase text-xs tracking-widest">Grand Total</span>
+              <span className="text-3xl font-black text-white">
+                {(() => {
+                  if (isUnlimited) return currency + (selectedPlan?.unlimited_amount || 0).toLocaleString();
+                  const currentAgg = selectedPlan ? planAggregates[selectedPlan.key] : null;
+                  const isFull = !!currentAgg && (currentAgg.total > 0 || selectedPlan?.free_listing === false);
+                  const extra = isFull ? selectedProductIds.length : Math.max(0, selectedProductIds.length - (selectedPlan?.product_limit || 0));
+                  const basePrice = isFull ? 0 : (selectedPlan?.price || 0);
+                  const total = basePrice + (extra * (selectedPlan?.extra_product_price || 0));
+                  return currency + total.toLocaleString();
+                })()}
+              </span>
             </div>
-            {purchaseSummary?.amount === 0 && (
-              <p className="text-xs text-green-600 font-bold text-center px-4">
-                ✓ Using remaining slots from your active subscription. No additional charge.
-              </p>
-            )}
           </div>
 
           <div className="flex gap-3">

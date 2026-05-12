@@ -7,7 +7,7 @@ import endPointApi from "@/utils/endPointApi";
 import { toast } from "react-toastify";
 import PageLoader from "@/components/common/PageLoader";
 import Button from "@/components/ui/button/Button";
-import { Wallet, Package, Search, Check, Rocket } from "lucide-react";
+import { Wallet, Package, Search, Check, Rocket, Plus } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { useWallet } from "@/context/WalletContext";
 import { useFilter } from "@/context/FilterContext";
@@ -33,6 +33,10 @@ interface PriorityPlan {
   addon_available_for_yearly?: boolean;
   addon_price_per_year?: number;
   addon_max_slots?: number;
+  unlimited_amount_monthly?: number;
+  extra_product_price_monthly?: number;
+  unlimited_amount_yearly?: number;
+  extra_product_price_yearly?: number;
   features?: string[];
 }
 
@@ -89,7 +93,10 @@ const SettingsPage: React.FC = () => {
   const [addonProductIds, setAddonProductIds] = useState<string[]>([]);
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean } | null>(null);
+  const [isUnlimited, setIsUnlimited] = useState(false);
+  const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
+  const [planPreferences, setPlanPreferences] = useState<Record<string, { monthly: 'extra' | 'unlimited', yearly: 'extra' | 'unlimited' }>>({});
+  const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean; isUnlimited?: boolean; extraCount?: number; extraPrice?: number, isFreeListing?: boolean } | null>(null);
   const [priorityHistoryTab, setPriorityHistoryTab] = useState<"rent" | "sell">("rent");
   const [hasShownLimitToast, setHasShownLimitToast] = useState(false); // Track if limit toast was shown
   const [isVideoUploading, setIsVideoUploading] = useState(false);
@@ -239,6 +246,7 @@ const SettingsPage: React.FC = () => {
     setSelectedProductIds([]);
     setAddonProductIds([]);
     setIncludeAddon(false);
+    setIsUnlimited(false);
     setIsModalOpen(true);
     if (rentProducts.length === 0 && sellProducts.length > 0) {
       setActiveTab("Sell");
@@ -247,7 +255,30 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const handlePurchase = async (isConfirmed = false) => {
+  const allVendorPurchases = useMemo(() => {
+    return [
+      ...(historyCacheRef.current['rent'] || []),
+      ...(historyCacheRef.current['sell'] || [])
+    ];
+  }, [vendorPurchases, initialDataFetchedRef.current]);
+
+  // Collect ALL product IDs that already have priority plans (from all purchases)
+  const priorityProductIds = useMemo(() => {
+    const ids = new Set<string>();
+    allVendorPurchases.forEach(purchase => {
+      purchase.product_ids?.forEach((id: any) => {
+        const pid = typeof id === 'object' && id !== null ? (id._id || id.id) : id;
+        ids.add(String(pid));
+      });
+      purchase.addon_product_ids?.forEach((id: any) => {
+        const pid = typeof id === 'object' && id !== null ? (id._id || id.id) : id;
+        ids.add(String(pid));
+      });
+    });
+    return ids;
+  }, [allVendorPurchases]);
+
+  const handlePurchase = async (isConfirmed = false, forcedUnlimited?: boolean, forcedDuration?: 'monthly' | 'yearly') => {
     const targetPlanId = selectedPlan?.id || selectedPlan?._id;
     if (!targetPlanId) return;
 
@@ -256,55 +287,104 @@ const SettingsPage: React.FC = () => {
       return;
     }
 
-    const currentDuration = planDurations[targetPlanId] || "monthly";
-    // CRITICAL FIX: Filter by BOTH plan_id AND duration
-    const activePurchases = vendorPurchases.filter(p =>
+    const currentDuration = forcedDuration || planDurations[targetPlanId] || "monthly";
+    const currentUnlimited = forcedUnlimited !== undefined ? forcedUnlimited : isUnlimited;
+    
+    const activePurchases = allVendorPurchases.filter(p =>
       String(p.plan_id) === String(targetPlanId) &&
-      p.plan_duration === currentDuration
+      p.plan_duration === currentDuration &&
+      new Date(p.expire_at) > new Date()
     );
 
-    // Total capacity across matching active plans
     const totalSlots = activePurchases.length > 0
       ? activePurchases.reduce((acc, p) => acc + Number(p.total_slots), 0)
       : Number(selectedPlan.product_slots || 0);
 
-    // Collect all unique products currently assigned across these matching plans
     const currentProductIds = new Set(activePurchases.flatMap(p => p.product_ids.map(id => String(id))));
-    const trulyNewIds = selectedProductIds.filter(id => !currentProductIds.has(String(id)));
-
     const usedSlots = currentProductIds.size;
     const remainingSlotsCalculated = Math.max(0, totalSlots - usedSlots);
+    const isRefillAvailable = remainingSlotsCalculated > 0 && selectedProductIds.length <= remainingSlotsCalculated;
+
+    const isExceeding = 
+      selectedPlan.free_listing === false || 
+      (activePurchases.length > 0 && selectedProductIds.length > remainingSlotsCalculated) ||
+      (!activePurchases.length && selectedProductIds.length > (selectedPlan.product_slots || 0));
 
     let finalPrice = currentDuration === "monthly" ? selectedPlan.monthly_price : selectedPlan.yearly_price;
-    let isRefill = false;
-    let purchaseIdToRefill = "";
+    let extraCount = 0;
+    let extraProductCost = 0;
+    let isExtraAddon = false;
+    const extraPrice = currentDuration === "monthly" ? selectedPlan.extra_product_price_monthly : selectedPlan.extra_product_price_yearly;
+    const unlimitedAmt = currentDuration === "monthly" ? selectedPlan.unlimited_amount_monthly : selectedPlan.unlimited_amount_yearly;
 
-    if (currentDuration === "yearly" && includeAddon) {
-      finalPrice += Number(selectedPlan.addon_price_per_year || 0);
-    }
+    console.log('=== Priority Plan Purchase Debug ===');
+    console.log('selectedPlan:', selectedPlan);
+    console.log('selectedPlan.free_listing:', selectedPlan.free_listing);
+    console.log('currentDuration:', currentDuration);
+    console.log('activePurchases.length:', activePurchases.length);
+    console.log('totalSlots:', totalSlots);
+    console.log('usedSlots:', usedSlots);
+    console.log('remainingSlotsCalculated:', remainingSlotsCalculated);
+    console.log('isRefillAvailable:', isRefillAvailable);
+    console.log('isExceeding:', isExceeding);
+    console.log('initial finalPrice:', finalPrice);
 
-    // Refill Logic: If we have room in an active plan and it's not a new addon purchase
-    if (activePurchases.length > 0 && trulyNewIds.length <= remainingSlotsCalculated) {
-      // Check if we are trying to add a new addon to an existing yearly plan that didn't have it
-      const yearlyWithoutAddon = activePurchases.find(p => p.plan_duration === 'yearly' && !p.is_addon_purchased);
-
-      if (includeAddon && yearlyWithoutAddon) {
-        // This is an upgrade (Addon added to existing Yearly plan)
-        isRefill = true;
-        purchaseIdToRefill = yearlyWithoutAddon.id || (yearlyWithoutAddon as any)._id;
-      } else if (!includeAddon) {
-        finalPrice = 0;
-        isRefill = true;
-        purchaseIdToRefill = activePurchases[0].id || (activePurchases[0] as any)._id;
+    if (currentUnlimited && unlimitedAmt) {
+      finalPrice = unlimitedAmt;
+      console.log('Setting unlimited, finalPrice:', finalPrice);
+    } else if (isRefillAvailable) {
+      finalPrice = 0;
+      console.log('Refill available, finalPrice:', finalPrice);
+    } else if (selectedPlan.free_listing === true) {
+      finalPrice = finalPrice;
+      isExtraAddon = false;
+      console.log('Free listing plan, finalPrice:', finalPrice);
+    } else if (isExceeding) {
+      if (activePurchases.length > 0 || selectedPlan.free_listing === false) {
+        const baseRemaining = selectedPlan.free_listing === false ? 0 : remainingSlotsCalculated;
+        extraCount = Math.max(0, selectedProductIds.length - baseRemaining);
+        extraProductCost = extraCount * (extraPrice || 0);
+        finalPrice = extraProductCost;
+        isExtraAddon = true;
+        console.log('Adding to active plan, finalPrice:', finalPrice);
+      } else {
+        extraCount = Math.max(0, selectedProductIds.length - (selectedPlan.product_slots || 0));
+        extraProductCost = extraCount * (extraPrice || 0);
+        finalPrice = (finalPrice || 0) + extraProductCost;
+        console.log('New plan exceeding limit, finalPrice:', finalPrice);
       }
     }
 
-    // Show Confirmation Modal first
+    console.log('=== FINAL finalPrice:', finalPrice);
+
     if (!isConfirmed) {
+      const activePurchase = activePurchases[0];
+      const savedPref = planPreferences[targetPlanId]?.[currentDuration] || 
+                      (activePurchase?.is_unlimited ? 'unlimited' : 
+                       activePurchase?.is_extra_per_product ? 'extra' : null);
+      
+      let shouldAutoConfirm = false;
+      let finalUnlimitedValue = currentUnlimited;
+
+      if (!isUnlimited && selectedPlan.free_listing === true) {
+        shouldAutoConfirm = true;
+      } else if (savedPref && !isUnlimited && !isChoiceModalOpen) {
+        shouldAutoConfirm = true;
+        finalUnlimitedValue = savedPref === 'unlimited';
+      }
+
+      if (!isConfirmed && shouldAutoConfirm) {
+        handlePurchase(true, finalUnlimitedValue, currentDuration);
+        return;
+      }
+
       setPurchaseSummary({
-        count: isAddonModalOpen ? addonProductIds.length : selectedProductIds.length,
+        count: selectedProductIds.length,
         amount: finalPrice,
-        isRefill
+        isRefill: isRefillAvailable && !isExtraAddon && !currentUnlimited,
+        isUnlimited: currentUnlimited,
+        extraCount: extraCount,
+        extraPrice: extraPrice
       });
       setIsConfirmModalOpen(true);
       return;
@@ -317,16 +397,20 @@ const SettingsPage: React.FC = () => {
 
     setIsPurchasing(true);
     try {
-      const res = await api.post(endPointApi.purchasePriorityPlan, {
+      const apiPayload = {
         plan_id: targetPlanId,
         product_ids: selectedProductIds,
-        price: finalPrice,
         plan_duration: currentDuration,
         is_addon_purchased: includeAddon,
         addon_product_ids: addonProductIds,
-        is_refill: isRefill,
-        purchase_id: purchaseIdToRefill
-      });
+        is_unlimited: currentUnlimited,
+        is_extra_per_product: isExceeding && !currentUnlimited && selectedPlan.free_listing === false
+      };
+      
+      console.log('=== Sending API Payload to Priority Purchase ===');
+      console.log(apiPayload);
+      
+      const res = await api.post(endPointApi.purchasePriorityPlan, apiPayload);
 
       if (res.data.success) {
         toast.success(res.data.message || "Priority plan updated successfully!");
@@ -334,7 +418,17 @@ const SettingsPage: React.FC = () => {
         setIsAddonModalOpen(false);
         setIsConfirmModalOpen(false);
         refreshBalance();
-        // Clear cache and force refresh
+        
+        if (isExceeding && selectedPlan.free_listing === false) {
+          setPlanPreferences(prev => ({
+            ...prev,
+            [targetPlanId]: {
+              ...prev[targetPlanId],
+              [currentDuration]: currentUnlimited ? 'unlimited' : 'extra'
+            }
+          }));
+        }
+
         historyCacheRef.current = {};
         initialDataFetchedRef.current = false;
         fetchData(true);
@@ -660,23 +754,61 @@ const SettingsPage: React.FC = () => {
 
   const currentTabProducts = activeTab === "Rent" ? rentProducts : sellProducts;
   const filteredProducts = useMemo(() => {
-    return currentTabProducts.filter(p =>
+    return currentTabProducts.map(p => ({
+      ...p,
+      isPriorityProduct: priorityProductIds.has(String(p.id || p._id))
+    })).filter(p =>
       p.product_name.toLowerCase().includes(gridSearch.toLowerCase()) ||
       p.category_name?.toLowerCase().includes(gridSearch.toLowerCase())
     );
-  }, [currentTabProducts, gridSearch]);
+  }, [currentTabProducts, gridSearch, priorityProductIds]);
 
   const handleSelectionChange = (rows: Product[]) => {
     // Filter out products that already have priority plans
     const selectableRows = rows.filter((p) => {
       const pid = p.id || (p as any)._id;
-      const hasPriorityPlan = vendorPurchases.some(vp => 
+      const hasPriorityPlan = allVendorPurchases.some(vp => 
         vp.product_ids?.some((id: any) => String(id) === String(pid))
       );
       return !hasPriorityPlan;
     });
+
+    // Limit check for Priority Plan only if no extra/unlimited options
+    if (selectedPlan) {
+      const targetPlanId = selectedPlan.id || selectedPlan._id;
+      const currentDuration = planDurations[targetPlanId] || "monthly";
+      const extraPrice = currentDuration === "monthly" ? selectedPlan.extra_product_price_monthly : selectedPlan.extra_product_price_yearly;
+      const unlimitedPrice = currentDuration === "monthly" ? selectedPlan.unlimited_amount_monthly : selectedPlan.unlimited_amount_yearly;
+
+      const activePurchases = allVendorPurchases.filter(p =>
+        String(p.plan_id) === String(targetPlanId) &&
+        p.plan_duration === currentDuration
+      );
+      const totalSlots = activePurchases.length > 0
+        ? activePurchases.reduce((acc, p) => acc + Number(p.total_slots), 0)
+        : Number(selectedPlan.product_slots || 0);
+
+      const currentProductIds = new Set(activePurchases.flatMap(p => p.product_ids.map(id => String(id))));
+      const usedSlots = currentProductIds.size;
+      const remainingSlots = Math.max(0, totalSlots - usedSlots);
+
+      // Only limit if no extra/unlimited options
+      if (!extraPrice && !unlimitedPrice && selectableRows.length > remainingSlots) {
+        const limitedRows = selectableRows.slice(0, remainingSlots);
+        const ids = limitedRows.map((p) => p.id || (p as any)._id);
+        setSelectedProductIds(ids);
+
+        if (!hasShownLimitToast) {
+          toast.warning(`You can only select up to ${remainingSlots} product(s) for this plan.`);
+          setHasShownLimitToast(true);
+        }
+        return;
+      }
+    }
+
     const ids = selectableRows.map((p) => p.id || (p as any)._id);
     setSelectedProductIds(ids);
+    setHasShownLimitToast(false);
   };
 
   if (loading) {
@@ -898,6 +1030,46 @@ const SettingsPage: React.FC = () => {
                   </button>
                 </div>
               </div>
+
+              {selectedPlan && (
+                (() => {
+                  const currentDuration = planDurations[selectedPlan.id || selectedPlan._id || ''] || "monthly";
+                  const extraPrice = currentDuration === "monthly" ? selectedPlan.extra_product_price_monthly : selectedPlan.extra_product_price_yearly;
+                  const unlimitedAmt = currentDuration === "monthly" ? selectedPlan.unlimited_amount_monthly : selectedPlan.unlimited_amount_yearly;
+                  
+                  if (!extraPrice && !unlimitedAmt) return null;
+
+                  return (
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl dark:bg-amber-900/10 dark:border-amber-900/30">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center dark:bg-amber-900/30">
+                          <Rocket className="text-amber-600" size={16} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-amber-900 dark:text-amber-100">Need more slots?</p>
+                          <p className="text-[10px] text-amber-600 font-medium italic">
+                            Pay {currency}{extraPrice} per extra product or upgrade to Unlimited
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-amber-200 shadow-sm dark:bg-gray-800 dark:border-amber-900/50">
+                          <input 
+                            type="checkbox" 
+                            id="unlimited-toggle"
+                            checked={isUnlimited}
+                            onChange={(e) => setIsUnlimited(e.target.checked)}
+                            className="w-4 h-4 text-amber-600 rounded border-gray-300 focus:ring-amber-500"
+                          />
+                          <label htmlFor="unlimited-toggle" className="text-xs font-bold text-gray-700 dark:text-gray-200 cursor-pointer">
+                            Upgrade to Unlimited ({currency}{unlimitedAmt})
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
             </div>
           </div>
           {/* Table */}
@@ -919,19 +1091,21 @@ const SettingsPage: React.FC = () => {
                   // For Priority Plan: Filter out products that already have priority plans
                   const selectableRows = rows.filter((p) => {
                     const pid = p.id || (p as any)._id;
-                    const hasPriorityPlan = vendorPurchases.some(vp => 
+                    const hasPriorityPlan = allVendorPurchases.some(vp => 
                       vp.product_ids?.some((id: any) => String(id) === String(pid))
                     );
                     return !hasPriorityPlan;
                   });
                   
-                  // Check priority plan slot limit
+                  // Check priority plan slot limit only if no extra/unlimited options
                   if (selectedPlan) {
                     const totalSlots = selectedPlan.product_slots || 0;
                     const currentRemaining = remainingSlots || totalSlots;
+                    const hasExtraOption = selectedPlan.extra_product_price_monthly || selectedPlan.extra_product_price_yearly;
+                    const hasUnlimitedOption = selectedPlan.unlimited_amount_monthly || selectedPlan.unlimited_amount_yearly;
                     
-                    // If selecting more than available slots, limit the selection and show toast
-                    if (selectableRows.length > currentRemaining) {
+                    // Only limit if no extra/unlimited options
+                    if (!hasExtraOption && !hasUnlimitedOption && selectableRows.length > currentRemaining) {
                       const limitedRows = selectableRows.slice(0, currentRemaining);
                       const ids = limitedRows.map(p => p.id || (p as any)._id);
                       setSelectedProductIds(ids);
@@ -962,11 +1136,7 @@ const SettingsPage: React.FC = () => {
                 }
                 // For Priority Plan: Block if already has priority plan
                 // Allow free products (same as Booster and Listing plans)
-                const pid = params.data.id || params.data._id;
-                const hasPriorityPlan = vendorPurchases.some(vp =>
-                  vp.product_ids?.some((id: any) => String(id) === String(pid))
-                );
-                return !hasPriorityPlan;
+                return !params.data.isPriorityProduct;
               }}
               getRowStyle={(params) => {
                 if (isAddonModalOpen) {
@@ -977,11 +1147,7 @@ const SettingsPage: React.FC = () => {
                   }
                 } else {
                   // For Priority Plan: Disable if already has priority plan
-                  const pid = params.data.id || params.data._id;
-                  const hasPriorityPlan = vendorPurchases.some(vp =>
-                    vp.product_ids?.some((id: any) => String(id) === String(pid))
-                  );
-                  if (hasPriorityPlan) {
+                  if (params.data.isPriorityProduct) {
                     return { opacity: 0.4, pointerEvents: 'none', background: 'rgba(0,0,0,0.03)' };
                   }
                 }
@@ -1017,10 +1183,7 @@ const SettingsPage: React.FC = () => {
               disabled={
                 isPurchasing ||
                 (isAddonModalOpen ? addonProductIds.length === 0 : selectedProductIds.length === 0) ||
-                (!isAddonModalOpen && activePurchasesForPlan.length === 0 && selectedProductIds.length > (selectedPlan?.product_slots || 0)) ||
-                (!isAddonModalOpen && activePurchasesForPlan.length > 0 && selectedProductIds.length > remainingSlots) ||
-                (isAddonModalOpen && addonProductIds.length > (selectedPlan?.addon_max_slots || 0)) ||
-                hasShownLimitToast
+                (isAddonModalOpen && addonProductIds.length > (selectedPlan?.addon_max_slots || 0))
               }
               className={`px-5 sm:px-8 py-2 sm:py-2.5 rounded-xl font-bold transition-all shadow-lg text-sm ${includeAddon && !isAddonModalOpen ? 'bg-indigo-600 hover:bg-indigo-700' : ''}`}
             >
@@ -1034,48 +1197,96 @@ const SettingsPage: React.FC = () => {
       <Modal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
-        className="max-w-md w-full"
+        className="max-w-4xl w-full"
       >
         <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center dark:bg-blue-900/30">
-              <Search className="text-blue-600" size={24} />
+              <Zap className="text-blue-600" size={24} />
             </div>
-            <h3 className="text-xl font-bold dark:text-white">Confirm Plan</h3>
+            <div>
+              <h3 className="text-xl font-bold dark:text-white">Choose Your Plan</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Select which option works best for you</p>
+            </div>
           </div>
-          <div className="space-y-4 mb-6">
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
-              <span className="text-gray-500 font-medium">Plan Name</span>
-              <span className="font-bold text-gray-900 dark:text-white">{selectedPlan?.name}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
-              <span className="text-gray-500 font-medium">Duration</span>
-              <span className="font-bold text-gray-900 dark:text-white capitalize">{planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly"}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl dark:bg-gray-800">
-              <span className="text-gray-500 font-medium">{isAddonModalOpen ? "Add-on Products" : "Priority Products"}</span>
-              <span className="font-bold text-gray-900 dark:text-white">{purchaseSummary?.count} Items</span>
-            </div>
-            {includeAddon && !isAddonModalOpen && (
-              <div className="flex justify-between items-center p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 dark:bg-indigo-900/10">
-                <span className="text-indigo-600 font-medium italic text-xs">Included Benefit</span>
-                <span className="font-bold text-indigo-700 text-xs text-right">Enabled (Selection Next Step)</span>
+
+          <div className="space-y-6 mb-8">
+            {/* Monthly Options */}
+            <div>
+              <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wider">Monthly Options</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <button
+                  onClick={() => {
+                    setIsUnlimited(false);
+                    handlePurchase(true, false, "monthly");
+                  }}
+                  className={`p-4 rounded-xl border-2 transition-all text-left ${!isUnlimited && (planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly") === "monthly" ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 hover:border-blue-300 dark:border-gray-700'}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-gray-900 dark:text-white">Extra Product</span>
+                    <span className="text-lg font-black text-blue-600">{currency}{selectedPlan?.extra_product_price_monthly || 0}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Pay per additional product</p>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsUnlimited(true);
+                    handlePurchase(true, true, "monthly");
+                  }}
+                  className={`p-4 rounded-xl border-2 transition-all text-left ${isUnlimited && (planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly") === "monthly" ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-200 hover:border-indigo-300 dark:border-gray-700'}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-gray-900 dark:text-white">Unlimited</span>
+                    <span className="text-lg font-black text-indigo-600">{currency}{selectedPlan?.unlimited_amount_monthly || 0}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Unlimited products for a fixed price</p>
+                </button>
               </div>
-            )}
-            <div className="flex justify-between items-center p-3 bg-brand-50 rounded-xl border border-brand-100 dark:bg-brand-900/10">
-              <span className="text-brand-600 font-bold uppercase text-xs tracking-wider">Total Amount</span>
-              <span className="text-2xl font-black text-brand-600">{currency}{purchaseSummary?.amount?.toLocaleString()}</span>
             </div>
-            {purchaseSummary?.amount === 0 && purchaseSummary?.isRefill && (
-              <p className="text-xs text-green-600 font-bold text-center px-4">
-                ✓ Using remaining slots from your active subscription. No additional charge.
-              </p>
-            )}
+
+            {/* Yearly Options */}
+            <div>
+              <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wider">Yearly Options</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <button
+                  onClick={() => {
+                    setIsUnlimited(false);
+                    handlePurchase(true, false, "yearly");
+                  }}
+                  className={`p-4 rounded-xl border-2 transition-all text-left ${!isUnlimited && (planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly") === "yearly" ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 hover:border-blue-300 dark:border-gray-700'}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-gray-900 dark:text-white">Extra Product</span>
+                    <span className="text-lg font-black text-blue-600">{currency}{selectedPlan?.extra_product_price_yearly || 0}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Pay per additional product</p>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsUnlimited(true);
+                    handlePurchase(true, true, "yearly");
+                  }}
+                  className={`p-4 rounded-xl border-2 transition-all text-left ${isUnlimited && (planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly") === "yearly" ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-200 hover:border-indigo-300 dark:border-gray-700'}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-gray-900 dark:text-white">Unlimited</span>
+                    <span className="text-lg font-black text-indigo-600">{currency}{selectedPlan?.unlimited_amount_yearly || 0}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Unlimited products for a fixed price</p>
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="flex gap-3">
-            <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setIsConfirmModalOpen(false)}>Cancel</Button>
-            <Button variant="primary" className="flex-1 rounded-xl btn-primary" onClick={() => handlePurchase(true)} disabled={isPurchasing}>
-              {isPurchasing ? "Processing..." : "Confirm Purchase"}
+
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              className="px-6 py-2 rounded-xl"
+              onClick={() => setIsConfirmModalOpen(false)}
+            >
+              Cancel
             </Button>
           </div>
         </div>
@@ -1181,8 +1392,8 @@ const SettingsPage: React.FC = () => {
                     const planId = plan.id || (plan as any)._id;
                     const durationToggle = planDurations[planId] || "monthly";
 
-                    const monthlyPurchases = vendorPurchases.filter(p => String(p.plan_id) === String(planId) && p.plan_duration === "monthly");
-                    const yearlyPurchases = vendorPurchases.filter(p => String(p.plan_id) === String(planId) && p.plan_duration === "yearly");
+                    const monthlyPurchases = allVendorPurchases.filter(p => String(p.plan_id) === String(planId) && p.plan_duration === "monthly");
+                    const yearlyPurchases = allVendorPurchases.filter(p => String(p.plan_id) === String(planId) && p.plan_duration === "yearly");
 
                     const mTotal = monthlyPurchases.reduce((acc, p) => acc + Number(p.total_slots), 0);
                     const mUsed = monthlyPurchases.reduce((acc, p) => acc + p.product_ids.length, 0);
@@ -1308,24 +1519,57 @@ const SettingsPage: React.FC = () => {
     {/* Other Dynamic Features from Backend */}
   {(plan.features || []).map((feature, fIdx) => (
   <div key={fIdx} className="flex items-center gap-2 sm:gap-3 md:gap-4">
-    
     <div className="bg-green-100 p-1 sm:p-1.5 rounded-full flex-shrink-0 flex items-center justify-center">
       <Check className="text-green-600" size={10} />
     </div>
-
     <p className="text-gray-900 text-xs sm:text-sm dark:text-gray-300 leading-tight">
       {feature}
     </p>
-
   </div>
 ))}
+
+    {/* Premium Extras (Extra Product / Unlimited) */}
+    {((durationToggle === "monthly" && (plan.extra_product_price_monthly || plan.unlimited_amount_monthly)) || 
+       (durationToggle === "yearly" && (plan.extra_product_price_yearly || plan.unlimited_amount_yearly))) && (
+      <div className="pt-2 mt-2 border-t border-gray-100 dark:border-gray-800">
+        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-2">Premium Benefits</p>
+        <div className="space-y-2">
+          {((durationToggle === "monthly" && plan.extra_product_price_monthly) || (durationToggle === "yearly" && plan.extra_product_price_yearly)) && (
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="bg-amber-100 p-1 rounded-full flex-shrink-0">
+                <Plus size={10} className="text-amber-600" />
+              </div>
+              <p className="text-[10px] sm:text-xs font-bold text-gray-700 dark:text-gray-300">
+                Extra Product: {currency}{durationToggle === "monthly" ? plan.extra_product_price_monthly : plan.extra_product_price_yearly}
+              </p>
+            </div>
+          )}
+          {((durationToggle === "monthly" && plan.unlimited_amount_monthly) || (durationToggle === "yearly" && plan.unlimited_amount_yearly)) && (
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="bg-indigo-100 p-1 rounded-full flex-shrink-0">
+                <Rocket size={10} className="text-indigo-600" />
+              </div>
+              <p className="text-[10px] sm:text-xs font-bold text-gray-700 dark:text-gray-300">
+                Unlimited Upgrade available
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
   </div>
     
   {/* Button - Responsive */}
   <Button
     onClick={() => handleSelectPlan(plan)}
     variant={plan.is_popular ? 'primary' : 'outline'}
-    className="w-full !py-2.5 sm:!py-3 md:!py-3.5 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm btn-primary"
+    disabled={
+      isDurationActive &&
+      currentRemaining === 0 &&
+      !((durationToggle === "monthly" && (plan.extra_product_price_monthly || plan.unlimited_amount_monthly)) ||
+        (durationToggle === "yearly" && (plan.extra_product_price_yearly || plan.unlimited_amount_yearly)))
+    }
+    className="w-full !py-2.5 sm:!py-3 md:!py-3.5 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
   >
     {isDurationActive ? 'Add More Products' : 'Select Plan'}
   </Button>
@@ -1395,8 +1639,8 @@ const SettingsPage: React.FC = () => {
                     {plans.map((plan) => {
                       const planId = plan.id || (plan as any)._id;
                       const durationToggle = planDurations[planId] || "monthly";
-                      const monthlyPurchases = vendorPurchases.filter(p => String(p.plan_id) === String(planId) && p.plan_duration === "monthly");
-                      const yearlyPurchases = vendorPurchases.filter(p => String(p.plan_id) === String(planId) && p.plan_duration === "yearly");
+                      const monthlyPurchases = allVendorPurchases.filter(p => String(p.plan_id) === String(planId) && p.plan_duration === "monthly");
+                      const yearlyPurchases = allVendorPurchases.filter(p => String(p.plan_id) === String(planId) && p.plan_duration === "yearly");
                       const mTotal = monthlyPurchases.reduce((acc, p) => acc + Number(p.total_slots), 0);
                       const mUsed = monthlyPurchases.reduce((acc, p) => acc + p.product_ids.length, 0);
                       const yTotal = yearlyPurchases.reduce((acc, p) => acc + Number(p.total_slots), 0);
