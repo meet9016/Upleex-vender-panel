@@ -21,6 +21,9 @@ import ServicePlanView from "./ServicePlanView";
 import ServicePriorityPlanView from "./ServicePriorityPlanView";
 import { Briefcase, Zap } from "lucide-react";
 import { MdDelete } from "react-icons/md";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { setSelection, replaceSelections, clearSelections, setMultipleSelections } from "@/store/slices/selectionSlice";
 
 interface PriorityPlan {
   id: string;
@@ -82,7 +85,26 @@ const SettingsPage: React.FC = () => {
   const [listingPurchases, setListingPurchases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<PriorityPlan | null>(null);
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  
+  // Redux state for persistent selection across tabs
+  const dispatch = useDispatch();
+  const selectedIdsMap = useSelector((state: RootState) => state.selection.selectedIds);
+  const selectedProductIds = useMemo(() => 
+    Object.keys(selectedIdsMap).filter(id => selectedIdsMap[id]), 
+    [selectedIdsMap]
+  );
+
+  const setSelectedProductIds = (ids: string[] | ((prev: string[]) => string[])) => {
+    const newIds = typeof ids === 'function' ? ids(selectedProductIds) : ids;
+    const newMap: Record<string, boolean> = {};
+    // When called from outside (e.g. handleSelectionChange or clearing), 
+    // it usually means we want to replace the current logical selection.
+    // However, if we want to preserve other tabs, we should be careful.
+    // For simplicity, if we pass a full array, we assume it's the global selection.
+    newIds.forEach(id => newMap[id] = true);
+    dispatch(replaceSelections(newMap));
+  };
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
@@ -160,8 +182,6 @@ const SettingsPage: React.FC = () => {
 
       const rentData = rentRes.data.data || [];
       const sellData = sellRes.data.data || [];
-      console.log("rentData", rentData);
-      console.log("sellData", sellData);
       // Calculate total slots sum for the counts
       const rentTotalSlots = rentData.reduce((acc: number, p: any) => acc + (p.total_slots || 0), 0);
       const sellTotalSlots = sellData.reduce((acc: number, p: any) => acc + (p.total_slots || 0), 0);
@@ -289,6 +309,24 @@ const SettingsPage: React.FC = () => {
       return;
     }
 
+    // Strict limit check requested by user: block if exceeding slots
+    const currentDurationForLimit = forcedDuration || planDurations[targetPlanId] || "monthly";
+    const activePurchasesForLimit = allVendorPurchases.filter(p =>
+      String(p.plan_id) === String(targetPlanId) &&
+      p.plan_duration === currentDurationForLimit &&
+      new Date(p.expire_at) > new Date()
+    );
+    const totalSlotsForLimit = activePurchasesForLimit.length > 0
+      ? activePurchasesForLimit.reduce((acc, p) => acc + Number(p.total_slots), 0)
+      : Number(selectedPlan.product_slots || 0);
+    const currentProductIdsForLimit = new Set(activePurchasesForLimit.flatMap(p => p.product_ids.map(id => String(id))));
+    const remainingSlotsForLimit = Math.max(0, totalSlotsForLimit - currentProductIdsForLimit.size);
+
+    if (selectedPlan.free_listing === true && selectedProductIds.length > remainingSlotsForLimit) {
+      toast.error(`You cannot select more than ${remainingSlotsForLimit} product(s) for this plan.`);
+      return;
+    }
+
     const currentDuration = forcedDuration || planDurations[targetPlanId] || "monthly";
     const currentUnlimited = forcedUnlimited !== undefined ? forcedUnlimited : isUnlimited;
     
@@ -319,28 +357,13 @@ const SettingsPage: React.FC = () => {
     const extraPrice = currentDuration === "monthly" ? selectedPlan.extra_product_price_monthly : selectedPlan.extra_product_price_yearly;
     const unlimitedAmt = currentDuration === "monthly" ? selectedPlan.unlimited_amount_monthly : selectedPlan.unlimited_amount_yearly;
 
-    console.log('=== Priority Plan Purchase Debug ===');
-    console.log('selectedPlan:', selectedPlan);
-    console.log('selectedPlan.free_listing:', selectedPlan.free_listing);
-    console.log('currentDuration:', currentDuration);
-    console.log('activePurchases.length:', activePurchases.length);
-    console.log('totalSlots:', totalSlots);
-    console.log('usedSlots:', usedSlots);
-    console.log('remainingSlotsCalculated:', remainingSlotsCalculated);
-    console.log('isRefillAvailable:', isRefillAvailable);
-    console.log('isExceeding:', isExceeding);
-    console.log('initial finalPrice:', finalPrice);
-
     if (currentUnlimited && unlimitedAmt) {
       finalPrice = unlimitedAmt;
-      console.log('Setting unlimited, finalPrice:', finalPrice);
     } else if (isRefillAvailable) {
       finalPrice = 0;
-      console.log('Refill available, finalPrice:', finalPrice);
     } else if (selectedPlan.free_listing === true) {
       finalPrice = finalPrice;
       isExtraAddon = false;
-      console.log('Free listing plan, finalPrice:', finalPrice);
     } else if (isExceeding) {
       if (activePurchases.length > 0 || selectedPlan.free_listing === false) {
         const baseRemaining = selectedPlan.free_listing === false ? 0 : remainingSlotsCalculated;
@@ -348,16 +371,12 @@ const SettingsPage: React.FC = () => {
         extraProductCost = extraCount * (extraPrice || 0);
         finalPrice = extraProductCost;
         isExtraAddon = true;
-        console.log('Adding to active plan, finalPrice:', finalPrice);
       } else {
         extraCount = Math.max(0, selectedProductIds.length - (selectedPlan.product_slots || 0));
         extraProductCost = extraCount * (extraPrice || 0);
         finalPrice = (finalPrice || 0) + extraProductCost;
-        console.log('New plan exceeding limit, finalPrice:', finalPrice);
       }
     }
-
-    console.log('=== FINAL finalPrice:', finalPrice);
 
     if (!isConfirmed) {
       const activePurchase = activePurchases[0];
@@ -409,8 +428,6 @@ const SettingsPage: React.FC = () => {
         is_extra_per_product: isExceeding && !currentUnlimited && selectedPlan.free_listing === false
       };
       
-      console.log('=== Sending API Payload to Priority Purchase ===');
-      console.log(apiPayload);
       
       const res = await api.post(endPointApi.purchasePriorityPlan, apiPayload);
 
@@ -1099,34 +1116,60 @@ const SettingsPage: React.FC = () => {
                     return !hasPriorityPlan;
                   });
                   
-                  // Check priority plan slot limit only if no extra/unlimited options
+                  // Check priority plan slot limit
                   if (selectedPlan) {
                     const totalSlots = selectedPlan.product_slots || 0;
                     const currentRemaining = remainingSlots || totalSlots;
                     const hasExtraOption = selectedPlan.extra_product_price_monthly || selectedPlan.extra_product_price_yearly;
                     const hasUnlimitedOption = selectedPlan.unlimited_amount_monthly || selectedPlan.unlimited_amount_yearly;
                     
-                    // Only limit if no extra/unlimited options
-                    if (!hasExtraOption && !hasUnlimitedOption && selectableRows.length > currentRemaining) {
-                      const limitedRows = selectableRows.slice(0, currentRemaining);
-                      const ids = limitedRows.map(p => p.id || (p as any)._id);
-                      setSelectedProductIds(ids);
-                      
-                      // Show toast only once
-                      if (!hasShownLimitToast) {
-                        toast.warning(`You can only select up to ${currentRemaining} product(s) for this plan.`);
-                        setHasShownLimitToast(true);
+                    // If exceeding limit
+                    if (selectedPlan.free_listing === true && selectableRows.length > currentRemaining) {
+                      // If plan does NOT allow extras, strictly limit
+                      if (!hasExtraOption && !hasUnlimitedOption) {
+                        const limitedRows = selectableRows.slice(0, currentRemaining);
+                        const ids = limitedRows.map(p => p.id || (p as any)._id);
+                        
+                        // Sync with Redux (only for products in current view)
+                        const updateMap: Record<string, boolean> = {};
+                        filteredProducts.forEach(p => {
+                          updateMap[String(p.id || p._id)] = false;
+                        });
+                        ids.forEach(id => {
+                          updateMap[String(id)] = true;
+                        });
+                        dispatch(setMultipleSelections(updateMap));
+
+                        toast.warning(`Limit exceeded! This plan allows only ${currentRemaining} product(s).`);
+                        return;
+                      } else {
+                        // If plan allows extras, show a warning toast but allow selection
+                        if (!hasShownLimitToast) {
+                          toast.info(`You have selected ${selectableRows.length} products, which exceeds the base limit of ${currentRemaining}. Extra products will be charged accordingly.`);
+                          setHasShownLimitToast(true);
+                        }
                       }
-                      return;
                     }
                   }
                   
                   const ids = selectableRows.map(p => p.id || (p as any)._id);
-                  setSelectedProductIds(ids);
+                  
+                  // Sync with Redux (only for products in current view)
+                  const updateMap: Record<string, boolean> = {};
+                  filteredProducts.forEach(p => {
+                    updateMap[String(p.id || p._id)] = false;
+                  });
+                  ids.forEach(id => {
+                    updateMap[String(id)] = true;
+                  });
+                  dispatch(setMultipleSelections(updateMap));
+                  
                   // Reset toast flag when valid selection is made
                   setHasShownLimitToast(false);
                 }
               }}
+              selectedIds={selectedIdsMap}
+              getRowId={(params) => String(params.data.id || params.data._id)}
               showCheckboxes={true}
               height={420}
               rowHeight={45}
@@ -1546,7 +1589,7 @@ const SettingsPage: React.FC = () => {
                   <Zap className="w-3 h-3 text-emerald-600" />
                 </div>
                 <span className="text-sm font-bold text-emerald-600">
-                  Extra Product: {currency}{plan.extra_product_price_monthly} / each
+                  Extra Product: {currency}{plan.extra_product_price_monthly} / mo
                 </span>
               </div>
             )}
@@ -1575,7 +1618,7 @@ const SettingsPage: React.FC = () => {
                   <Zap className="w-3 h-3 text-emerald-600" />
                 </div>
                 <span className="text-sm font-bold text-emerald-600">
-                  Extra Product: {currency}{plan.extra_product_price_yearly} / each
+                  Extra Product: {currency}{plan.extra_product_price_yearly} / yr
                 </span>
               </div>
             )}
@@ -1750,7 +1793,7 @@ const SettingsPage: React.FC = () => {
                                           <Zap className="w-3 h-3 text-emerald-600" />
                                         </div>
                                         <span className="text-sm font-bold text-emerald-600">
-                                          Extra Product: {currency}{plan.extra_product_price_monthly} / each
+                                          Extra Product: {currency}{plan.extra_product_price_monthly} / mo
                                         </span>
                                       </div>
                                     )}
@@ -1779,7 +1822,7 @@ const SettingsPage: React.FC = () => {
                                           <Zap className="w-3 h-3 text-emerald-600" />
                                         </div>
                                         <span className="text-sm font-bold text-emerald-600">
-                                          Extra Product: {currency}{plan.extra_product_price_yearly} / each
+                                          Extra Product: {currency}{plan.extra_product_price_yearly} / yr
                                         </span>
                                       </div>
                                     )}

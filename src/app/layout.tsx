@@ -6,6 +6,7 @@ import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import StoreProvider from '@/store/StoreProvider';
 
 
 const outfit = Outfit({
@@ -32,11 +33,13 @@ export default function RootLayout({
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
       </head>
       <body className={`${outfit.className} dark:bg-gray-900`}>
-        <ThemeProvider>
-          <SidebarProvider>{children}
-          <ToastContainer position="top-right" autoClose={3000} newestOnTop style={{ zIndex: 999999, position: "fixed" }} />
-          </SidebarProvider>
-        </ThemeProvider>
+        <StoreProvider>
+          <ThemeProvider>
+            <SidebarProvider>{children}
+            <ToastContainer position="top-right" autoClose={3000} newestOnTop style={{ zIndex: 999999, position: "fixed" }} />
+            </SidebarProvider>
+          </ThemeProvider>
+        </StoreProvider>
       </body>
     </html>
   );

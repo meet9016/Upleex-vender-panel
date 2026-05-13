@@ -12,6 +12,9 @@ import { ColDef } from "ag-grid-community";
 import StatusBadge from "@/components/common/StatusBadge";
 import { useWallet } from "@/context/WalletContext";
 import { Modal } from "@/components/ui/modal";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { setMultipleSelections, replaceSelections } from "@/store/slices/selectionSlice";
 
 interface ServiceListingPlan {
   _id?: string;
@@ -45,10 +48,26 @@ const ServicePlanView: React.FC = () => {
   const [purchasedPlans, setPurchasedPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<ServiceListingPlan | null>(null);
-  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  
+  // Redux state for persistent selection
+  const dispatch = useDispatch();
+  const selectedIdsMap = useSelector((state: RootState) => state.selection.selectedIds);
+  const selectedServiceIds = useMemo(() => 
+    Object.keys(selectedIdsMap).filter(id => selectedIdsMap[id]), 
+    [selectedIdsMap]
+  );
+
+  const setSelectedServiceIds = (ids: string[] | ((prev: string[]) => string[])) => {
+    const newIds = typeof ids === 'function' ? ids(selectedServiceIds) : ids;
+    const newMap: Record<string, boolean> = {};
+    newIds.forEach(id => newMap[id] = true);
+    dispatch(replaceSelections(newMap));
+  };
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [gridSearch, setGridSearch] = useState("");
+  const [hasShownLimitToast, setHasShownLimitToast] = useState(false);
   const fetchedRef = React.useRef(false);
 
   const planAggregates = useMemo(() => {
@@ -145,6 +164,15 @@ const ServicePlanView: React.FC = () => {
 
     if (selectedServiceIds.length === 0) {
       toast.error("Please select at least one service.");
+      return;
+    }
+
+    // Strict limit check requested by user: block if exceeding slots
+    const aggForLimit = planAggregates[selectedPlan.plan_name] || { total: 0, used: 0, serviceIds: new Set() };
+    const remainingSlotsForLimit = aggForLimit && aggForLimit.total > 0 ? Math.max(0, aggForLimit.total - aggForLimit.used) : (selectedPlan.max_services || 0);
+
+    if (selectedServiceIds.length > (remainingSlotsForLimit || 0)) {
+      toast.error(`You cannot select more than ${remainingSlotsForLimit} service(s) for this plan.`);
       return;
     }
 
@@ -449,19 +477,48 @@ const ServicePlanView: React.FC = () => {
                   const agg = selectedPlan ? planAggregates[selectedPlan.plan_name] : null;
                   const remainingSlots = agg && agg.total > 0 ? Math.max(0, agg.total - agg.used) : selectedPlan.max_services;
                   
-                  // If selecting more than available slots, limit the selection silently
-                  if (selectableRows.length > remainingSlots) {
-                    // Take only the first 'remainingSlots' services
+                  // If exceeding limit
+                  if (selectableRows.length > (remainingSlots || 0)) {
+                    // Service plans currently don't have "extra" pricing implemented in UI the same way,
+                    // so we enforce the hard limit.
                     const limitedRows = selectableRows.slice(0, remainingSlots);
-                    const ids = limitedRows.map((r: any) => r._id || r.id).filter((id: any) => !!id);
-                    setSelectedServiceIds(ids);
+                    const ids = limitedRows.map((r: any) => String(r._id || r.id)).filter((id: any) => !!id);
+                    
+                    // Sync with Redux
+                    const updateMap: Record<string, boolean> = {};
+                    filteredServices.forEach(s => {
+                      updateMap[String(s._id || s.id)] = false;
+                    });
+                    ids.forEach(id => {
+                      updateMap[String(id)] = true;
+                    });
+                    dispatch(setMultipleSelections(updateMap));
+                    
+                    if (!hasShownLimitToast) {
+                      toast.warning(`Limit exceeded! This plan allows only ${remainingSlots} service(s).`);
+                      setHasShownLimitToast(true);
+                    }
                     return;
                   }
                 }
                 
-                const ids = selectableRows.map((r: any) => r._id || r.id).filter((id: any) => !!id);
-                setSelectedServiceIds(ids);
+                const ids = selectableRows.map((r: any) => String(r._id || r.id)).filter((id: any) => !!id);
+                
+                // Sync with Redux
+                const updateMap: Record<string, boolean> = {};
+                filteredServices.forEach(s => {
+                  updateMap[String(s._id || s.id)] = false;
+                });
+                ids.forEach(id => {
+                  updateMap[String(id)] = true;
+                });
+                dispatch(setMultipleSelections(updateMap));
+                
+                // Reset toast flag when valid selection is made
+                setHasShownLimitToast(false);
               }}
+              selectedIds={selectedIdsMap}
+              getRowId={(params) => String(params.data._id || params.data.id)}
               showCheckboxes={true}
               height={500}
               isRowSelectable={(params) => {

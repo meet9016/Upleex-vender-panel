@@ -50,6 +50,7 @@ interface AgGridTableProps {
   groupDefaultExpanded?: number;
   getRowId?: (params: any) => string;
   noRowsMessage?: string;
+  selectedIds?: Record<string, boolean>;
 }
 
 const AgGridTable: React.FC<AgGridTableProps> = ({
@@ -73,6 +74,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
   groupDefaultExpanded,
   getRowId,
   noRowsMessage,
+  selectedIds,
 }) => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
@@ -190,6 +192,18 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
       headerClass: 'ag-center-aligned-header',
     };
   }, []);
+
+  useEffect(() => {
+    if (gridRef.current?.api && rowData && selectedIds && showCheckboxes) {
+      gridRef.current.api.forEachNode((node: any) => {
+        const id = getRowId ? getRowId({ data: node.data }) : (node.data.id || node.data._id);
+        const shouldBeSelected = !!selectedIds[String(id)];
+        if (node.isSelected() !== shouldBeSelected) {
+          node.setSelected(shouldBeSelected, false, true);
+        }
+      });
+    }
+  }, [rowData, selectedIds, getRowId, showCheckboxes]);
 
   useEffect(() => {
     if (gridRef.current?.api) {

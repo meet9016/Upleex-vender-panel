@@ -12,6 +12,9 @@ import StatusBadge from "@/components/common/StatusBadge";
 import { useWallet } from "@/context/WalletContext";
 import { Modal } from "@/components/ui/modal";
 import PageLoader from "@/components/common/PageLoader";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { setMultipleSelections, replaceSelections } from "@/store/slices/selectionSlice";
 
 const BoosterPlanView: React.FC = () => {
   const { currency, refreshBalance, balance } = useWallet();
@@ -26,8 +29,22 @@ const BoosterPlanView: React.FC = () => {
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [historyTab, setHistoryTab] = useState<"rent" | "sell">("rent");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([""]);
   const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
+  
+  // Redux state for persistent selection
+  const dispatch = useDispatch();
+  const selectedIdsMap = useSelector((state: RootState) => state.selection.selectedIds);
+  const selectedProductIds = useMemo(() => 
+    Object.keys(selectedIdsMap).filter(id => selectedIdsMap[id]), 
+    [selectedIdsMap]
+  );
+
+  const setSelectedProductIds = (ids: string[] | ((prev: string[]) => string[])) => {
+    const newIds = typeof ids === 'function' ? ids(selectedProductIds) : ids;
+    const newMap: Record<string, boolean> = {};
+    newIds.forEach(id => newMap[id] = true);
+    dispatch(replaceSelections(newMap));
+  };
   const [gridSearch, setGridSearch] = useState("")
   const historyCacheRef = React.useRef<Record<string, any[]>>({});
   const initialDataFetchedRef = React.useRef(false);
@@ -464,7 +481,7 @@ const BoosterPlanView: React.FC = () => {
                 className={`w-full !py-4 rounded-xl font-bold btn-primary dark:bg-[#1c2938] shadow-indigo-100`}
                 variant="primary"
               >
-                {isPurchasing ? "Processing..." : `Boost Selected Products - ${currency}${plan.price}/product`}
+                {isPurchasing ? "Processing..." : `Boost Selected Products`}
               </Button>
               <p className="text-center text-[10px] text-gray-400 font-medium px-4 leading-relaxed">
                 Select multiple products to boost. Each product costs {currency}{plan.price}.
@@ -549,8 +566,19 @@ const BoosterPlanView: React.FC = () => {
                   .filter((row: any) => !isProductBoosted(row))
                   .map((row: any) => row.id || row._id)
                   .filter(Boolean);
-                setSelectedProductIds(ids);
+                
+                // Sync with Redux (only for products in current view)
+                const updateMap: Record<string, boolean> = {};
+                filteredProducts.forEach(p => {
+                  updateMap[String(p.id || p._id)] = false;
+                });
+                ids.forEach(id => {
+                  updateMap[String(id)] = true;
+                });
+                dispatch(setMultipleSelections(updateMap));
               }}
+              selectedIds={selectedIdsMap}
+              getRowId={(params) => String(params.data.id || params.data._id)}
               isRowSelectable={(params) => {
                 const product = params.data;
                 const isBoosted = product.is_boosted && product.boost_expiry && new Date(product.boost_expiry) > new Date();

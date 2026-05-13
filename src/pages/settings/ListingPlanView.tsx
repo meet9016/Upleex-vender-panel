@@ -12,6 +12,9 @@ import { ColDef } from "ag-grid-community";
 import StatusBadge from "@/components/common/StatusBadge";
 import { useWallet } from "@/context/WalletContext";
 import { Modal } from "@/components/ui/modal";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { setMultipleSelections, replaceSelections } from "@/store/slices/selectionSlice";
 
 interface ListingPlan {
   key: string;
@@ -54,7 +57,22 @@ const ListingPlanView: React.FC = () => {
   const [listingSellCount, setListingSellCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<ListingPlan | null>(null);
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  
+  // Redux state for persistent selection
+  const dispatch = useDispatch();
+  const selectedIdsMap = useSelector((state: RootState) => state.selection.selectedIds);
+  const selectedProductIds = useMemo(() => 
+    Object.keys(selectedIdsMap).filter(id => selectedIdsMap[id]), 
+    [selectedIdsMap]
+  );
+
+  const setSelectedProductIds = (ids: string[] | ((prev: string[]) => string[])) => {
+    const newIds = typeof ids === 'function' ? ids(selectedProductIds) : ids;
+    const newMap: Record<string, boolean> = {};
+    newIds.forEach(id => newMap[id] = true);
+    dispatch(replaceSelections(newMap));
+  };
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
   const [priorityAddons, setPriorityAddons] = useState<any[]>([]);
@@ -234,13 +252,22 @@ const ListingPlanView: React.FC = () => {
     setIsChoiceModalOpen(false);
     setIsModalOpen(true);
   };
-
   const handlePurchase = async (isConfirmed = false, forcedUnlimited?: boolean) => {
     if (!selectedPlan) return;
 
     if (selectedProductIds.length === 0) {
       toast.error("Please select at least one product.");
       return;
+    }
+
+    // Strict limit check requested by user: block if exceeding slots
+    const aggForLimit = planAggregates[selectedPlan.key] || { total: 0, used: 0, productIds: new Set() };
+    const remainingSlotsForLimit = aggForLimit.total > 0 ? Math.max(0, aggForLimit.total - aggForLimit.used) : selectedPlan.product_limit;
+
+    if (selectedPlan.free_listing === true && selectedProductIds.length > (remainingSlotsForLimit || 0) ) {
+        toast.error(`You cannot select more than ${remainingSlotsForLimit} product(s) for this plan.`);
+        return;
+      
     }
 
     const currentUnlimited = forcedUnlimited !== undefined ? forcedUnlimited : isUnlimited;
@@ -615,28 +642,52 @@ const ListingPlanView: React.FC = () => {
       return true;
     });
     
-      // Check plan limit
-      if (selectedPlan) {
-        const agg = planAggregates[selectedPlan.key] || { total: 0, used: 0, productIds: new Set() };
-        const remainingSlots = agg.total > 0 ? Math.max(0, agg.total - agg.used) : selectedPlan.product_limit;
-        
-        // If selecting more than available slots, check if extra product add-on is available
-        if (selectableRows.length > remainingSlots && !selectedPlan.extra_product_price) {
+    // Check plan limit
+    if (selectedPlan) {
+      const agg = planAggregates[selectedPlan.key] || { total: 0, used: 0, productIds: new Set() };
+      const remainingSlots = agg.total > 0 ? Math.max(0, agg.total - agg.used) : selectedPlan.product_limit;
+      
+      // If exceeding limit
+      if (selectedPlan.free_listing === true && selectableRows.length > (remainingSlots || 0)) {
+        // If plan does NOT allow extras, strictly limit
+        if (!selectedPlan.extra_product_price && !selectedPlan.unlimited_amount) {
           const limitedRows = selectableRows.slice(0, remainingSlots);
           const ids = limitedRows.map((p) => p.id);
-          setSelectedProductIds(ids);
           
-          // Show toast only once
+          // Sync with Redux (only for products in current view)
+          const updateMap: Record<string, boolean> = {};
+          filteredProducts.forEach(p => {
+            updateMap[String(p.id || p._id)] = false;
+          });
+          ids.forEach(id => {
+            updateMap[String(id)] = true;
+          });
+          dispatch(setMultipleSelections(updateMap));
+          
+          toast.warning(`Limit exceeded! This plan allows only ${remainingSlots} product(s).`);
+          return;
+        } else {
+          // If plan allows extras, show a warning toast but allow selection
           if (!hasShownLimitToast) {
-            toast.warning(`You can only select up to ${remainingSlots} product(s) for this plan.`);
+            toast.info(`You have selected ${selectableRows.length} products, which exceeds the base limit of ${remainingSlots}. Extra products will be charged accordingly.`);
             setHasShownLimitToast(true);
           }
-          return;
         }
       }
+    }
     
     const ids = selectableRows.map((p) => p.id);
-    setSelectedProductIds(ids);
+    
+    // Sync with Redux (only for products in current view)
+    const updateMap: Record<string, boolean> = {};
+    filteredProducts.forEach(p => {
+      updateMap[String(p.id || p._id)] = false;
+    });
+    ids.forEach(id => {
+      updateMap[String(id)] = true;
+    });
+    dispatch(setMultipleSelections(updateMap));
+    
     // Reset toast flag when valid selection is made
     setHasShownLimitToast(false);
   };
@@ -973,6 +1024,8 @@ const ListingPlanView: React.FC = () => {
               columns={columns}
               rowData={filteredProducts}
               onSelectionChange={handleSelectionChange}
+              selectedIds={selectedIdsMap}
+              getRowId={(params) => String(params.data.id || params.data._id)}
               showCheckboxes={true}
               height={500}
               rowHeight={65}

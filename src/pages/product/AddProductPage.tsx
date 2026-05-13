@@ -252,6 +252,8 @@ export default function AddProductPage() {
                     p.pricing_type === 'free' &&
                     ['active', 'draft'].includes(p.status)
                 ).length;
+                
+                setFreeProductCount(freeCount);
             }
         } catch (error) {
             setSkuCounter(1); // Fallback to 1
@@ -1038,7 +1040,6 @@ export default function AddProductPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-
                     {/* ================= Row 1: Category & Sub Category ================= */}
                     <div>
                         <Label required className="font-semibold mb-2">Category</Label>
