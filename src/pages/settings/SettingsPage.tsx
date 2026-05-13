@@ -1574,11 +1574,11 @@ const SettingsPage: React.FC = () => {
 ))}
 
     {/* Premium Extras (Extra Product / Unlimited) */}
-    {(plan.extra_product_price_monthly || plan.unlimited_amount_monthly || plan.unlimited_price_monthly || 
-      plan.extra_product_price_yearly || plan.unlimited_amount_yearly || plan.unlimited_price_yearly) && (
+    {((durationToggle === "monthly" && (plan.extra_product_price_monthly || plan.unlimited_amount_monthly || plan.unlimited_price_monthly)) || 
+      (durationToggle === "yearly" && (plan.extra_product_price_yearly || plan.unlimited_amount_yearly || plan.unlimited_price_yearly))) && (
       <div className=" border-t border-gray-100 dark:border-gray-800 space-y-2 text-left w-full">
         {/* Monthly Extras Section */}
-        {(plan.extra_product_price_monthly > 0 || plan.unlimited_amount_monthly > 0 || plan.unlimited_price_monthly > 0) && (
+        {durationToggle === "monthly" && (plan.extra_product_price_monthly > 0 || plan.unlimited_amount_monthly > 0 || plan.unlimited_price_monthly > 0) && (
           <div className="space-y-2">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
               <span className="w-1 h-1 bg-gray-400 rounded-full"></span> Monthly Extras
@@ -1607,7 +1607,7 @@ const SettingsPage: React.FC = () => {
         )}
 
         {/* Yearly Extras Section */}
-        {(plan.extra_product_price_yearly > 0 || plan.unlimited_amount_yearly > 0 || plan.unlimited_price_yearly > 0) && (
+        {durationToggle === "yearly" && (plan.extra_product_price_yearly > 0 || plan.unlimited_amount_yearly > 0 || plan.unlimited_price_yearly > 0) && (
           <div className="space-y-2">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
               <span className="w-1 h-1 bg-gray-400 rounded-full"></span> Yearly Extras
@@ -1778,11 +1778,11 @@ const SettingsPage: React.FC = () => {
                               </div>
                             ))}
                             {/* Premium Extras (Extra Product / Unlimited) */}
-                            {(plan.extra_product_price_monthly || plan.unlimited_amount_monthly || plan.unlimited_price_monthly || 
-                              plan.extra_product_price_yearly || plan.unlimited_amount_yearly || plan.unlimited_price_yearly) && (
+                            {((durationToggle === "monthly" && (plan.extra_product_price_monthly || plan.unlimited_amount_monthly || plan.unlimited_price_monthly)) || 
+                              (durationToggle === "yearly" && (plan.extra_product_price_yearly || plan.unlimited_amount_yearly || plan.unlimited_price_yearly))) && (
                               <div className=" border-t border-gray-100 dark:border-gray-800 space-y-2 text-left w-full mb-6">
                                 {/* Monthly Extras Section */}
-                                {(plan.extra_product_price_monthly > 0 || plan.unlimited_amount_monthly > 0 || plan.unlimited_price_monthly > 0) && (
+                                {durationToggle === "monthly" && (plan.extra_product_price_monthly > 0 || plan.unlimited_amount_monthly > 0 || plan.unlimited_price_monthly > 0) && (
                                   <div className="space-y-2">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                                       <span className="w-1 h-1 bg-gray-400 rounded-full"></span> Monthly Extras
@@ -1811,7 +1811,7 @@ const SettingsPage: React.FC = () => {
                                 )}
 
                                 {/* Yearly Extras Section */}
-                                {(plan.extra_product_price_yearly > 0 || plan.unlimited_amount_yearly > 0 || plan.unlimited_price_yearly > 0) && (
+                                {durationToggle === "yearly" && (plan.extra_product_price_yearly > 0 || plan.unlimited_amount_yearly > 0 || plan.unlimited_price_yearly > 0) && (
                                   <div className="space-y-2">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                                       <span className="w-1 h-1 bg-gray-400 rounded-full"></span> Yearly Extras
