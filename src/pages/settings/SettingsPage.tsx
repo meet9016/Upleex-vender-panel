@@ -117,10 +117,21 @@ const SettingsPage: React.FC = () => {
   const [addonProductIds, setAddonProductIds] = useState<string[]>([]);
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [isUnlimited, setIsUnlimited] = useState(false);
   const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
   const [planPreferences, setPlanPreferences] = useState<Record<string, { monthly: 'extra' | 'unlimited', yearly: 'extra' | 'unlimited' }>>({});
-  const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean; isUnlimited?: boolean; extraCount?: number; extraPrice?: number, isFreeListing?: boolean } | null>(null);
+  const [purchaseSummary, setPurchaseSummary] = useState<{ 
+    count: number; 
+    amount: number; 
+    gstAmount: number;
+    totalAmount: number;
+    isRefill: boolean; 
+    isUnlimited?: boolean; 
+    extraCount?: number; 
+    extraPrice?: number, 
+    isFreeListing?: boolean 
+  } | null>(null);
   const [priorityHistoryTab, setPriorityHistoryTab] = useState<"rent" | "sell">("rent");
   const [hasShownLimitToast, setHasShownLimitToast] = useState(false); // Track if limit toast was shown
   const [isVideoUploading, setIsVideoUploading] = useState(false);
@@ -181,10 +192,11 @@ const SettingsPage: React.FC = () => {
       const sellRes = results[1];
 
       const rentData = rentRes.data.data || [];
+      console.log("🚀 ~ file: SettingsPage.tsx:263 ~ fetchData ~ rentData:", rentData)
       const sellData = sellRes.data.data || [];
       // Calculate total slots sum for the counts
-      const rentTotalSlots = rentData.reduce((acc: number, p: any) => acc + (p.total_slots || 0), 0);
-      const sellTotalSlots = sellData.reduce((acc: number, p: any) => acc + (p.total_slots || 0), 0);
+      const rentTotalSlots = rentData.reduce((acc: number, p: any) => acc + (p.product_ids?.length || 0), 0);
+      const sellTotalSlots = sellData.reduce((acc: number, p: any) => acc + (p.product_ids?.length || 0), 0);
 
       setPriorityRentCount(rentTotalSlots);
       setPrioritySellCount(sellTotalSlots);
@@ -343,7 +355,7 @@ const SettingsPage: React.FC = () => {
     const currentProductIds = new Set(activePurchases.flatMap(p => p.product_ids.map(id => String(id))));
     const usedSlots = currentProductIds.size;
     const remainingSlotsCalculated = Math.max(0, totalSlots - usedSlots);
-    const isRefillAvailable = remainingSlotsCalculated > 0 && selectedProductIds.length <= remainingSlotsCalculated;
+    const isRefillAvailable = activePurchases.length > 0 && remainingSlotsCalculated > 0 && selectedProductIds.length <= remainingSlotsCalculated;
 
     const isExceeding = 
       selectedPlan.free_listing === false || 
@@ -379,40 +391,79 @@ const SettingsPage: React.FC = () => {
     }
 
     if (!isConfirmed) {
-      const activePurchase = activePurchases[0];
-      const savedPref = planPreferences[targetPlanId]?.[currentDuration] || 
-                      (activePurchase?.is_unlimited ? 'unlimited' : 
-                       activePurchase?.is_extra_per_product ? 'extra' : null);
+      // Auto-confirm logic: skip popup if price is 0 (for refills) 
+      const activePurchase = allVendorPurchases.find(p => String(p.plan_id) === String(targetPlanId) && p.plan_duration === currentDuration && new Date(p.expire_at) > new Date());
+      const savedPref = planPreferences[targetPlanId]?.[currentDuration];
       
+      const hasSavedFlag = activePurchase && (
+        activePurchase.is_monthly_extra || 
+        activePurchase.is_monthly_unlimited || 
+        activePurchase.is_yearly_extra || 
+        activePurchase.is_yearly_unlimited
+      );
+
+      if (hasSavedFlag && selectedPlan.free_listing === false) {
+        const finalUnlimitedValue = activePurchase.is_monthly_unlimited || activePurchase.is_yearly_unlimited;
+        setIsModalOpen(false);
+        setTimeout(() => handlePurchase(true, finalUnlimitedValue, currentDuration), 10);
+        return;
+      }
+
       let shouldAutoConfirm = false;
       let finalUnlimitedValue = currentUnlimited;
 
-      if (!isUnlimited && selectedPlan.free_listing === true) {
+      if (!currentUnlimited && selectedPlan.free_listing === true) {
         shouldAutoConfirm = true;
-      } else if (savedPref && !isUnlimited && !isChoiceModalOpen) {
+      } else if (savedPref && !currentUnlimited && !isChoiceModalOpen && selectedPlan.free_listing === true) {
         shouldAutoConfirm = true;
         finalUnlimitedValue = savedPref === 'unlimited';
       }
 
       if (!isConfirmed && shouldAutoConfirm) {
-        handlePurchase(true, finalUnlimitedValue, currentDuration);
+        // Still calculate summary even for auto-confirm to show the final modal
+        const gstAmount = finalPrice > 0 ? Number((finalPrice * 0.18).toFixed(2)) : 0;
+        const totalAmountWithGst = Number((finalPrice + gstAmount).toFixed(2));
+
+        setPurchaseSummary({
+          count: selectedProductIds.length,
+          amount: finalPrice,
+          gstAmount: gstAmount,
+          totalAmount: totalAmountWithGst,
+          isRefill: isRefillAvailable && !isExtraAddon && !finalUnlimitedValue,
+          isUnlimited: finalUnlimitedValue,
+          extraCount: extraCount,
+          extraPrice: extraPrice,
+          isFreeListing: selectedPlan.free_listing
+        });
+        setIsModalOpen(false);
+        setIsSummaryModalOpen(true);
         return;
       }
+
+      const gstAmount = finalPrice > 0 ? Number((finalPrice * 0.18).toFixed(2)) : 0;
+      const totalAmountWithGst = Number((finalPrice + gstAmount).toFixed(2));
 
       setPurchaseSummary({
         count: selectedProductIds.length,
         amount: finalPrice,
+        gstAmount: gstAmount,
+        totalAmount: totalAmountWithGst,
         isRefill: isRefillAvailable && !isExtraAddon && !currentUnlimited,
         isUnlimited: currentUnlimited,
         extraCount: extraCount,
-        extraPrice: extraPrice
+        extraPrice: extraPrice,
+        isFreeListing: selectedPlan.free_listing
       });
+      setIsModalOpen(false);
       setIsConfirmModalOpen(true);
       return;
     }
 
-    if (finalPrice > balance) {
-      toast.error("Insufficient wallet balance.");
+    const gstAmount = finalPrice > 0 ? Number((finalPrice * 0.18).toFixed(2)) : 0;
+    const totalAmountWithGst = Number((finalPrice + gstAmount).toFixed(2));
+
+    if (totalAmountWithGst > balance) {
+      toast.error(`Insufficient wallet balance. Total required including 18% GST is ₹${totalAmountWithGst}.`);
       return;
     }
 
@@ -524,6 +575,57 @@ const SettingsPage: React.FC = () => {
     } finally {
       setVideoToDelete(null);
     }
+  };
+
+  const getPricingForOption = (duration: "monthly" | "yearly", unlimited: boolean) => {
+    if (!selectedPlan) return { finalPrice: 0, gstAmount: 0, totalAmount: 0, extraCount: 0, extraPrice: 0 };
+    const targetPlanId = selectedPlan.id || selectedPlan._id;
+    const activePurchases = allVendorPurchases.filter(p =>
+      String(p.plan_id) === String(targetPlanId) &&
+      p.plan_duration === duration &&
+      new Date(p.expire_at) > new Date()
+    );
+
+    const totalSlots = activePurchases.length > 0
+      ? activePurchases.reduce((acc, p) => acc + Number(p.total_slots), 0)
+      : Number(selectedPlan.product_slots || 0);
+
+    const currentProductIds = new Set(activePurchases.flatMap(p => p.product_ids.map(id => String(id))));
+    const usedSlots = currentProductIds.size;
+    const remainingSlotsCalculated = Math.max(0, totalSlots - usedSlots);
+    const isRefillAvailable = activePurchases.length > 0 && remainingSlotsCalculated > 0 && selectedProductIds.length <= remainingSlotsCalculated;
+
+    const isExceeding = 
+      selectedPlan.free_listing === false || 
+      (activePurchases.length > 0 && selectedProductIds.length > remainingSlotsCalculated) ||
+      (!activePurchases.length && selectedProductIds.length > (selectedPlan.product_slots || 0));
+
+    let finalPrice = duration === "monthly" ? selectedPlan.monthly_price : selectedPlan.yearly_price;
+    let extraCount = 0;
+    const extraPrice = duration === "monthly" ? selectedPlan.extra_product_price_monthly : selectedPlan.extra_product_price_yearly;
+    const unlimitedAmt = duration === "monthly" ? selectedPlan.unlimited_amount_monthly : selectedPlan.unlimited_amount_yearly;
+
+    if (unlimited && unlimitedAmt) {
+      finalPrice = unlimitedAmt;
+    } else if (isRefillAvailable) {
+      finalPrice = 0;
+    } else if (selectedPlan.free_listing === true) {
+      finalPrice = finalPrice;
+    } else if (isExceeding) {
+      if (activePurchases.length > 0 || selectedPlan.free_listing === false) {
+        const baseRemaining = selectedPlan.free_listing === false ? 0 : remainingSlotsCalculated;
+        extraCount = Math.max(0, selectedProductIds.length - baseRemaining);
+        finalPrice = extraCount * (extraPrice || 0);
+      } else {
+        extraCount = Math.max(0, selectedProductIds.length - (selectedPlan.product_slots || 0));
+        finalPrice = (finalPrice || 0) + extraCount * (extraPrice || 0);
+      }
+    }
+
+    const gstAmount = finalPrice > 0 ? Number((finalPrice * 0.18).toFixed(2)) : 0;
+    const totalAmount = Number((finalPrice + gstAmount).toFixed(2));
+
+    return { finalPrice, gstAmount, totalAmount, extraCount, extraPrice };
   };
 
   const columns = useMemo((): ColDef[] => [
@@ -1263,29 +1365,55 @@ const SettingsPage: React.FC = () => {
                 <button
                   onClick={() => {
                     setIsUnlimited(false);
-                    handlePurchase(true, false, "monthly");
+                    setPlanDurations(prev => ({ ...prev, [selectedPlan?.id || '']: "monthly" }));
+                    setIsConfirmModalOpen(false);
+                    setTimeout(() => handlePurchase(true, false, "monthly"), 100);
                   }}
                   className={`p-4 rounded-xl border-2 transition-all text-left ${!isUnlimited && (planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly") === "monthly" ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 hover:border-blue-300 dark:border-gray-700'}`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-gray-900 dark:text-white">Extra Product</span>
-                    <span className="text-lg font-black text-blue-600">{currency}{selectedPlan?.extra_product_price_monthly || 0}</span>
+                  <div className="flex items-start justify-between mb-2 gap-2">
+                    <span className="font-bold text-gray-900 dark:text-white mt-1">Extra Product</span>
+                    {(() => {
+                      const amount = selectedPlan?.extra_product_price_monthly || 0;
+                      const gst = Number((amount * 0.18).toFixed(2));
+                      const total = Number((amount + gst).toFixed(2));
+                      return (
+                        <div className="text-right">
+                          <div className="text-xs text-gray-500 whitespace-nowrap">Amount: {currency}{amount}</div>
+                          <div className="text-[10px] text-gray-400 whitespace-nowrap">+ GST (18%): {currency}{gst}</div>
+                          <div className="text-base font-black text-blue-600 whitespace-nowrap">Total: {currency}{total}</div>
+                        </div>
+                      );
+                    })()}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Pay per additional product</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Pay per additional product. Click to purchase directly.</p>
                 </button>
 
                 <button
                   onClick={() => {
                     setIsUnlimited(true);
-                    handlePurchase(true, true, "monthly");
+                    setPlanDurations(prev => ({ ...prev, [selectedPlan?.id || '']: "monthly" }));
+                    setIsConfirmModalOpen(false);
+                    setTimeout(() => handlePurchase(true, true, "monthly"), 100);
                   }}
                   className={`p-4 rounded-xl border-2 transition-all text-left ${isUnlimited && (planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly") === "monthly" ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-200 hover:border-indigo-300 dark:border-gray-700'}`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-gray-900 dark:text-white">Unlimited</span>
-                    <span className="text-lg font-black text-indigo-600">{currency}{selectedPlan?.unlimited_amount_monthly || 0}</span>
+                  <div className="flex items-start justify-between mb-2 gap-2">
+                    <span className="font-bold text-gray-900 dark:text-white mt-1">Unlimited</span>
+                    {(() => {
+                      const amount = selectedPlan?.unlimited_amount_monthly || 0;
+                      const gst = Number((amount * 0.18).toFixed(2));
+                      const total = Number((amount + gst).toFixed(2));
+                      return (
+                        <div className="text-right">
+                          <div className="text-xs text-gray-500 whitespace-nowrap">Amount: {currency}{amount}</div>
+                          <div className="text-[10px] text-gray-400 whitespace-nowrap">+ GST (18%): {currency}{gst}</div>
+                          <div className="text-base font-black text-indigo-600 whitespace-nowrap">Total: {currency}{total}</div>
+                        </div>
+                      );
+                    })()}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Unlimited products for a fixed price</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Unlimited products for a fixed price. Click to purchase.</p>
                 </button>
               </div>
             </div>
@@ -1297,29 +1425,55 @@ const SettingsPage: React.FC = () => {
                 <button
                   onClick={() => {
                     setIsUnlimited(false);
-                    handlePurchase(true, false, "yearly");
+                    setPlanDurations(prev => ({ ...prev, [selectedPlan?.id || '']: "yearly" }));
+                    setIsConfirmModalOpen(false);
+                    setTimeout(() => handlePurchase(true, false, "yearly"), 100);
                   }}
                   className={`p-4 rounded-xl border-2 transition-all text-left ${!isUnlimited && (planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly") === "yearly" ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 hover:border-blue-300 dark:border-gray-700'}`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-gray-900 dark:text-white">Extra Product</span>
-                    <span className="text-lg font-black text-blue-600">{currency}{selectedPlan?.extra_product_price_yearly || 0}</span>
+                  <div className="flex items-start justify-between mb-2 gap-2">
+                    <span className="font-bold text-gray-900 dark:text-white mt-1">Extra Product</span>
+                    {(() => {
+                      const amount = selectedPlan?.extra_product_price_yearly || 0;
+                      const gst = Number((amount * 0.18).toFixed(2));
+                      const total = Number((amount + gst).toFixed(2));
+                      return (
+                        <div className="text-right">
+                          <div className="text-xs text-gray-500 whitespace-nowrap">Amount: {currency}{amount}</div>
+                          <div className="text-[10px] text-gray-400 whitespace-nowrap">+ GST (18%): {currency}{gst}</div>
+                          <div className="text-base font-black text-blue-600 whitespace-nowrap">Total: {currency}{total}</div>
+                        </div>
+                      );
+                    })()}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Pay per additional product</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Pay per additional product. Click to purchase directly.</p>
                 </button>
 
                 <button
                   onClick={() => {
                     setIsUnlimited(true);
-                    handlePurchase(true, true, "yearly");
+                    setPlanDurations(prev => ({ ...prev, [selectedPlan?.id || '']: "yearly" }));
+                    setIsConfirmModalOpen(false);
+                    setTimeout(() => handlePurchase(true, true, "yearly"), 100);
                   }}
                   className={`p-4 rounded-xl border-2 transition-all text-left ${isUnlimited && (planDurations[selectedPlan?.id || selectedPlan?._id || ''] || "monthly") === "yearly" ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-200 hover:border-indigo-300 dark:border-gray-700'}`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-gray-900 dark:text-white">Unlimited</span>
-                    <span className="text-lg font-black text-indigo-600">{currency}{selectedPlan?.unlimited_amount_yearly || 0}</span>
+                  <div className="flex items-start justify-between mb-2 gap-2">
+                    <span className="font-bold text-gray-900 dark:text-white mt-1">Unlimited</span>
+                    {(() => {
+                      const amount = selectedPlan?.unlimited_amount_yearly || 0;
+                      const gst = Number((amount * 0.18).toFixed(2));
+                      const total = Number((amount + gst).toFixed(2));
+                      return (
+                        <div className="text-right">
+                          <div className="text-xs text-gray-500 whitespace-nowrap">Amount: {currency}{amount}</div>
+                          <div className="text-[10px] text-gray-400 whitespace-nowrap">+ GST (18%): {currency}{gst}</div>
+                          <div className="text-base font-black text-indigo-600 whitespace-nowrap">Total: {currency}{total}</div>
+                        </div>
+                      );
+                    })()}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Unlimited products for a fixed price</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Unlimited products for a fixed price. Click to purchase.</p>
                 </button>
               </div>
             </div>
@@ -1332,6 +1486,79 @@ const SettingsPage: React.FC = () => {
               onClick={() => setIsConfirmModalOpen(false)}
             >
               Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Final Summary Modal */}
+      <Modal
+        isOpen={isSummaryModalOpen}
+        onClose={() => setIsSummaryModalOpen(false)}
+        className="max-w-md w-full"
+      >
+        <div className="p-8 text-center space-y-6 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 animate-in zoom-in-95 duration-300">
+          <div className="w-20 h-20 mx-auto bg-brand-50 rounded-3xl flex items-center justify-center animate-bounce dark:bg-brand-900/20">
+            <Rocket className="text-brand-600" size={36} />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+              Confirm Purchase
+            </h3>
+            <p className="text-gray-500 text-sm leading-relaxed px-4 dark:text-gray-400 font-medium">
+              You are about to purchase priority status for <strong>{purchaseSummary?.count}</strong> product(s).
+              {purchaseSummary?.isFreeListing && purchaseSummary?.amount > 0 && (
+                <span className="block mt-2 text-brand-600 font-bold">
+                  Do you want to purchase this plan? (Kya aap plan lena chahte ho?)
+                </span>
+              )}
+            </p>
+          </div>
+
+          {purchaseSummary && (
+            <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 shadow-inner dark:bg-gray-800/50 dark:border-gray-700 space-y-3">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500 dark:text-gray-400 font-semibold">Plan Amount</span>
+                <span className="font-bold text-gray-900 dark:text-gray-200">{currency}{purchaseSummary.amount}</span>
+              </div>
+              {purchaseSummary.amount > 0 && (
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-500 dark:text-gray-400 font-semibold">GST (18%)</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-200">+{currency}{purchaseSummary.gstAmount}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center text-base font-black border-t pt-3 border-gray-200 dark:border-gray-700 mt-2">
+                <span className="text-gray-900 dark:text-white uppercase text-[10px] tracking-widest font-black">Total Payable</span>
+                <span className="text-2xl text-brand-600 drop-shadow-sm">
+                  {currency}{purchaseSummary.totalAmount}
+                </span>
+              </div>
+              <p className="text-[10px] text-center text-gray-400 font-medium italic mt-2">
+                Amount will be deducted from your wallet balance
+              </p>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-3">
+            <Button
+              variant="primary"
+              className="w-full !py-4 rounded-xl font-bold shadow-xl btn-primary transform active:scale-95 transition-all"
+              onClick={() => {
+                setIsSummaryModalOpen(false);
+                handlePurchase(true);
+              }}
+              disabled={isPurchasing}
+            >
+              {isPurchasing ? "Processing..." : "Confirm & Activate"}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full py-3.5 rounded-xl text-gray-500 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              onClick={() => setIsSummaryModalOpen(false)}
+              disabled={isPurchasing}
+            >
+              Back
             </Button>
           </div>
         </div>

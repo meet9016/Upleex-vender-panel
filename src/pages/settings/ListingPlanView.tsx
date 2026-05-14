@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { Package, Search, Check, ShoppingBag, Loader2, AlertCircle, History, Eye, Zap } from "lucide-react";
+import { Package, Search, Check, ShoppingBag, Loader2, AlertCircle, History, Eye, Zap, Rocket } from "lucide-react";
 import PageLoader from "@/components/common/PageLoader";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
@@ -82,7 +82,7 @@ const ListingPlanView: React.FC = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isUnlimited, setIsUnlimited] = useState(false);
   const [planPreferences, setPlanPreferences] = useState<Record<string, 'extra' | 'unlimited'>>({});
-  const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; isRefill: boolean; isUnlimited?: boolean; extraCount?: number; extraPrice?: number; isFreeListing?: boolean; remainingFreeDays?: number; freeProductsInfo?: Array<{ name: string, days: number, freeExpiry: string }> } | null>(null);
+  const [purchaseSummary, setPurchaseSummary] = useState<{ count: number; amount: number; gstAmount: number; totalAmount: number; isRefill: boolean; isUnlimited?: boolean; extraCount?: number; extraPrice?: number; isFreeListing?: boolean; remainingFreeDays?: number; freeProductsInfo?: Array<{ name: string, days: number, freeExpiry: string }> } | null>(null);
 
   const [historyTab, setHistoryTab] = useState<"rent" | "sell">("rent");
   const [hasShownLimitToast, setHasShownLimitToast] = useState(false); // Track if limit toast was shown
@@ -289,27 +289,35 @@ const ListingPlanView: React.FC = () => {
 
     if (currentUnlimited && selectedPlan.unlimited_amount) {
       finalPrice = selectedPlan.unlimited_amount;
+    } else if (selectedPlan.free_listing === false) {
+      // Paid plan: ALWAYS calculate extra product cost, ignore isRefillAvailable
+      extraCount = selectedProductIds.length;
+      extraProductCost = extraCount * (selectedPlan.extra_product_price || 0);
+      finalPrice = extraProductCost;
+      isExtraAddon = true;
     } else if (isRefillAvailable || isAddonRefill) {
+      // Free listing plan with remaining slots -> zero cost refill
       finalPrice = 0;
     } else if (selectedPlan.free_listing === true) {
-      // For free_listing plans, we always charge the base plan amount (amount: 39)
+      // Free listing plan, first purchase: charge base plan amount
       finalPrice = selectedPlan.price;
-      isExtraAddon = false; // It's treated as a bundle purchase
+      isExtraAddon = false;
     } else if (isExceeding) {
-      if (agg.total > 0 || selectedPlan.free_listing === false) {
-        // Case A: Adding to an active plan OR a plan that's already full
-        const baseRemaining = selectedPlan.free_listing === false ? 0 : remainingSlots;
+      if (agg.total > 0) {
+        const baseRemaining = remainingSlots;
         extraCount = Math.max(0, selectedProductIds.length - baseRemaining);
         extraProductCost = extraCount * (selectedPlan.extra_product_price || 0);
         finalPrice = extraProductCost;
         isExtraAddon = true;
       } else {
-        // Case B: New plan but exceeding its base limit
         extraCount = Math.max(0, selectedProductIds.length - (selectedPlan.product_limit || 0));
         extraProductCost = extraCount * (selectedPlan.extra_product_price || 0);
         finalPrice = (selectedPlan.price || 0) + extraProductCost;
       }
     }
+
+    const gstAmount = finalPrice > 0 ? Number((finalPrice * 0.18).toFixed(2)) : 0;
+    const totalAmountWithGst = Number((finalPrice + gstAmount).toFixed(2));
 
     if (!isConfirmed) {
       // Calculate potential remaining free days AFTER the paid plan expires
@@ -350,21 +358,20 @@ const ListingPlanView: React.FC = () => {
         })
         .filter(Boolean) as Array<{ name: string, days: number, freeExpiry: string }>;
 
-      // Auto-confirm logic: skip popup if price is 0 (for refills) 
-      // OR if the plan is a free listing plan (always costs amount: 39 but skip popup as requested)
-      // OR if the user has already saved a preference for this plan
       const activePurchase = allPurchasedPlans.find(p => p.plan_type === selectedPlan.key && new Date(p.expire_at) > new Date());
       const savedPref = planPreferences[selectedPlan.key] || 
                        (activePurchase?.is_unlimited ? 'unlimited' : 
                         activePurchase?.is_extra_per_product ? 'extra' : null);
-      
+
+      // Auto-confirm: 
+      // 1. Zero-cost refills on FREE LISTING plans
+      // 2. Paid plans where the user ALREADY chose 'extra' or 'unlimited' previously
       let shouldAutoConfirm = false;
       let finalUnlimitedValue = currentUnlimited;
 
-      if (!isUnlimited && selectedPlan.free_listing === true) {
+      if (selectedPlan.free_listing !== false && (isRefillAvailable || isAddonRefill) && finalPrice === 0) {
         shouldAutoConfirm = true;
-      } else if (savedPref && !isUnlimited && !isChoiceModalOpen) {
-        // If user already chose a method and isn't currently in the "choice" flow
+      } else if (selectedPlan.free_listing === false && savedPref && !isChoiceModalOpen) {
         shouldAutoConfirm = true;
         finalUnlimitedValue = savedPref === 'unlimited';
       }
@@ -377,18 +384,21 @@ const ListingPlanView: React.FC = () => {
       setPurchaseSummary({
         count: selectedProductIds.length,
         amount: finalPrice,
+        gstAmount: gstAmount,
+        totalAmount: totalAmountWithGst,
         isRefill: (isRefillAvailable || isAddonRefill) && !isExtraAddon && !currentUnlimited,
         isUnlimited: currentUnlimited,
         extraCount: extraCount,
         extraPrice: selectedPlan.extra_product_price,
+        isFreeListing: selectedPlan.free_listing,
         freeProductsInfo: freeProductsInfo.length > 0 ? freeProductsInfo : undefined
       });
       setIsConfirmModalOpen(true);
       return;
     }
 
-    if (finalPrice > balance) {
-      toast.error("Insufficient wallet balance.");
+    if (totalAmountWithGst > balance) {
+      toast.error(`Insufficient wallet balance. Total required including 18% GST is ₹${totalAmountWithGst}.`);
       return;
     }
 
@@ -1081,112 +1091,63 @@ const ListingPlanView: React.FC = () => {
           </div>
         </div>
       </Modal>
-
       {/* Confirmation Modal */}
       <Modal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
         className="max-w-md w-full"
       >
-        <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center dark:bg-emerald-900/30">
-              <Package className="text-emerald-600" size={24} />
-            </div>
-            <h3 className="text-xl font-bold dark:text-white">Confirm Listing Plan</h3>
-          </div>
-
-          <div className="space-y-4 mb-6">
-            {/* Header Info */}
-            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Active Plan</p>
-                <h4 className="text-lg font-bold text-gray-900 dark:text-white capitalize">{selectedPlan?.name} Plan</h4>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Products</p>
-                <h4 className="text-lg font-bold text-gray-900 dark:text-white">{selectedProductIds.length} Selected</h4>
-              </div>
+        {/* ── FREE LISTING plan (free_listing: true) → Clean GST Confirm Popup ── */}
+        {purchaseSummary?.isFreeListing === true ? (
+          <div className="p-8 text-center space-y-6 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 animate-in zoom-in-95 duration-300">
+            {/* Icon */}
+            <div className="w-20 h-20 mx-auto bg-indigo-50 rounded-3xl flex items-center justify-center dark:bg-indigo-900/20">
+              <Rocket className="text-indigo-500" size={36} />
             </div>
 
-            {/* Selection Options (Comparison) */}
-            <div className="grid grid-cols-1 gap-3">
-              {/* Option: Pay per Product */}
-              <div 
-                onClick={() => {
-                  const currentAgg = selectedPlan ? planAggregates[selectedPlan.key] : null;
-                  const isFull = !!currentAgg && (currentAgg.total > 0 || selectedPlan?.free_listing === false);
-                  const extra = isFull ? selectedProductIds.length : Math.max(0, selectedProductIds.length - (selectedPlan?.product_limit || 0));
-                  const basePrice = (isFull && selectedPlan?.free_listing === false) ? 0 : (selectedPlan?.price || 0);
-                  const extraPrice = (selectedPlan?.free_listing === true) ? 0 : (extra * (selectedPlan?.extra_product_price || 0));
-                  const total = basePrice + extraPrice;
-                  
-                  setIsUnlimited(false);
-                  setPurchaseSummary(prev => prev ? ({ ...prev, isUnlimited: false, amount: total, extraCount: extra }) : null);
-                }}
-                className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden ${!isUnlimited ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10' : 'border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 hover:border-emerald-200'}`}
-              >
-                {!isUnlimited && <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">Selected</div>}
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${!isUnlimited ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}>
-                      {!isUnlimited && <Check size={14} className="text-white" />}
-                    </div>
-                    <span className="font-bold text-gray-900 dark:text-white">Pay per Extra Product</span>
-                  </div>
-                  <div className="text-right">
-                    {/* Calculate preview price for this option */}
-                    <span className="text-emerald-600 font-black text-lg">
-                      {(() => {
-                         const agg = selectedPlan ? planAggregates[selectedPlan.key] : null;
-                         const isFull = !!agg && (agg.total > 0 || selectedPlan?.free_listing === false);
-                         const extra = isFull ? selectedProductIds.length : Math.max(0, selectedProductIds.length - (selectedPlan?.product_limit || 0));
-                         const basePrice = (isFull && selectedPlan?.free_listing === false) ? 0 : (selectedPlan?.price || 0);
-                         const extraPrice = (selectedPlan?.free_listing === true) ? 0 : (extra * (selectedPlan?.extra_product_price || 0));
-                         return currency + (basePrice + extraPrice);
-                      })()}
-                    </span>
-                  </div>
-                </div>
-                <div className="pl-9 space-y-1">
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Charge: <span className="font-bold text-emerald-600">{currency}{selectedPlan?.extra_product_price}</span> per extra product
-                  </p>
-                  
-                </div>
-              </div>
-
-              {/* Option: Unlimited */}
-              {selectedPlan?.unlimited_amount ? (
-                <div 
-                  onClick={() => {
-                    setIsUnlimited(true);
-                    setPurchaseSummary(prev => prev ? ({ ...prev, isUnlimited: true, amount: selectedPlan.unlimited_amount! }) : null);
-                  }}
-                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden ${isUnlimited ? 'border-amber-500 bg-amber-50/30 dark:bg-amber-900/10' : 'border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 hover:border-amber-200'}`}
-                >
-                  {isUnlimited && <div className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">Selected</div>}
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${isUnlimited ? 'border-amber-500 bg-amber-500' : 'border-gray-300'}`}>
-                        {isUnlimited && <Check size={14} className="text-white" />}
-                      </div>
-                      <span className="font-bold text-gray-900 dark:text-white">Upgrade to Unlimited</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-amber-600 font-black text-lg">{currency}{selectedPlan.unlimited_amount}</span>
-                    </div>
-                  </div>
-                  <div className="pl-9">
-                    <p className="text-xs text-gray-600 dark:text-gray-400">List as many products as you want for {selectedPlan.duration_months} months.</p>
-                  </div>
-                </div>
-              ) : null}
+            {/* Title */}
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+                Confirm Purchase
+              </h3>
+              <p className="text-gray-500 text-sm leading-relaxed px-4 dark:text-gray-400 font-medium">
+                You are about to activate the <strong>{selectedPlan?.name}</strong> plan for <strong>{selectedProductIds.length}</strong> product(s).
+              </p>
+              {purchaseSummary?.amount > 0 && (
+                <p className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+                  Do you want to purchase this plan? (Kya aap plan lena chahte ho?)
+                </p>
+              )}
             </div>
 
-            {/* Free Products Information */}
+            {/* GST Breakdown */}
+            {purchaseSummary && (
+              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 shadow-inner dark:bg-gray-800/50 dark:border-gray-700 space-y-3 text-left">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-500 dark:text-gray-400 font-semibold">Plan Amount</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-200">{currency}{purchaseSummary.amount}</span>
+                </div>
+                {purchaseSummary.amount > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500 dark:text-gray-400 font-semibold">GST (18%)</span>
+                    <span className="font-bold text-gray-900 dark:text-gray-200">+{currency}{purchaseSummary.gstAmount}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center font-black border-t pt-3 border-gray-200 dark:border-gray-700">
+                  <span className="text-gray-900 dark:text-white uppercase text-[10px] tracking-widest font-black">Total Payable</span>
+                  <span className="text-xl text-indigo-600 dark:text-indigo-400 drop-shadow-sm">
+                    {currency}{purchaseSummary.totalAmount}
+                  </span>
+                </div>
+                <p className="text-[10px] text-center text-gray-400 font-medium italic">
+                  Amount will be deducted from your wallet balance
+                </p>
+              </div>
+            )}
+
+            {/* Free Days Info */}
             {purchaseSummary?.freeProductsInfo && purchaseSummary.freeProductsInfo.length > 0 && (
-              <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl dark:bg-blue-900/10 dark:border-blue-800">
+              <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl dark:bg-blue-900/10 dark:border-blue-800 text-left">
                 <div className="flex items-center gap-2 mb-1">
                   <AlertCircle className="w-3.5 h-3.5 text-blue-600" />
                   <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Free Days Protection</span>
@@ -1201,42 +1162,194 @@ const ListingPlanView: React.FC = () => {
                 </div>
               </div>
             )}
-            
-            {/* Grand Total Bar */}
-            <div className="flex justify-between items-center p-5 bg-emerald-600 rounded-2xl shadow-xl shadow-emerald-100 dark:shadow-none mt-2">
-              <span className="text-white font-bold uppercase text-xs tracking-widest">Grand Total</span>
-              <span className="text-3xl font-black text-white">
-                {(() => {
-                  if (isUnlimited) return currency + (selectedPlan?.unlimited_amount || 0).toLocaleString();
-                  const currentAgg = selectedPlan ? planAggregates[selectedPlan.key] : null;
-                  const isFull = !!currentAgg && (currentAgg.total > 0 || selectedPlan?.free_listing === false);
-                  const extra = isFull ? selectedProductIds.length : Math.max(0, selectedProductIds.length - (selectedPlan?.product_limit || 0));
-                  const basePrice = isFull ? 0 : (selectedPlan?.price || 0);
-                  const total = basePrice + (extra * (selectedPlan?.extra_product_price || 0));
-                  return currency + total.toLocaleString();
-                })()}
-              </span>
+
+            {/* Buttons */}
+            <div className="flex flex-col gap-3">
+              <Button
+                variant="primary"
+                className="w-full !py-4 rounded-xl font-bold shadow-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white transition-all transform active:scale-95"
+                onClick={() => handlePurchase(true)}
+                disabled={isPurchasing}
+              >
+                {isPurchasing ? "Processing..." : "Confirm & Activate"}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full py-3.5 rounded-xl text-gray-400 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                onClick={() => setIsConfirmModalOpen(false)}
+                disabled={isPurchasing}
+              >
+                Back
+              </Button>
             </div>
           </div>
+        ) : (
+          /* ── PAID plan (free_listing: false) → Old Extra Product / Unlimited Choice Popup ── */
+          <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center dark:bg-emerald-900/30">
+                <Package className="text-emerald-600" size={24} />
+              </div>
+              <h3 className="text-xl font-bold dark:text-white">Confirm Listing Plan</h3>
+            </div>
 
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1 rounded-xl"
-              onClick={() => setIsConfirmModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              className="flex-1 rounded-xl btn-primary bg-emerald-600 hover:bg-emerald-700"
-              onClick={() => handlePurchase(true)}
-              disabled={isPurchasing}
-            >
-              {isPurchasing ? "Processing..." : "Confirm Activation"}
-            </Button>
+            <div className="space-y-4 mb-6">
+              {/* Header Info */}
+              <div className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Active Plan</p>
+                  <h4 className="text-lg font-bold text-gray-900 dark:text-white capitalize">{selectedPlan?.name} Plan</h4>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Products</p>
+                  <h4 className="text-lg font-bold text-gray-900 dark:text-white">{selectedProductIds.length} Selected</h4>
+                </div>
+              </div>
+
+              {/* Selection Options */}
+              <div className="grid grid-cols-1 gap-3">
+                {/* Option: Pay per Extra Product */}
+                <div
+                  onClick={() => {
+                    let total = 0;
+                    let extra = 0;
+                    if (selectedPlan?.free_listing === false) {
+                      // Paid plan: charge per product selected
+                      extra = selectedProductIds.length;
+                      total = extra * (selectedPlan?.extra_product_price || 0);
+                    } else {
+                      const currentAgg = selectedPlan ? planAggregates[selectedPlan.key] : null;
+                      const isFull = !!currentAgg && (currentAgg.total > 0);
+                      extra = isFull ? selectedProductIds.length : Math.max(0, selectedProductIds.length - (selectedPlan?.product_limit || 0));
+                      const basePrice = isFull ? 0 : (selectedPlan?.price || 0);
+                      total = basePrice + (extra * (selectedPlan?.extra_product_price || 0));
+                    }
+                    const gst = Number((total * 0.18).toFixed(2));
+                    setIsUnlimited(false);
+                    setPurchaseSummary(prev => prev ? ({ ...prev, isUnlimited: false, amount: total, gstAmount: gst, totalAmount: Number((total + gst).toFixed(2)), extraCount: extra }) : null);
+                  }}
+                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden ${!isUnlimited ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10' : 'border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 hover:border-emerald-200'}`}
+                >
+                  {!isUnlimited && <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">Selected</div>}
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${!isUnlimited ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}>
+                        {!isUnlimited && <Check size={14} className="text-white" />}
+                      </div>
+                      <span className="font-bold text-gray-900 dark:text-white">Pay per Extra Product</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-emerald-600 font-black text-lg">
+                        {(() => {
+                          const agg = selectedPlan ? planAggregates[selectedPlan.key] : null;
+                          const isFull = !!agg && (agg.total > 0 || selectedPlan?.free_listing === false);
+                          const extra = isFull ? selectedProductIds.length : Math.max(0, selectedProductIds.length - (selectedPlan?.product_limit || 0));
+                          const basePrice = (isFull && selectedPlan?.free_listing === false) ? 0 : (selectedPlan?.price || 0);
+                          const extraCost = (selectedPlan?.free_listing === true) ? 0 : (extra * (selectedPlan?.extra_product_price || 0));
+                          return currency + (basePrice + extraCost);
+                        })()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="pl-9 space-y-1">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Charge: <span className="font-bold text-emerald-600">{currency}{selectedPlan?.extra_product_price}</span> per extra product
+                    </p>
+                  </div>
+                </div>
+
+                {/* Option: Unlimited */}
+                {selectedPlan?.unlimited_amount ? (
+                  <div
+                    onClick={() => {
+                      const total = selectedPlan.unlimited_amount!;
+                      const gst = Number((total * 0.18).toFixed(2));
+                      setIsUnlimited(true);
+                      setPurchaseSummary(prev => prev ? ({ ...prev, isUnlimited: true, amount: total, gstAmount: gst, totalAmount: Number((total + gst).toFixed(2)) }) : null);
+                    }}
+                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden ${isUnlimited ? 'border-amber-500 bg-amber-50/30 dark:bg-amber-900/10' : 'border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 hover:border-amber-200'}`}
+                  >
+                    {isUnlimited && <div className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">Selected</div>}
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${isUnlimited ? 'border-amber-500 bg-amber-500' : 'border-gray-300'}`}>
+                          {isUnlimited && <Check size={14} className="text-white" />}
+                        </div>
+                        <span className="font-bold text-gray-900 dark:text-white">Upgrade to Unlimited</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-amber-600 font-black text-lg">{currency}{selectedPlan.unlimited_amount}</span>
+                      </div>
+                    </div>
+                    <div className="pl-9">
+                      <p className="text-xs text-gray-600 dark:text-gray-400">List as many products as you want for {selectedPlan.duration_months} months.</p>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Free Days Info */}
+              {purchaseSummary?.freeProductsInfo && purchaseSummary.freeProductsInfo.length > 0 && (
+                <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl dark:bg-blue-900/10 dark:border-blue-800">
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertCircle className="w-3.5 h-3.5 text-blue-600" />
+                    <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Free Days Protection</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-1">
+                    {purchaseSummary.freeProductsInfo.map((fp, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-[10px] text-blue-600">
+                        <span className="truncate max-w-[180px]">{fp.name}</span>
+                        <span className="font-bold">+{fp.days} days later</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* GST Summary Breakdown */}
+              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 shadow-inner dark:bg-gray-800/50 dark:border-gray-700 space-y-3 mt-4">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-500 dark:text-gray-400 font-semibold">Plan Amount</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-200">{currency}{purchaseSummary?.amount}</span>
+                </div>
+                {purchaseSummary && purchaseSummary.amount > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500 dark:text-gray-400 font-semibold">GST (18%)</span>
+                    <span className="font-bold text-gray-900 dark:text-gray-200">+{currency}{purchaseSummary.gstAmount}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-base font-black border-t pt-3 border-gray-200 dark:border-gray-700">
+                  <span className="text-gray-900 dark:text-white uppercase text-[10px] tracking-widest font-black">Total Payable</span>
+                  <span className="text-xl text-emerald-600 drop-shadow-sm">
+                    {currency}{purchaseSummary?.totalAmount}
+                  </span>
+                </div>
+                <p className="text-[10px] text-center text-gray-400 font-medium italic mt-2">
+                  Amount will be deducted from your wallet balance
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 mt-6">
+              <Button
+                variant="primary"
+                className="w-full !py-4 rounded-xl font-bold shadow-xl btn-primary bg-emerald-600 hover:bg-emerald-700 text-white transition-all transform active:scale-95"
+                onClick={() => handlePurchase(true)}
+                disabled={isPurchasing}
+              >
+                {isPurchasing ? "Processing..." : "Confirm & Activate"}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full py-3.5 rounded-xl text-gray-400 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                onClick={() => setIsConfirmModalOpen(false)}
+                disabled={isPurchasing}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </Modal>
     </div>
   );

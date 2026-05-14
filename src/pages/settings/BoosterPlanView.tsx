@@ -143,9 +143,12 @@ const BoosterPlanView: React.FC = () => {
   const handleBulkBoost = async () => {
     if (!selectedPlanForBoost || selectedProductIds.length === 0) return;
 
-    const totalPrice = selectedPlanForBoost.price * selectedProductIds.length;
-    if (totalPrice > balance) {
-      toast.error(`Insufficient wallet balance. Required: ${currency}${totalPrice}`);
+    const basePrice = selectedPlanForBoost.price * selectedProductIds.length;
+    const gstAmount = Math.round(basePrice * 0.18);
+    const totalAmount = basePrice + gstAmount;
+
+    if (totalAmount > balance) {
+      toast.error(`Insufficient wallet balance. Total required including 18% GST is ${currency}${totalAmount}.`);
       return;
     }
 
@@ -639,25 +642,24 @@ const BoosterPlanView: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-inner dark:bg-[#1c2938] space-y-3">
+          <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 shadow-inner dark:bg-[#1c2938] space-y-3">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500 dark:text-gray-200">Booster Plan</span>
-              <span className="font-bold text-gray-900 dark:text-gray-200">{selectedPlanForBoost?.name || `${selectedPlanForBoost?.days}-Day Boost`}</span>
+              <span className="text-gray-500 dark:text-gray-200 font-semibold">Plan Amount</span>
+              <span className="font-bold text-gray-900 dark:text-gray-200">{currency}{selectedPlanForBoost?.price * selectedProductIds.length}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500 dark:text-gray-200">Price per Product</span>
-              <span className="font-bold text-gray-900 dark:text-gray-200">{currency}{selectedPlanForBoost?.price}</span>
+              <span className="text-gray-500 dark:text-gray-200 font-semibold">GST (18%)</span>
+              <span className="font-bold text-gray-900 dark:text-gray-200">+{currency}{Math.round(selectedPlanForBoost?.price * selectedProductIds.length * 0.18)}</span>
             </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500 dark:text-gray-200">Products Selected</span>
-              <span className="font-bold text-gray-900 dark:text-gray-200">{selectedProductIds.length} Item(s)</span>
-            </div>
-            <div className="flex justify-between items-center text-sm font-black border-t pt-2 border-gray-200 dark:border-gray-700 dark:text-gray-200">
-              <span className="text-gray-900 dark:text-gray-200 uppercase text-xs">Total Payable</span>
-              <span className="text-lg text-indigo-600">
-                {currency}{selectedPlanForBoost?.price * selectedProductIds.length}
+            <div className="flex justify-between items-center text-base font-black border-t pt-3 border-gray-200 dark:border-gray-700">
+              <span className="text-gray-900 dark:text-gray-200 uppercase text-[10px] tracking-widest font-black">Total Payable</span>
+              <span className="text-2xl text-indigo-600 drop-shadow-sm">
+                {currency}{Math.round(selectedPlanForBoost?.price * selectedProductIds.length * 1.18)}
               </span>
             </div>
+            <p className="text-[10px] text-center text-gray-400 font-medium italic mt-1">
+              Amount will be deducted from your wallet balance
+            </p>
           </div>
 
           <div className="flex flex-col gap-3">

@@ -76,10 +76,12 @@ const ServicePriorityPlanView: React.FC = () => {
     }
 
     const amount = selectedDuration === "monthly" ? plan.monthly_price : plan.yearly_price;
-    const totalAmount = amount + (hasDurationAddon ? plan.addon_price : 0);
+    const baseAmount = amount + (hasDurationAddon ? plan.addon_price : 0);
+    const gstAmount = Math.round(baseAmount * 0.18);
+    const totalAmount = baseAmount + gstAmount;
     
     if (totalAmount > balance) {
-      toast.error("Insufficient balance");
+      toast.error(`Insufficient wallet balance. Total required including 18% GST is ₹${totalAmount}.`);
       return;
     }
 
@@ -297,34 +299,30 @@ const ServicePriorityPlanView: React.FC = () => {
             </div>
           )}
 
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-            <div className="flex justify-between text-sm mb-2 text-gray-600">
-              <span>{selectedDuration === 'monthly' ? 'Monthly' : 'Yearly'} Plan</span>
-              <span>{currency}{selectedDuration === 'monthly' ? plan?.monthly_price : plan?.yearly_price}</span>
+          <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 shadow-inner dark:bg-[#1c2938] space-y-3">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-500 dark:text-gray-400 font-semibold">{selectedDuration === 'monthly' ? 'Monthly' : 'Yearly'} Plan</span>
+              <span className="font-bold text-gray-900 dark:text-gray-200">{currency}{selectedDuration === 'monthly' ? plan?.monthly_price : plan?.yearly_price}</span>
             </div>
-            {services.length > 0 && (
-              <div className="flex justify-between text-sm mb-2 text-gray-600">
-                <span>Services Covered</span>
-                <span className="font-semibold">
-                  {services.length} Total
-                  <span className="ml-1 text-gray-400">|</span>
-                  <span className="ml-1 text-blue-600">{paidServices.length} Paid</span>
-                  {freeServices.length > 0 && (
-                    <span className="ml-1 text-green-600">(+{freeServices.length} Free)</span>
-                  )}
-                </span>
-              </div>
-            )}
             {hasDurationAddon && (
-              <div className="flex justify-between text-sm mb-2 text-gray-600">
-                <span>Annual Benefit Addon</span>
-                <span>{currency}{plan?.addon_price}</span>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500 dark:text-gray-400 font-semibold">Annual Benefit Addon</span>
+                <span className="font-bold text-gray-900 dark:text-gray-200">{currency}{plan?.addon_price}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold border-t pt-2 mt-2">
-              <span>Total Payable</span>
-              <span className="text-brand-600">{currency}{(selectedDuration === 'monthly' ? plan?.monthly_price : plan?.yearly_price)! + (hasDurationAddon ? (plan?.addon_price || 0) : 0)}</span>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-500 dark:text-gray-400 font-semibold">GST (18%)</span>
+              <span className="font-bold text-gray-900 dark:text-gray-200">+{currency}{Math.round(((selectedDuration === 'monthly' ? plan?.monthly_price : plan?.yearly_price)! + (hasDurationAddon ? (plan?.addon_price || 0) : 0)) * 0.18)}</span>
             </div>
+            <div className="flex justify-between items-center text-base font-black border-t pt-3 border-gray-200 dark:border-gray-700 mt-2">
+              <span className="text-gray-900 dark:text-white uppercase text-[10px] tracking-widest font-black">Total Payable</span>
+              <span className="text-2xl text-brand-600 drop-shadow-sm">
+                {currency}{Math.round(((selectedDuration === 'monthly' ? plan?.monthly_price : plan?.yearly_price)! + (hasDurationAddon ? (plan?.addon_price || 0) : 0)) * 1.18)}
+              </span>
+            </div>
+            <p className="text-[10px] text-center text-gray-400 font-medium italic mt-2">
+              Amount will be deducted from your wallet balance
+            </p>
           </div>
 
           <div className="flex flex-col gap-3">

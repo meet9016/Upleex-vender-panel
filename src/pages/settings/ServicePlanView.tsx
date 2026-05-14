@@ -65,6 +65,8 @@ const ServicePlanView: React.FC = () => {
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [purchaseSummary, setPurchaseSummary] = useState<{ amount: number; gstAmount: number; totalAmount: number; count: number } | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [gridSearch, setGridSearch] = useState("");
   const [hasShownLimitToast, setHasShownLimitToast] = useState(false);
@@ -153,7 +155,7 @@ const ServicePlanView: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (isConfirmed = false) => {
     if (!selectedPlan) return;
     const planId = selectedPlan._id || selectedPlan.id;
     
@@ -186,13 +188,22 @@ const ServicePlanView: React.FC = () => {
     const isNewPurchaseNeeded = trulyNewIds.length > remainingSlots || agg.total === 0;
     const priceToPay = isNewPurchaseNeeded ? selectedPlan.amount : 0;
 
-    if (priceToPay > balance) {
-      toast.error("Insufficient wallet balance.");
+    const gstAmount = Math.round(priceToPay * 0.18);
+    const totalAmount = priceToPay + gstAmount;
+
+    if (!isConfirmed) {
+      setPurchaseSummary({
+        amount: priceToPay,
+        gstAmount: gstAmount,
+        totalAmount: totalAmount,
+        count: selectedServiceIds.length
+      });
+      setShowConfirmModal(true);
       return;
     }
 
-    if (trulyNewIds.length > (isNewPurchaseNeeded ? selectedPlan.max_services : remainingSlots)) {
-      toast.error(`Exceeds available capacity. You can add up to ${isNewPurchaseNeeded ? selectedPlan.max_services : remainingSlots} services.`);
+    if (totalAmount > balance) {
+      toast.error(`Insufficient wallet balance. Total required including 18% GST is ₹${totalAmount}.`);
       return;
     }
 
@@ -206,6 +217,7 @@ const ServicePlanView: React.FC = () => {
       if (res.data.success) {
         toast.success(res.data.message || "Service plan activated successfully!");
         setIsModalOpen(false);
+        setShowConfirmModal(false);
         refreshBalance();
         fetchData();
       }
@@ -214,6 +226,10 @@ const ServicePlanView: React.FC = () => {
     } finally {
       setIsPurchasing(false);
     }
+  };
+
+  const handleConfirmPurchase = () => {
+    handlePurchase(true);
   };
 
   const purchaseHistoryColumns = useMemo((): ColDef[] => [
@@ -554,6 +570,69 @@ const ServicePlanView: React.FC = () => {
                   return (remaining > 0 && selectedServiceIds.length <= remaining) ? 'Add to Plan (Free)' : 'Activate Plan';
                 })()
               )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Confirmation Modal */}
+      <Modal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        className="max-w-md w-full"
+      >
+        <div className="p-8 text-center space-y-6">
+          <div className="w-20 h-20 mx-auto rounded-3xl flex items-center justify-center animate-bounce bg-blue-100 text-blue-600">
+            <Briefcase size={36} />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white">
+              Confirm Activation
+            </h3>
+            <p className="text-gray-500 text-sm leading-relaxed px-4">
+              {`You are activating the ${selectedPlan?.plan_name} for ${purchaseSummary?.count} service(s).`}
+            </p>
+          </div>
+
+          <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 shadow-inner dark:bg-gray-800 space-y-3">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-500 font-semibold">Plan Amount</span>
+              <span className="font-bold text-gray-900 dark:text-gray-200">{currency}{purchaseSummary?.amount}</span>
+            </div>
+            {purchaseSummary && purchaseSummary.amount > 0 && (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500 font-semibold">GST (18%)</span>
+                <span className="font-bold text-gray-900 dark:text-gray-200">+{currency}{purchaseSummary.gstAmount}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center text-base font-black border-t pt-3 border-gray-200 dark:border-gray-700">
+              <span className="text-gray-900 dark:text-white uppercase text-[10px] tracking-widest font-black">Total Payable</span>
+              <span className="text-2xl text-blue-600 drop-shadow-sm">
+                {currency}{purchaseSummary?.totalAmount}
+              </span>
+            </div>
+            <p className="text-[10px] text-center text-gray-400 font-medium italic mt-2">
+              Amount will be deducted from your wallet balance
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <Button
+              variant="primary"
+              className="w-full !py-4 rounded-xl font-bold shadow-xl btn-primary transform active:scale-95 transition-all"
+              onClick={handleConfirmPurchase}
+              disabled={isPurchasing}
+            >
+              {isPurchasing ? "Processing..." : "Confirm & Pay"}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full py-3.5 rounded-xl text-gray-500 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              onClick={() => setShowConfirmModal(false)}
+              disabled={isPurchasing}
+            >
+              Cancel
             </Button>
           </div>
         </div>
