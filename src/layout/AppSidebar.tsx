@@ -25,9 +25,9 @@ const navItems: NavItem[] = [
   { icon: <TaskIcon />, name: "Service", path: "/service" },
   { icon: <BsChatSquareQuote className="w-5 h-5" />, name: "Quote", path: "/quote" },
   { icon: <ListIcon />, name: "Orders", path: "/order" },
+  { icon: <BoxIcon />, name: "Plans", path: "/settings" },
   { icon: <WalletIcon />, name: "Wallet", path: "/wallet" },
   { icon: <DocsIcon />, name: "Drafts", path: "/draft" },
-
 ];
 
 // KYC only nav items for initial render

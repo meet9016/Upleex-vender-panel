@@ -657,7 +657,7 @@ const BoosterPlanView: React.FC = () => {
                 {currency}{Math.round(selectedPlanForBoost?.price * selectedProductIds.length * 1.18)}
               </span>
             </div>
-            <p className="text-[10px] text-center text-gray-400 font-medium italic mt-1">
+            <p className="text-[10px] text-center text-gray-400 font-medium mt-1">
               Amount will be deducted from your wallet balance
             </p>
           </div>

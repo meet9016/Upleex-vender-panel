@@ -320,7 +320,7 @@ const ServicePriorityPlanView: React.FC = () => {
                 {currency}{Math.round(((selectedDuration === 'monthly' ? plan?.monthly_price : plan?.yearly_price)! + (hasDurationAddon ? (plan?.addon_price || 0) : 0)) * 1.18)}
               </span>
             </div>
-            <p className="text-[10px] text-center text-gray-400 font-medium italic mt-2">
+            <p className="text-[10px] text-center text-gray-400 font-medium mt-2">
               Amount will be deducted from your wallet balance
             </p>
           </div>

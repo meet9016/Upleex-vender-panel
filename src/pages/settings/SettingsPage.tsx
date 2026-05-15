@@ -334,7 +334,9 @@ const SettingsPage: React.FC = () => {
     const currentProductIdsForLimit = new Set(activePurchasesForLimit.flatMap(p => p.product_ids.map(id => String(id))));
     const remainingSlotsForLimit = Math.max(0, totalSlotsForLimit - currentProductIdsForLimit.size);
 
-    if (selectedPlan.free_listing === true && selectedProductIds.length > remainingSlotsForLimit) {
+    const isBasicOrStandard = selectedPlan?.name?.toLowerCase() === 'basic' || selectedPlan?.name?.toLowerCase() === 'standard';
+
+    if (!isBasicOrStandard && selectedPlan.free_listing === true && selectedProductIds.length > remainingSlotsForLimit) {
       toast.error(`You cannot select more than ${remainingSlotsForLimit} product(s) for this plan.`);
       return;
     }
@@ -369,7 +371,10 @@ const SettingsPage: React.FC = () => {
     const extraPrice = currentDuration === "monthly" ? selectedPlan.extra_product_price_monthly : selectedPlan.extra_product_price_yearly;
     const unlimitedAmt = currentDuration === "monthly" ? selectedPlan.unlimited_amount_monthly : selectedPlan.unlimited_amount_yearly;
 
-    if (currentUnlimited && unlimitedAmt) {
+    if (isBasicOrStandard && activePurchases.length > 0) {
+      finalPrice = 0;
+      isExtraAddon = false;
+    } else if (currentUnlimited && unlimitedAmt) {
       finalPrice = unlimitedAmt;
     } else if (isRefillAvailable) {
       finalPrice = 0;
@@ -406,6 +411,12 @@ const SettingsPage: React.FC = () => {
         const finalUnlimitedValue = activePurchase.is_monthly_unlimited || activePurchase.is_yearly_unlimited;
         setIsModalOpen(false);
         setTimeout(() => handlePurchase(true, finalUnlimitedValue, currentDuration), 10);
+        return;
+      }
+
+      if (isBasicOrStandard && activePurchases.length > 0) {
+        setIsModalOpen(false);
+        setTimeout(() => handlePurchase(true, false, currentDuration), 10);
         return;
       }
 
@@ -605,7 +616,11 @@ const SettingsPage: React.FC = () => {
     const extraPrice = duration === "monthly" ? selectedPlan.extra_product_price_monthly : selectedPlan.extra_product_price_yearly;
     const unlimitedAmt = duration === "monthly" ? selectedPlan.unlimited_amount_monthly : selectedPlan.unlimited_amount_yearly;
 
-    if (unlimited && unlimitedAmt) {
+    const isBasicOrStandard = selectedPlan?.name?.toLowerCase() === 'basic' || selectedPlan?.name?.toLowerCase() === 'standard';
+
+    if (isBasicOrStandard && activePurchases.length > 0) {
+      finalPrice = 0;
+    } else if (unlimited && unlimitedAmt) {
       finalPrice = unlimitedAmt;
     } else if (isRefillAvailable) {
       finalPrice = 0;
@@ -913,8 +928,12 @@ const SettingsPage: React.FC = () => {
       const usedSlots = currentProductIds.size;
       const remainingSlots = Math.max(0, totalSlots - usedSlots);
 
-      // Only limit if no extra/unlimited options
-      if (!extraPrice && !unlimitedPrice && selectableRows.length > remainingSlots) {
+      // Only limit if no extra/unlimited options, UNLESS it's a refill for Basic/Standard
+      const isBasicOrStandard = selectedPlan?.name?.toLowerCase() === 'basic' || selectedPlan?.name?.toLowerCase() === 'standard';
+      const hasActivePurchase = activePurchases.length > 0;
+      const shouldBypassLimit = isBasicOrStandard && hasActivePurchase;
+
+      if (!shouldBypassLimit && !extraPrice && !unlimitedPrice && selectableRows.length > remainingSlots) {
         const limitedRows = selectableRows.slice(0, remainingSlots);
         const ids = limitedRows.map((p) => p.id || (p as any)._id);
         setSelectedProductIds(ids);
@@ -1226,9 +1245,14 @@ const SettingsPage: React.FC = () => {
                     const hasUnlimitedOption = selectedPlan.unlimited_amount_monthly || selectedPlan.unlimited_amount_yearly;
                     
                     // If exceeding limit
+                    const isBasicOrStandard = selectedPlan?.name?.toLowerCase() === 'basic' || selectedPlan?.name?.toLowerCase() === 'standard';
+                    const hasActivePurchase = activePurchasesForPlan.length > 0;
+                    
                     if (selectedPlan.free_listing === true && selectableRows.length > currentRemaining) {
-                      // If plan does NOT allow extras, strictly limit
-                      if (!hasExtraOption && !hasUnlimitedOption) {
+                      // Bypass limit for Basic/Standard if active purchase exists
+                      if (isBasicOrStandard && hasActivePurchase) {
+                        // Let them select unlimited products
+                      } else if (!hasExtraOption && !hasUnlimitedOption) {
                         const limitedRows = selectableRows.slice(0, currentRemaining);
                         const ids = limitedRows.map(p => p.id || (p as any)._id);
                         
@@ -1534,7 +1558,7 @@ const SettingsPage: React.FC = () => {
                   {currency}{purchaseSummary.totalAmount}
                 </span>
               </div>
-              <p className="text-[10px] text-center text-gray-400 font-medium italic mt-2">
+              <p className="text-[10px] text-center text-gray-400 font-medium mt-2">
                 Amount will be deducted from your wallet balance
               </p>
             </div>
@@ -1955,7 +1979,7 @@ const SettingsPage: React.FC = () => {
                       const isDurationActive = durationToggle === "monthly" ? mTotal > 0 : yTotal > 0;
                       return (
                         <div key={plan.id} className={`relative p-5 sm:p-8 rounded-2xl sm:rounded-3xl border transition-all duration-500 flex flex-col h-full bg-white dark:bg-[#0d111c] group ${plan.is_popular ? 'border-brand-500 shadow-2xl shadow-brand-100 sm:scale-[1.02] z-10' : 'border-gray-200 hover:border-brand-300 hover:shadow-xl shadow-sm'}`}>
-                          {plan.is_popular && <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-5 py-1.5 rounded-full text-xs font-bold tracking-widest shadow-lg">Recommended</span>}
+                          {plan.is_popular && <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-5 py-1.5 rounded-full text-xs font-semibold shadow-lg">Recommended</span>}
                           <div className="mb-3 flex flex-col items-center text-center">
                             <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform dark:bg-[#1c2938]"><Package className="w-5 h-5 text-brand-600" /></div>
                             <h4 className="text-base font-bold text-gray-900 mb-0.5 dark:text-gray-300">{plan.name}</h4>

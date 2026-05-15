@@ -1139,7 +1139,7 @@ const ListingPlanView: React.FC = () => {
                     {currency}{purchaseSummary.totalAmount}
                   </span>
                 </div>
-                <p className="text-[10px] text-center text-gray-400 font-medium italic">
+                <p className="text-[10px] text-center text-gray-400 font-medium ">
                   Amount will be deducted from your wallet balance
                 </p>
               </div>
@@ -1324,7 +1324,7 @@ const ListingPlanView: React.FC = () => {
                     {currency}{purchaseSummary?.totalAmount}
                   </span>
                 </div>
-                <p className="text-[10px] text-center text-gray-400 font-medium italic mt-2">
+                <p className="text-[10px] text-center text-gray-400 font-medium  mt-2">
                   Amount will be deducted from your wallet balance
                 </p>
               </div>
