@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useSidebar } from "@/context/SidebarContext";
 import { FilterProvider } from "@/context/FilterContext";
 import { WalletProvider } from "@/context/WalletContext";

@@ -7,6 +7,8 @@ import StatisticsChart from "@/components/ecommerce/StatisticsChart";
 import DemographicCard from "@/components/ecommerce/DemographicCard";
 import DashboardFilter from "@/components/ecommerce/DashboardFilter";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title:
     "Upleex Vendor Panel",
