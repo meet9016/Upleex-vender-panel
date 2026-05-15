@@ -717,16 +717,24 @@ const ListingPlanView: React.FC = () => {
         });
         return;
       }
-      productList.forEach((prod: any) => {
+      productList.forEach((prod: any, index: number) => {
         // Try to find full product from local products list for type info
         const prodId = typeof prod === 'string' ? prod : (prod.id || prod._id || prod.product_id);
         const fullProduct = products.find(p => String(p.id) === String(prodId));
+        
+        let isExtraSlot = false;
+        if (purchase.is_extra_per_product) {
+          // Products beyond the max_products base limit are the extra ones
+          isExtraSlot = index >= (purchase.max_products || 0);
+        }
+
         rows.push({
           ...purchase,
           product_name: prod.product_name || fullProduct?.product_name || "-",
           category_name: prod.category_name || fullProduct?.category_name || "-",
           sub_category_name: prod.sub_category_name || fullProduct?.sub_category_name || "-",
           product_type_name: fullProduct?.product_type_name || prod.product_type_name || "-",
+          is_extra_slot: isExtraSlot
         });
       });
     });
@@ -762,8 +770,19 @@ const ListingPlanView: React.FC = () => {
       field: "plan_type",
       width: 120,
       cellRenderer: (params: any) => (
-        <span className=" text-xs font-semibold">{params.value} Plan</span>
+        <span className="capitalize">{params.value}</span>
       )
+    },
+    {
+      headerName: "Usage Type",
+      field: "is_unlimited",
+      width: 140,
+      cellRenderer: (params: any) => {
+        const data = params.data;
+        if (data.is_unlimited) return <span className="text-purple-600 bg-purple-50 px-2 py-1 rounded-md text-xs font-semibold">Unlimited</span>;
+        if (data.is_extra_slot) return <span className="text-orange-600 bg-orange-50 px-2 py-1 rounded-md text-xs font-semibold">Extra (Paid)</span>;
+        return <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded-md text-xs font-semibold">Base Slot</span>;
+      }
     },
     {
       headerName: "Expiry Date",

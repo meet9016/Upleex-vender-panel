@@ -805,11 +805,16 @@ const SettingsPage: React.FC = () => {
         return;
       }
 
-      allProductRefs.forEach(({ p: pRef, type: slotType }) => {
+      allProductRefs.forEach(({ p: pRef, type: slotType }, index) => {
         // Handle both populated objects and ID strings
         const isPopulated = typeof pRef === 'object' && pRef !== null;
         const pId = isPopulated ? (pRef._id || pRef.id) : pRef;
         const product = products.find(p => String(p.id) === String(pId)) || (isPopulated ? pRef : null);
+
+        let isExtraSlot = false;
+        if (slotType === 'Priority' && purchase.is_extra_per_product) {
+          isExtraSlot = index >= (purchase.total_slots || 0);
+        }
 
         rows.push({
           ...purchase,
@@ -818,6 +823,8 @@ const SettingsPage: React.FC = () => {
           category_name: product?.category_name || "-",
           sub_category_name: (product as any)?.sub_category_name || "-",
           product_type_name: product?.product_type_name || "-",
+          is_addon_slot: slotType === 'Add-on',
+          is_extra_slot: isExtraSlot
         });
       });
     });
@@ -853,6 +860,19 @@ const SettingsPage: React.FC = () => {
       field: "plan_name",
       minWidth: 100,
       flex: 1,
+    },
+    {
+      headerName: "Usage Type",
+      field: "is_unlimited",
+      minWidth: 120,
+      flex: 1,
+      cellRenderer: (params: any) => {
+        const data = params.data;
+        if (data.is_addon_slot) return <span className="text-teal-600 bg-teal-50 px-2 py-1 rounded-md text-xs font-semibold">Add-on Benefit</span>;
+        if (data.is_unlimited) return <span className="text-purple-600 bg-purple-50 px-2 py-1 rounded-md text-xs font-semibold">Unlimited</span>;
+        if (data.is_extra_slot) return <span className="text-orange-600 bg-orange-50 px-2 py-1 rounded-md text-xs font-semibold">Extra (Paid)</span>;
+        return <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded-md text-xs font-semibold">Base Slot</span>;
+      }
     },
     {
       headerName: "Duration",
