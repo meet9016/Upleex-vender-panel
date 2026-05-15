@@ -33,6 +33,13 @@ interface PriorityPlan {
   yearly_price: number;
   product_slots: number;
   is_popular: boolean;
+  free_listing?: boolean;
+  is_unlimited?: boolean;
+  is_extra_per_product?: boolean;
+  is_monthly_extra?: boolean;
+  is_monthly_unlimited?: boolean;
+  is_yearly_extra?: boolean;
+  is_yearly_unlimited?: boolean;
   addon_available_for_yearly?: boolean;
   addon_price_per_year?: number;
   addon_max_slots?: number;
@@ -375,14 +382,33 @@ const SettingsPage: React.FC = () => {
       finalPrice = 0;
       isExtraAddon = false;
     } else if (currentUnlimited && unlimitedAmt) {
-      finalPrice = unlimitedAmt;
+      // If user chose unlimited, charge the unlimited amount only once
+      // For subsequent purchases, if they already have unlimited active, charge nothing
+      const hasActiveUnlimited = activePurchases.some(p => 
+        (currentDuration === "monthly" && p.is_monthly_unlimited) ||
+        (currentDuration === "yearly" && p.is_yearly_unlimited)
+      );
+      
+      if (hasActiveUnlimited) {
+        finalPrice = 0; // No additional charge for unlimited users
+      } else {
+        finalPrice = unlimitedAmt; // First time unlimited purchase
+      }
     } else if (isRefillAvailable) {
       finalPrice = 0;
     } else if (selectedPlan.free_listing === true) {
       finalPrice = finalPrice;
       isExtraAddon = false;
     } else if (isExceeding) {
-      if (activePurchases.length > 0 || selectedPlan.free_listing === false) {
+      // Check if user already has unlimited for this duration
+      const hasActiveUnlimited = activePurchases.some(p => 
+        (currentDuration === "monthly" && p.is_monthly_unlimited) ||
+        (currentDuration === "yearly" && p.is_yearly_unlimited)
+      );
+      
+      if (hasActiveUnlimited) {
+        finalPrice = 0; // No charge for unlimited users
+      } else if (activePurchases.length > 0 || selectedPlan.free_listing === false) {
         const baseRemaining = selectedPlan.free_listing === false ? 0 : remainingSlotsCalculated;
         extraCount = Math.max(0, selectedProductIds.length - baseRemaining);
         extraProductCost = extraCount * (extraPrice || 0);
@@ -400,15 +426,23 @@ const SettingsPage: React.FC = () => {
       const activePurchase = allVendorPurchases.find(p => String(p.plan_id) === String(targetPlanId) && p.plan_duration === currentDuration && new Date(p.expire_at) > new Date());
       const savedPref = planPreferences[targetPlanId]?.[currentDuration];
       
-      const hasSavedFlag = activePurchase && (
-        activePurchase.is_monthly_extra || 
-        activePurchase.is_monthly_unlimited || 
-        activePurchase.is_yearly_extra || 
-        activePurchase.is_yearly_unlimited
+      // Check if user has already made a choice for this plan and duration from the plan itself
+      const hasSavedChoice = selectedPlan && (
+        (currentDuration === "monthly" && (selectedPlan.is_monthly_extra || selectedPlan.is_monthly_unlimited)) ||
+        (currentDuration === "yearly" && (selectedPlan.is_yearly_extra || selectedPlan.is_yearly_unlimited))
       );
 
-      if (hasSavedFlag && selectedPlan.free_listing === false) {
-        const finalUnlimitedValue = activePurchase.is_monthly_unlimited || activePurchase.is_yearly_unlimited;
+      // If user has already made a choice and free_listing is false, use that choice directly
+      if (hasSavedChoice && selectedPlan.free_listing === false) {
+        let finalUnlimitedValue = false;
+        
+        // Determine the user's previous choice based on the current duration
+        if (currentDuration === "monthly") {
+          finalUnlimitedValue = selectedPlan.is_monthly_unlimited || false;
+        } else {
+          finalUnlimitedValue = selectedPlan.is_yearly_unlimited || false;
+        }
+        
         setIsModalOpen(false);
         setTimeout(() => handlePurchase(true, finalUnlimitedValue, currentDuration), 10);
         return;
@@ -487,7 +521,12 @@ const SettingsPage: React.FC = () => {
         is_addon_purchased: includeAddon,
         addon_product_ids: addonProductIds,
         is_unlimited: currentUnlimited,
-        is_extra_per_product: isExceeding && !currentUnlimited && selectedPlan.free_listing === false
+        is_extra_per_product: isExceeding && !currentUnlimited && selectedPlan.free_listing === false,
+        // Save user's choice flags based on duration
+        is_monthly_extra: currentDuration === "monthly" && !currentUnlimited && selectedPlan.free_listing === false,
+        is_monthly_unlimited: currentDuration === "monthly" && currentUnlimited,
+        is_yearly_extra: currentDuration === "yearly" && !currentUnlimited && selectedPlan.free_listing === false,
+        is_yearly_unlimited: currentDuration === "yearly" && currentUnlimited
       };
       
       
@@ -1191,7 +1230,7 @@ const SettingsPage: React.FC = () => {
                 </div>
               </div>
 
-              {selectedPlan && (
+              {/* {selectedPlan && (
                 (() => {
                   const currentDuration = planDurations[selectedPlan.id || selectedPlan._id || ''] || "monthly";
                   const extraPrice = currentDuration === "monthly" ? selectedPlan.extra_product_price_monthly : selectedPlan.extra_product_price_yearly;
@@ -1229,7 +1268,7 @@ const SettingsPage: React.FC = () => {
                     </div>
                   );
                 })()
-              )}
+              )} */}
             </div>
           </div>
           {/* Table */}
