@@ -38,6 +38,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     if (!token) {
       router.push("/signin");
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAuthenticated(true);
       setIsChecking(false);
     }

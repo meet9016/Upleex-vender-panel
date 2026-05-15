@@ -30,24 +30,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-
-  // Turbopack config (required if using custom loaders)
-  turbopack: {
-    rules: {
-      "*.svg": {
-        loaders: [
-          {
-            loader: "@svgr/webpack",
-            options: {
-              memo: true,
-              svgo: true,
-            },
-          },
-        ],
-        as: "*.js",
-      },
-    },
-  },
 };
 
 export default nextConfig;
