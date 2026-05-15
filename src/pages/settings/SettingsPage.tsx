@@ -299,7 +299,7 @@ const SettingsPage: React.FC = () => {
   // Collect ALL product IDs that already have priority plans (from all purchases)
   const priorityProductIds = useMemo(() => {
     const ids = new Set<string>();
-    allVendorPurchases.filter(p => new Date(p.expire_at) > new Date()).forEach(purchase => {
+    allVendorPurchases.forEach(purchase => {
       purchase.product_ids?.forEach((id: any) => {
         const pid = typeof id === 'object' && id !== null ? (id._id || id.id) : id;
         ids.add(String(pid));
@@ -1322,7 +1322,7 @@ const SettingsPage: React.FC = () => {
               isRowSelectable={(params) => {
                 if (isAddonModalOpen) {
                   // For Addon: Block if already has listing plan
-                  const hasListing = listingPurchases.some(lp => new Date(lp.expire_at) > new Date() && lp.product_ids?.some((pr: any) => String(pr.id || pr._id || pr) === String(params.data.id || params.data._id)));
+                  const hasListing = listingPurchases.some(lp => lp.product_ids?.some((pr: any) => String(pr.id || pr._id || pr) === String(params.data.id || params.data._id)));
                   return !hasListing;
                 }
                 // For Priority Plan: Block if already has priority plan
@@ -1332,7 +1332,7 @@ const SettingsPage: React.FC = () => {
               getRowStyle={(params) => {
                 if (isAddonModalOpen) {
                   // For Addon: Disable if already has listing plan
-                  const hasListing = listingPurchases.some(lp => new Date(lp.expire_at) > new Date() && lp.product_ids?.some((pr: any) => String(pr.id || pr._id || pr) === String(params.data.id || params.data._id)));
+                  const hasListing = listingPurchases.some(lp => lp.product_ids?.some((pr: any) => String(pr.id || pr._id || pr) === String(params.data.id || params.data._id)));
                   if (hasListing) {
                     return { opacity: 0.4, pointerEvents: 'none', background: 'rgba(0,0,0,0.03)' };
                   }

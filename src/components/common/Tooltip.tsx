@@ -1,4 +1,4 @@
-import React, { ReactNode, useState, useRef, useEffect, useMemo } from 'react';
+import React, { ReactNode, useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 interface TooltipProps {
@@ -34,7 +34,7 @@ const Tooltip: React.FC<TooltipProps> = ({ children, content, position = 'bottom
     };
   }, [isVisible]);
 
-  const positionStyles = useMemo(() => {
+  const positionStyles = () => {
     if (!triggerRef.current) return {};
     const rect = triggerRef.current.getBoundingClientRect();
     const space = 8;
@@ -67,7 +67,7 @@ const Tooltip: React.FC<TooltipProps> = ({ children, content, position = 'bottom
       default:
         return {};
     }
-  }, [coords, position]);
+  };
 
   const arrowClasses = {
     top: 'top-full left-1/2 -translate-x-1/2 border-t-gray-900 dark:border-t-gray-800',
@@ -87,7 +87,7 @@ const Tooltip: React.FC<TooltipProps> = ({ children, content, position = 'bottom
       {isVisible && createPortal(
         <div
           className="fixed z-[99999] pointer-events-none transition-all duration-300"
-          style={positionStyles}
+          style={positionStyles()}
         >
           <div className="relative px-3 py-1.5 text-[11px] font-bold text-white bg-gray-900 dark:bg-gray-800 rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.3)] whitespace-nowrap animate-in fade-in zoom-in-95 duration-200">
             {content}

@@ -105,7 +105,7 @@ const RentalBoostDialog: React.FC<RentalBoostDialogProps> = ({
             <div className="text-sm text-blue-800 dark:text-blue-300">
               <p className="font-semibold">Benefits of Boosting:</p>
               <ul className="list-disc ml-4 mt-1 space-y-1">
-                <li>Show up first in &quot;You May Like&quot; recommendations.</li>
+                <li>Show up first in "You May Like" recommendations.</li>
                 <li>Reach up to 10x more potential buyers.</li>
                 <li>Priority sorting in category browsing.</li>
               </ul>
