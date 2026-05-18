@@ -138,6 +138,7 @@ export default function AddProductPage() {
     const [hasGst, setHasGst] = useState<boolean>(false);
     const [freeProductCount, setFreeProductCount] = useState<number>(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    console.log("hasGst",hasGst);
     const [validationErrors, setValidationErrors] = useState<{
         category?: string;
         subCategory?: string;
@@ -184,43 +185,34 @@ export default function AddProductPage() {
 
     const fetchVendorProfile = async () => {
         try {
-            // First try to get business name from localStorage
+            // Set quick initial value from localStorage while API loads
             const userInfo = localStorage.getItem('user_info');
             if (userInfo) {
                 const user = JSON.parse(userInfo);
-                const businessName = user.business_name;
-                if (businessName) {
-                    setVendorBusinessName(businessName);
-                    return;
+                // Set initial business name immediately (will be overridden by API if needed)
+                if (user.business_name) {
+                    setVendorBusinessName(user.business_name);
+                }
+                // Set initial hasGst from localStorage if available
+                if (user.gst_number !== undefined) {
+                    setHasGst(!!user.gst_number);
                 }
             }
 
-            // Fallback to API call if localStorage doesn't have business_name
-            const res = await api.get(endPointApi.postFetchVendorKYCFormData || 'vendor-single-details');
+            // Always call API to get fresh/complete data (especially hasGst)
+            const res = await api.post(endPointApi.postFetchVendorKYCFormData as string);
             if (res?.data?.status === 200 && res?.data?.data) {
                 const data = res.data.data;
+                console.log("vendor data", data);
                 const businessName = data.business_name || data.businessName || data.Identity?.business_name;
-                setVendorBusinessName(businessName || "Vendor");
+                if (businessName) setVendorBusinessName(businessName);
                 setHasGst(!!(data.Identity?.gst_number || data.gst_number));
-            } else {
-                setVendorBusinessName("Vendor"); // Fallback
             }
         } catch (error) {
-            // Try localStorage as final fallback
-            try {
-                const userInfo = localStorage.getItem('user_info');
-                if (userInfo) {
-                    const user = JSON.parse(userInfo);
-                    const businessName = user.business_name;
-                    if (businessName) {
-                        setVendorBusinessName(businessName);
-                        return;
-                    }
-                }
-            } catch (localStorageError) {
-                console.error("Error reading from localStorage:", localStorageError);
-            }
-            setVendorBusinessName("Vendor"); // Final fallback
+            console.error("Error fetching vendor profile:", error);
+            // localStorage already set above as initial value, nothing extra needed
+            // Final fallback if localStorage also had no name
+            setVendorBusinessName(prev => prev || "Vendor");
         }
     };
 
@@ -580,9 +572,10 @@ export default function AddProductPage() {
     }, [productId]);
 
     useEffect(() => {
-        // Fetch vendor profile and SKU counter on component mount
+        // Fetch vendor profile always (needed for hasGst, vendorBusinessName etc.)
+        fetchVendorProfile();
+        // Only fetch SKU counter in add mode (not needed when editing)
         if (!isEditMode) {
-            fetchVendorProfile();
             fetchNextSKUCounter();
         }
     }, [isEditMode]);
@@ -835,7 +828,7 @@ export default function AddProductPage() {
         } else if (pricingType === 'free') {
             const limit = hasGst ? 3 : 1;
             if (freeProductCount >= limit) {
-                toast.error(`Free listing limit reached (${freeProductCount}/${limit}). Please select 'Base (Paid listing)' or add money to your wallet.`);
+                toast.error(`Free listing limit reachedvfd (${freeProductCount}/${limit}). Please select 'Base (Paid listing)' or add money to your wallet.`);
                 return;
             }
         }

@@ -398,8 +398,13 @@ const ListingPlanView: React.FC = () => {
     }
 
     if (totalAmountWithGst > balance) {
-      toast.error(`Insufficient wallet balance. Total required including 18% GST is ₹${totalAmountWithGst}.`);
-      return;
+      // Skip balance check for demo account
+      const userInfo = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user_info') || '{}') : {};
+      const isDemoAccount = userInfo?.number === '8200199856';
+      if (!isDemoAccount) {
+        toast.error(`Insufficient wallet balance. Total required including 18% GST is ₹${totalAmountWithGst}.`);
+        return;
+      }
     }
 
     setIsPurchasing(true);
