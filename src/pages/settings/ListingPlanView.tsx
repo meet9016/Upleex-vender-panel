@@ -659,30 +659,20 @@ const ListingPlanView: React.FC = () => {
       
       // If exceeding limit
       if (selectedPlan.free_listing === true && selectableRows.length > (remainingSlots || 0)) {
-        // If plan does NOT allow extras, strictly limit
-        if (!selectedPlan.extra_product_price && !selectedPlan.unlimited_amount) {
-          const limitedRows = selectableRows.slice(0, remainingSlots);
-          const ids = limitedRows.map((p) => p.id);
-          
-          // Sync with Redux (only for products in current view)
-          const updateMap: Record<string, boolean> = {};
-          filteredProducts.forEach(p => {
-            updateMap[String(p.id || p._id)] = false;
-          });
-          ids.forEach(id => {
-            updateMap[String(id)] = true;
-          });
-          dispatch(setMultipleSelections(updateMap));
-          
-          toast.warning(`Limit exceeded! This plan allows only ${remainingSlots} product(s).`);
-          return;
-        } else {
-          // If plan allows extras, show a warning toast but allow selection
-          if (!hasShownLimitToast) {
-            toast.info(`You have selected ${selectableRows.length} products, which exceeds the base limit of ${remainingSlots}. Extra products will be charged accordingly.`);
-            setHasShownLimitToast(true);
-          }
-        }
+        const limitedRows = selectableRows.slice(0, remainingSlots);
+        const ids = limitedRows.map((p) => p.id);
+        
+        const updateMap: Record<string, boolean> = {};
+        filteredProducts.forEach(p => {
+          updateMap[String(p.id || p._id)] = false;
+        });
+        ids.forEach(id => {
+          updateMap[String(id)] = true;
+        });
+        dispatch(setMultipleSelections(updateMap));
+        
+        toast.warning(`Limit exceeded! This plan allows only ${remainingSlots} product(s).`);
+        return;
       }
     }
     

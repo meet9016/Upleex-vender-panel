@@ -992,7 +992,7 @@ const SettingsPage: React.FC = () => {
       const hasActivePurchase = activePurchases.length > 0;
       const shouldBypassLimit = isBasicOrStandard && hasActivePurchase;
 
-      if (!shouldBypassLimit && !extraPrice && !unlimitedPrice && selectableRows.length > remainingSlots) {
+      if (!shouldBypassLimit && selectableRows.length > remainingSlots) {
         const limitedRows = selectableRows.slice(0, remainingSlots);
         const ids = limitedRows.map((p) => p.id || (p as any)._id);
         setSelectedProductIds(ids);
@@ -1311,11 +1311,11 @@ const SettingsPage: React.FC = () => {
                       // Bypass limit for Basic/Standard if active purchase exists
                       if (isBasicOrStandard && hasActivePurchase) {
                         // Let them select unlimited products
-                      } else if (!hasExtraOption && !hasUnlimitedOption) {
+                      } else {
+                        // For ALL plans (including Premium): auto-unchecked extra checkboxes
                         const limitedRows = selectableRows.slice(0, currentRemaining);
                         const ids = limitedRows.map(p => p.id || (p as any)._id);
                         
-                        // Sync with Redux (only for products in current view)
                         const updateMap: Record<string, boolean> = {};
                         filteredProducts.forEach(p => {
                           updateMap[String(p.id || p._id)] = false;
@@ -1325,14 +1325,11 @@ const SettingsPage: React.FC = () => {
                         });
                         dispatch(setMultipleSelections(updateMap));
 
-                        toast.warning(`Limit exceeded! This plan allows only ${currentRemaining} product(s).`);
-                        return;
-                      } else {
-                        // If plan allows extras, show a warning toast but allow selection
                         if (!hasShownLimitToast) {
-                          toast.info(`You have selected ${selectableRows.length} products, which exceeds the base limit of ${currentRemaining}. Extra products will be charged accordingly.`);
+                          toast.warning(`Limit exceeded! This plan allows only ${currentRemaining} product(s).`);
                           setHasShownLimitToast(true);
                         }
+                        return;
                       }
                     }
                   }
