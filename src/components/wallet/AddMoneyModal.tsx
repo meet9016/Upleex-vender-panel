@@ -70,8 +70,33 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
         );
       }
 
-      const { transaction_id, razorpay_order_id, key } =
+      const { transaction_id, razorpay_order_id, key, is_demo } =
         orderResponse.data.data;
+
+      // Demo account: skip Razorpay popup, directly verify
+      if (is_demo) {
+        try {
+          const verifyResponse = await api.post(endPointApi.verifyWalletPayment, {
+            razorpay_order_id: razorpay_order_id,
+            transaction_id: transaction_id,
+          });
+
+          if (verifyResponse.data.success) {
+            setTransactionId(transaction_id);
+            await refreshBalance();
+            window.dispatchEvent(new Event('walletUpdated'));
+            setCurrentStep("success");
+          } else {
+            throw new Error("Payment verification failed");
+          }
+        } catch (error: any) {
+          setError(error.message || "Demo payment failed. Please try again.");
+          setCurrentStep("amount");
+        } finally {
+          setIsLoading(false);
+        }
+        return;
+      }
 
       // Load Razorpay script
       const script = document.createElement("script");
