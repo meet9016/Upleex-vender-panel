@@ -36,7 +36,7 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
     }
   }, [isOpen]);
 
-  const quickAmounts = [50, 100, 200, 500, 1000, 2000];
+  const quickAmounts = [1,50, 100, 200, 500, 1000, 2000];
 
   const handleAmountSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,8 +44,8 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
 
     const numAmount = parseFloat(amount);
 
-    if (!numAmount || numAmount < 50) {
-      setError("Minimum amount is ₹50");
+    if (!numAmount || numAmount < 1) {
+      setError("Minimum amount is ₹1");
       return;
     }
 
@@ -257,7 +257,7 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
                 setError("");
               }}
               placeholder="50"
-              min="50"
+              min="1"
               className="w-full pl-8 pr-4 py-2.5 text-sm border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-800 dark:text-white/90 placeholder-gray-400"
               required
             />
@@ -309,7 +309,7 @@ const AddMoneyModal: React.FC<AddMoneyModalProps> = ({
           <Button
             onClick={() => handleAmountSubmit(new Event('submit') as any)}
             className=" btn-primary"
-            disabled={!amount || parseFloat(amount) < 50}
+            disabled={!amount || parseFloat(amount) < 1}
           >
             Continue to Payment
           </Button>

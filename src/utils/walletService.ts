@@ -40,7 +40,7 @@ class WalletService {
 
   async addMoney(request: AddMoneyRequest): Promise<AddMoneyResponse> {
     try {
-      if (request.amount < 50) {
+      if (request.amount < 1) {
         throw new Error("Minimum amount is ₹50");
       }
 
@@ -65,7 +65,7 @@ class WalletService {
       return { isValid: false, error: "Please enter a valid amount" };
     }
     
-    if (amount < 50) {
+    if (amount < 1) {
       return { isValid: false, error: "Minimum amount is ₹50" };
     }
     
