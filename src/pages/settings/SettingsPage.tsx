@@ -79,6 +79,7 @@ interface PriorityPurchase {
   is_addon_purchased?: boolean;
   addon_max_slots?: number;
   addon_product_ids?: string[];
+  status:string;
 }
 
 const DEFAULT_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Crect width=\'48\' height=\'48\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'24\' y=\'24\' font-family=\'Arial\' font-size=\'10\' fill=\'%23999\' text-anchor=\'middle\' dominant-baseline=\'middle\'%3ENo Image%3C/text%3E%3C/svg%3E';
@@ -92,7 +93,12 @@ const SettingsPage: React.FC = () => {
   const [listingPurchases, setListingPurchases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<PriorityPlan | null>(null);
-  
+  console.log("vendorPurchases", vendorPurchases)
+  console.log('Type of vendorPurchases:', Array.isArray(vendorPurchases));
+console.log('vendorPurchases:', vendorPurchases);
+console.log('vendorPurchases length:', vendorPurchases?.length);
+
+
   // Redux state for persistent selection across tabs
   const dispatch = useDispatch();
   const selectedIdsMap = useSelector((state: RootState) => state.selection.selectedIds);
@@ -571,6 +577,11 @@ const SettingsPage: React.FC = () => {
 
   const handleVideoUpload = async () => {
     if (!uploadVideo) return;
+
+    if (uploadVideo.size > 25 * 1024 * 1024) {
+      toast.error("Video file is too large. Maximum allowed size is 25MB.");
+      return;
+    }
 
     if (uploadedVideos.length >= 4) {
       toast.error("You can upload a maximum of 4 promotional videos.");
@@ -2027,6 +2038,93 @@ const SettingsPage: React.FC = () => {
               {/* Priority Plan Content */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-3">
+
+                  {/* Video Upload Section (Outside Modal) */}
+                  {/* Video Upload Section - Only for Yearly Priority Plan */}
+                  {vendorPurchases.some(p =>
+                    p.plan_duration === 'yearly' &&
+                    p.status === 'active' &&
+                    new Date(p.expire_at) > new Date()
+                  ) ? (
+                  <div className="mb-6 bg-white border border-gray-100 rounded-2xl p-5 shadow-sm flex flex-col gap-4 dark:bg-[#0d111c] dark:border-gray-800">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shrink-0 dark:bg-indigo-900/30 dark:text-indigo-400">
+                          <Zap size={24} />
+                        </div>
+                        <div>
+                          <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">Store Promotional Video</h3>
+                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                            Upload up to 4 videos to showcase on your public store profile. Attract more customers!
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-start sm:items-end gap-2 w-full sm:w-auto">
+                        <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-3">
+                          <input 
+                            id="promotional-video-upload-dual"
+                            type="file" 
+                            accept="video/*" 
+                            disabled={isVideoUploading || uploadedVideos.length >= 4}
+                            onChange={(e) => setUploadVideo(e.target.files?.[0] || null)}
+                            className="flex-1 text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 disabled:opacity-50 dark:file:bg-brand-900/30 dark:file:text-brand-400"
+                          />
+                          <Button
+                            variant="primary"
+                            onClick={handleVideoUpload}
+                            disabled={isVideoUploading || !uploadVideo || uploadedVideos.length >= 4}
+                            className="px-6 py-2.5 rounded-xl whitespace-nowrap btn-primary font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+                          >
+                            {isVideoUploading ? "Uploading..." : (uploadedVideos.length >= 4 ? "Limit Reached" : "Upload Video")}
+                          </Button>
+                        </div>
+                        <span className="text-[10px] sm:text-xs font-semibold text-gray-400">
+                          {uploadedVideos.length}/4 videos uploaded
+                        </span>
+                      </div>
+                    </div>
+
+                    {uploadedVideos.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 overflow-x-auto">
+                        <div className="flex gap-4 sm:gap-6 pb-2 min-w-max">
+                          {uploadedVideos.map((video, idx) => (
+                            <div
+                              key={idx}
+                              className="relative w-64 sm:w-80 aspect-video bg-gray-100 rounded-2xl overflow-hidden group border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex-shrink-0"
+                            >
+                              <video src={video} controls className="w-full h-full object-cover" />
+
+                              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                <button
+                                  onClick={() => handleDeleteVideoClick(video)}
+                                  className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg transition-transform hover:scale-110"
+                                  title="Delete Video"
+                                >
+                                  <MdDelete size={20} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  ) : (
+                    <div className="mb-6 bg-white border border-dashed border-amber-300 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 dark:bg-[#0d111c] dark:border-amber-700">
+                      <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center shrink-0 dark:bg-amber-900/30 mt-1 sm:mt-0">
+                          <Zap className="w-5 h-5 sm:w-6 sm:h-6" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100">Store Promotional Video</h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">This feature is available exclusively for vendors with an active <strong>Yearly Priority Plan</strong>.</p>
+                        </div>
+                      </div>
+                      <div className="ml-[52px] sm:ml-0 self-start sm:self-auto">
+                        <span className="text-[10px] sm:text-xs font-bold px-3 py-1.5 bg-amber-100 text-amber-700 rounded-full dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap">Yearly Plan Required</span>
+                      </div>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
                     {plans.map((plan) => {
                       const planId = plan.id || (plan as any)._id;
