@@ -78,6 +78,7 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
 }) => {
   const router = useRouter();
   const gridRef = useRef<any>(null);
+  const isUpdatingSelectionRef = useRef(false);
   const [isDark, setIsDark] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -265,25 +266,27 @@ const AgGridTable: React.FC<AgGridTableProps> = ({
             paginationPageSize={20}
             rowSelection={showCheckboxes ? rowSelection : undefined}
             onSelectionChanged={() => {
+              if (isUpdatingSelectionRef.current) return;
               if (showCheckboxes) {
                 let rows = gridRef.current?.api?.getSelectedRows() || [];
                 
                 // Filter out rows that are not selectable based on isRowSelectable
                 if (isRowSelectable) {
-                  rows = rows.filter((row: any) => {
+                  const unselectableSelectedNodes = (gridRef.current?.api?.getSelectedNodes() || [])
+                    .filter((node: any) => node.isSelected() && !isRowSelectable({ data: node.data }));
+                  
+                  if (unselectableSelectedNodes.length > 0) {
+                    isUpdatingSelectionRef.current = true;
+                    unselectableSelectedNodes.forEach((node: any) => {
+                      node.setSelected(false);
+                    });
+                    isUpdatingSelectionRef.current = false;
+                  }
+
+                  // Re-fetch the filtered rows after deselecting
+                  rows = (gridRef.current?.api?.getSelectedRows() || []).filter((row: any) => {
                     return isRowSelectable({ data: row });
                   });
-                  
-                  // Deselect the unselectable rows that were auto-selected
-                  const allSelectedNodes = gridRef.current?.api?.getSelectedNodes() || [];
-                  allSelectedNodes.forEach((node: any) => {
-                    if (!isRowSelectable({ data: node.data })) {
-                      node.setSelected(false);
-                    }
-                  });
-                  
-                  // Re-fetch the filtered rows after deselecting
-                  rows = gridRef.current?.api?.getSelectedRows() || [];
                 }
                 
                 if (typeof onSelectionChange === 'function') {

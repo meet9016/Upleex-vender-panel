@@ -153,7 +153,11 @@ export default function AddServicePage() {
         }
 
         // Check wallet balance for listing fee (₹29) only in non-edit mode (new service)
-        if (!isEditMode && balance < 29) {
+        const userInfo = typeof window !== 'undefined' ? localStorage.getItem('user_info') : null;
+        const user = userInfo ? JSON.parse(userInfo) : null;
+        const isDemoAccount = user && (String(user.number) === '8200199856' || String(user.mobile) === '8200199856');
+
+        if (!isEditMode && balance < 29 && !isDemoAccount) {
             toast.error("Insufficient wallet balance. Minimum ₹29 required for Service listing fee. Please add money to your wallet.");
             return;
         }

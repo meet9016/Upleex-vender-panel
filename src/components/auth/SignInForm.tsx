@@ -228,6 +228,7 @@ export default function SignInForm() {
                 alt="Upleex Logo"
                 width={150}
                 height={40}
+                style={{ height: "auto" }}
                 priority
               />
               <Image
@@ -236,6 +237,7 @@ export default function SignInForm() {
                 alt="Upleex Logo"
                 width={150}
                 height={40}
+                style={{ height: "auto" }}
                 priority
               />
             <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-white">

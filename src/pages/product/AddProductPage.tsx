@@ -409,7 +409,11 @@ export default function AddProductPage() {
         const isChecked = checked;
 
         // Check wallet balance before allowing paid listing
-        if (isChecked && balance < 10) {
+        const userInfo = typeof window !== 'undefined' ? localStorage.getItem('user_info') : null;
+        const user = userInfo ? JSON.parse(userInfo) : null;
+        const isDemoAccount = user && (String(user.number) === '8200199856' || String(user.mobile) === '8200199856');
+
+        if (isChecked && balance < 10 && !isDemoAccount) {
             toast.error("Insufficient wallet balance. Minimum ₹10 required for Base (Paid listing). Please add money to your wallet.");
             return; // Don't change the state
         }
@@ -820,14 +824,18 @@ export default function AddProductPage() {
         }
 
         // Check wallet balance and free limit
+        const userInfo = typeof window !== 'undefined' ? localStorage.getItem('user_info') : null;
+        const user = userInfo ? JSON.parse(userInfo) : null;
+        const isDemoAccount = user && (String(user.number) === '8200199856' || String(user.mobile) === '8200199856');
+
         if (pricingType === 'paid') {
-            if (balance <= 0) {
+            if (balance <= 0 && !isDemoAccount) {
                 toast.error("Your wallet balance is 0. Please add money to your wallet to add paid products.");
                 return;
             }
         } else if (pricingType === 'free') {
             const limit = hasGst ? 3 : 1;
-            if (freeProductCount >= limit) {
+            if (freeProductCount >= limit && !isDemoAccount) {
                 toast.error(`Free listing limit reachedvfd (${freeProductCount}/${limit}). Please select 'Base (Paid listing)' or add money to your wallet.`);
                 return;
             }

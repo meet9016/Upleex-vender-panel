@@ -126,6 +126,7 @@ const AppSidebar: React.FC = () => {
                 alt="Upleex Logo"
                 width={150}
                 height={40}
+                style={{ height: "auto" }}
                 priority
               />
               <Image
@@ -134,11 +135,12 @@ const AppSidebar: React.FC = () => {
                 alt="Upleex Logo"
                 width={150}
                 height={40}
+                style={{ height: "auto" }}
                 priority
               />
             </>
           ) : (
-            <Image src="/images/logo/small-logo.webp" alt="Upleex" width={32} height={32} priority />
+            <Image src="/images/logo/small-logo.webp" alt="Upleex" width={32} height={32} style={{ height: "auto" }} priority />
           )}
         </Link>
       </div>

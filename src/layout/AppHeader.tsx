@@ -138,6 +138,7 @@ const AppHeader = () => {
               alt="Upleex Logo"
               width={120}
               height={32}
+              style={{ height: "auto" }}
               priority
             />
             <Image
@@ -146,6 +147,7 @@ const AppHeader = () => {
               alt="Upleex Logo"
               width={120}
               height={32}
+              style={{ height: "auto" }}
               priority
             />
           </Link>

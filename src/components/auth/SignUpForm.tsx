@@ -264,6 +264,7 @@ export default function SignUpForm() {
                            alt="Upleex Logo"
                            width={150}
                            height={40}
+                           style={{ height: "auto" }}
                            priority
                          />
                          <Image
@@ -272,6 +273,7 @@ export default function SignUpForm() {
                            alt="Upleex Logo"
                            width={150}
                            height={40}
+                           style={{ height: "auto" }}
                            priority
                          />
             <h1 className="mb-2 mt-3 font-semibold text-gray-800 dark:text-white text-title-sm">
