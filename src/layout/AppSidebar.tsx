@@ -122,7 +122,7 @@ const AppSidebar: React.FC = () => {
             <>
               <Image
                 className="dark:hidden"
-                src="/images/logo/upleex-logo-dark.jpg"
+                src="/images/logo/logo.webp"
                 alt="Upleex Logo"
                 width={150}
                 height={40}
