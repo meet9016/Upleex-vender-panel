@@ -68,6 +68,13 @@ export default function DocumentUpload({
 
     if (!selected) return;
 
+    // Check file size (max 10MB)
+    if (selected.size > 10 * 1024 * 1024) {
+      toast.error("File is too large. Maximum size is 10MB.");
+      e.target.value = "";
+      return;
+    }
+
     // Check file type - allow images and PDFs
     const isImage = selected.type.startsWith("image/");
     const isPDF = selected.type === "application/pdf";
@@ -84,13 +91,7 @@ export default function DocumentUpload({
       if (selected.size > 0.5 * 1024 * 1024) {
         toast.info("Optimizing large image...");
         finalFile = await compressImage(selected, 0.8);
-        
       }
-    }
-
-    // Check if PDF is too large (optional warning)
-    if (isPDF && selected.size > 10 * 1024 * 1024) {
-      toast.warning("PDF file is larger than 10MB");
     }
 
     onChange(finalFile);
