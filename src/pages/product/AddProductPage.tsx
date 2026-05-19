@@ -65,6 +65,7 @@ export default function AddProductPage() {
     const searchParams = useSearchParams();
     const productId = searchParams?.get("id") ?? null;
     const isEditMode = !!productId;
+    const demoNumbers = ['8200199856', '7874977238', '9601545245'];
 
     let balance = 0;
     let refreshBalance = async () => { };
@@ -138,7 +139,7 @@ export default function AddProductPage() {
     const [hasGst, setHasGst] = useState<boolean>(false);
     const [freeProductCount, setFreeProductCount] = useState<number>(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    console.log("hasGst",hasGst);
+    console.log("hasGst", hasGst);
     const [validationErrors, setValidationErrors] = useState<{
         category?: string;
         subCategory?: string;
@@ -244,7 +245,7 @@ export default function AddProductPage() {
                     p.pricing_type === 'free' &&
                     ['active', 'draft'].includes(p.status)
                 ).length;
-                
+
                 setFreeProductCount(freeCount);
             }
         } catch (error) {
@@ -296,7 +297,7 @@ export default function AddProductPage() {
                     [field]: undefined
                 };
             }
-            
+
             // Clear subCategory error only when user actually selects a subCategory
             if (field === 'subCategory' && value && prev.subCategory) {
                 return {
@@ -304,7 +305,7 @@ export default function AddProductPage() {
                     subCategory: undefined
                 };
             }
-            
+
             return prev;
         });
     }, []);
@@ -411,7 +412,7 @@ export default function AddProductPage() {
         // Check wallet balance before allowing paid listing
         const userInfo = typeof window !== 'undefined' ? localStorage.getItem('user_info') : null;
         const user = userInfo ? JSON.parse(userInfo) : null;
-        const isDemoAccount = user && (String(user.number) === '8200199856' || String(user.mobile) === '8200199856');
+        const isDemoAccount = user && (demoNumbers.includes(String(user.number)) || demoNumbers.includes(String(user.mobile)));
 
         if (isChecked && balance < 10 && !isDemoAccount) {
             toast.error("Insufficient wallet balance. Minimum ₹10 required for Base (Paid listing). Please add money to your wallet.");
@@ -420,7 +421,7 @@ export default function AddProductPage() {
 
         setPricingType(isChecked ? "paid" : "free");
 
-        
+
     };
 
     const handleRadioChange = (value: "day" | "month" | "hourly") => {
@@ -826,7 +827,7 @@ export default function AddProductPage() {
         // Check wallet balance and free limit
         const userInfo = typeof window !== 'undefined' ? localStorage.getItem('user_info') : null;
         const user = userInfo ? JSON.parse(userInfo) : null;
-        const isDemoAccount = user && (String(user.number) === '8200199856' || String(user.mobile) === '8200199856');
+        const isDemoAccount = user && (demoNumbers.includes(String(user.number)) || demoNumbers.includes(String(user.mobile)));
 
         if (pricingType === 'paid') {
             if (balance <= 0 && !isDemoAccount) {

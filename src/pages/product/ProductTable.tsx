@@ -123,7 +123,8 @@ const ProductTable = () => {
   const [isDark, setIsDark] = useState(false);
     const userInfo = typeof window !== 'undefined' ? localStorage.getItem('user_info') : null;
         const user = userInfo ? JSON.parse(userInfo) : null;
-        const isDemoAccount = user && (String(user.number) === '8200199856' || String(user.mobile) === '8200199856');
+        const demoNumbers = ['8200199856', '7874977238', '9601545245'];
+        const isDemoAccount = user && (demoNumbers.includes(String(user.number)) || demoNumbers.includes(String(user.mobile)));
   // Track dark mode changes
   useEffect(() => {
     const checkDarkMode = () => {

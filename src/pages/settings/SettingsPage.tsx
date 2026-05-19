@@ -510,7 +510,8 @@ const SettingsPage: React.FC = () => {
     if (totalAmountWithGst > balance) {
       // Skip balance check for demo account
       const userInfo = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user_info') || '{}') : {};
-      const isDemoAccount = userInfo?.number === '8200199856';
+      const demoNumbers = ['8200199856', '7874977238', '9601545245'];
+      const isDemoAccount = demoNumbers.includes(String(userInfo?.number));
       if (!isDemoAccount) {
         toast.error(`Insufficient wallet balance. Total required including 18% GST is ₹${totalAmountWithGst}.`);
         return;
