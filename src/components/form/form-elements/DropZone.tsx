@@ -31,7 +31,19 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
 }) => {
 
 
-  const onDrop = (acceptedFiles: File[]) => {
+  const onDrop = (acceptedFiles: File[], rejectedFiles: any[]) => {
+    if (rejectedFiles && rejectedFiles.length > 0) {
+      const err = rejectedFiles[0]?.errors?.[0];
+      if (err?.code === 'file-too-large') {
+        toast.error('File is too large. Maximum size is 10MB.');
+      } else if (err?.code === 'file-invalid-type') {
+        toast.error('Invalid file type. Please upload JPEG, PNG, WEBP, or SVG.');
+      } else {
+        toast.error('Upload failed: ' + (err?.message || 'invalid file'));
+      }
+      return;
+    }
+
     if (!multiple) {
       // Single image
       const file = acceptedFiles[0];
@@ -107,6 +119,7 @@ const DropzoneComponent: React.FC<DropzoneProps> = ({
       "image/webp": [],
       "image/svg+xml": [],
     },
+    maxSize: 10 * 1024 * 1024,
     disabled: isLimitReached,
   });
 

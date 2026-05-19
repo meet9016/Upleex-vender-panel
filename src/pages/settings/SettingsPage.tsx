@@ -149,7 +149,7 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
   const [hasShownLimitToast, setHasShownLimitToast] = useState(false); // Track if limit toast was shown
   const [isVideoUploading, setIsVideoUploading] = useState(false);
   const [uploadedVideos, setUploadedVideos] = useState<string[]>([]);
-  const [uploadVideo, setUploadVideo] = useState<File | null>(null);
+  const [uploadVideos, setUploadVideos] = useState<File[]>([]);
   const [videoToDelete, setVideoToDelete] = useState<string | null>(null);
   const [pendingVideos, setPendingVideos] = useState<File[]>([]); // Videos waiting to be uploaded when rendering starts
   const { balance, currency, refreshBalance } = useWallet();
@@ -576,48 +576,59 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
   };
 
   const handleVideoUpload = async () => {
-    if (!uploadVideo) return;
+    if (uploadVideos.length === 0) return;
 
-    if (uploadVideo.size > 25 * 1024 * 1024) {
-      toast.error("Video file is too large. Maximum allowed size is 25MB.");
+    if (uploadedVideos.length + uploadVideos.length > 4) {
+      toast.error(`You can only upload up to ${4 - uploadedVideos.length} more video(s).`);
       return;
     }
 
-    if (uploadedVideos.length >= 4) {
-      toast.error("You can upload a maximum of 4 promotional videos.");
-      return;
-    }
-
-    // Upload immediately
-    setIsVideoUploading(true);
-    const toastId = toast.loading("Uploading store video...");
-    try {
-      const formData = new FormData();
-      formData.append('video', uploadVideo);
-      const res = await api.post('vendor-store-video', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      toast.dismiss(toastId);
-      if (res.data.success) {
-        toast.success("Store promotional video uploaded successfully!");
-        setUploadVideo(null);
-
-        // Reset file input visually
-        const fileInput = document.getElementById('promotional-video-upload') as HTMLInputElement;
-        if (fileInput) fileInput.value = '';
-
-        if (res.data.video_url) {
-          setUploadedVideos(prev => [...prev, res.data.video_url]);
-        }
-      } else {
-        toast.error("Failed to upload video");
+    for (const file of uploadVideos) {
+      if (file.size > 25 * 1024 * 1024) {
+        toast.error(`Video "${file.name}" is too large. Maximum allowed size is 25MB.`);
+        return;
       }
-    } catch (error: any) {
-      toast.dismiss(toastId);
-      toast.error(error?.response?.data?.message || "Failed to upload video");
-    } finally {
-      setIsVideoUploading(false);
     }
+
+    // Upload sequential
+    setIsVideoUploading(true);
+    const newUploadedUrls: string[] = [];
+
+    for (let i = 0; i < uploadVideos.length; i++) {
+      const file = uploadVideos[i];
+      const toastId = toast.loading(`Uploading video ${i + 1} of ${uploadVideos.length} (${file.name})...`);
+      try {
+        const formData = new FormData();
+        formData.append('video', file);
+        const res = await api.post('vendor-store-video', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        toast.dismiss(toastId);
+        if (res.data.success && res.data.video_url) {
+          toast.success(`Video "${file.name}" uploaded successfully!`);
+          newUploadedUrls.push(res.data.video_url);
+        } else {
+          toast.error(`Failed to upload "${file.name}"`);
+        }
+      } catch (error: any) {
+        toast.dismiss(toastId);
+        toast.error(error?.response?.data?.message || `Failed to upload "${file.name}"`);
+      }
+    }
+
+    if (newUploadedUrls.length > 0) {
+      setUploadedVideos(prev => [...prev, ...newUploadedUrls]);
+    }
+
+    setUploadVideos([]);
+
+    // Reset file inputs visually
+    const fileInput = document.getElementById('promotional-video-upload') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+    const fileInputDual = document.getElementById('promotional-video-upload-dual') as HTMLInputElement;
+    if (fileInputDual) fileInputDual.value = '';
+
+    setIsVideoUploading(false);
   };
 
   const handleDeleteVideoClick = (videoUrl: string) => {
@@ -1177,7 +1188,7 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
         onClose={() => setIsModalOpen(false)}
         className="max-w-6xl w-full mx-2 sm:mx-auto"
       >
-        <div className="flex flex-col h-[85vh] sm:h-[70vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
+        <div className="flex flex-col h-[85vh] sm:h-[80vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
           {/* Modal Header */}
           <div className="px-4 sm:px-6 pr-10 sm:pr-14 py-3 sm:py-4 border-b bg-white dark:bg-gray-900">
             <div className="flex flex-col gap-3">
@@ -1370,7 +1381,7 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
               selectedIds={selectedIdsMap}
               getRowId={(params) => String(params.data.id || params.data._id)}
               showCheckboxes={true}
-              height={420}
+              height={350}
               rowHeight={45}
               isRowSelectable={(params) => {
                 if (isAddonModalOpen) {
@@ -1695,14 +1706,15 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
                           id="promotional-video-upload"
                           type="file" 
                           accept="video/*" 
+                          multiple
                           disabled={isVideoUploading || uploadedVideos.length >= 4}
-                          onChange={(e) => setUploadVideo(e.target.files?.[0] || null)}
+                          onChange={(e) => setUploadVideos(Array.from(e.target.files || []))}
                           className="flex-1 text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 disabled:opacity-50 dark:file:bg-brand-900/30 dark:file:text-brand-400"
                         />
                         <Button
                           variant="primary"
                           onClick={handleVideoUpload}
-                          disabled={isVideoUploading || !uploadVideo || uploadedVideos.length >= 4}
+                          disabled={isVideoUploading || uploadVideos.length === 0 || uploadedVideos.length >= 4}
                           className="px-6 py-2.5 rounded-xl whitespace-nowrap btn-primary font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                         >
                           {isVideoUploading ? "Uploading..." : (uploadedVideos.length >= 4 ? "Limit Reached" : "Upload Video")}
@@ -1902,12 +1914,12 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
       (durationToggle === "yearly" && (plan.extra_product_price_yearly || plan.unlimited_amount_yearly || plan.unlimited_price_yearly))) && (
       <div className=" border-t border-gray-100 dark:border-gray-800 space-y-2 text-left w-full">
         {/* Monthly Extras Section */}
-        {durationToggle === "monthly" && (plan.extra_product_price_monthly > 0 || plan.unlimited_amount_monthly > 0 || plan.unlimited_price_monthly > 0) && (
+        {durationToggle === "monthly" && ((plan.extra_product_price_monthly ?? 0) > 0 || (plan.unlimited_amount_monthly ?? 0) > 0 || (plan.unlimited_price_monthly ?? 0) > 0) && (
           <div className="space-y-2">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
               <span className="w-1 h-1 bg-gray-400 rounded-full"></span> Monthly Extras
             </p>
-            {plan.extra_product_price_monthly > 0 && (
+            {(plan.extra_product_price_monthly ?? 0) > 0 && (
               <div className="flex items-center gap-3">
                 <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
                   <Zap className="w-3 h-3 text-emerald-600" />
@@ -1917,7 +1929,7 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
                 </span>
               </div>
             )}
-            {(plan.unlimited_amount_monthly > 0 || plan.unlimited_price_monthly > 0) && (
+            {((plan.unlimited_amount_monthly ?? 0) > 0 || (plan.unlimited_price_monthly ?? 0) > 0) && (
               <div className="flex items-center gap-3">
                 <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
                   <Zap className="w-3 h-3 text-amber-600" />
@@ -1931,12 +1943,12 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
         )}
 
         {/* Yearly Extras Section */}
-        {durationToggle === "yearly" && (plan.extra_product_price_yearly > 0 || plan.unlimited_amount_yearly > 0 || plan.unlimited_price_yearly > 0) && (
+        {durationToggle === "yearly" && ((plan.extra_product_price_yearly ?? 0) > 0 || (plan.unlimited_amount_yearly ?? 0) > 0 || (plan.unlimited_price_yearly ?? 0) > 0) && (
           <div className="space-y-2">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
               <span className="w-1 h-1 bg-gray-400 rounded-full"></span> Yearly Extras
             </p>
-            {plan.extra_product_price_yearly > 0 && (
+            {(plan.extra_product_price_yearly ?? 0) > 0 && (
               <div className="flex items-center gap-3">
                 <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
                   <Zap className="w-3 h-3 text-emerald-600" />
@@ -1946,7 +1958,7 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
                 </span>
               </div>
             )}
-            {(plan.unlimited_amount_yearly > 0 || plan.unlimited_price_yearly > 0) && (
+            {((plan.unlimited_amount_yearly ?? 0) > 0 || (plan.unlimited_price_yearly ?? 0) > 0) && (
               <div className="flex items-center gap-3">
                 <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
                   <Zap className="w-3 h-3 text-amber-600" />
@@ -2065,14 +2077,15 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
                             id="promotional-video-upload-dual"
                             type="file" 
                             accept="video/*" 
+                            multiple
                             disabled={isVideoUploading || uploadedVideos.length >= 4}
-                            onChange={(e) => setUploadVideo(e.target.files?.[0] || null)}
+                            onChange={(e) => setUploadVideos(Array.from(e.target.files || []))}
                             className="flex-1 text-sm text-gray-500 file:cursor-pointer file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 disabled:opacity-50 dark:file:bg-brand-900/30 dark:file:text-brand-400"
                           />
                           <Button
                             variant="primary"
                             onClick={handleVideoUpload}
-                            disabled={isVideoUploading || !uploadVideo || uploadedVideos.length >= 4}
+                            disabled={isVideoUploading || uploadVideos.length === 0 || uploadedVideos.length >= 4}
                             className="px-6 py-2.5 rounded-xl whitespace-nowrap btn-primary font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                           >
                             {isVideoUploading ? "Uploading..." : (uploadedVideos.length >= 4 ? "Limit Reached" : "Upload Video")}
@@ -2193,12 +2206,12 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
                               (durationToggle === "yearly" && (plan.extra_product_price_yearly || plan.unlimited_amount_yearly || plan.unlimited_price_yearly))) && (
                               <div className=" border-t border-gray-100 dark:border-gray-800 space-y-2 text-left w-full mb-6">
                                 {/* Monthly Extras Section */}
-                                {durationToggle === "monthly" && (plan.extra_product_price_monthly > 0 || plan.unlimited_amount_monthly > 0 || plan.unlimited_price_monthly > 0) && (
+                                {durationToggle === "monthly" && ((plan.extra_product_price_monthly ?? 0) > 0 || (plan.unlimited_amount_monthly ?? 0) > 0 || (plan.unlimited_price_monthly ?? 0) > 0) && (
                                   <div className="space-y-2">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                                       <span className="w-1 h-1 bg-gray-400 rounded-full"></span> Monthly Extras
                                     </p>
-                                    {plan.extra_product_price_monthly > 0 && (
+                                    {(plan.extra_product_price_monthly ?? 0) > 0 && (
                                       <div className="flex items-center gap-3">
                                         <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
                                           <Zap className="w-3 h-3 text-emerald-600" />
@@ -2208,7 +2221,7 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
                                         </span>
                                       </div>
                                     )}
-                                    {(plan.unlimited_amount_monthly > 0 || plan.unlimited_price_monthly > 0) && (
+                                    {((plan.unlimited_amount_monthly ?? 0) > 0 || (plan.unlimited_price_monthly ?? 0) > 0) && (
                                       <div className="flex items-center gap-3">
                                         <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
                                           <Zap className="w-3 h-3 text-amber-600" />
@@ -2222,12 +2235,12 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
                                 )}
 
                                 {/* Yearly Extras Section */}
-                                {durationToggle === "yearly" && (plan.extra_product_price_yearly > 0 || plan.unlimited_amount_yearly > 0 || plan.unlimited_price_yearly > 0) && (
+                                {durationToggle === "yearly" && ((plan.extra_product_price_yearly ?? 0) > 0 || (plan.unlimited_amount_yearly ?? 0) > 0 || (plan.unlimited_price_yearly ?? 0) > 0) && (
                                   <div className="space-y-2">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                                       <span className="w-1 h-1 bg-gray-400 rounded-full"></span> Yearly Extras
                                     </p>
-                                    {plan.extra_product_price_yearly > 0 && (
+                                    {(plan.extra_product_price_yearly ?? 0) > 0 && (
                                       <div className="flex items-center gap-3">
                                         <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
                                           <Zap className="w-3 h-3 text-emerald-600" />
@@ -2237,7 +2250,7 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
                                         </span>
                                       </div>
                                     )}
-                                    {(plan.unlimited_amount_yearly > 0 || plan.unlimited_price_yearly > 0) && (
+                                    {((plan.unlimited_amount_yearly ?? 0) > 0 || (plan.unlimited_price_yearly ?? 0) > 0) && (
                                       <div className="flex items-center gap-3">
                                         <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
                                           <Zap className="w-3 h-3 text-amber-600" />
