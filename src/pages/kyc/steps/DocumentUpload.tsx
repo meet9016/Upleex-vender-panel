@@ -132,7 +132,7 @@ export default function DocumentUpload({
               Drag & drop or <span className="text-indigo-600 dark:text-indigo-400">Browse</span>
             </p>
             <p className="text-[9px] sm:text-[10px] md:text-xs text-slate-400">Supports JPG, PNG or PDF</p>
-            {hint && <p className="text-[8px] sm:text-[9px] md:text-[10px] text-indigo-500 font-medium mt-1 italic">{hint}</p>}
+            {hint && <p className="text-[8px] sm:text-[9px] md:text-[10px] text-indigo-500 font-medium mt-1 ">{hint}</p>}
           </div>
           <input
             type="file"
