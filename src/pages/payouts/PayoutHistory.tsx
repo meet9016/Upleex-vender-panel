@@ -36,6 +36,7 @@ const PayoutHistory: React.FC = () => {
     const router = useRouter();
     const pathname = usePathname();
     const activeTab = searchParams ? (searchParams.get('type') || 'sell') : 'sell';
+    const activeStatus = searchParams ? (searchParams.get('status') || 'released') : 'released';
 
     const [payouts, setPayouts] = useState<PayoutRecord[]>([]);
     const [loading, setLoading] = useState(true);
@@ -48,50 +49,71 @@ const PayoutHistory: React.FC = () => {
         pages: 0
     });
     const [dataCache, setDataCache] = useState<{
-        rent: { payments: PayoutRecord[], pagination: any } | null,
-        sell: { payments: PayoutRecord[], pagination: any } | null
-    }>({ rent: null, sell: null });
+        [key: string]: { payments: PayoutRecord[], pagination: any } | null
+    }>({});
     const [currentDataTab, setCurrentDataTab] = useState(activeTab);
+    const [currentStatus, setCurrentStatus] = useState(activeStatus);
+    const [counts, setCounts] = useState<{ [key: string]: number }>({});
 
     const fetchPayouts = useCallback(async (isInitial = false) => {
+        const cacheKey = `${activeTab}-${activeStatus}`;
+        
         // Check cache first if no explicit refresh is needed
-        if (dataCache[activeTab as 'rent' | 'sell'] && !isInitial) {
-            const cached = dataCache[activeTab as 'rent' | 'sell']!;
+        if (dataCache[cacheKey] && !isInitial) {
+            const cached = dataCache[cacheKey]!;
             setPayouts(cached.payments);
             setPagination(prev => ({ ...prev, ...cached.pagination }));
             setCurrentDataTab(activeTab);
+            setCurrentStatus(activeStatus);
             setLoading(false);
             return;
         }
 
         setLoading(true);
         // Only clear if no cache to show, otherwise keep old data under loader
-        if (!dataCache[activeTab as 'rent' | 'sell']) {
+        if (!dataCache[cacheKey]) {
             setPayouts([]);
         }
 
         try {
-            const response = await api.get(endPointApi.getVendorPaymentHistory, {
-                params: {
-                    page: pagination.page,
-                    limit: pagination.limit,
-                    type: activeTab,
-                    status: 'released'
-                }
-            });
+            // Fetch both rent and sell data for the current status to get counts
+            const [rentResponse, sellResponse, activeTabResponse] = await Promise.all([
+                api.get(endPointApi.getVendorPaymentHistory, {
+                    params: { page: 1, limit: 1, type: 'rent', status: activeStatus }
+                }),
+                api.get(endPointApi.getVendorPaymentHistory, {
+                    params: { page: 1, limit: 1, type: 'sell', status: activeStatus }
+                }),
+                api.get(endPointApi.getVendorPaymentHistory, {
+                    params: {
+                        page: pagination.page,
+                        limit: pagination.limit,
+                        type: activeTab,
+                        status: activeStatus
+                    }
+                })
+            ]);
 
-            if (response.data.success) {
-                const payments = response.data.data.payments || [];
-                const pag = response.data.data.pagination;
+            // Update counts
+            const newCounts = {
+                [`rent-${activeStatus}`]: rentResponse.data.data.pagination?.total || 0,
+                [`sell-${activeStatus}`]: sellResponse.data.data.pagination?.total || 0
+            };
+            setCounts(prev => ({ ...prev, ...newCounts }));
+
+            if (activeTabResponse.data.success) {
+                const payments = activeTabResponse.data.data.payments || [];
+                const pag = activeTabResponse.data.data.pagination;
                 
                 setPayouts(payments);
                 setPagination(prev => ({ ...prev, ...pag }));
                 setCurrentDataTab(activeTab);
+                setCurrentStatus(activeStatus);
                 
                 // Update cache
                 setDataCache(prev => ({
                     ...prev,
-                    [activeTab]: { payments, pagination: pag }
+                    [cacheKey]: { payments, pagination: pag }
                 }));
             }
         } catch (error) {
@@ -100,16 +122,26 @@ const PayoutHistory: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [activeTab, pagination.page, pagination.limit, dataCache]);
+    }, [activeTab, activeStatus, pagination.page, pagination.limit, dataCache]);
+
+    const [tabStats, setTabStats] = useState<any>(null);
+    const [totalStats, setTotalStats] = useState<any>(null);
 
     const fetchStats = useCallback(async () => {
         setStatsLoading(true);
         try {
-            const response = await api.get(endPointApi.getVendorPaymentStats, {
-                params: { type: activeTab }
-            });
-            if (response.data.success) {
-                setStats(response.data.data.stats);
+            const [totalResponse, tabResponse] = await Promise.all([
+                api.get(endPointApi.getVendorPaymentStats),
+                api.get(endPointApi.getVendorPaymentStats, {
+                    params: { type: activeTab }
+                })
+            ]);
+            if (totalResponse.data.success) {
+                setTotalStats(totalResponse.data.data.stats);
+            }
+            if (tabResponse.data.success) {
+                setTabStats(tabResponse.data.data.stats);
+                setStats(tabResponse.data.data.stats);
             }
         } finally {
             setStatsLoading(false);
@@ -119,11 +151,25 @@ const PayoutHistory: React.FC = () => {
     useEffect(() => {
         fetchPayouts();
         fetchStats();
-    }, [activeTab, pagination.page, pagination.limit]);
+    }, [activeTab, activeStatus, pagination.page, pagination.limit]);
 
     const handleTabChange = (tab: string) => {
         const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
         params.set('type', tab);
+        params.set('page', '1');
+        router.push(`${pathname}?${params.toString()}`);
+    };
+
+    const handleStatusChange = (status: string) => {
+        const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
+        params.set('status', status);
+        params.set('page', '1');
+        router.push(`${pathname}?${params.toString()}`);
+    };
+
+    const handleUpcomingClick = () => {
+        const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
+        params.set('status', 'pending');
         params.set('page', '1');
         router.push(`${pathname}?${params.toString()}`);
     };
@@ -230,16 +276,17 @@ const PayoutHistory: React.FC = () => {
             minWidth: 120,
         },
         {
-            headerName: "Release Date",
-            field: "released_at",
+            headerName: currentStatus === 'pending' ? "Scheduled Release Date" : "Release Date",
+            field: currentStatus === 'pending' ? "release_date" : "released_at",
             valueFormatter: (params) => {
                 if (params.data?.type === 'customer') return '';
-                return params.value ? new Date(params.value).toLocaleDateString('en-IN') : 'N/A';
+                const date = currentStatus === 'pending' ? params.data.release_date : params.data.released_at;
+                return date ? new Date(date).toLocaleDateString('en-IN') : 'N/A';
             },
             flex: 1,
             minWidth: 120,
         }
-    ], [currentDataTab]);
+    ], [currentDataTab, currentStatus]);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -285,7 +332,10 @@ const PayoutHistory: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between relative overflow-hidden">
+                <div 
+                    className={`bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-md ${activeStatus === 'pending' ? 'ring-2 ring-orange-500' : ''}`}
+                    onClick={handleUpcomingClick}
+                >
                     {statsLoading && (
                         <div className="absolute inset-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-[1px] flex items-center justify-center z-10">
                             <div className="w-5 h-5 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
@@ -304,6 +354,7 @@ const PayoutHistory: React.FC = () => {
             </div>
 
             {/* Tab Switcher */}
+            <div className="flex justify-between">
             <div className="flex items-center p-1 bg-gray-100 dark:bg-gray-900/50 rounded-2xl w-fit border border-gray-200 dark:border-gray-800">
                  <button
                     onClick={() => handleTabChange('rent')}
@@ -315,6 +366,13 @@ const PayoutHistory: React.FC = () => {
                 >
                     <FileText size={16} />
                     Rent
+                    <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
+                        activeTab === 'rent' 
+                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' 
+                            : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                    }`}>
+                        {counts[`rent-${activeStatus}`] || 0}
+                    </span>
                 </button>
                 <button
                     onClick={() => handleTabChange('sell')}
@@ -326,8 +384,56 @@ const PayoutHistory: React.FC = () => {
                 >
                     <ShoppingBag size={16} />
                     Sell
+                    <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
+                        activeTab === 'sell' 
+                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' 
+                            : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                    }`}>
+                        {counts[`sell-${activeStatus}`] || 0}
+                    </span>
                 </button>
-                    </div>
+            </div>
+
+            {/* Status Tabs */}
+            <div className="flex items-center p-1 bg-gray-100 dark:bg-gray-900/50 rounded-2xl w-fit border border-gray-200 dark:border-gray-800">
+                <button
+                    onClick={() => handleStatusChange('released')}
+                    className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
+                        activeStatus === 'released'
+                            ? "bg-white dark:bg-gray-800 text-green-600 shadow-sm ring-1 ring-black/5"
+                            : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                    }`}
+                >
+                    <CheckCircle size={16} />
+                    Released
+                    <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
+                        activeStatus === 'released' 
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' 
+                            : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                    }`}>
+                        {stats?.released?.count || 0}
+                    </span>
+                </button>
+                <button
+                    onClick={() => handleStatusChange('pending')}
+                    className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
+                        activeStatus === 'pending'
+                            ? "bg-white dark:bg-gray-800 text-orange-600 shadow-sm ring-1 ring-black/5"
+                            : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                    }`}
+                >
+                    <Clock size={16} />
+                    Pending
+                    <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
+                        activeStatus === 'pending' 
+                            ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' 
+                            : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                    }`}>
+                        {stats?.pending?.count || 0}
+                    </span>
+                </button>
+            </div>
+            </div>
             {/* Table */}
             <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-xl shadow-gray-200/20 dark:shadow-none">
                 <AgGridTable
@@ -341,7 +447,9 @@ const PayoutHistory: React.FC = () => {
                     loading={loading}
                     height={500}
                     showCheckboxes={false}
-                    noRowsMessage={activeTab === 'sell' ? "No sell payouts found" : "No rent payouts found"}
+                    noRowsMessage={activeStatus === 'pending' 
+                        ? (activeTab === 'sell' ? "No pending sell payouts found" : "No pending rent payouts found")
+                        : (activeTab === 'sell' ? "No released sell payouts found" : "No released rent payouts found")}
                 />
             </div>
         </div>
