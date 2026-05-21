@@ -21,15 +21,12 @@ const BoosterPlanView: React.FC = () => {
   const [plans, setPlans] = useState<any[]>([]);
   const [purchases, setPurchases] = useState<any[]>([]);
   const [boosterRentCount, setBoosterRentCount] = useState<number>(0);
-  const [boosterSellCount, setBoosterSellCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedPlanForBoost, setSelectedPlanForBoost] = useState<any>(null);
   const [allProducts, setAllProducts] = useState<any[]>([]);
-  const [historyTab, setHistoryTab] = useState<"rent" | "sell">("rent");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
   
   // Redux state for persistent selection
   const dispatch = useDispatch();
@@ -63,9 +60,8 @@ const BoosterPlanView: React.FC = () => {
 
       const promises: any[] = [];
       
-      // Always fetch rent/sell booster history for counts and cache
+      // Only fetch rent booster history
       promises.push(api.get(endPointApi.getVendorRentalBoostPurchases, { params: { filter_rent_sell: '1' } }).catch(() => ({ data: { total: 0, data: [] } })));
-      promises.push(api.get(endPointApi.getVendorRentalBoostPurchases, { params: { filter_rent_sell: '2' } }).catch(() => ({ data: { total: 0, data: [] } })));
 
       if (!initialDataFetchedRef.current || forceRefresh) {
         promises.push(api.get(endPointApi.getAllRentalBoostPlans, { params: { status: "active" } }));
@@ -76,16 +72,13 @@ const BoosterPlanView: React.FC = () => {
 
       const results = await Promise.all(promises);
       const rentRes = results[0];
-      const sellRes = results[1];
 
-      // Update counts and cache
+      // Update counts and cache - only rent
       setBoosterRentCount(rentRes.data.total || 0);
-      setBoosterSellCount(sellRes.data.total || 0);
       historyCacheRef.current['rent'] = rentRes.data.data || [];
-      historyCacheRef.current['sell'] = sellRes.data.data || [];
 
       if (!initialDataFetchedRef.current || forceRefresh) {
-        const [plansRes, productsRes] = results.slice(2);
+        const [plansRes, productsRes] = results.slice(1);
 
         if (plansRes?.data?.success) setPlans(plansRes.data.data);
 
@@ -106,24 +99,23 @@ const BoosterPlanView: React.FC = () => {
   };
 
   useEffect(() => {
-    const cachedData = historyCacheRef.current[historyTab];
+    const cachedData = historyCacheRef.current['rent'];
     if (cachedData) {
       setPurchases(cachedData);
     }
     if (!cachedData) {
       fetchData();
     }
-  }, [historyTab]);
+  }, []);
 
   useEffect(() => {
-    const cachedData = historyCacheRef.current[historyTab];
+    const cachedData = historyCacheRef.current['rent'];
     if (cachedData) {
       setPurchases(cachedData);
     }
   }, [loading]);
 
   const rentProducts = useMemo(() => allProducts.filter(p => p.product_type_name?.toLowerCase() === "rent"), [allProducts]);
-  const sellProducts = useMemo(() => allProducts.filter(p => p.product_type_name?.toLowerCase() === "sell"), [allProducts]);
 
   const handleOpenConfirm = (plan: any) => {
     setSelectedPlanForBoost(plan);
@@ -175,13 +167,12 @@ const BoosterPlanView: React.FC = () => {
     }
   };
 
-  const currentTabProducts = activeTab === "Rent" ? rentProducts : sellProducts;
   const filteredProducts = useMemo(() => {
-    return currentTabProducts.filter(p =>
+    return rentProducts.filter(p =>
       p.product_name.toLowerCase().includes(gridSearch.toLowerCase()) ||
       p.category_name?.toLowerCase().includes(gridSearch.toLowerCase())
     );
-  }, [currentTabProducts, gridSearch]);
+  }, [rentProducts, gridSearch]);
 
   const isProductBoosted = (product: any) => {
     return product.is_boosted && product.boost_expiry && new Date(product.boost_expiry) > new Date();
@@ -313,9 +304,8 @@ const BoosterPlanView: React.FC = () => {
     });
 
     const sorted = rows.sort((a, b) => new Date(b.expiry_date || b.createdAt).getTime() - new Date(a.expiry_date || a.createdAt).getTime());
-    if (historyTab === "sell") return sorted.filter(r => r.product_type_name?.toLowerCase() === "sell");
     return sorted.filter(r => r.product_type_name?.toLowerCase() === "rent");
-  }, [purchases, allProducts, historyTab]);
+  }, [purchases, allProducts]);
 
   const columns: ColDef[] = [
     {
@@ -540,18 +530,9 @@ const BoosterPlanView: React.FC = () => {
                 </div>
 
                 <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1.5 border border-gray-200 dark:border-gray-700 gap-1.5 ">
-                  <button
-                    onClick={() => setActiveTab('Rent')}
-                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition h-auto ${activeTab === 'Rent' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                  >
+                  <div className="px-4 py-1.5 text-xs font-bold rounded-md bg-white dark:bg-gray-700 text-indigo-600 shadow-sm">
                     Rent ({rentProducts.length})
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('Sell')}
-                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition h-auto ${activeTab === 'Sell' ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                  >
-                    Sell ({sellProducts.length})
-                  </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -691,18 +672,9 @@ const BoosterPlanView: React.FC = () => {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200">Booster Purchase History</h2>
           </div>
           <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700 gap-1">
-            {(["rent", "sell"] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setHistoryTab(tab)}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition capitalize ${historyTab === tab
-                    ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                  }`}
-              >
-                {tab === 'rent' ? 'Rent' : 'Sell'} ({tab === 'rent' ? boosterRentCount : boosterSellCount})
-              </button>
-            ))}
+            <div className="px-3 py-1 text-xs font-bold rounded-md bg-white dark:bg-gray-700 text-indigo-600 shadow-sm">
+              Rent ({boosterRentCount})
+            </div>
           </div>
         </div>
 
