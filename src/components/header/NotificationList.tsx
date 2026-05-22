@@ -31,6 +31,7 @@ const getRedirectPath = (notif: VendorNotification) => {
   const data = notif.data || {};
   const title = (notif.title || "").toLowerCase();
 
+  if (type === "payment_update" || title.includes("payment")  || title.includes("released")) return "/payouts";
   if (type === "kyc_update") return "/kyc";
   if (type === "order_request") return "/order";
   if (type === "quote_request") return "/quote";
@@ -47,6 +48,7 @@ const getTypeColor = (type: string, isReject: boolean) => {
   if (type === "product_update") return "bg-green-100 text-green-600";
   if (type === "quote_request") return "bg-blue-100 text-blue-600";
   if (type === "order_request") return "bg-orange-100 text-orange-600";
+  if (type === "payment_update") return "bg-orange-100 text-orange-600"
   return "bg-gray-100 text-gray-600";
 };
 

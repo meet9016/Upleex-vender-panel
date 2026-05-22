@@ -1677,15 +1677,15 @@ export default QuoteTable;
 
 const ColorLegend = () => (
   <div className="flex flex-wrap items-center gap-2 text-[12px] sm:text-xs">
-    <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+    <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg  dark:border-gray-800">
       <span className="w-3 h-3 rounded-full bg-[#e1f4ee] border border-green-300"></span>
       <span className="text-gray-600 dark:text-gray-400 font-medium text-[12px]">Due Today</span>
     </div>
-    <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+    <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg dark:border-gray-800">
       <span className="w-3 h-3 rounded-full bg-[#fef6d0] border border-yellow-300"></span>
       <span className="text-gray-600 dark:text-gray-400 font-medium text-[12px]">New Quote</span>
     </div>
-    <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+    <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg dark:border-gray-800">
       <span className="w-3 h-3 rounded-full bg-[#fee3e7] border border-red-300"></span>
       <span className="text-gray-600 dark:text-gray-400 font-medium text-[12px]">Late Return</span>
     </div>

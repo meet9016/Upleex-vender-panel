@@ -93,10 +93,6 @@ const SettingsPage: React.FC = () => {
   const [listingPurchases, setListingPurchases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<PriorityPlan | null>(null);
-  console.log("vendorPurchases", vendorPurchases)
-  console.log('Type of vendorPurchases:', Array.isArray(vendorPurchases));
-console.log('vendorPurchases:', vendorPurchases);
-console.log('vendorPurchases length:', vendorPurchases?.length);
 
 
   // Redux state for persistent selection across tabs
@@ -205,7 +201,6 @@ console.log('vendorPurchases length:', vendorPurchases?.length);
       const sellRes = results[1];
 
       const rentData = rentRes.data.data || [];
-      console.log("🚀 ~ file: SettingsPage.tsx:263 ~ fetchData ~ rentData:", rentData)
       const sellData = sellRes.data.data || [];
       // Calculate total slots sum for the counts
       const rentTotalSlots = rentData.reduce((acc: number, p: any) => acc + (p.product_ids?.length || 0), 0);
