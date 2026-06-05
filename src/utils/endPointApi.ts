@@ -97,6 +97,9 @@ export interface EndPointApi {
     getStoreVideos: string;
     deleteStoreVideo: string;
     checkVideoAccess: string;
+    getAllGeneralPlans: string;
+    postPurchaseGeneralPlan: string;
+    getVendorGeneralPurchases: string;
 }
 
 // Define and export the API endpoint object
@@ -209,6 +212,9 @@ const endPointApi: EndPointApi = {
     getStoreVideos: 'vendor-store-video',
     deleteStoreVideo: 'vendor-store-video',
     checkVideoAccess: 'priority-plans/vendor/purchases',
+    getAllGeneralPlans: 'general-plans/getall',
+    postPurchaseGeneralPlan: 'general-plans/purchase',
+    getVendorGeneralPurchases: 'general-plans/vendor-purchases',
 };
 
 export default endPointApi;
