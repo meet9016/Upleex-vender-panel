@@ -179,7 +179,7 @@ export const MobileMenuSheet: React.FC<MobileMenuSheetProps> = ({
                         className="overflow-hidden border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50"
                       >
                         <ul className="flex flex-col p-2 gap-1">
-                          <li>
+                          {/* <li>
                             <Link
                               href="/profile"
                               onClick={onClose}
@@ -188,7 +188,7 @@ export const MobileMenuSheet: React.FC<MobileMenuSheetProps> = ({
                               <GoPeople size={20} className="text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300" />
                               Edit profile
                             </Link>
-                          </li>
+                          </li> */}
                           <li>
                             <Link
                               href="/settings"

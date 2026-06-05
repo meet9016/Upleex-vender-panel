@@ -91,7 +91,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
         </div>
 
         <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
-          <li>
+          {/* <li>
         <DropdownItem
             onItemClick={closeDropdown}
             tag="a"
@@ -104,7 +104,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
             />
             Edit profile
           </DropdownItem>
-          </li>
+          </li> */}
           <li>
             <DropdownItem
               onItemClick={closeDropdown}
