@@ -563,8 +563,8 @@ const ProductTable = () => {
         params.append('filter_rent_sell', '2');
       }
 
-      params.append('page', String(page));
-      params.append('limit', String(pageSize));
+      params.append('page', '1');
+      params.append('limit', '100000');
 
       const queryString = params.toString();
       const url = queryString
