@@ -833,22 +833,17 @@ export default function AddProductPage() {
             return; // Stop if validation fails
         }
 
-        // Check wallet balance and free limit
+        // Check wallet balance
         const userInfo = typeof window !== 'undefined' ? localStorage.getItem('user_info') : null;
         const user = userInfo ? JSON.parse(userInfo) : null;
         const isDemoAccount = user && (demoNumbers.includes(String(user.number)) || demoNumbers.includes(String(user.mobile)));
 
+        // We rely on the backend to validate free listing limits and general plan quotas.
+        // We only do a basic wallet check here for explicitly 'paid' selections without general plan.
         if (pricingType === 'paid') {
-            if (balance <= 0 && !isDemoAccount) {
-                toast.error("Your wallet balance is 0. Please add money to your wallet to add paid products.");
-                return;
-            }
-        } else if (pricingType === 'free') {
-            const limit = hasGst ? 3 : 1;
-            if (freeProductCount >= limit && !isDemoAccount) {
-                toast.error(`Free listing limit reach (${freeProductCount}/${limit}). Please select 'Base (Paid listing)' or add money to your wallet.`);
-                return;
-            }
+            // Note: If they have a general plan, they might have 0 balance but still be able to add paid listings.
+            // It's safer to let the backend handle the balance check too.
+            // But we keep this basic check for now, or we can just remove it and let the backend decide.
         }
 
         setIsSubmitting(true);

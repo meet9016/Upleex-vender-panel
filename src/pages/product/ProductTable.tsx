@@ -1107,17 +1107,6 @@ const ProductTable = () => {
           {/* Add Product Button for Mobile only - in the same row as tabs */}
           <button
             onClick={() => {
-              const freeLimit = hasGst ? 3 : 1;
-              const hasWalletBalance = balance > 0;
-              const canAddFreeProduct = freeProductCount < freeLimit;
-              if (!canAddFreeProduct && !hasWalletBalance && !isDemoAccount) {
-                toast.error("Your wallet balance is 0. Please add money to your wallet to add paid products.");
-                return;
-              }
-              if (freeProductCount >= freeLimit && !hasWalletBalance) {
-                toast.error(`Free listing limit reached (${freeProductCount}/${freeLimit}). Please select 'Base (Paid listing)' or add money to your wallet.`);
-                return;
-              }
               router.push('/product/addProduct');
             }}
             className="sm:hidden px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-100 flex items-center gap-2 h-10 text-[11px] whitespace-nowrap"
@@ -1146,19 +1135,6 @@ const ProductTable = () => {
 
           <button
             onClick={() => {
-              const freeLimit = hasGst ? 3 : 1;
-              const hasWalletBalance = balance > 0;
-              const canAddFreeProduct = freeProductCount < freeLimit;
-                         if (!canAddFreeProduct && !hasWalletBalance && !isDemoAccount) {
-                toast.error("Your wallet balance is 0. Please add money to your wallet to add paid products.");
-                return;
-              }
-
-              if (freeProductCount >= freeLimit && !hasWalletBalance && !isDemoAccount) {
-                toast.error(`Free listing limit reached (${freeProductCount}/${freeLimit}). Please select 'Base (Paid listing)' or add money to your wallet.`);
-                return;
-              }
-
               router.push('/product/addProduct');
             }}
             className="hidden sm:flex px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-100 dark:shadow-none items-center gap-2 h-10 text-sm whitespace-nowrap"
