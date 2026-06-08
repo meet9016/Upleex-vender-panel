@@ -139,6 +139,8 @@ export default function AddProductPage() {
     const [hasGst, setHasGst] = useState<boolean>(false);
     const [freeProductCount, setFreeProductCount] = useState<number>(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [existingSKUs, setExistingSKUs] = useState<string[]>([]);
+    const [originalSku, setOriginalSku] = useState<string>("");
     console.log("hasGst", hasGst);
     const [validationErrors, setValidationErrors] = useState<{
         category?: string;
@@ -247,6 +249,9 @@ export default function AddProductPage() {
                 ).length;
 
                 setFreeProductCount(freeCount);
+
+                const skus = products.map((p: any) => p.sku).filter(Boolean);
+                setExistingSKUs(skus);
             }
         } catch (error) {
             setSkuCounter(1); // Fallback to 1
@@ -541,6 +546,7 @@ export default function AddProductPage() {
                     setSelectedCategory(String(data.category_id || ""));
                     setSelectedSubCategory(String(data.sub_category_id || ""));
                     setSelectedListingType(data.product_type_name || null);
+                    setOriginalSku(data.sku || "");
 
                     if (data.product_main_image) {
                         setMainPreview([{
@@ -579,10 +585,8 @@ export default function AddProductPage() {
     useEffect(() => {
         // Fetch vendor profile always (needed for hasGst, vendorBusinessName etc.)
         fetchVendorProfile();
-        // Only fetch SKU counter in add mode (not needed when editing)
-        if (!isEditMode) {
-            fetchNextSKUCounter();
-        }
+        // Fetch existing products to get counter and existing SKUs for validation
+        fetchNextSKUCounter();
     }, [isEditMode]);
 
     useEffect(() => {
@@ -705,6 +709,11 @@ export default function AddProductPage() {
         }
         if (!formData.sku?.trim()) {
             errors.sku = "SKU is required";
+        } else {
+            const isDuplicate = existingSKUs.some(sku => sku.toLowerCase() === formData.sku.trim().toLowerCase());
+            if (isDuplicate && (!isEditMode || formData.sku.trim().toLowerCase() !== originalSku.toLowerCase())) {
+                errors.sku = "This SKU already exists. Please enter a unique SKU.";
+            }
         }
         if (!formData.description?.trim()) {
             errors.description = "Please enter description";
@@ -837,7 +846,7 @@ export default function AddProductPage() {
         } else if (pricingType === 'free') {
             const limit = hasGst ? 3 : 1;
             if (freeProductCount >= limit && !isDemoAccount) {
-                toast.error(`Free listing limit reachedvfd (${freeProductCount}/${limit}). Please select 'Base (Paid listing)' or add money to your wallet.`);
+                toast.error(`Free listing limit reach (${freeProductCount}/${limit}). Please select 'Base (Paid listing)' or add money to your wallet.`);
                 return;
             }
         }
@@ -1185,11 +1194,10 @@ export default function AddProductPage() {
                                 placeholder="Auto-generated SKU"
                                 type="text"
                                 value={formData.sku}
-                                infoTooltip="SKU ID is automatically generated."
+                                infoTooltip="SKU ID is automatically generated but can be edited."
                                 onChange={(e) => handleChange("sku", e.target.value)}
                                 error={!!validationErrors.sku}
-                                className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full bg-gray-50"
-                                readOnly={!isEditMode}
+                                className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
                             />
                             {validationErrors.sku && (
                                 <span className="error-message">

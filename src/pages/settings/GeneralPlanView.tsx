@@ -129,15 +129,28 @@ const GeneralPlanView: React.FC = () => {
       if (new Date(p.expire_at) > now && p.status === 'active') {
         const used = p.product_ids?.length || 0;
         const total = p.max_products || 0;
-        const pIds = new Set<string>();
-        (p.product_ids || []).forEach((prod: any) => pIds.add(String(prod._id || prod.id || prod)));
+        
+        if (!aggs[p.plan_type]) {
+            aggs[p.plan_type] = {
+                total: 0,
+                used: 0,
+                purchase_id: "",
+                productIds: new Set<string>()
+            };
+        }
 
-        aggs[p.plan_type] = {
-          total,
-          used,
-          purchase_id: p.id || p._id,
-          productIds: pIds
-        };
+        aggs[p.plan_type].total += total;
+        aggs[p.plan_type].used += used;
+        
+        (p.product_ids || []).forEach((prod: any) => {
+            aggs[p.plan_type].productIds.add(String(prod._id || prod.id || prod));
+        });
+
+        if (total > used) {
+            aggs[p.plan_type].purchase_id = p.id || p._id;
+        } else if (!aggs[p.plan_type].purchase_id) {
+            aggs[p.plan_type].purchase_id = p.id || p._id;
+        }
       }
     });
     return aggs;
@@ -147,9 +160,14 @@ const GeneralPlanView: React.FC = () => {
     const selectableRows = rows.filter(r => !activeProductIds.has(String(r.id)));
 
     const agg = selectedPlan ? planAggregates[selectedPlan.plan_type] : null;
-    const maxAllowed = agg && agg.total > 0 
-      ? Math.max(0, agg.total - agg.used) 
-      : (selectedPlan?.max_products || 0);
+    let maxAllowed = selectedPlan?.max_products || 0;
+    
+    if (agg) {
+      const remaining = agg.total - agg.used;
+      if (remaining > 0) {
+        maxAllowed = remaining;
+      }
+    }
 
     if (selectedPlan && selectableRows.length > maxAllowed) {
       toast.warning(`Limit exceeded! You can only select ${maxAllowed} more product(s).`);
@@ -674,7 +692,7 @@ const GeneralPlanView: React.FC = () => {
             <div className="w-full space-y-3">
               <Button
                 variant="primary"
-                onClick={executePurchase}
+                onClick={() => executePurchase(false)}
                 disabled={isPurchasing}
                 className="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white rounded-xl py-4 font-bold text-[15px] transition-all shadow-lg shadow-purple-500/25 border-0"
               >
