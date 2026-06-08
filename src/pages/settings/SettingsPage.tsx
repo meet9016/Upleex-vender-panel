@@ -19,6 +19,7 @@ import BoosterPlanView from "./BoosterPlanView";
 import ListingPlanView from "./ListingPlanView";
 import ServicePlanView from "./ServicePlanView";
 import ServicePriorityPlanView from "./ServicePriorityPlanView";
+import GeneralPlanView from "./GeneralPlanView";
 import { Briefcase, Zap } from "lucide-react";
 import { MdDelete } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
@@ -118,7 +119,7 @@ const SettingsPage: React.FC = () => {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
   const [gridSearch, setGridSearch] = useState("");
-  const [currentTab, setCurrentTab] = useState<"priority" | "booster" | "listing">("priority");
+  const [currentTab, setCurrentTab] = useState<"priority" | "booster" | "listing" | "general">("priority");
   const [currentServiceTab, setCurrentServiceTab] = useState<"listing" | "priority">("listing");
   const [planScope, setPlanScope] = useState<"product" | "service">("product");
   const [planDurations, setPlanDurations] = useState<Record<string, "monthly" | "yearly">>({});
@@ -339,7 +340,7 @@ const SettingsPage: React.FC = () => {
     const totalSlotsForLimit = activePurchasesForLimit.length > 0
       ? activePurchasesForLimit.reduce((acc, p) => acc + Number(p.total_slots), 0)
       : Number(selectedPlan.product_slots || 0);
-    const currentProductIdsForLimit = new Set(activePurchasesForLimit.flatMap(p => p.product_ids.map(id => String(id))));
+    const currentProductIdsForLimit = new Set(activePurchasesForLimit.flatMap(p => p.product_ids.map((id: any) => String(id))));
     const remainingSlotsForLimit = Math.max(0, totalSlotsForLimit - currentProductIdsForLimit.size);
 
     const isBasicOrStandard = selectedPlan?.name?.toLowerCase() === 'basic' || selectedPlan?.name?.toLowerCase() === 'standard';
@@ -362,7 +363,7 @@ const SettingsPage: React.FC = () => {
       ? activePurchases.reduce((acc, p) => acc + Number(p.total_slots), 0)
       : Number(selectedPlan.product_slots || 0);
 
-    const currentProductIds = new Set(activePurchases.flatMap(p => p.product_ids.map(id => String(id))));
+    const currentProductIds = new Set(activePurchases.flatMap(p => p.product_ids.map((id: any) => String(id))));
     const usedSlots = currentProductIds.size;
     const remainingSlotsCalculated = Math.max(0, totalSlots - usedSlots);
     const isRefillAvailable = activePurchases.length > 0 && remainingSlotsCalculated > 0 && selectedProductIds.length <= remainingSlotsCalculated;
@@ -663,7 +664,7 @@ const SettingsPage: React.FC = () => {
       ? activePurchases.reduce((acc, p) => acc + Number(p.total_slots), 0)
       : Number(selectedPlan.product_slots || 0);
 
-    const currentProductIds = new Set(activePurchases.flatMap(p => p.product_ids.map(id => String(id))));
+    const currentProductIds = new Set(activePurchases.flatMap(p => p.product_ids.map((id: any) => String(id))));
     const usedSlots = currentProductIds.size;
     const remainingSlotsCalculated = Math.max(0, totalSlots - usedSlots);
     const isRefillAvailable = activePurchases.length > 0 && remainingSlotsCalculated > 0 && selectedProductIds.length <= remainingSlotsCalculated;
@@ -870,11 +871,11 @@ const SettingsPage: React.FC = () => {
       allProductRefs.forEach(({ p: pRef, type: slotType }, index) => {
         // Handle both populated objects and ID strings
         const isPopulated = typeof pRef === 'object' && pRef !== null;
-        const pId = isPopulated ? (pRef._id || pRef.id) : pRef;
+        const pId = isPopulated ? ((pRef as any)._id || (pRef as any).id) : pRef;
         const product = products.find(p => String(p.id) === String(pId)) || (isPopulated ? pRef : null);
 
         let isExtraSlot = false;
-        if (slotType === 'Priority' && purchase.is_extra_per_product) {
+        if (slotType === 'Priority' && (purchase as any).is_extra_per_product) {
           isExtraSlot = index >= (purchase.total_slots || 0);
         }
 
@@ -994,7 +995,7 @@ const SettingsPage: React.FC = () => {
     // Limit check for Priority Plan only if no extra/unlimited options
     if (selectedPlan) {
       const targetPlanId = selectedPlan.id || selectedPlan._id;
-      const currentDuration = planDurations[targetPlanId] || "monthly";
+      const currentDuration = planDurations[targetPlanId as string] || "monthly";
       const extraPrice = currentDuration === "monthly" ? selectedPlan.extra_product_price_monthly : selectedPlan.extra_product_price_yearly;
       const unlimitedPrice = currentDuration === "monthly" ? selectedPlan.unlimited_amount_monthly : selectedPlan.unlimited_amount_yearly;
 
@@ -1006,7 +1007,7 @@ const SettingsPage: React.FC = () => {
         ? activePurchases.reduce((acc, p) => acc + Number(p.total_slots), 0)
         : Number(selectedPlan.product_slots || 0);
 
-      const currentProductIds = new Set(activePurchases.flatMap(p => p.product_ids.map(id => String(id))));
+      const currentProductIds = new Set(activePurchases.flatMap(p => p.product_ids.map((id: any) => String(id))));
       const usedSlots = currentProductIds.size;
       const remainingSlots = Math.max(0, totalSlots - usedSlots);
 
@@ -1136,6 +1137,17 @@ const SettingsPage: React.FC = () => {
             >
               <Package size={15} className={currentTab === "listing" ? "text-emerald-500" : "text-gray-400"} />
               <span>Listing</span>
+            </Button>
+            <Button
+              variant={currentTab === "general" ? "secondary" : "ghost"}
+              onClick={() => setCurrentTab("general")}
+              className={`px-3 py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 h-auto ${currentTab === "general"
+                ? "bg-white text-amber-600 shadow-md ring-1 ring-black/[0.04]"
+                : "text-gray-500 hover:text-gray-900"
+                }`}
+            >
+              <Package size={15} className={currentTab === "general" ? "text-amber-500" : "text-gray-400"} />
+              <span>General</span>
             </Button>
           </div>
         )}
@@ -1613,7 +1625,7 @@ const SettingsPage: React.FC = () => {
               You are about to purchase priority status for <strong>{purchaseSummary?.count}</strong> product(s).
               {purchaseSummary?.isFreeListing && purchaseSummary?.amount > 0 && (
                 <span className="block mt-2 text-brand-600 font-bold">
-                  Do you want to purchase this plan? (Kya aap plan lena chahte ho?)
+                  Do you want to purchase this plan?
                 </span>
               )}
             </p>
@@ -2027,6 +2039,8 @@ const SettingsPage: React.FC = () => {
           </>
         ) : currentTab === "booster" ? (
           <BoosterPlanView />
+        ) : currentTab === "general" ? (
+          <GeneralPlanView />
         ) : (
           <ListingPlanView />
         )
@@ -2293,6 +2307,8 @@ const SettingsPage: React.FC = () => {
             </>
           ) : currentTab === "booster" ? (
             <BoosterPlanView />
+          ) : currentTab === "general" ? (
+            <GeneralPlanView />
           ) : (
             <ListingPlanView />
           )

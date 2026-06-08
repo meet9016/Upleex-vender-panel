@@ -1130,7 +1130,7 @@ const ListingPlanView: React.FC = () => {
               </p>
               {purchaseSummary?.amount > 0 && (
                 <p className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
-                  Do you want to purchase this plan? (Kya aap plan lena chahte ho?)
+                  Do you want to purchase this plan?
                 </p>
               )}
             </div>
