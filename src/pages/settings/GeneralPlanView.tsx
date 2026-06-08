@@ -277,51 +277,22 @@ const GeneralPlanView: React.FC = () => {
 
   const handlePurchaseClick = (plan: GPlan) => {
     setSelectedPlan(plan);
-    dispatch(replaceSelections({}));
-    setIsModalOpen(true);
+    setIsConfirmModalOpen(true);
   };
 
-  const handleConfirmPurchase = () => {
-    if (!selectedPlan) return;
-    if (selectedProductIds.length === 0) {
-      toast.error("Please select at least one product.");
-      return;
-    }
-    
-    const agg = planAggregates[selectedPlan.plan_type];
-    const isRefill = agg && (agg.total - agg.used > 0);
-    
-    if (isRefill) {
-      executePurchase(true);
-    } else {
-      setIsConfirmModalOpen(true);
-    }
-  };
-
-  const executePurchase = async (isRefill = false) => {
+  const executePurchase = async () => {
     if (!selectedPlan) return;
     setIsPurchasing(true);
-    
-    const agg = planAggregates[selectedPlan.plan_type];
     
     try {
       const payload: any = {
         plan_id: selectedPlan.id || selectedPlan._id,
-        product_ids: selectedProductIds,
       };
-      if (isRefill) {
-        payload.is_refill = true;
-        if (agg?.purchase_id) {
-          payload.purchase_id = agg.purchase_id;
-        }
-      }
 
       const res = await api.post(endPointApi.postPurchaseGeneralPlan, payload);
       if (res.data.success) {
-        toast.success(res.data.message || `${selectedPlan.plan_type} plan updated successfully!`);
+        toast.success(res.data.message || `${selectedPlan.plan_type} plan purchased successfully!`);
         setIsConfirmModalOpen(false);
-        setIsModalOpen(false);
-        dispatch(replaceSelections({}));
         refreshBalance();
         fetchData();
       }
@@ -496,13 +467,7 @@ const GeneralPlanView: React.FC = () => {
               variant={plan.popular ? 'primary' : 'outline'} 
               className="w-full !py-3.5 rounded-xl font-bold btn-primary"
             >
-              {(() => {
-                const agg = planAggregates[plan.plan_type];
-                if (!agg) return 'Select Plan';
-                const remaining = Math.max(0, agg.total - agg.used);
-                if (remaining > 0) return 'Add More Products';
-                return 'Select Plan';
-              })()}
+              Purchase Plan
             </Button>
           </div>
         ))}
@@ -545,102 +510,7 @@ const GeneralPlanView: React.FC = () => {
         />
       </div>
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        className="max-w-6xl w-full"
-      >
-        <div className="flex flex-col h-[85vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
-          <div className="px-6 pr-14 py-4 border-b bg-white dark:bg-gray-900">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Select Products for {selectedPlan?.plan_type}
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  Available Slots: <span className="font-semibold text-emerald-600">
-                    {(() => {
-                      const agg = selectedPlan ? planAggregates[selectedPlan.plan_type] : null;
-                      if (!agg || agg.total === 0) return selectedPlan?.max_products || 0;
-                      const remaining = Math.max(0, agg.total - agg.used);
-                      return remaining > 0 ? remaining : selectedPlan?.max_products;
-                    })()}
-                  </span>
-                </p>
-              </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  <input
-                    type="text"
-                    placeholder="Search products..."
-                    value={gridSearch}
-                    onChange={(e) => setGridSearch(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none"
-                  />
-                </div>
-
-                <div className="flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1.5 border border-gray-200 dark:border-gray-700 gap-1.5">
-                  <button
-                    onClick={() => setActiveTab('Rent')}
-                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition h-auto ${activeTab === 'Rent' ? 'bg-white dark:bg-gray-700 text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                  >
-                    Rent ({rentProducts.length})
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('Sell')}
-                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition h-auto ${activeTab === 'Sell' ? 'bg-white dark:bg-gray-700 text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                  >
-                    Sell ({sellProducts.length})
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 px-6 overflow-hidden">
-            <AgGridTable
-              columns={columns}
-              rowData={filteredProducts}
-              onSelectionChange={handleSelectionChange}
-              selectedIds={selectedIdsMap}
-              getRowId={(params) => String(params.data.id || params.data._id)}
-              showCheckboxes={true}
-              height={500}
-              rowHeight={65}
-              isRowSelectable={(params) => {
-                return !activeProductIds.has(String(params.data.id));
-              }}
-              getRowStyle={(params) => {
-                if (activeProductIds.has(String(params.data.id))) {
-                  return { opacity: 0.4, pointerEvents: 'none', background: 'rgba(0,0,0,0.03)' };
-                }
-                return undefined;
-              }}
-              noRowsMessage="No products found"
-            />
-          </div>
-
-          <div className="px-6 py-4 border-t bg-gray-50 dark:bg-gray-800 flex items-center justify-end gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setIsModalOpen(false)}
-              className="px-6 py-2.5 rounded-xl font-bold"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleConfirmPurchase}
-              disabled={isPurchasing || selectedProductIds.length === 0}
-              className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-100/50"
-            >
-              {isPurchasing ? 'Processing...' : 'Activate Plan'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
       <Modal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
@@ -664,7 +534,7 @@ const GeneralPlanView: React.FC = () => {
             </h3>
 
             <p className="text-[#6B7280] text-sm mb-6 leading-relaxed">
-              You are about to activate the <span className="font-bold text-gray-900 capitalize">{selectedPlan?.plan_type}</span> plan for <span className="font-bold text-gray-900">{selectedProductIds.length}</span> product(s).
+              You are about to purchase the <span className="font-bold text-gray-900 capitalize">{selectedPlan?.plan_type}</span> plan, which gives you a quota of <span className="font-bold text-gray-900">{selectedPlan?.max_products}</span> product listings without the ₹10 fee.
               <br />
               <span className="text-[#6B46FF] font-bold mt-2 block">
                 Do you want to purchase this plan?
@@ -692,7 +562,7 @@ const GeneralPlanView: React.FC = () => {
             <div className="w-full space-y-3">
               <Button
                 variant="primary"
-                onClick={() => executePurchase(false)}
+                onClick={() => executePurchase()}
                 disabled={isPurchasing}
                 className="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white rounded-xl py-4 font-bold text-[15px] transition-all shadow-lg shadow-purple-500/25 border-0"
               >
