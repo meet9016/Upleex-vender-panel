@@ -547,12 +547,12 @@ const GeneralPlanView: React.FC = () => {
                 <span className="text-[#111827] font-bold">₹{selectedPlan?.amount || 0}</span>
               </div>
               <div className="flex justify-between items-center pb-4 border-b border-gray-200">
-                <span className="text-[#6B7280] font-semibold text-sm">GST (18%)</span>
-                <span className="text-[#111827] font-bold">+₹{selectedPlan ? (selectedPlan.amount * 0.18).toFixed(2) : '0.00'}</span>
+                <span className="text-[#6B7280] font-semibold text-sm">GST (0%)</span>
+                <span className="text-[#111827] font-bold">₹0.00</span>
               </div>
               <div className="flex justify-between items-center mt-4">
                 <span className="text-[#111827] font-black text-sm uppercase tracking-wider">Total Payable</span>
-                <span className="text-[#6B46FF] font-black text-xl">₹{selectedPlan ? (selectedPlan.amount + (selectedPlan.amount * 0.18)).toFixed(2) : '0.00'}</span>
+                <span className="text-[#6B46FF] font-black text-xl">₹{selectedPlan ? selectedPlan.amount.toFixed(2) : '0.00'}</span>
               </div>
               <p className="text-[11px] font-semibold text-[#9CA3AF] text-center mt-4 uppercase tracking-wider">
                 Amount will be deducted from your wallet balance
