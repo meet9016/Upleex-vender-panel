@@ -3,7 +3,7 @@ import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { toast } from "react-toastify";
 import PageLoader from "@/components/common/PageLoader";
-import { Package, Check, Search, Rocket, X } from "lucide-react";
+import { Package, Check, Search, Rocket } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
@@ -517,13 +517,6 @@ const GeneralPlanView: React.FC = () => {
         className="max-w-md w-full"
       >
         <div className="bg-white dark:bg-gray-900 rounded-[24px] p-6 relative">
-          <button
-            onClick={() => setIsConfirmModalOpen(false)}
-            className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X size={20} />
-          </button>
-
           <div className="flex flex-col items-center text-center mt-2">
             <div className="w-20 h-20 bg-[#F4F6FF] rounded-[20px] flex items-center justify-center mb-6">
               <Rocket className="w-10 h-10 text-[#6B46FF]" />
