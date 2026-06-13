@@ -83,6 +83,7 @@ export default function AddProductPage() {
         listingType: string | null;
         name: string;
         sku: string;
+        hsnCode: string;
         dayPrice: string;
         dayCancelPrice: string;
         hourlyPrice: string;
@@ -101,6 +102,7 @@ export default function AddProductPage() {
         listingType: null,
         name: "",
         sku: "",
+        hsnCode: "",
         dayPrice: "",
         dayCancelPrice: "",
         hourlyPrice: "",
@@ -523,6 +525,7 @@ export default function AddProductPage() {
                         listingType: String(data.product_type_id || ""),
                         name: data.product_name || "",
                         sku: data.sku || "",
+                        hsnCode: data.hsnCode || "",
                         dayPrice: productTypeName === "rent" && listingTypeName === "daily" ? String(data.price || "") : "",
                         dayCancelPrice: productTypeName === "rent" && listingTypeName === "daily" ? String(data.cancel_price || "") : "",
                         hourlyPrice: productTypeName === "rent" && listingTypeName === "hourly" ? String(data.price || "") : "",
@@ -633,6 +636,7 @@ export default function AddProductPage() {
             value: String(item.subcategory_id || item.id),
             label: item.subcategory_name || item.name,
             image: item.image,
+            hsnCodes: item.hsnCodes || [],
         }));
 
         setSubCategoryList(subcats);
@@ -870,6 +874,7 @@ export default function AddProductPage() {
 
             formdata.append("product_name", formData.name.trim());
             formdata.append("sku", formData.sku.trim());
+            formdata.append("hsnCode", formData.hsnCode.trim());
             formdata.append("description", formData.description.trim());
             formdata.append("is_new", String(formData.isNew));
 
@@ -1199,6 +1204,40 @@ export default function AddProductPage() {
                                     {validationErrors.sku}
                                 </span>
                             )}
+                        </div>
+                    </div>
+
+                    <div>
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">HSN Code</Label>
+                        <div className="flex flex-col">
+                            {(() => {
+                                const selectedSubCatData = subCategoryList.find(s => String(s.value) === String(formData.subCategory));
+                                const hsnCodeOptions = (selectedSubCatData as any)?.hsnCodes?.map((h: any) => ({
+                                    label: `${h.materialType} (HSN: ${h.code})`,
+                                    value: h.code
+                                })) || [];
+
+                                if (hsnCodeOptions.length > 0) {
+                                    return (
+                                        <SearchableDropdown
+                                            options={hsnCodeOptions}
+                                            value={formData.hsnCode}
+                                            placeholder="Select Material Type"
+                                            onChange={(val) => handleChange("hsnCode", val)}
+                                        />
+                                    );
+                                }
+                                return (
+                                    <Input
+                                        placeholder="HSN Code (inherited if blank)"
+                                        type="text"
+                                        value={formData.hsnCode}
+                                        infoTooltip="Optional: If left blank, it will be automatically fetched from the Sub Category."
+                                        onChange={(e) => handleChange("hsnCode", e.target.value)}
+                                        className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                                    />
+                                );
+                            })()}
                         </div>
                     </div>
 

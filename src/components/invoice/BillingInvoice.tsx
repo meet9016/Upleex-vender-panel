@@ -249,6 +249,7 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
             <thead>
               <tr className="bg-gray-900 text-white">
                 <th className="p-3 text-[10px] font-black text-left">Item & Description</th>
+                <th className="p-3 text-[10px] font-black text-left">HSN</th>
                 <th className="p-3 text-[10px] font-black text-left">Type</th>
                 <th className="p-3 text-[10px] font-black text-left">Unit Price</th>
                 <th className="p-3 text-[10px] font-black text-left">Qty</th>
@@ -264,6 +265,7 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
                 const price = isQuote ? (item.price || product.price) : (item.price || product.price);
                 const qty = isQuote ? (item.qty) : (item.quantity || 1);
                 const rowTotal = isQuote ? (item.totalPrice || item.calculatedPrice) : (item.price * (item.quantity || 1));
+                const hsn = item.hsnCode || item.hsn_code || product?.hsnCode || product?.hsn_code || 'N/A';
 
                 return (
                   <tr key={index} className="hover:bg-gray-50/50 transition-all">
@@ -286,6 +288,7 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
                          </div>
                       </div>
                     </td>
+                    <td className="p-3 text-left text-xs font-bold text-gray-500">{hsn}</td>
                     <td className="p-3 text-left">
                       <span className={`px-2 py-0.5 rounded-[4px] text-[9px] border font-black   ${
                         typeLabel.toLowerCase() === 'rent' || typeLabel.toLowerCase() === 'rental' ? 'text-blue-600 bg-blue-50 border-blue-100' : 'text-emerald-600 bg-emerald-50 border-emerald-100'
