@@ -66,7 +66,7 @@ export default function AddProductPage() {
     const searchParams = useSearchParams();
     const productId = searchParams?.get("id") ?? null;
     const isEditMode = !!productId;
-
+    const { isDemoAccount, checkIsDemoAccount } = useDemoAccount();
 
     let balance = 0;
     let refreshBalance = async () => { };
@@ -836,7 +836,6 @@ export default function AddProductPage() {
         }
 
         // Check wallet balance
-        try {
         const isDemoAccount = await checkIsDemoAccount();
 
         // We rely on the backend to validate free listing limits and general plan quotas.
