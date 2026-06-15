@@ -4,6 +4,7 @@ import ComponentCard from "@/components/common/ComponentCard";
 import Input from "@/components/common/Input";
 import DropzoneComponent from "@/components/form/form-elements/DropZone";
 import Label from "@/components/form/Label";
+import { useDemoAccount } from "@/hooks/useDemoAccount";
 import Button from "@/components/ui/button/Button";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState,useRef } from "react";
@@ -55,6 +56,7 @@ export default function AddServicePage() {
     const [subPreviews, setSubPreviews] = useState<any[]>([]);
     const [categoryList, setCategoryList] = useState<Option[]>([]);
     const [submitting, setSubmitting] = useState(false);
+    const { checkIsDemoAccount } = useDemoAccount();
     const [pageLoading, setPageLoading] = useState(true);
     const [validationErrors, setValidationErrors] = useState<{
         name?: string;
@@ -153,10 +155,7 @@ export default function AddServicePage() {
         }
 
         // Check wallet balance for listing fee (₹29) only in non-edit mode (new service)
-        const userInfo = typeof window !== 'undefined' ? localStorage.getItem('user_info') : null;
-        const user = userInfo ? JSON.parse(userInfo) : null;
-        const demoNumbers = ['8200199856', '7874977238', '9601545245'];
-        const isDemoAccount = user && (demoNumbers.includes(String(user.number)) || demoNumbers.includes(String(user.mobile)));
+        const isDemoAccount = await checkIsDemoAccount();
 
         if (!isEditMode && balance < 29 && !isDemoAccount) {
             toast.error("Insufficient wallet balance. Minimum ₹29 required for Service listing fee. Please add money to your wallet.");

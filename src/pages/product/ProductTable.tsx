@@ -9,6 +9,7 @@ import StatusBadge from "@/components/common/StatusBadge";
 import { api } from '@/utils/axiosInstance';
 import endPointApi from '@/utils/endPointApi';
 import ConfirmDeleteModal from '@/components/common/ConfirmDeleteModal';
+import { useDemoAccount } from '@/hooks/useDemoAccount';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import { CiFilter, CiWarning } from "react-icons/ci";
 import { toast } from 'react-toastify';
@@ -121,10 +122,24 @@ const ProductTable = () => {
   const [hoveredImage, setHoveredImage] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isDark, setIsDark] = useState(false);
-    const userInfo = typeof window !== 'undefined' ? localStorage.getItem('user_info') : null;
-        const user = userInfo ? JSON.parse(userInfo) : null;
-        const demoNumbers = ['8200199856', '7874977238', '9601545245'];
-        const isDemoAccount = user && (demoNumbers.includes(String(user.number)) || demoNumbers.includes(String(user.mobile)));
+  const [isDemoAccount, setIsDemoAccount] = useState(false);
+  const { isDemoAccount: isDemoAccountHook, demoNumbers, loading: demoLoading, checkIsDemoAccount } = useDemoAccount();
+
+  useEffect(() => {
+    const fetchDemoStatus = async () => {
+      const userInfo = typeof window !== 'undefined' ? localStorage.getItem('user_info') : null;
+      const user = userInfo ? JSON.parse(userInfo) : null;
+      if (!user) return;
+      try {
+        const isDemo = await checkIsDemoAccount();
+        setIsDemoAccount(isDemo);
+      } catch (e) {
+        console.error('Failed to fetch demo numbers');
+      }
+    };
+    fetchDemoStatus();
+  }, []);
+
   // Track dark mode changes
   useEffect(() => {
     const checkDarkMode = () => {

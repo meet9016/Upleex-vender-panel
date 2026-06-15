@@ -6,6 +6,7 @@ import DropzoneComponent from "@/components/form/form-elements/DropZone";
 import Label from "@/components/form/Label";
 import Select from "@/components/form/Select";
 import Button from "@/components/ui/button/Button";
+import { useDemoAccount } from "@/hooks/useDemoAccount";
 import { ChevronDownIcon } from "@/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, useEffect, useState, useRef, useCallback } from "react";
@@ -65,7 +66,7 @@ export default function AddProductPage() {
     const searchParams = useSearchParams();
     const productId = searchParams?.get("id") ?? null;
     const isEditMode = !!productId;
-    const demoNumbers = ['8200199856', '7874977238', '9601545245'];
+
 
     let balance = 0;
     let refreshBalance = async () => { };
@@ -413,13 +414,10 @@ export default function AddProductPage() {
         });
     };
 
-    const handlePricingChange = (checked: boolean) => {
+    const handlePricingChange = async (checked: boolean) => {
         const isChecked = checked;
 
-        // Check wallet balance before allowing paid listing
-        const userInfo = typeof window !== 'undefined' ? localStorage.getItem('user_info') : null;
-        const user = userInfo ? JSON.parse(userInfo) : null;
-        const isDemoAccount = user && (demoNumbers.includes(String(user.number)) || demoNumbers.includes(String(user.mobile)));
+        const isDemoAccount = await checkIsDemoAccount();
 
         if (isChecked && balance < 10 && !isDemoAccount) {
             toast.error("Insufficient wallet balance. Minimum ₹10 required for Base (Paid listing). Please add money to your wallet.");
@@ -838,9 +836,8 @@ export default function AddProductPage() {
         }
 
         // Check wallet balance
-        const userInfo = typeof window !== 'undefined' ? localStorage.getItem('user_info') : null;
-        const user = userInfo ? JSON.parse(userInfo) : null;
-        const isDemoAccount = user && (demoNumbers.includes(String(user.number)) || demoNumbers.includes(String(user.mobile)));
+        try {
+        const isDemoAccount = await checkIsDemoAccount();
 
         // We rely on the backend to validate free listing limits and general plan quotas.
         // We only do a basic wallet check here for explicitly 'paid' selections without general plan.

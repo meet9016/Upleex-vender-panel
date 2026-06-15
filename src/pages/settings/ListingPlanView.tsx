@@ -11,6 +11,7 @@ import AgGridTable from "@/components/tables/AgGridTable";
 import { ColDef } from "ag-grid-community";
 import StatusBadge from "@/components/common/StatusBadge";
 import { useWallet } from "@/context/WalletContext";
+import { useDemoAccount } from "@/hooks/useDemoAccount";
 import { Modal } from "@/components/ui/modal";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
@@ -77,6 +78,7 @@ const ListingPlanView: React.FC = () => {
   const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
   const [priorityAddons, setPriorityAddons] = useState<any[]>([]);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const { checkIsDemoAccount } = useDemoAccount();
   const [activeTab, setActiveTab] = useState<"Rent" | "Sell">("Rent");
   const [gridSearch, setGridSearch] = useState("");
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -398,10 +400,7 @@ const ListingPlanView: React.FC = () => {
     }
 
     if (totalAmountWithGst > balance) {
-      // Skip balance check for demo account
-      const userInfo = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user_info') || '{}') : {};
-      const demoNumbers = ['8200199856', '7874977238', '9601545245'];
-      const isDemoAccount = demoNumbers.includes(String(userInfo?.number));
+      const isDemoAccount = await checkIsDemoAccount();
       if (!isDemoAccount) {
         toast.error(`Insufficient wallet balance. Total required including 18% GST is ₹${totalAmountWithGst}.`);
         return;

@@ -12,6 +12,7 @@ import StatusBadge from "@/components/common/StatusBadge";
 import { useWallet } from "@/context/WalletContext";
 import { Modal } from "@/components/ui/modal";
 import PageLoader from "@/components/common/PageLoader";
+import { useDemoAccount } from "@/hooks/useDemoAccount";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { setMultipleSelections, replaceSelections } from "@/store/slices/selectionSlice";
@@ -26,6 +27,7 @@ const BoosterPlanView: React.FC = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedPlanForBoost, setSelectedPlanForBoost] = useState<any>(null);
   const [allProducts, setAllProducts] = useState<any[]>([]);
+  const { checkIsDemoAccount } = useDemoAccount();
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Redux state for persistent selection
@@ -139,7 +141,9 @@ const BoosterPlanView: React.FC = () => {
     const gstAmount = Math.round(basePrice * 0.18);
     const totalAmount = basePrice + gstAmount;
 
-    if (totalAmount > balance) {
+    const isDemoAccount = await checkIsDemoAccount();
+
+    if (totalAmount > balance && !isDemoAccount) {
       toast.error(`Insufficient wallet balance. Total required including 18% GST is ${currency}${totalAmount}.`);
       return;
     }

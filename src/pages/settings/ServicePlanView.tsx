@@ -12,6 +12,7 @@ import { ColDef } from "ag-grid-community";
 import StatusBadge from "@/components/common/StatusBadge";
 import { useWallet } from "@/context/WalletContext";
 import { Modal } from "@/components/ui/modal";
+import { useDemoAccount } from "@/hooks/useDemoAccount";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { setMultipleSelections, replaceSelections } from "@/store/slices/selectionSlice";
@@ -48,6 +49,7 @@ const ServicePlanView: React.FC = () => {
   const [purchasedPlans, setPurchasedPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<ServiceListingPlan | null>(null);
+  const { checkIsDemoAccount } = useDemoAccount();
   
   // Redux state for persistent selection
   const dispatch = useDispatch();
@@ -191,6 +193,8 @@ const ServicePlanView: React.FC = () => {
     const gstAmount = Math.round(priceToPay * 0.18);
     const totalAmount = priceToPay + gstAmount;
 
+    const isDemoAccount = await checkIsDemoAccount();
+
     if (!isConfirmed) {
       setPurchaseSummary({
         amount: priceToPay,
@@ -202,7 +206,7 @@ const ServicePlanView: React.FC = () => {
       return;
     }
 
-    if (totalAmount > balance) {
+    if (totalAmount > balance && !isDemoAccount) {
       toast.error(`Insufficient wallet balance. Total required including 18% GST is ₹${totalAmount}.`);
       return;
     }

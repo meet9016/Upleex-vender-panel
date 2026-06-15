@@ -7,7 +7,8 @@ import endPointApi from "@/utils/endPointApi";
 import { toast } from "react-toastify";
 import PageLoader from "@/components/common/PageLoader";
 import Button from "@/components/ui/button/Button";
-import { Wallet, Package, Search, Check, Rocket, Plus } from "lucide-react";
+import { AlertCircle, Eye, Shield, KeyRound, Save, Mail, Calendar, MapPin, User, FileText, Smartphone, Plus, Trash2, Rocket, Wallet, Package, Search, Check } from "lucide-react";
+import { useDemoAccount } from "@/hooks/useDemoAccount";
 import { Modal } from "@/components/ui/modal";
 import { useWallet } from "@/context/WalletContext";
 import { useFilter } from "@/context/FilterContext";
@@ -94,6 +95,7 @@ const SettingsPage: React.FC = () => {
   const [listingPurchases, setListingPurchases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<PriorityPlan | null>(null);
+  const { checkIsDemoAccount } = useDemoAccount();
 
 
   // Redux state for persistent selection across tabs
@@ -510,10 +512,7 @@ const SettingsPage: React.FC = () => {
     const totalAmountWithGst = Number((finalPrice + gstAmount).toFixed(2));
 
     if (totalAmountWithGst > balance) {
-      // Skip balance check for demo account
-      const userInfo = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user_info') || '{}') : {};
-      const demoNumbers = ['8200199856', '7874977238', '9601545245'];
-      const isDemoAccount = demoNumbers.includes(String(userInfo?.number));
+      const isDemoAccount = await checkIsDemoAccount();
       if (!isDemoAccount) {
         toast.error(`Insufficient wallet balance. Total required including 18% GST is ₹${totalAmountWithGst}.`);
         return;

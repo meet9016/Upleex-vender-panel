@@ -12,6 +12,7 @@ import { ColDef } from "ag-grid-community";
 import StatusBadge from "@/components/common/StatusBadge";
 import { useWallet } from "@/context/WalletContext";
 import { Modal } from "@/components/ui/modal";
+import { useDemoAccount } from "@/hooks/useDemoAccount";
 
 interface PriorityPlan {
   _id?: string;
@@ -30,6 +31,7 @@ const ServicePriorityPlanView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState<"monthly" | "yearly">("monthly");
   const [hasDurationAddon, setHasDurationAddon] = useState(false);
+  const { checkIsDemoAccount } = useDemoAccount();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [historyTab, setHistoryTab] = useState<"free" | "paid">("paid");
@@ -80,7 +82,9 @@ const ServicePriorityPlanView: React.FC = () => {
     const gstAmount = Math.round(baseAmount * 0.18);
     const totalAmount = baseAmount + gstAmount;
     
-    if (totalAmount > balance) {
+    const isDemoAccount = await checkIsDemoAccount();
+
+    if (totalAmount > balance && !isDemoAccount) {
       toast.error(`Insufficient wallet balance. Total required including 18% GST is ₹${totalAmount}.`);
       return;
     }

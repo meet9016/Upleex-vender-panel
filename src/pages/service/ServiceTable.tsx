@@ -16,6 +16,7 @@ import { CiFilter } from "react-icons/ci";
 import { toast } from 'react-toastify';
 import { Modal } from '@/components/ui/modal';
 import Loader from '@/components/common/Loader';
+import { useDemoAccount } from '@/hooks/useDemoAccount';
 import { exportServicesToExcel, exportServicesToPDF } from '@/utils/exportUtils';
 import { useWallet } from '@/context/WalletContext';
 
@@ -36,6 +37,7 @@ type Service = {
 const ServiceTable = () => {
   const router = useRouter();
     const { balance } = useWallet();
+    const { checkIsDemoAccount } = useDemoAccount();
   const [serviceData, setServiceData] = useState<Service[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
@@ -273,8 +275,10 @@ const ServiceTable = () => {
       <div className="flex flex-wrap items-center justify-end mb-4 mt-5 gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <button
-            onClick={() => {
-              if (balance <= 0) {
+            onClick={async () => {
+              const isDemoAccount = await checkIsDemoAccount();
+
+              if (balance <= 0 && !isDemoAccount) {
                 toast.error("Insufficient wallet balance. Please add money to your wallet before adding a Service.");
                 return;
               }
