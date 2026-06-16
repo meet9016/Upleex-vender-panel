@@ -253,15 +253,18 @@ export default function AddProductPage() {
         }
     };
 
-    const updateSKU = () => {
-        if (selectedCategory && vendorBusinessName) {
-            const categoryData = categoriesData.find((c: any) =>
-                String(c.categories_id || c.id) === String(selectedCategory)
-            );
-            const categoryName = categoryData?.categories_name || categoryData?.name || "Category";
-
-            const newSKU = generateSKU(categoryName, vendorBusinessName, skuCounter);
-            handleChange("sku", newSKU);
+    const updateSKU = async () => {
+        if (selectedCategory) {
+            try {
+                const res = await api.post(endPointApi.generateSKU, {
+                    category_id: selectedCategory,
+                });
+                if (res?.data?.success && res?.data?.data?.sku) {
+                    handleChange("sku", res.data.data.sku);
+                }
+            } catch (error) {
+                console.error("Error generating SKU:", error);
+            }
         }
     };
 

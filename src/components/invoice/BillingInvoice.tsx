@@ -234,7 +234,21 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
               {data.shippingAddress ? (
                 <div className="mt-2 text-right">
                   <span className="text-[9px] font-black bg-blue-50 text-blue-600 px-1 py-0.5 rounded border border-blue-100 uppercase tracking-tighter">Shipping Address</span>
-                  <p className="text-blue-500 pt-1 text-[11px] font-medium leading-tight max-w-[200px] ml-auto">{data.shippingAddress}</p>
+                  {typeof data.shippingAddress === 'string' ? (
+                    <p className="text-blue-500 pt-1 text-[11px] font-medium leading-tight max-w-[200px] ml-auto">{data.shippingAddress}</p>
+                  ) : (
+                    <div className="text-blue-500 pt-1 text-[11px] font-medium leading-tight max-w-[200px] ml-auto">
+                      {data.shippingAddress.name && <p>{data.shippingAddress.name}</p>}
+                      {data.shippingAddress.phone && <p>{data.shippingAddress.phone}</p>}
+                      {data.shippingAddress.addressLine1 && <p>{data.shippingAddress.addressLine1}</p>}
+                      {data.shippingAddress.addressLine2 && <p>{data.shippingAddress.addressLine2}</p>}
+                      <p>
+                        {[data.shippingAddress.city, data.shippingAddress.state, data.shippingAddress.pincode]
+                          .filter(Boolean).join(', ')}
+                      </p>
+                      {data.shippingAddress.country && <p>{data.shippingAddress.country}</p>}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-gray-400 pt-1 text-[10px] ">Standard billing address used for shipping</p>
