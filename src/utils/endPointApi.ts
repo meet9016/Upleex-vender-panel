@@ -4,6 +4,7 @@ export interface EndPointApi {
     register: string;
     logout: string;
     businessRegister: string;
+    generateSKU: string;
 
     //Vendor
     postVendorKYCFormSubmit?: string;
@@ -109,6 +110,7 @@ const endPointApi: EndPointApi = {
     register: 'auth/register',
     logout: 'auth/logout',
     businessRegister: 'vendor/auth/business-register',
+    generateSKU: 'products/generate-sku',
     //Vendor
     postVendorKYCFormSubmit: 'vendor-kyc',
     postFetchVendorKYCFormData: 'vendor-single-details',

@@ -52,6 +52,7 @@ interface VendorOrder {
   id?: string;
   type?: string;
   order_id: string;
+  delivery_type?: string;
   user_id: {
     name: string;
     email: string;
@@ -167,6 +168,28 @@ const OrderList = () => {
       if (opt.value.toLowerCase() === 'delivered') return { ...opt, label: 'Delivery' };
       return opt;
     });
+
+  // Face to Face orders: only show Pending, Approve (accepted), Complete
+  const FACE_TO_FACE_ONLY_STATUSES = ['pending', 'accepted', 'completed'];
+
+  // Shipping orders: hide Pending/Approve/Complete — show rest but all disabled
+  const SHIPPING_HIDDEN_STATUSES = ['pending', 'accepted', 'completed'];
+
+  const getStatusOptionsForModal = (order: VendorOrder | null) => {
+    const isShipping = order?.delivery_type === 'shipping';
+
+    if (!isShipping) {
+      // Face to Face: show ONLY pending, accepted (Approve), completed
+      return editStatusOptions
+        .filter((opt) => FACE_TO_FACE_ONLY_STATUSES.includes(opt.value.toLowerCase()))
+        .map((opt) => ({ ...opt, disabled: false }));
+    } else {
+      // Shipping: hide pending/accepted/completed, show rest but all disabled
+      return editStatusOptions
+        .filter((opt) => !SHIPPING_HIDDEN_STATUSES.includes(opt.value.toLowerCase()))
+        .map((opt) => ({ ...opt, disabled: true }));
+    }
+  };
 
   const getCurrentParams = () => {
     const params: any = {};
@@ -1670,14 +1693,12 @@ const OrderList = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  New Status
-                </label>
                 <SearchableDropdown
                   value={newStatus || ''}
-                  options={editStatusOptions}
+                  options={getStatusOptionsForModal(selectedOrder)}
                   placeholder="Select status"
                   searchable
+                  usePortal
                   onChange={(val) => setNewStatus(val)}
                   disabled={loading}
                 />
