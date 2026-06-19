@@ -55,6 +55,8 @@ export type Option = {
     value: string;
     label: string;
     image?: string;
+    gst?: number;
+    hsnCodes?: any[];
 };
 
 export default function AddProductPage() {
