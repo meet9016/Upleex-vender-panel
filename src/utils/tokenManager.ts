@@ -4,9 +4,9 @@ export const saveToken = (token: string) => {
   localStorage.setItem('auth_token', token);
 
   // Save to cookies (for middleware/server-side access)
-  // Set expiry: 7 days for app (mobile), 24 hours (1 day) for web (desktop)
+  // Set expiry: 7 days for app (mobile), 48 hours (2 day) for web (desktop)
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  const expiryDays = isMobile ? 7 : 1;
+  const expiryDays = isMobile ? 7 : 2;
   
   const date = new Date();
   date.setTime(date.getTime() + expiryDays * 24 * 60 * 60 * 1000);
