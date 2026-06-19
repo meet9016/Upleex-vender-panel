@@ -85,6 +85,7 @@ export default function AddProductPage() {
         name: string;
         sku: string;
         hsnCode: string;
+        gst: string;
         dayPrice: string;
         dayCancelPrice: string;
         hourlyPrice: string;
@@ -104,6 +105,7 @@ export default function AddProductPage() {
         name: "",
         sku: "",
         hsnCode: "",
+        gst: "",
         dayPrice: "",
         dayCancelPrice: "",
         hourlyPrice: "",
@@ -527,6 +529,7 @@ export default function AddProductPage() {
                         name: data.product_name || "",
                         sku: data.sku || "",
                         hsnCode: data.hsnCode || "",
+                        gst: data.gst !== undefined ? String(data.gst) : "",
                         dayPrice: productTypeName === "rent" && listingTypeName === "daily" ? String(data.price || "") : "",
                         dayCancelPrice: productTypeName === "rent" && listingTypeName === "daily" ? String(data.cancel_price || "") : "",
                         hourlyPrice: productTypeName === "rent" && listingTypeName === "hourly" ? String(data.price || "") : "",
@@ -638,12 +641,18 @@ export default function AddProductPage() {
             label: item.subcategory_name || item.name,
             image: item.image,
             hsnCodes: item.hsnCodes || [],
+            gst: item.gst || 0,
         }));
 
         setSubCategoryList(subcats);
 
         if (isEditMode && formData.subCategory && subcats.some((sc: Option) => sc.value === formData.subCategory)) {
             setSelectedSubCategory(formData.subCategory);
+            // Also set gst from the selected subcategory
+            const selectedSubCat = subcats.find((s: any) => String(s.value) === String(formData.subCategory));
+            if (selectedSubCat && (selectedSubCat as any).gst !== undefined) {
+                handleChange("gst", String((selectedSubCat as any).gst));
+            }
         }
         // No auto-selection or clearing here; user will select manually
     }, [selectedCategory, categoriesData, isEditMode, handleChange]);
@@ -874,6 +883,9 @@ export default function AddProductPage() {
             formdata.append("product_name", formData.name.trim());
             formdata.append("sku", formData.sku.trim());
             formdata.append("hsnCode", formData.hsnCode.trim());
+            if (formData.gst.trim()) {
+                formdata.append("gst", formData.gst.trim());
+            }
             formdata.append("description", formData.description.trim());
             formdata.append("is_new", String(formData.isNew));
 
@@ -1087,6 +1099,13 @@ export default function AddProductPage() {
                             onChange={(val) => {
                                 handleChange("subCategory", val);
                                 setSelectedSubCategory(val);
+                                // Auto-fill GST when subcategory is selected
+                                const selectedSubCat = subCategoryList.find((s: any) => String(s.value) === String(val));
+                                if (selectedSubCat && (selectedSubCat as any).gst !== undefined) {
+                                    handleChange("gst", String((selectedSubCat as any).gst));
+                                } else {
+                                    handleChange("gst", "");
+                                }
                             }}
                         />
                         {validationErrors.subCategory && (
@@ -1237,6 +1256,20 @@ export default function AddProductPage() {
                                     />
                                 );
                             })()}
+                        </div>
+                    </div>
+
+                    <div>
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">GST Rate (%)</Label>
+                        <div className="flex flex-col">
+                            <Input
+                                placeholder="GST Rate"
+                                type="number"
+                                step="0.01"
+                                value={formData.gst}
+                                onChange={(e) => handleChange("gst", e.target.value)}
+                                className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                            />
                         </div>
                     </div>
 
