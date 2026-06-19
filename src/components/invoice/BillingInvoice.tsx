@@ -72,9 +72,8 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
   if (paymentMethod.toLowerCase() === 'razorpay') {
     paymentMethod = 'Online / Prepaid';
   }
-  const gstRate = 18; // Default to 18% for display
-  const totalGst = (subTotal * gstRate) / (100 + gstRate); // Assuming inclusive
-  const subtotalExclGst = subTotal - totalGst;
+  const totalGst = data.gstAmount || data.gst_amount || 0;
+  const subtotalExclGst = data.subTotal || data.subtotal || (subTotal - totalGst);
   
   // Table sync data
   const orderStatus = data.vendorStatus || data.status || 'Pending';
@@ -267,6 +266,7 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
                 <th className="p-3 text-[10px] font-black text-left">Type</th>
                 <th className="p-3 text-[10px] font-black text-left">Unit Price</th>
                 <th className="p-3 text-[10px] font-black text-left">Qty</th>
+                <th className="p-3 text-[10px] font-black text-left">GST</th>
                 <th className="p-3 text-[10px] font-black text-left">Net Amount</th>
               </tr>
             </thead>
@@ -280,6 +280,8 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
                 const qty = isQuote ? (item.qty) : (item.quantity || 1);
                 const rowTotal = isQuote ? (item.totalPrice || item.calculatedPrice) : (item.price * (item.quantity || 1));
                 const hsn = item.hsnCode || item.hsn_code || product?.hsnCode || product?.hsn_code || 'N/A';
+                const gstPer = item.gstPer || item.gst_per || product?.gst || 0;
+                const gstAmt = item.gstAmount || item.gst_amount || (Number(price || 0) * Number(qty || 1) * Number(gstPer) / 100);
 
                 return (
                   <tr key={index} className="hover:bg-gray-50/50 transition-all">
@@ -312,6 +314,10 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
                     </td>
                     <td className="p-3 text-left text-xs font-bold text-gray-600">Rs. {Number(price || 0).toLocaleString()}</td>
                     <td className="p-3 text-left text-xs font-bold text-gray-600">{qty}</td>
+                    <td className="p-3 text-left text-xs font-bold text-gray-600">
+                      <div>{gstPer}%</div>
+                      <div className="text-[10px] text-gray-400">Rs. {Number(gstAmt || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                    </td>
                     <td className="p-3 text-left text-xs font-black text-gray-900 tracking-tight">Rs. {Number(rowTotal || 0).toLocaleString()}</td>
                   </tr>
                 );
@@ -344,7 +350,7 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
                 <span className="text-gray-700 font-mono ">Rs. {Number(subtotalExclGst).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
               </div>
               <div className="flex justify-between text-[11px] text-gray-500 font-bold">
-                <span>Tax (IGST 18%)</span>
+                <span>Total Tax (GST)</span>
                 <span className="text-gray-700 font-mono ">Rs. {Number(totalGst).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
               </div>
               <div className="flex justify-between text-[11px] text-gray-500 font-bold">
