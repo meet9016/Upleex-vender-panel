@@ -101,6 +101,7 @@ export interface EndPointApi {
     getAllGeneralPlans: string;
     postPurchaseGeneralPlan: string;
     getVendorGeneralPurchases: string;
+    getDemoNumbers: string;
 }
 
 // Define and export the API endpoint object
@@ -217,6 +218,7 @@ const endPointApi: EndPointApi = {
     getAllGeneralPlans: 'general-plans/getall',
     postPurchaseGeneralPlan: 'general-plans/purchase',
     getVendorGeneralPurchases: 'general-plans/vendor-purchases',
+    getDemoNumbers: 'settings/demoNumbers',
 };
 
 export default endPointApi;

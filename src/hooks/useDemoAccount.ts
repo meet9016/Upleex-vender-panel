@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/utils/axiosInstance';
+import endPointApi from '@/utils/endPointApi';
 
 export const useDemoAccount = () => {
   const [isDemoAccount, setIsDemoAccount] = useState<boolean>(false);
@@ -8,7 +9,7 @@ export const useDemoAccount = () => {
 
   const fetchDemoNumbers = useCallback(async () => {
     try {
-      const res = await api.get('settings/demoNumbers');
+      const res = await api.get(endPointApi.getDemoNumbers);
       const numbers = res.data?.data?.value || [];
       setDemoNumbers(numbers);
       
