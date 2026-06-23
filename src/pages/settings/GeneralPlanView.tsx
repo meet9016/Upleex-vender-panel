@@ -55,6 +55,7 @@ const GeneralPlanView: React.FC = () => {
   const [isPurchasing, setIsPurchasing] = useState(false);
   
   const [historyTab, setHistoryTab] = useState<"rent" | "sell">("rent");
+  const [backendPlanAggregates, setBackendPlanAggregates] = useState<Record<string, { total: number, used: number }>>({});
 
   const dispatch = useDispatch();
   const selectedIdsMap = useSelector((state: RootState) => state.selection.selectedIds);
@@ -75,6 +76,11 @@ const GeneralPlanView: React.FC = () => {
         setPlans(plansRes.data.data.filter((p: GPlan) => p.status === 'active'));
       }
 
+      // Store backend plan aggregates
+      if (plansRes?.data?.planAggregates) {
+        setBackendPlanAggregates(plansRes.data.planAggregates);
+      }
+
       if (productsRes?.data?.data) {
         setProducts(productsRes.data.data.map((p: any) => ({
           ...p,
@@ -85,6 +91,11 @@ const GeneralPlanView: React.FC = () => {
 
       if (purchasesRes?.data?.data) {
         setPurchasedPlans(purchasesRes.data.data);
+      }
+
+      // Store backend plan aggregates from getVendorPurchases
+      if (purchasesRes?.data?.planAggregates) {
+        setBackendPlanAggregates(purchasesRes.data.planAggregates);
       }
     } catch (e: any) {
       toast.error(e?.response?.data?.message || "Failed to load data");
@@ -425,7 +436,7 @@ const GeneralPlanView: React.FC = () => {
 
             <div className="space-y-4 mb-8 flex-grow">
               {(() => {
-                const agg = planAggregates[plan.plan_type];
+                const agg = backendPlanAggregates[plan.plan_type];
                 if (agg) {
                   const remaining = Math.max(0, agg.total - agg.used);
                   return (
