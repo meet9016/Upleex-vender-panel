@@ -53,8 +53,25 @@ export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<VendorNotification[]>([]);
   const [loading, setLoading] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const router = useRouter();
   const isFetchingRef = useRef(false);
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    if (!('Notification' in window)) return;
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+    }
+  };
 
   const fetchNotifications = useCallback(async () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
@@ -138,27 +155,27 @@ export default function NotificationDropdown() {
         className="fixed inset-x-4 top-20 flex h-[480px] w-auto max-w-[calc(100vw-32px)] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark sm:absolute sm:right-0 sm:top-full sm:mt-3 sm:w-[380px] sm:inset-x-auto"
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 mb-2 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between pb-3 mb-2 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-[#6366f1] to-[#0ea5e9] px-3 pt-3 -mx-3 -mt-3 rounded-t-2xl">
           <div className="flex items-center gap-2">
-            <h5 className="text-base font-semibold text-gray-800 dark:text-gray-200">Notifications</h5>
+            <h5 className="text-base font-semibold text-white">Notifications</h5>
             {unreadCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">
+              <span className="px-2 py-0.5 text-xs font-bold text-[#6366f1] bg-white rounded-full">
                 {unreadCount}
               </span>
             )}
           </div>
           <div className="flex items-center gap-2">
-            {unreadCount > 0 && (
+            {notificationPermission !== 'granted' && (
               <button
-                onClick={markAllAsRead}
-                className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                onClick={requestNotificationPermission}
+                className="text-xs font-medium text-[#6366f1] hover:text-[#4f46e5] cursor-pointer bg-white px-2 py-1 rounded shadow-sm transition-colors"
               >
-                Mark all read
+                {notificationPermission === 'denied' ? 'Enable Notifications' : 'Allow Notifications'}
               </button>
             )}
             <button
               onClick={() => setIsOpen(false)}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              className="text-white/70 hover:text-white transition-colors"
             >
               <svg className="fill-current" width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path fillRule="evenodd" clipRule="evenodd" d="M6.21967 7.28131C5.92678 6.98841 5.92678 6.51354 6.21967 6.22065C6.51256 5.92775 6.98744 5.92775 7.28033 6.22065L11.999 10.9393L16.7176 6.22078C17.0105 5.92789 17.4854 5.92788 17.7782 6.22078C18.0711 6.51367 18.0711 6.98855 17.7782 7.28144L13.0597 12L17.7782 16.7186C18.0711 17.0115 18.0711 17.4863 17.7782 17.7792C17.4854 18.0721 17.0105 18.0721 16.7176 17.7792L11.999 13.0607L7.28033 17.7794C6.98744 18.0722 6.51256 18.0722 6.21967 17.7794C5.92678 17.4865 5.92678 17.0116 6.21967 16.7187L10.9384 12L6.21967 7.28131Z" fill="currentColor" />
@@ -167,8 +184,17 @@ export default function NotificationDropdown() {
           </div>
         </div>
 
+        {/* Permission denied message */}
+        {notificationPermission === 'denied' && (
+          <div className="px-3 py-2 mb-2 bg-yellow-50 border border-yellow-100 rounded-lg dark:bg-yellow-900/20 dark:border-yellow-900/50">
+            <p className="text-xs text-yellow-800 dark:text-yellow-200">
+              Notifications are blocked. Please enable them in your browser settings to receive real-time updates.
+            </p>
+          </div>
+        )}
+
         {/* List */}
-        <ul className="flex flex-col flex-1 overflow-y-auto custom-scrollbar gap-0.5">
+        <ul className="flex flex-col flex-1 overflow-y-auto custom-scrollbar gap-0.5 px-3 py-2">
           {loading && notifications.length === 0 ? (
             <li className="flex items-center justify-center py-12">
               <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -201,17 +227,21 @@ export default function NotificationDropdown() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p 
-                        title={notif.title}
-                        className={`text-sm font-semibold truncate ${isReject ? "text-red-600" : !notif.is_read ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"}`}>
-                        {notif.title}
-                      </p>
+                      <div className="flex items-center justify-between mb-1">
+                        <p 
+                          title={notif.title}
+                          className={`text-sm font-semibold truncate ${isReject ? "text-red-600" : !notif.is_read ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"}`}>
+                          {notif.title}
+                        </p>
+                        <span className="text-[10px] text-gray-400 whitespace-nowrap ml-2">
+                          {formatDate(notif.createdAt).split(' ')[0]}
+                        </span>
+                      </div>
                       <p 
                         title={notif.body?.replace(/<[^>]*>?/gm, '')}
                         className={`text-xs mt-0.5 line-clamp-2 ${isReject ? "text-red-500" : "text-gray-500 dark:text-gray-400"}`}>
                         <span dangerouslySetInnerHTML={{ __html: notif.body }} />
                       </p>
-                      <p className="text-[11px] text-gray-400 mt-1">{formatDate(notif.createdAt)}</p>
                     </div>
 
                     {!notif.is_read && (
@@ -223,6 +253,21 @@ export default function NotificationDropdown() {
             })
           )}
         </ul>
+
+        {/* Footer / Mark all as read */}
+        {unreadCount > 0 && (
+          <div className="border-t border-gray-100 dark:border-gray-700 -mx-3 -mb-3 rounded-b-2xl overflow-hidden mt-1">
+            <button
+              onClick={markAllAsRead}
+              className="w-full px-4 py-3 text-sm bg-gradient-to-r from-[#6366f1] to-[#0ea5e9] text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Mark all as read ({unreadCount})
+            </button>
+          </div>
+        )}
       </Dropdown>
     </div>
   );
