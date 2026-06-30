@@ -1264,13 +1264,17 @@ export default function AddProductPage() {
                     <div>
                         <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">GST Rate (%)</Label>
                         <div className="flex flex-col">
-                            <Input
-                                placeholder="GST Rate"
-                                type="number"
-                                step="0.01"
-                                value={formData.gst}
-                                onChange={(e) => handleChange("gst", e.target.value)}
-                                className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                            <SearchableDropdown
+                                options={[
+                                    { value: "0", label: "0%" },
+                                    { value: "3", label: "3%" },
+                                    { value: "5", label: "5%" },
+                                    { value: "18", label: "18%" },
+                                ]}
+                                value={formData.gst ? String(formData.gst) : "0"}
+                                placeholder="Select GST Rate"
+                                onChange={(val) => handleChange("gst", val)}
+                                searchable={false}
                             />
                         </div>
                     </div>
