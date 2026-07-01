@@ -531,7 +531,7 @@ export default function AddProductPage() {
                         name: data.product_name || "",
                         sku: data.sku || "",
                         hsnCode: data.hsnCode || "",
-                        gst: data.gst !== undefined ? String(data.gst) : "",
+                        gst: data.gst !== undefined && data.gst !== null && data.gst !== "" ? String(data.gst) : "",
                         dayPrice: productTypeName === "rent" && listingTypeName === "daily" ? String(data.price || "") : "",
                         dayCancelPrice: productTypeName === "rent" && listingTypeName === "daily" ? String(data.cancel_price || "") : "",
                         hourlyPrice: productTypeName === "rent" && listingTypeName === "hourly" ? String(data.price || "") : "",
@@ -633,7 +633,7 @@ export default function AddProductPage() {
         if (!selectedCategory) {
             setSubCategoryList([]);
             setSelectedSubCategory(null);
-            handleChange("subCategory", null);
+            setFormData(prev => ({ ...prev, subCategory: null }));
             return;
         }
 
@@ -648,16 +648,16 @@ export default function AddProductPage() {
 
         setSubCategoryList(subcats);
 
-        if (isEditMode && formData.subCategory && subcats.some((sc: Option) => sc.value === formData.subCategory)) {
-            setSelectedSubCategory(formData.subCategory);
-            // Also set gst from the selected subcategory
-            const selectedSubCat = subcats.find((s: any) => String(s.value) === String(formData.subCategory));
-            if (selectedSubCat && (selectedSubCat as any).gst !== undefined) {
-                handleChange("gst", String((selectedSubCat as any).gst));
+        if (isEditMode && subcats.length > 0) {
+            // Find the subcat that matches formData.subCategory
+            const matchingSubcat = subcats.find((sc: Option) => sc.value === formData.subCategory);
+            if (matchingSubcat) {
+                setSelectedSubCategory(formData.subCategory);
+                // Don't overwrite GST in edit mode - use the value from product data
             }
         }
-        // No auto-selection or clearing here; user will select manually
-    }, [selectedCategory, categoriesData, isEditMode, handleChange]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedCategory, categoriesData]);
 
     /* <!-- ============================================ Fetch dropdown options  ============================================ --> */
 
@@ -1271,7 +1271,7 @@ export default function AddProductPage() {
                                     { value: "5", label: "5%" },
                                     { value: "18", label: "18%" },
                                 ]}
-                                value={formData.gst ? String(formData.gst) : "0"}
+                                value={formData.gst || null}
                                 placeholder="Select GST Rate"
                                 onChange={(val) => handleChange("gst", val)}
                                 searchable={false}
