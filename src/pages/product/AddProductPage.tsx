@@ -107,7 +107,7 @@ export default function AddProductPage() {
         name: "",
         sku: "",
         hsnCode: "",
-        gst: "",
+        gst: "18",
         dayPrice: "",
         dayCancelPrice: "",
         hourlyPrice: "",
@@ -167,6 +167,7 @@ export default function AddProductPage() {
         description?: string;
         mainImage?: string;
         billingType?: string;
+        gst?: string;
     }>({});
 
     const resolveImageUrl = (src?: string) => {
@@ -531,7 +532,7 @@ export default function AddProductPage() {
                         name: data.product_name || "",
                         sku: data.sku || "",
                         hsnCode: data.hsnCode || "",
-                        gst: data.gst !== undefined && data.gst !== null && data.gst !== "" ? String(data.gst) : "",
+                        gst: data.gst !== undefined && data.gst !== null && data.gst !== "" ? String(data.gst) : "18",
                         dayPrice: productTypeName === "rent" && listingTypeName === "daily" ? String(data.price || "") : "",
                         dayCancelPrice: productTypeName === "rent" && listingTypeName === "daily" ? String(data.cancel_price || "") : "",
                         hourlyPrice: productTypeName === "rent" && listingTypeName === "hourly" ? String(data.price || "") : "",
@@ -733,6 +734,9 @@ export default function AddProductPage() {
         }
         if (!formData.description?.trim()) {
             errors.description = "Please enter description";
+        }
+        if (!formData.gst) {
+            errors.gst = "Please select GST rate";
         }
         if (!mainImage && (!mainPreview || mainPreview.length === 0)) {
             errors.mainImage = "Please upload main image";
@@ -1262,20 +1266,26 @@ export default function AddProductPage() {
                     </div>
 
                     <div>
-                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">GST Rate (%)</Label>
+                        <Label required className="font-semibold text-gray-700 dark:text-gray-200 mb-2">GST Rate (%)</Label>
                         <div className="flex flex-col">
                             <SearchableDropdown
                                 options={[
-                                    { value: "0", label: "0%" },
-                                    { value: "3", label: "3%" },
-                                    { value: "5", label: "5%" },
                                     { value: "18", label: "18%" },
+                                    { value: "5", label: "5%" },
+                                    { value: "3", label: "3%" },
+                                    { value: "0", label: "0%" },
                                 ]}
-                                value={formData.gst || null}
+                                value={formData.gst || "18"}
                                 placeholder="Select GST Rate"
                                 onChange={(val) => handleChange("gst", val)}
                                 searchable={false}
+                                error={!!validationErrors.gst}
                             />
+                            {validationErrors.gst && (
+                                <span className="error-message">
+                                    {validationErrors.gst}
+                                </span>
+                            )}
                         </div>
                     </div>
 
