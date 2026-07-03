@@ -6,6 +6,9 @@ import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
 import StatisticsChart from "@/components/ecommerce/StatisticsChart";
 import DemographicCard from "@/components/ecommerce/DemographicCard";
 import DashboardFilter from "@/components/ecommerce/DashboardFilter";
+import ProductDistributionChart from "@/components/ecommerce/ProductDistributionChart";
+import ServiceStatusChart from "@/components/ecommerce/ServiceStatusChart";
+import CustomerChart from "@/components/ecommerce/CustomerChart";
 
 export const dynamic = 'force-dynamic';
 
@@ -28,20 +31,27 @@ export default function Ecommerce() {
         <EcommerceMetrics />
       </div>
 
-      {/* Row 2: Earnings & Target */}
-      <div className="col-span-12 xl:col-span-12">
+      {/* Row 2: Side-by-side charts on large screens */}
+      <div className="col-span-12 lg:col-span-6">
         <StatisticsChart />
       </div>
 
-      {/* Row 3: Orders Chart */}
-      <div className="col-span-12 xl:col-span-12">
+      <div className="col-span-12 lg:col-span-6">
         <MonthlySalesChart />
       </div>
 
-      {/* Row 4: Monthly Target & Other components */}
-      {/* <div className="col-span-12 xl:col-span-4">
-        <MonthlyTarget />
-      </div> */}
+      {/* Row 3: Product distribution and status */}
+      <div className="col-span-12 lg:col-span-4">
+        <ProductDistributionChart />
+      </div>
+
+      <div className="col-span-12 lg:col-span-4">
+        <ServiceStatusChart />
+      </div>
+
+      <div className="col-span-12 lg:col-span-4">
+        <CustomerChart />
+      </div>
 
     </div>
   );

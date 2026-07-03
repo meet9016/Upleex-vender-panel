@@ -1,10 +1,9 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { ApexOptions } from "apexcharts";
 import flatpickr from "flatpickr";
-import ChartTab from "../common/ChartTab";
 import { CalenderIcon } from "../../icons";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
@@ -12,221 +11,175 @@ import { useSearchParams } from "next/navigation";
 
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
+type ChartRange = "monthly" | "weekly" | "yearly" | "custom";
+
 export default function StatisticsChart() {
   const searchParams = useSearchParams();
-  const range = searchParams?.get("range") || "";
-  const qsStart = searchParams?.get("startDate");
-  const qsEnd = searchParams?.get("endDate");
+  const kpiRange = searchParams?.get("range") || "";
+  const kpiStart = searchParams?.get("startDate");
+  const kpiEnd = searchParams?.get("endDate");
 
   const datePickerRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
-  const [customDates, setCustomDates] = useState<{ start: Date, end: Date } | null>(null);
+  const [chartRange, setChartRange] = useState<ChartRange>("monthly");
+  const [customDates, setCustomDates] = useState<{ start: Date; end: Date } | null>(null);
+  const [labels, setLabels] = useState<string[]>([]);
   const [series, setSeries] = useState<any>([
-    { name: "Sell Earnings", data: new Array(12).fill(0) },
-    { name: "Rent Earnings", data: new Array(12).fill(0) },
+    { name: "Sell Earnings", data: [] },
+    { name: "Rent Earnings", data: [] },
   ]);
-  const [selectedTab, setSelectedTab] = useState<"optionOne" | "optionTwo" | "optionThree">("optionOne");
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams();
-        if (range) params.append("range", range);
-        const start = qsStart ? new Date(qsStart) : customDates?.start;
-        const end = qsEnd ? new Date(qsEnd) : customDates?.end;
-        if (range === "Custom Range" && start && end) {
-          params.append("chartStartDate", start.toISOString());
-          params.append("chartEndDate", end.toISOString());
-        }
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      // KPI filter (global range from URL)
+      if (kpiRange) params.append("range", kpiRange);
+      if (kpiStart) params.append("startDate", kpiStart);
+      if (kpiEnd) params.append("endDate", kpiEnd);
 
-        const query = params.toString() ? `?${params.toString()}` : "";
-        const response = await api.get(`${endPointApi.getVendorDashboardMetrics}${query}`);
-        if (response.data.success) {
-          const { earnings } = response.data.data.graphs;
-          setSeries([
-            { name: "Sell Earnings", data: earnings.sell },
-            { name: "Rent Earnings", data: earnings.rent },
-          ]);
-        }
-      } catch (error) {
-        console.error("Error fetching earnings graph data:", error);
-      } finally {
-        setLoading(false);
+      // Chart-specific range
+      params.append("chartRange", chartRange);
+      if (chartRange === "custom" && customDates) {
+        params.append("chartStartDate", customDates.start.toISOString());
+        params.append("chartEndDate", customDates.end.toISOString());
       }
-    };
 
-    fetchData();
-  }, [range, customDates, qsStart, qsEnd]);
+      const response = await api.get(`${endPointApi.getVendorDashboardMetrics}?${params.toString()}`);
+      if (response.data.success) {
+        const { labels: lbs, earnings } = response.data.data.graphs;
+        setLabels(lbs || []);
+        setSeries([
+          { name: "Sell Earnings", data: earnings.sell || [] },
+          { name: "Rent Earnings", data: earnings.rent || [] },
+        ]);
+      }
+    } catch (error) {
+      console.error("Error fetching earnings graph data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [kpiRange, kpiStart, kpiEnd, chartRange, customDates]);
 
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // flatpickr for custom range
   useEffect(() => {
-    if (!datePickerRef.current) return;
-
+    if (!datePickerRef.current || chartRange !== "custom") return;
     const today = new Date();
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(today.getDate() - 6);
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
     const fp = flatpickr(datePickerRef.current, {
       mode: "range",
       static: true,
       monthSelectorType: "static",
-      dateFormat: "M d",
-      defaultDate: [sevenDaysAgo, today],
-      clickOpens: true,
-      prevArrow: `<i class="fa-solid fa-chevron-left"></i>`,
-      nextArrow: `<i class="fa-solid fa-chevron-right"></i>`,
+      dateFormat: "M d, Y",
+      defaultDate: [oneMonthAgo, today],
       onChange: (selectedDates) => {
         if (selectedDates.length === 2) {
           setCustomDates({ start: selectedDates[0], end: selectedDates[1] });
         }
-      }
+      },
     });
-
-    return () => {
-      if (!Array.isArray(fp)) {
-        fp.destroy();
-      }
-    };
-  }, []);
-
-  const transformSeries = () => {
-    if (selectedTab === "optionOne") {
-      return {
-        categories: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
-        series,
-      };
-    }
-    if (selectedTab === "optionTwo") {
-      const cats = ["Q1","Q2","Q3","Q4"];
-      const sum3 = (arr: Array<number | null>) => [0,1,2,3].map(q=>{
-        const start = q*3;
-        const slice = arr.slice(start,start+3) as Array<number | null>;
-        const s = slice.reduce<number>((acc, val)=> acc + (val ?? 0), 0);
-        return s > 0 ? s : null;
-      });
-      return {
-        categories: cats,
-        series: series.map((s:any)=>({ ...s, data: sum3((s.data as Array<number | null>) || []) })),
-      };
-    }
-    const yearLabel = String(new Date().getFullYear());
-    const sumAll = (arr: Array<number | null>) => {
-      const s = arr.reduce<number>((acc, val)=> acc + (val ?? 0), 0);
-      return [s > 0 ? s : null];
-    };
-    return {
-      categories: [yearLabel],
-      series: series.map((s:any)=>({ ...s, data: sumAll((s.data as Array<number | null>) || []) })),
-    };
-  };
-
-  const { categories: displayCategories, series: displaySeries } = transformSeries();
+    return () => { if (!Array.isArray(fp)) fp.destroy(); };
+  }, [chartRange]);
 
   const options: ApexOptions = {
-    legend: {
-      show: true,
-      position: "top",
-      horizontalAlign: "right",
-      fontFamily: "Outfit",
-    },
-    colors: ["#465FFF", "#f97316"], // blue-600 (Sell) and orange-500 (Rent)
+    legend: { show: true, position: "top", horizontalAlign: "right", fontFamily: "Outfit" },
+    colors: ["#6366f1", "#ec4899"],
     chart: {
       fontFamily: "Outfit, sans-serif",
       height: 310,
-      type: "bar",
-      toolbar: {
-        show: false,
-      },
+      type: "area",
+      toolbar: { show: false },
+      dropShadow: { enabled: true, color: '#6366f1', top: 14, left: 0, blur: 4, opacity: 0.1 }
     },
-    plotOptions: {
-      bar: {
-        horizontal: false,
-        columnWidth: selectedTab === "optionThree" ? "25%" : selectedTab === "optionTwo" ? "40%" : "55%",
-        borderRadius: 4,
-        borderRadiusApplication: "end",
-      },
+    stroke: { show: true, width: 3, colors: ["#6366f1", "#ec4899"], curve: "smooth" },
+    fill: {
+      type: "gradient",
+      gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.03, stops: [0, 100] }
     },
-    stroke: {
-      show: true,
-      width: 2,
-      colors: ["transparent"],
-    },
-    grid: {
-      xaxis: {
-        lines: {
-          show: false,
-        },
-      },
-      yaxis: {
-        lines: {
-          show: true,
-        },
-      },
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    tooltip: {
-      enabled: true,
-      y: {
-        formatter: (val) => val ? `₹${Number(val).toLocaleString('en-IN')}` : '₹0',
-      },
-    },
+    markers: { size: 0, hover: { size: 6 } },
     xaxis: {
-      type: "category",
-      categories: displayCategories,
-      axisBorder: {
-        show: false,
-      },
-      axisTicks: {
-        show: false,
-      },
-      tooltip: {
-        enabled: false,
-      },
+      categories: labels,
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+      labels: {
+        rotate: labels.length > 12 ? -45 : 0,
+        style: { fontSize: "11px", colors: ["#6B7280"] }
+      }
     },
     yaxis: {
       labels: {
         formatter: (val) => val ? `₹${Number(val).toLocaleString('en-IN')}` : '₹0',
-        style: {
-          fontSize: "12px",
-          colors: ["#6B7280"],
-        },
-      },
+        style: { fontSize: "12px", colors: ["#6B7280"] },
+      }
+    },
+    grid: { yaxis: { lines: { show: true } }, borderColor: "#f1f5f9" },
+    tooltip: {
+      y: { formatter: (val) => val ? `₹${Number(val).toLocaleString('en-IN')}` : '₹0' }
     },
   };
 
+  const tabs: { label: string; value: ChartRange }[] = [
+    { label: "Weekly", value: "weekly" },
+    { label: "Monthly", value: "monthly" },
+    { label: "Yearly", value: "yearly" },
+    { label: "Custom", value: "custom" },
+  ];
+
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
-      <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
-        <div className="w-full">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Earnings Graph
-          </h3>
-          <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-            Monthly earnings overview (Sell vs Rent)
-          </p>
+    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-gradient-to-b from-white to-purple-50/30 px-5 pb-5 pt-5 shadow-sm hover:shadow-md transition-shadow dark:border-gray-800 dark:bg-gray-900 sm:px-6 sm:pt-6">
+      <div className="flex flex-col gap-4 mb-5 sm:flex-row sm:justify-between sm:items-start">
+        <div>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-white/90">Earnings Overview</h3>
+          <p className="mt-1 text-gray-500 text-xs dark:text-gray-400">Revenue breakdown (Sell vs Rent)</p>
         </div>
-        <div className="flex items-center gap-3 sm:justify-end">
-          <ChartTab selected={selectedTab} onChange={setSelectedTab} />
-          {range === "Custom Range" && (
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Range Tabs */}
+          <div className="flex items-center gap-0.5 rounded-lg bg-gray-100 p-0.5 dark:bg-gray-900">
+            {tabs.map((tab) => (
+              <button
+                key={tab.value}
+                onClick={() => setChartRange(tab.value)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  chartRange === tab.value
+                    ? "bg-white shadow-sm text-indigo-600 dark:bg-gray-800 dark:text-indigo-400"
+                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Custom date picker — inline next to Custom tab */}
+          {chartRange === "custom" && (
             <div className="relative inline-flex items-center">
-              <CalenderIcon className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:left-3 lg:top-1/2 lg:translate-x-0 lg:-translate-y-1/2  text-gray-500 dark:text-gray-400 pointer-events-none z-10" />
+              <CalenderIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10 w-3.5 h-3.5" />
               <input
                 ref={datePickerRef}
-                className="h-10 w-10 lg:w-40 lg:h-auto  lg:pl-10 lg:pr-3 lg:py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-transparent lg:text-gray-700 outline-none dark:border-gray-700 dark:bg-gray-800 dark:lg:text-gray-300 cursor-pointer"
+                className="h-8 w-44 pl-8 pr-3 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-700 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 cursor-pointer"
                 placeholder="Select date range"
+                readOnly
               />
             </div>
           )}
         </div>
       </div>
 
-      <div className="max-w-full overflow-x-auto custom-scrollbar">
-        <div className="min-w-[700px] xl:min-w-full">
-          <Chart options={options} series={displaySeries} type="bar" height={310} />
+      {loading ? (
+        <div className="flex items-center justify-center h-[310px]">
+          <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
         </div>
-      </div>
+      ) : (
+        <div className="max-w-full overflow-x-auto custom-scrollbar">
+          <div className="-ml-4 min-w-[700px] xl:min-w-full pl-2">
+            <Chart options={options} series={series} type="area" height={310} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
