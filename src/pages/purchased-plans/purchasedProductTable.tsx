@@ -898,7 +898,7 @@ export default function PurchasedProductsPage() {
                       </>
                     ) : row.products_used !== undefined ? (
                       <span className="text-xs text-gray-500">
-                        {row.products_used} product(s)
+                        {row.products_used} products
                       </span>
                     ) : (
                       <span className="text-xs text-gray-400">—</span>
