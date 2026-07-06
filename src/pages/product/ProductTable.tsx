@@ -109,6 +109,9 @@ const ProductTable = () => {
   const [productsToActivate, setProductsToActivate] = useState<any[]>([]);
   const [selectedExpiringProducts, setSelectedExpiringProducts] = useState<string[]>([]);
   const [singleProductActivate, setSingleProductActivate] = useState<any>(null);
+  const [viewProduct, setViewProduct] = useState<any>(null);
+  // Map: productId -> plan_type (e.g. 'basic', 'standard', 'premium') from active general plans
+  const [generalPlanMap, setGeneralPlanMap] = useState<Record<string, string>>({});
   // Filter dropdown data
   const [categoriesData, setCategoriesData] = useState<Category[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
@@ -391,12 +394,42 @@ const ProductTable = () => {
       {
         field: "pricing_type",
         headerName: "Pricing",
-        minWidth: 110,
-        cellRenderer: (params: any) => (
-          <div className="flex items-center h-full">
-            <StatusBadge status={params.value || 'free'} />
-          </div>
-        ),
+        minWidth: 145,
+        cellRenderer: (params: any) => {
+          const pricingType = (params.value || 'free').toLowerCase();
+          const productId = String(params.data._id || params.data.id || '');
+          const generalPlanType = generalPlanMap[productId];
+
+          if (pricingType === 'free') {
+            return (
+              <div className="flex items-center h-full">
+                <StatusBadge status="free" />
+              </div>
+            );
+          }
+
+          // Paid product — check if it came from a general plan
+          if (generalPlanType) {
+            return (
+              <div className="flex items-center h-full py-1 gap-2">
+                <StatusBadge status="paid" />
+                <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 capitalize whitespace-nowrap">
+                  {generalPlanType} Plan
+                </span>
+              </div>
+            );
+          }
+
+          // Paid from base listing plan
+          return (
+            <div className="flex items-center h-full py-1 gap-2">
+              <StatusBadge status="paid" />
+              <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                Base Listing
+              </span>
+            </div>
+          );
+        },
         cellStyle: { justifyContent: "left" },
       },
       {
@@ -486,6 +519,8 @@ const ProductTable = () => {
 
           return (
             <ActionButtons
+              onView={() => setViewProduct(product)}
+              showView={true}
               onEdit={() => router.push(`/product/addProduct?id=${product._id || product.id}`)}
               onDelete={() => {
                 if (!isApproved) {
@@ -540,6 +575,29 @@ const ProductTable = () => {
       params.status = filters.status.join(',');
     }
     return params;
+  };
+
+  // Fetch general plan purchases to build productId -> planType map
+  const fetchGeneralPlanMap = async () => {
+    try {
+      const res = await api.get(endPointApi.getVendorGeneralPurchases);
+      const purchases: any[] = res?.data?.data || [];
+      const map: Record<string, string> = {};
+      const now = new Date();
+      purchases.forEach((purchase: any) => {
+        // Only include active (non-expired) purchases
+        if (purchase.expire_at && new Date(purchase.expire_at) < now) return;
+        const planType: string = purchase.plan_type || '';
+        const productIds: any[] = purchase.product_ids || [];
+        productIds.forEach((prod: any) => {
+          const id = typeof prod === 'string' ? prod : String(prod._id || prod.id || prod.product_id || '');
+          if (id) map[id] = planType;
+        });
+      });
+      setGeneralPlanMap(map);
+    } catch {
+      // silently ignore — pricing column will fall back to 'Base Listing'
+    }
   };
 
   // Fetch products with filters
@@ -840,6 +898,7 @@ const ProductTable = () => {
   useEffect(() => {
     fetchCategories();
     fetchDropdownData();
+    fetchGeneralPlanMap();
   }, []);
 
   // Fetch vendor profile and free product count for validation
@@ -1048,11 +1107,10 @@ const ProductTable = () => {
 
       if (plan_id) body.plan_id = plan_id;
       if (plan_type === "custom") {
-        body.months = months;
         body.max_products = max_products;
       }
 
-      const response = await api.post(endPointApi.postCreateListingPlan, body);
+      const response = await api.post(endPointApi.postPurchaseGeneralPlan, body);
       const message = response?.data?.message || "Plan applied successfully! Selected products activated.";
       toast.success(message);
 
@@ -1876,6 +1934,130 @@ const ProductTable = () => {
         onApplyPlan={applyPlanFromExpiry}
         selectedProducts={productsToActivate}
       />
+
+      {/* Product View Modal */}
+      <Modal
+        isOpen={!!viewProduct}
+        onClose={() => setViewProduct(null)}
+        className="max-w-3xl w-[90vw] p-0 overflow-hidden"
+        showCloseButton
+      >
+        <div className="flex flex-col h-[80vh]">
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-between shrink-0">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white capitalize">
+                {viewProduct?.product_name || 'Product Details'}
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                SKU: <span className="font-semibold text-gray-700 dark:text-gray-300">{viewProduct?.sku || 'N/A'}</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-white dark:bg-gray-900">
+            {viewProduct && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Left Column - Image & Basic Info */}
+                  <div className="space-y-6">
+                    <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-gray-50 dark:bg-gray-800/30 flex items-center justify-center p-4 h-64">
+                      {isValidImageUrl(getImageUrl(viewProduct)) ? (
+                        <img 
+                          src={getImageUrl(viewProduct)} 
+                          alt="Product" 
+                          className="max-w-full max-h-full object-contain drop-shadow-sm rounded-lg"
+                        />
+                      ) : (
+                        <div className="text-gray-400 font-medium">No Image</div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Basic Info</h4>
+                        <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[11px] text-gray-500">Brand</span>
+                            <span className="text-sm font-semibold text-gray-900 dark:text-white">{viewProduct.brand || '-'}</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[11px] text-gray-500">Category</span>
+                            <span className="text-sm font-semibold text-gray-900 dark:text-white">{viewProduct.category_name || '-'}</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[11px] text-gray-500">Sub-Category</span>
+                            <span className="text-sm font-semibold text-gray-900 dark:text-white">{viewProduct.sub_category_name || '-'}</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[11px] text-gray-500">Condition</span>
+                            <span className="text-sm font-semibold text-gray-900 dark:text-white capitalize">{viewProduct.condition || '-'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column - Pricing, Status & Details */}
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Status & Pricing</h4>
+                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 space-y-4 border border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Pricing Type</span>
+                          <StatusBadge status={viewProduct.pricing_type || 'free'} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Approval</span>
+                          <StatusBadge status={viewProduct.approval_status || 'pending'} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Visibility</span>
+                          <StatusBadge status={viewProduct.is_visible === false ? 'Hidden' : 'Visible'} />
+                        </div>
+                        <hr className="border-gray-200 dark:border-gray-700" />
+                        
+                        {(viewProduct.product_type_name || '').toLowerCase().includes('sell') && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Selling Price</span>
+                            <span className="text-sm font-bold text-gray-900 dark:text-white">
+                              ₹{Number(viewProduct.selling_price || 0).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        )}
+                        {(viewProduct.product_type_name || '').toLowerCase().includes('rent') && (
+                          <>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">Rental Price (Month)</span>
+                              <span className="text-sm font-bold text-gray-900 dark:text-white">
+                                ₹{Number(viewProduct.rental_price_month || 0).toLocaleString('en-IN')}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">Security Deposit</span>
+                              <span className="text-sm font-bold text-gray-900 dark:text-white">
+                                ₹{Number(viewProduct.deposit_amount || 0).toLocaleString('en-IN')}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Description</h4>
+                      <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap bg-gray-50 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-800 h-32 overflow-y-auto">
+                        {viewProduct.description || viewProduct.product_description || 'No description provided.'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </Modal>
 
       {/* Floating Image Preview */}
       {hoveredImage && (

@@ -1,15 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
-import { ApexOptions } from "apexcharts";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { useSearchParams } from "next/navigation";
-
-const ReactApexChart = dynamic(() => import("react-apexcharts"), {
-  ssr: false,
-});
+import DoughnutChart from "@/components/common/DoughnutChart";
 
 export default function ProductDistributionChart() {
   const searchParams = useSearchParams();
@@ -43,61 +38,17 @@ export default function ProductDistributionChart() {
     fetchData();
   }, [range, startDate, endDate]);
 
-  const options: ApexOptions = {
-    chart: {
-      type: "donut",
-      fontFamily: "Outfit, sans-serif",
-      height: 280,
-    },
-    labels: ["For Sell", "For Rent"],
-    colors: ["#8b5cf6", "#ec4899"],
-    legend: {
-      position: "bottom",
-      fontFamily: "Outfit",
-    },
-    dataLabels: {
-      enabled: true,
-      style: {
-        fontSize: '12px',
-        fontWeight: 'bold',
-        colors: ['#ffffff']
-      },
-      dropShadow: {
-        enabled: true,
-        top: 1,
-        left: 1,
-        blur: 1,
-        color: '#000',
-        opacity: 0.45
-      },
-      formatter: (val: number) => `${val.toFixed(1)}%`,
-    },
-    tooltip: {
-      y: {
-        formatter: (val: number) => val.toLocaleString('en-IN'),
-      },
-    },
-    plotOptions: {
-      pie: {
-        donut: {
-          size: "60%",
-          labels: {
-            show: true,
-            total: {
-              show: true,
-              label: "Total Products",
-              formatter: () => (data?.totalProducts || 0).toLocaleString('en-IN'),
-            },
-          },
-        },
-      },
-    },
-  };
+  const sellProducts = data?.sellProducts || 0;
+  const rentProducts = data?.rentProducts || 0;
+  const totalProducts = data?.totalProducts || 0;
 
-  const series = [data?.sellProducts || 0, data?.rentProducts || 0];
+  const chartData = [
+    { label: "Sell", value: sellProducts, color: "#8b5cf6" },
+    { label: "Rent", value: rentProducts, color: "#ec4899" },
+  ];
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+    <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6 h-full flex flex-col">
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Product Distribution
@@ -106,10 +57,16 @@ export default function ProductDistributionChart() {
           Split between sell and rent products
         </p>
       </div>
-      <div className="max-w-full overflow-x-auto custom-scrollbar">
-        <div className="min-w-[280px]">
-          {!loading && <ReactApexChart options={options} series={series} type="donut" height={280} />}
-        </div>
+      <div className="w-full flex-1 flex items-center justify-center">
+        {loading ? (
+           <div className="flex items-center justify-center">Loading...</div>
+        ) : (
+           <DoughnutChart 
+            data={chartData}
+            centerText={totalProducts.toString()}
+            centerSubtext="Total Products"
+           />
+        )}
       </div>
     </div>
   );

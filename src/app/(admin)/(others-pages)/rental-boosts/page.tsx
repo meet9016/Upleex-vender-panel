@@ -166,7 +166,7 @@ export default function RentalBoostsPage() {
             <p className="text-gray-500 dark:text-gray-400 text-center max-w-sm mb-6">
               You need to have products with an active Priority Plan to use the Booster Plan functionality.
             </p>
-            <Button onClick={() => router.push('/purchasedplan')} className="bg-indigo-600">
+            <Button onClick={() => router.push('/purchased-plans')} className="bg-indigo-600">
               Get Priority Plan
             </Button>
           </div>

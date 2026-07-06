@@ -1,15 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
-import { ApexOptions } from "apexcharts";
 import { api } from "@/utils/axiosInstance";
 import endPointApi from "@/utils/endPointApi";
 import { useSearchParams } from "next/navigation";
-
-const ReactApexChart = dynamic(() => import("react-apexcharts"), {
-  ssr: false,
-});
+import DoughnutChart from "@/components/common/DoughnutChart";
 
 export default function ServiceStatusChart() {
   const searchParams = useSearchParams();
@@ -43,52 +38,16 @@ export default function ServiceStatusChart() {
     fetchData();
   }, [range, startDate, endDate]);
 
-  const options: ApexOptions = {
-    chart: {
-      type: "pie",
-      fontFamily: "Outfit, sans-serif",
-      height: 280,
-    },
-    labels: ["Approved", "Pending", "Rejected"],
-    colors: ["#22c55e", "#f59e0b", "#ef4444"], // Green, Yellow, Red
-    legend: {
-      position: "bottom",
-      fontFamily: "Outfit",
-    },
-    dataLabels: {
-      enabled: true,
-      style: {
-        fontSize: '12px',
-        fontWeight: 'bold',
-        colors: ['#ffffff']
-      },
-      dropShadow: {
-        enabled: true,
-        top: 1,
-        left: 1,
-        blur: 1,
-        color: '#000',
-        opacity: 0.45
-      },
-      formatter: (val: number) => `${val.toFixed(1)}%`,
-    },
-    tooltip: {
-      y: {
-        formatter: (val: number) => val.toLocaleString('en-IN'),
-      },
-    },
-  };
-
-  const series = [
-    data?.serviceActive || 0,
-    data?.servicePending || 0,
-    data?.serviceRejected || 0,
+  const chartData = [
+    { label: "Approved", value: data?.serviceActive || 0, color: "#22c55e" },
+    { label: "Pending", value: data?.servicePending || 0, color: "#f59e0b" },
+    { label: "Rejected", value: data?.serviceRejected || 0, color: "#ef4444" },
   ];
 
-  const total = series.reduce((a, b) => a + b, 0);
+  const total = chartData.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
+    <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6 h-full flex flex-col">
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Services Status
@@ -97,16 +56,22 @@ export default function ServiceStatusChart() {
           Approved, Pending, and Rejected services
         </p>
       </div>
-      <div className="max-w-full overflow-x-auto custom-scrollbar">
-        <div className="min-w-[280px]">
-          {loading ? (
-             <div className="h-[280px] flex items-center justify-center">Loading...</div>
-          ) : total > 0 ? (
-             <ReactApexChart options={options} series={series} type="pie" height={280} />
-          ) : (
-             <div className="h-[280px] flex items-center justify-center text-gray-400">No Services Found</div>
-          )}
-        </div>
+      <div className="w-full flex-1 flex items-center justify-center">
+        {loading ? (
+           <div className="flex items-center justify-center">Loading...</div>
+        ) : total > 0 ? (
+           <DoughnutChart 
+            data={chartData} 
+            centerText={total.toString()}
+            centerSubtext="Total Services"
+            isPie={true}
+           />
+        ) : (
+           <div className="flex flex-col items-center justify-center text-gray-400">
+              <p className="text-3xl font-bold mb-2">0</p>
+              <p>No Services Found</p>
+           </div>
+        )}
       </div>
     </div>
   );

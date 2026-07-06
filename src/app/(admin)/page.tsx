@@ -9,6 +9,7 @@ import DashboardFilter from "@/components/ecommerce/DashboardFilter";
 import ProductDistributionChart from "@/components/ecommerce/ProductDistributionChart";
 import ServiceStatusChart from "@/components/ecommerce/ServiceStatusChart";
 import CustomerChart from "@/components/ecommerce/CustomerChart";
+import PurchasedPlanChart from "@/components/ecommerce/PurchasedPlanChart";
 
 export const dynamic = 'force-dynamic';
 
@@ -40,17 +41,21 @@ export default function Ecommerce() {
         <MonthlySalesChart />
       </div>
 
-      {/* Row 3: Product distribution and status */}
-      <div className="col-span-12 lg:col-span-4">
+      {/* Row 3: All 4 pie charts in one row - Customer Acquisition, Product Distribution, Purchased Plans, Services Status */}
+      <div className="col-span-12 lg:col-span-3">
+        <CustomerChart />
+      </div>
+
+      <div className="col-span-12 lg:col-span-3">
         <ProductDistributionChart />
       </div>
 
-      <div className="col-span-12 lg:col-span-4">
-        <ServiceStatusChart />
+      <div className="col-span-12 lg:col-span-3">
+        <PurchasedPlanChart />
       </div>
 
-      <div className="col-span-12 lg:col-span-4">
-        <CustomerChart />
+      <div className="col-span-12 lg:col-span-3">
+        <ServiceStatusChart />
       </div>
 
     </div>

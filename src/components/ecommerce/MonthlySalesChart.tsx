@@ -47,8 +47,8 @@ export default function MonthlySalesChart() {
         const { labels: lbs, orders, quotes } = response.data.data.graphs;
         setLabels(lbs || []);
         setSeries([
-          { name: "Orders (Sell)", data: orders || [] },
-          { name: "Quotes (Rent)", data: quotes || [] },
+          { name: "Orders (Sell)", data: (orders || []).map((v: any) => v ?? 0) },
+          { name: "Quotes (Rent)", data: (quotes || []).map((v: any) => v ?? 0) },
         ]);
       }
     } catch (error) {
@@ -83,16 +83,16 @@ export default function MonthlySalesChart() {
   }, [chartRange]);
 
   const options: ApexOptions = {
-    colors: ["#3b82f6", "#f43f5e"],
+    colors: ["#6366f1", "#ec4899"],
     chart: {
       fontFamily: "Outfit, sans-serif",
       type: "area",
       height: 310,
       toolbar: { show: false },
-      dropShadow: { enabled: true, color: '#3b82f6', top: 18, left: 0, blur: 5, opacity: 0.1 }
+      dropShadow: { enabled: true, color: '#6366f1', top: 18, left: 0, blur: 5, opacity: 0.1 }
     },
     dataLabels: { enabled: false },
-    stroke: { show: true, width: 3, colors: ["#3b82f6", "#f43f5e"], curve: "smooth" },
+    stroke: { show: true, width: 3, colors: ["#6366f1", "#ec4899"], curve: "smooth" },
     fill: {
       type: "gradient",
       gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] }
@@ -177,8 +177,8 @@ export default function MonthlySalesChart() {
           <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
         </div>
       ) : (
-        <div className="max-w-full overflow-x-auto custom-scrollbar">
-          <div className="-ml-5 min-w-[650px] xl:min-w-full pl-2">
+        <div className="w-full">
+          <div className="-ml-5 w-full pl-2">
             <ReactApexChart options={options} series={series} type="area" height={310} />
           </div>
         </div>

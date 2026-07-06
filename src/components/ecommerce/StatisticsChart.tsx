@@ -50,8 +50,8 @@ export default function StatisticsChart() {
         const { labels: lbs, earnings } = response.data.data.graphs;
         setLabels(lbs || []);
         setSeries([
-          { name: "Sell Earnings", data: earnings.sell || [] },
-          { name: "Rent Earnings", data: earnings.rent || [] },
+          { name: "Sell Earnings", data: (earnings.sell || []).map((v: any) => v ?? 0) },
+          { name: "Rent Earnings", data: (earnings.rent || []).map((v: any) => v ?? 0) },
         ]);
       }
     } catch (error) {
@@ -95,7 +95,8 @@ export default function StatisticsChart() {
       toolbar: { show: false },
       dropShadow: { enabled: true, color: '#6366f1', top: 14, left: 0, blur: 4, opacity: 0.1 }
     },
-    stroke: { show: true, width: 3, colors: ["#6366f1", "#ec4899"], curve: "smooth" },
+    dataLabels: { enabled: false },
+    stroke: { show: true, width: 3, colors: ["#6366f1", "#ec4899"], curve: "smooth", lineCap: "round" },
     fill: {
       type: "gradient",
       gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.03, stops: [0, 100] }
@@ -174,8 +175,8 @@ export default function StatisticsChart() {
           <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
         </div>
       ) : (
-        <div className="max-w-full overflow-x-auto custom-scrollbar">
-          <div className="-ml-4 min-w-[700px] xl:min-w-full pl-2">
+        <div className="w-full">
+          <div className="-ml-4 w-full pl-2">
             <Chart options={options} series={series} type="area" height={310} />
           </div>
         </div>

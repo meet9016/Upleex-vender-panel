@@ -1,4 +1,4 @@
-import PurchasedProductsPage from '@/pages/purchasedplan/purchasedProductTable'
+import PurchasedProductsPage from '@/pages/purchased-plans/purchasedProductTable'
 import React from 'react'   
 
 const page = () => {
