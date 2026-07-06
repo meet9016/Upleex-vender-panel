@@ -903,14 +903,7 @@ export default function PurchasedProductsPage() {
                     ) : (
                       <span className="text-xs text-gray-400">—</span>
                     )}
-                    {row.product_names && row.product_names !== "—" && (
-                      <span
-                        className="text-[10px] text-gray-400 dark:text-gray-500 truncate max-w-[160px]"
-                        title={row.product_names}
-                      >
-                        {row.product_names}
-                      </span>
-                    )}
+                    
                   </div>
 
                   {/* Start Date */}
