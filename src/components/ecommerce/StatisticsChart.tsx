@@ -30,6 +30,8 @@ export default function StatisticsChart() {
   ]);
 
   const fetchData = useCallback(async () => {
+    // For custom, only fetch when dates are selected
+    if (chartRange === "custom" && !customDates) return;
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -63,19 +65,29 @@ export default function StatisticsChart() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // When switching to custom without dates, reset chart to flat zero
+  useEffect(() => {
+    if (chartRange === "custom" && !customDates) {
+      setLabels([]);
+      setSeries([
+        { name: "Sell Earnings", data: [] },
+        { name: "Rent Earnings", data: [] },
+      ]);
+    }
+  }, [chartRange, customDates]);
   // flatpickr for custom range
   useEffect(() => {
-    if (!datePickerRef.current || chartRange !== "custom") return;
-    const today = new Date();
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    if (!datePickerRef.current || chartRange !== "custom") {
+      // Reset custom dates when switching away from custom
+      if (chartRange !== "custom") setCustomDates(null);
+      return;
+    }
 
     const fp = flatpickr(datePickerRef.current, {
       mode: "range",
       static: true,
       monthSelectorType: "static",
       dateFormat: "M d, Y",
-      defaultDate: [oneMonthAgo, today],
       onChange: (selectedDates) => {
         if (selectedDates.length === 2) {
           setCustomDates({ start: selectedDates[0], end: selectedDates[1] });
