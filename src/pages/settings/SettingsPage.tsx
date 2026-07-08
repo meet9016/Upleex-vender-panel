@@ -1135,7 +1135,7 @@ const SettingsPage: React.FC = () => {
                 }`}
             >
               <Package size={15} className={currentTab === "listing" ? "text-emerald-500" : "text-gray-400"} />
-              <span>Listing</span>
+              <span>Listing Duration</span>
             </Button>
             <Button
               variant={currentTab === "general" ? "secondary" : "ghost"}

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import AgGridTable from '@/components/tables/AgGridTable';
 import { ColDef } from 'ag-grid-community';
 import { MdDelete, MdModeEdit, MdSearch, MdMoreVert, MdBlock, MdClose } from "react-icons/md";
-import { FiMoreVertical } from "react-icons/fi";
+import { FiMoreVertical, FiFileText } from "react-icons/fi";
 import { FaFileExcel, FaFilePdf } from "react-icons/fa";
 import ActionButtons from "@/components/common/ActionButtons";
 import StatusBadge from "@/components/common/StatusBadge";
@@ -235,11 +235,13 @@ const ServiceTable = () => {
       const res = await api.get(endPointApi.postAllVendorServiceList, {
         params: { 
           search,
-          sortBy: 'is_priority', // Ensure priority sorting
+          sortBy: 'is_priority',
           order: 'desc'
         }
       });
-      setServiceData(res?.data?.data || []);
+      // Draft services draft page pe dikhenge, yahan filter karo
+      const all = res?.data?.data || [];
+      setServiceData(all.filter((s: any) => s.status !== 'draft'));
     } catch (error) {
       console.log("fetch error", error);
     } finally {
@@ -327,6 +329,13 @@ const ServiceTable = () => {
                 </div> */}
 
                 <div className="py-1">
+                  <button
+                    onClick={() => { setShowActionsMenu(false); router.push('/draft?tab=service'); }}
+                    className="group w-full flex items-center gap-3 px-4 py-3.5 text-[13px] font-medium text-gray-700 dark:text-gray-300 border-l-4 border-transparent hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all duration-200"
+                  >
+                    <FiFileText className="text-lg text-indigo-500 group-hover:scale-110 transition-transform duration-200" />
+                    <span>View Drafts</span>
+                  </button>
                   <button
                     onClick={handleExportExcel}
                     disabled={excelLoading || pdfLoading}
