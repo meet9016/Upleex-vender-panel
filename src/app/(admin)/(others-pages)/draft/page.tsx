@@ -113,7 +113,7 @@ export default function DraftPage() {
       cellRenderer: (params: any) => (
         <div className="flex gap-2 items-center h-full">
           <button
-            onClick={() => openPlanModal(params.data)}
+            onClick={() => openServicePlanModal(params.data)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm"
           >
             <RotateCcw size={12} />
@@ -220,9 +220,9 @@ export default function DraftPage() {
     }
   };
 
-  const openPlanModal = (item: any) => {
+  const openServicePlanModal = (item: any) => {
     setSelected([item]);
-    setShowPlanDialog(true);
+    setShowServicePlanDialog(true);
   };
 
   const currentColumns = activeScope === 'product' ? productColumns : serviceColumns;
