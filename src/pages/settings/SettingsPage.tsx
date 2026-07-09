@@ -7,7 +7,7 @@ import endPointApi from "@/utils/endPointApi";
 import { toast } from "react-toastify";
 import PageLoader from "@/components/common/PageLoader";
 import Button from "@/components/ui/button/Button";
-import { AlertCircle, Eye, Shield, KeyRound, Save, Mail, Calendar, MapPin, User, FileText, Smartphone, Plus, Trash2, Rocket, Wallet, Package, Search, Check } from "lucide-react";
+import { AlertCircle, Eye, Shield, KeyRound, Save, Mail, Calendar, MapPin, User, FileText, Smartphone, Plus, Trash2, Rocket, Wallet, Package, Search, Check, Expand, X } from "lucide-react";
 import { useDemoAccount } from "@/hooks/useDemoAccount";
 import { Modal } from "@/components/ui/modal";
 import { useWallet } from "@/context/WalletContext";
@@ -150,6 +150,8 @@ const SettingsPage: React.FC = () => {
   const [uploadedVideos, setUploadedVideos] = useState<string[]>([]);
   const [uploadVideos, setUploadVideos] = useState<File[]>([]);
   const [videoToDelete, setVideoToDelete] = useState<string | null>(null);
+  const [fullscreenVideo, setFullscreenVideo] = useState<string | null>(null);
+  const [videoRatios, setVideoRatios] = useState<Record<string, number>>({});
   const [pendingVideos, setPendingVideos] = useState<File[]>([]); // Videos waiting to be uploaded when rendering starts
   const { balance, currency, refreshBalance } = useWallet();
   const { filters, isLoadingFilter } = useFilter();
@@ -628,6 +630,37 @@ const SettingsPage: React.FC = () => {
 
   const handleDeleteVideoClick = (videoUrl: string) => {
     setVideoToDelete(videoUrl);
+  };
+
+  const detectVideoRatio = (videoUrl: string) => {
+    const video = document.createElement('video');
+    video.src = videoUrl;
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => {
+      const ratio = video.videoWidth / video.videoHeight;
+      setVideoRatios(prev => ({ ...prev, [videoUrl]: ratio }));
+    };
+  };
+
+  useEffect(() => {
+    uploadedVideos.forEach(video => {
+      if (!videoRatios[video]) {
+        detectVideoRatio(video);
+      }
+    });
+  }, [uploadedVideos]);
+
+  const getContainerStyle = (ratio: number | undefined): React.CSSProperties => {
+    if (!ratio) return {};
+    const maxHeight = typeof window !== 'undefined' ? window.innerHeight * 0.85 : 600;
+    const maxWidth = typeof window !== 'undefined' ? window.innerWidth * 0.9 : 800;
+    let width = maxWidth;
+    let height = width / ratio;
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = height * ratio;
+    }
+    return { width: `${width}px`, height: `${height}px` };
   };
 
   const confirmDeleteVideo = async () => {
@@ -1740,7 +1773,16 @@ const SettingsPage: React.FC = () => {
           key={idx}
           className="relative w-64 sm:w-80 aspect-video bg-gray-100 rounded-2xl overflow-hidden group border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex-shrink-0"
         >
-          <video src={video} controls className="w-full h-full object-cover" />
+          <video src={video} className="w-full h-full object-cover" preload="metadata" muted playsInline />
+          
+          <button 
+            onClick={() => setFullscreenVideo(video)}
+            className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+              <Expand size={20} className="text-brand-600" />
+            </div>
+          </button>
 
           <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
             <button
@@ -1753,6 +1795,34 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
       ))}
+    </div>
+  </div>
+)}
+
+{/* Fullscreen Video Modal */}
+{fullscreenVideo && (
+  <div 
+    className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+    onClick={() => setFullscreenVideo(null)}
+  >
+    <button 
+      onClick={() => setFullscreenVideo(null)}
+      className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+    >
+      <X size={24} className="text-white" />
+    </button>
+    <div 
+      className="relative bg-black rounded-lg overflow-hidden"
+      style={getContainerStyle(videoRatios[fullscreenVideo])}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <video 
+        src={fullscreenVideo} 
+        controls
+        autoPlay
+        className="w-full h-full"
+        style={{ aspectRatio: videoRatios[fullscreenVideo] || '16/9' }}
+      />
     </div>
   </div>
 )}
@@ -2113,7 +2183,16 @@ const SettingsPage: React.FC = () => {
                               key={idx}
                               className="relative w-64 sm:w-80 aspect-video bg-gray-100 rounded-2xl overflow-hidden group border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex-shrink-0"
                             >
-                              <video src={video} controls className="w-full h-full object-cover" />
+                              <video src={video} className="w-full h-full object-cover" preload="metadata" muted playsInline />
+                              
+                              <button 
+                                onClick={() => setFullscreenVideo(video)}
+                                className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                              >
+                                <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                                  <Expand size={20} className="text-brand-600" />
+                                </div>
+                              </button>
 
                               <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                 <button
@@ -2124,8 +2203,36 @@ const SettingsPage: React.FC = () => {
                                   <MdDelete size={20} />
                                 </button>
                               </div>
-                            </div>
+                                Q`</div>
                           ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fullscreen Video Modal */}
+                    {fullscreenVideo && (
+                      <div 
+                        className="fixed inset-0 z-9999 bg-black/95 flex items-center justify-center p-4"
+                        onClick={() => setFullscreenVideo(null)}
+                      >
+                        <button 
+                          onClick={() => setFullscreenVideo(null)}
+                          className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                        >
+                          <X size={24} className="text-white" />
+                        </button>
+                        <div 
+                          className="relative bg-black rounded-lg overflow-hidden"
+                          style={getContainerStyle(videoRatios[fullscreenVideo])}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <video 
+                            src={fullscreenVideo} 
+                            controls
+                            autoPlay
+                            className="w-full h-full"
+                            style={{ aspectRatio: videoRatios[fullscreenVideo] || '16/9' }}
+                          />
                         </div>
                       </div>
                     )}

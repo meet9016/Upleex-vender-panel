@@ -744,6 +744,145 @@ export default function ContactDetails({ setKYCFormData, KYCformData, errors, cl
         </div>
       </div>
 
+      {/* Pickup Address Section */}
+      <ComponentCard title="Pickup Address (Optional)" className="mt-6">
+        <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                If different from contact address, courier will pick up from here
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setKYCFormData(prev => ({
+                  ...prev,
+                  pickup_address: KYCformData.address,
+                  pickup_pincode: KYCformData.pincode,
+                  pickup_country_id: KYCformData.country_id,
+                  pickup_state_id: KYCformData.state_id,
+                  pickup_city_id: KYCformData.city_id,
+                }));
+                toast.success("Contact address copied to pickup address!");
+              }}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-white dark:bg-gray-800 border border-blue-300 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Copy from Contact
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <Label>Address</Label>
+            <Input
+              placeholder="Pickup address"
+              className="py-3"
+              type="text"
+              value={KYCformData?.pickup_address}
+              onChange={(e) => {
+                setKYCFormData(prev => ({
+                  ...prev,
+                  pickup_address: e.target.value,
+                }));
+              }}
+            />
+          </div>
+
+          <div>
+            <Label>City</Label>
+            <SearchableDropdown
+              options={filteredCities}
+              value={KYCformData?.pickup_city_id?.value || null}
+              placeholder="Select Pickup City"
+              onChange={(value: string) => {
+                const selected = filteredCities.find((c) => c.value === value);
+                if (selected) {
+                  setKYCFormData(prev => ({
+                    ...prev,
+                    pickup_city_id: { value: selected.value, label: selected.label },
+                  }));
+                }
+              }}
+              searchable={true}
+              onSearch={(value: string) => debounceSearch("city", value)}
+              onScrollNearBottom={() => {
+                if (hasMoreCities && !loadingCities) {
+                  fetchOptions("city", searchCity, pageRefCity.current);
+                }
+              }}
+            />
+          </div>
+
+          <div>
+            <Label>State</Label>
+            <SearchableDropdown
+              options={filteredStates}
+              value={KYCformData?.pickup_state_id?.value || null}
+              placeholder="Select Pickup State"
+              onChange={(value: string) => {
+                const selected = filteredStates.find((s) => s.value === value);
+                if (selected) {
+                  setKYCFormData(prev => ({
+                    ...prev,
+                    pickup_state_id: { value: selected.value, label: selected.label },
+                  }));
+                }
+              }}
+              searchable={true}
+              onSearch={(value: string) => debounceSearch("state", value)}
+            />
+          </div>
+
+          <div>
+            <Label>Country</Label>
+            <SearchableDropdown
+              options={filteredCountries}
+              value={KYCformData?.pickup_country_id?.value || null}
+              placeholder="Select Pickup Country"
+              onChange={(value: string) => {
+                const selected = filteredCountries.find((c) => c.value === value);
+                if (selected) {
+                  setKYCFormData(prev => ({
+                    ...prev,
+                    pickup_country_id: { value: selected.value, label: selected.label },
+                  }));
+                }
+              }}
+              searchable={true}
+              onSearch={(value: string) => debounceSearch("country", value)}
+            />
+          </div>
+
+          <div>
+            <Label>Pincode</Label>
+            <Input
+              placeholder="Pickup pincode"
+              type="text"
+              maxLength={6}
+              value={KYCformData?.pickup_pincode}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (/^\d*$/.test(value)) {
+                  setKYCFormData(prev => ({
+                    ...prev,
+                    pickup_pincode: value,
+                  }));
+                }
+              }}
+              className="py-3"
+            />
+          </div>
+        </div>
+      </ComponentCard>
+
     </ComponentCard >
   );
 }

@@ -59,6 +59,15 @@ export type KycFormDataType = {
   cheque_image: File | string | null;
   terms_conditions: boolean;
   completed_pages: string[];
+  // Pickup Address fields
+  pickup_contact_person: string;
+  pickup_phone: string;
+  pickup_email: string;
+  pickup_address: string;
+  pickup_pincode: string;
+  pickup_country_id: { value: string; label: string };
+  pickup_state_id: { value: string; label: string };
+  pickup_city_id: { value: string; label: string };
 };
 
 export type ErrorType = {
@@ -129,6 +138,15 @@ export default function KYCPage() {
     cheque_image: null,
     terms_conditions: false,
     completed_pages: [],
+    // Pickup Address defaults
+    pickup_contact_person: "",
+    pickup_phone: "",
+    pickup_email: "",
+    pickup_address: "",
+    pickup_pincode: "",
+    pickup_country_id: { value: "", label: "" },
+    pickup_state_id: { value: "", label: "" },
+    pickup_city_id: { value: "", label: "" },
   });
 
   // Sync currentStep to URL
@@ -411,6 +429,24 @@ export default function KYCPage() {
           page: "1"
         };
         formData.append("ContactDetails", JSON.stringify([contact]));
+        
+        // Add PickupAddress if any field is filled
+        if (KYCformData.pickup_address || KYCformData.pickup_pincode || KYCformData.pickup_contact_person) {
+          const pickupAddress = {
+            contact_person: KYCformData.pickup_contact_person,
+            phone: KYCformData.pickup_phone,
+            email: KYCformData.pickup_email,
+            address: KYCformData.pickup_address,
+            pincode: KYCformData.pickup_pincode,
+            country_id: KYCformData.pickup_country_id?.value || "",
+            country_name: KYCformData.pickup_country_id?.label || "",
+            state_id: KYCformData.pickup_state_id?.value || "",
+            state_name: KYCformData.pickup_state_id?.label || "",
+            city_id: KYCformData.pickup_city_id?.value || "",
+            city_name: KYCformData.pickup_city_id?.label || "",
+          };
+          formData.append("PickupAddress", JSON.stringify(pickupAddress));
+        }
       } else if (actualStep === 1) {
         const identity = {
           pancard_number: KYCformData.pancard_number,
@@ -623,6 +659,22 @@ export default function KYCPage() {
           terms_conditions: data.terms_conditions !== undefined 
             ? data.terms_conditions 
             : (data.Declaration?.terms_conditions !== undefined ? data.Declaration.terms_conditions : prev.terms_conditions),
+          
+          // Pickup Address from API
+          pickup_contact_person: data.PickupAddress?.contact_person || "",
+          pickup_phone: data.PickupAddress?.phone || "",
+          pickup_email: data.PickupAddress?.email || "",
+          pickup_address: data.PickupAddress?.address || "",
+          pickup_pincode: data.PickupAddress?.pincode || "",
+          pickup_country_id: data.PickupAddress?.country_id 
+            ? { value: data.PickupAddress.country_id, label: data.PickupAddress.country_name || "" }
+            : { value: "", label: "" },
+          pickup_state_id: data.PickupAddress?.state_id 
+            ? { value: data.PickupAddress.state_id, label: data.PickupAddress.state_name || "" }
+            : { value: "", label: "" },
+          pickup_city_id: data.PickupAddress?.city_id 
+            ? { value: data.PickupAddress.city_id, label: data.PickupAddress.city_name || "" }
+            : { value: "", label: "" },
         }));
 
         // If user has completed any pages or has terms accepted, it's "edit time"
