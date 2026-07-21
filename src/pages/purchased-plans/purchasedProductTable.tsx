@@ -20,7 +20,10 @@ import {
   Tag,
   Calendar,
   IndianRupee,
+  FileText,
+  Printer
 } from "lucide-react";
+import AgGridTable from "@/components/tables/AgGridTable";
 
 // ─────────────────────────────────────────────
 // Types
@@ -509,6 +512,169 @@ const PlanViewModal = ({
 };
 
 // ─────────────────────────────────────────────
+// Invoice Modal
+// ─────────────────────────────────────────────
+const InvoiceModal = ({ data, vendorKyc, onClose }: { data: PlanRow[]; vendorKyc: any; onClose: () => void }) => {
+  const [downloading, setDownloading] = useState(false);
+
+  if (!data || data.length === 0) return null;
+
+  const handlePrint = async () => {
+    try {
+      setDownloading(true);
+      const payload = {
+        data: data.map((item, index) => ({
+          id: index === 0 ? (item.id || item._id) : undefined,
+          items: [{
+            productName: `${item.plan_name} Plan`,
+            productTypeName: item.plan_source,
+            price: Number(item.amount) || 0,
+            quantity: 1,
+            totalPrice: Number(item.total_amount) || Number(item.amount) || 0,
+            gstAmount: Number(item.gst_amount) || 0
+          }],
+          totalAmount: data.reduce((sum, i) => sum + (Number(i.total_amount) || Number(i.amount) || 0), 0)
+        }))[0],
+        vendorProfile: {
+          businessName: vendorKyc?.Identity?.business_name,
+          email: vendorKyc?.ContactDetails?.email,
+          mobile: vendorKyc?.ContactDetails?.mobile,
+          address: vendorKyc?.ContactDetails?.address,
+          city: vendorKyc?.ContactDetails?.city_name,
+          state: vendorKyc?.ContactDetails?.state_name,
+          pincode: vendorKyc?.ContactDetails?.pincode,
+          gstNumber: vendorKyc?.Identity?.gst_number,
+          businessLogo: vendorKyc?.Documents?.business_logo_image,
+        },
+        type: 'plan' // Important flag to branch in backend!
+      };
+
+      // Since we want multiple plans in one invoice, adjust payload
+      payload.data.items = data.map(item => ({
+        productName: `${item.plan_name} Plan`,
+        productTypeName: item.plan_source,
+        price: Number(item.amount) || 0,
+        quantity: 1,
+        totalPrice: Number(item.total_amount) || Number(item.amount) || 0,
+        gstAmount: Number(item.gst_amount) || 0
+      }));
+
+      const response = await api.post('/invoice/pdf', payload, {
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const billNo = parseInt(String(data[0].id || data[0]._id).slice(-6), 16) || Math.floor(Math.random() * 1000000);
+      link.setAttribute('download', `Invoice-${billNo}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const totalAmount = data.reduce((sum, item) => sum + (Number(item.total_amount) || Number(item.amount) || 0), 0);
+
+  return (
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm print:bg-transparent print:p-0">
+      <div className="bg-white text-black w-full max-w-4xl max-h-[90vh] overflow-y-auto print:max-h-none print:overflow-visible shadow-2xl relative">
+        <div className="sticky top-0 bg-gray-100 flex justify-end items-center p-4 print:hidden border-b z-10">
+          <button onClick={onClose} className="p-2 bg-gray-200 rounded-md hover:bg-gray-300">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-8 print:p-4 relative flex-1">
+          {vendorKyc?.Documents?.business_logo_image && (
+            <div className="absolute top-8 left-8 print:top-4 print:left-4">
+              <img src={vendorKyc.Documents.business_logo_image} alt="Business Logo" className="h-16 object-contain" />
+            </div>
+          )}
+          <div className="text-center mb-6">
+            <p className="text-sm font-semibold uppercase tracking-widest">|| Shree Ganeshay Namah ||</p>
+            <h1 className="text-3xl font-black uppercase mt-1">INVOICE</h1>
+            <div className="text-sm mt-2 uppercase text-center max-w-2xl mx-auto">
+              {vendorKyc?.ContactDetails?.address && (
+                <>ADDRESS : {vendorKyc.ContactDetails.address}, <br /></>
+              )}
+              {vendorKyc?.ContactDetails?.city_name || 'SURAT'}-{vendorKyc?.ContactDetails?.pincode || '395010'}, {vendorKyc?.ContactDetails?.state_name || 'GUJARAT'} 
+            </div>
+          </div>
+
+          <div className="flex justify-between border-t border-b border-black py-2 mb-4 text-sm font-semibold">
+            <div>
+              <p>Customer : {vendorKyc?.Identity?.business_name || 'VENDOR'}</p>
+              <p>Mob.No. : {vendorKyc?.ContactDetails?.mobile || 'N/A'}</p>
+              
+            </div>
+            <div className="text-right">
+              <p>Bill No: {parseInt(String(data[0].id || data[0]._id).slice(-6), 16) || Math.floor(Math.random() * 1000000)}</p>
+              <p>Date : {new Date().toLocaleDateString("en-GB")}</p>
+            </div>
+          </div>
+
+          <table className="w-full text-sm border-collapse border border-black mb-4">
+            <thead>
+              <tr className="border-b border-black">
+                <th className="border-r border-black p-2 text-left w-12">No.</th>
+                <th className="border-r border-black p-2 text-left">Description</th>
+                <th className="border-r border-black p-2 text-center w-24">Type</th>
+                <th className="border-r border-black p-2 text-right w-24">Rate</th>
+                <th className="border-r border-black p-2 text-right w-24">Tax GST</th>
+                <th className="p-2 text-right w-32">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item, index) => {
+                const total = Number(item.total_amount) || Number(item.amount) || 0;
+                const gst = Number(item.gst_amount) || 0;
+                const rate = total - gst;
+                return (
+                  <tr key={index} className="border-b border-black last:border-b-0">
+                    <td className="border-r border-black p-2">{index + 1}</td>
+                    <td className="border-r border-black p-2">{item.plan_name} Plan</td>
+                    <td className="border-r border-black p-2 text-center">{item.plan_source}</td>
+                    <td className="border-r border-black p-2 text-right">{rate.toFixed(2)}</td>
+                    <td className="border-r border-black p-2 text-right">{gst.toFixed(2)}</td>
+                    <td className="p-2 text-right">{total.toFixed(2)}</td>
+                  </tr>
+                );
+              })}
+              <tr>
+                <td colSpan={5} className="border-r border-t border-black p-2 text-right font-bold">Bill Total Amount :</td>
+                <td className="border-t border-black p-2 text-right font-bold">{totalAmount.toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div className="flex justify-between text-xs mt-8">
+            <div>
+              <p>* Goods Once Sold will not be Refunded.</p>
+              <p>* No Guarantee for Cloth, Colour & Work.</p>
+              <p>SUBJECT TO SURAT JURISDICTION</p>
+            </div>
+            <div className="text-right pt-4 border-t border-black w-48 mt-4">
+              <p>For, UPLEEX</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="sticky bottom-0 bg-gray-100 p-4 border-t print:hidden flex justify-end z-10">
+          <button onClick={handlePrint} disabled={downloading} className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 shadow-md font-medium">
+            <Printer className="w-4 h-4" /> {downloading ? "Downloading..." : "Download PDF"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────
 // Main Component
 // ─────────────────────────────────────────────
 export default function PurchasedProductsPage() {
@@ -517,6 +683,9 @@ export default function PurchasedProductsPage() {
 
   const [activeTab, setActiveTab] = useState<"all" | PlanSource>("all");
   const [viewPlan, setViewPlan] = useState<PlanRow | null>(null);
+  const [selectedRows, setSelectedRows] = useState<PlanRow[]>([]);
+  const [invoiceData, setInvoiceData] = useState<PlanRow[] | null>(null);
+  const [vendorKyc, setVendorKyc] = useState<any>(null);
   const { setBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -529,13 +698,18 @@ export default function PurchasedProductsPage() {
       try {
         setLoading(true);
 
-        const [listingRes, priorityRes, boostRes, generalRes] =
+        const [listingRes, priorityRes, boostRes, generalRes, kycRes] =
           await Promise.allSettled([
             api.get(endPointApi.getVendorListingPurchases),
             api.get(endPointApi.getVendorPriorityPurchases),
             api.get(endPointApi.getVendorRentalBoostPurchases),
             api.get(endPointApi.getVendorGeneralPurchases),
+            api.post(endPointApi.postFetchVendorKYCFormData as string),
           ]);
+
+        if (kycRes.status === "fulfilled") {
+          setVendorKyc(kycRes.value?.data?.data || kycRes.value?.data || null);
+        }
 
         const allRows: PlanRow[] = [];
 
@@ -700,6 +874,114 @@ export default function PurchasedProductsPage() {
     },
   ];
 
+  const columns = useMemo(() => [
+    {
+      field: "plan_source",
+      headerName: "Plan Type",
+      width: 160,
+      cellRenderer: (params: any) => <SourceBadge source={params.value} />
+    },
+    {
+      field: "plan_name",
+      headerName: "Plan Name",
+      width: 180,
+      cellRenderer: (params: any) => <span className="capitalize">{params.value}</span>
+    },
+    {
+      field: "amount",
+      headerName: "Amount",
+      width: 120,
+      cellRenderer: (params: any) => `₹${Number(params.value).toLocaleString("en-IN")}`
+    },
+    {
+      headerName: "Products",
+      width: 150,
+      cellRenderer: (params: any) => {
+        const row = params.data;
+        const cfg = PLAN_CONFIG[row.plan_source];
+        if (row.max_products !== undefined) {
+          return (
+            <div className="flex flex-col justify-center gap-0.5 w-full pt-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-700 dark:text-gray-300">
+                  {row.products_used ?? 0}
+                  <span className="text-gray-400">/{row.max_products}</span>
+                </span>
+              </div>
+              <div className="h-1 w-16 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${cfg.dot} opacity-80`}
+                  style={{
+                    width: `${Math.min(100, ((row.products_used ?? 0) / row.max_products) * 100)}%`,
+                  }}
+                />
+              </div>
+            </div>
+          );
+        } else if (row.products_used !== undefined) {
+          return <span className="text-xs text-gray-500 pt-3 inline-block">{row.products_used} products</span>;
+        }
+        return <span className="text-xs text-gray-400 pt-3 inline-block">—</span>;
+      }
+    },
+    {
+      field: "start_at",
+      headerName: "Start Date",
+      width: 160,
+      cellRenderer: (params: any) => (
+        <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+          <Clock className="w-3 h-3 opacity-60 flex-shrink-0" />
+          {formatDate(params.value)}
+        </span>
+      )
+    },
+    {
+      field: "expire_at",
+      headerName: "Expiry",
+      width: 160,
+      cellRenderer: (params: any) => {
+        const row = params.data;
+        return (
+          <span className={`text-xs flex items-center gap-1.5 ${row.is_expired ? "text-red-500" : "text-gray-500 dark:text-gray-400"}`}>
+            {row.is_expired ? <XCircle className="w-3 h-3 flex-shrink-0" /> : <CheckCircle2 className="w-3 h-3 flex-shrink-0 text-green-500" />}
+            {formatDate(params.value)}
+          </span>
+        );
+      }
+    },
+    {
+      field: "status",
+      headerName: "Status",
+      width: 120,
+      cellRenderer: (params: any) => (
+        <StatusBadge status={params.data.is_expired ? "expired" : params.value || "active"} />
+      )
+    },
+    {
+      headerName: "Action",
+      width: 140,
+      pinned: "right",
+      cellRenderer: (params: any) => (
+        <div className="flex items-center justify-center gap-2 h-full">
+          <button
+            onClick={() => setViewPlan(params.data)}
+            className="w-8 h-8 flex items-center justify-center rounded-md text-brand-600 bg-brand-50 hover:bg-brand-100 hover:text-brand-700 transition-all duration-300 shadow-sm"
+            title="View Details"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setInvoiceData([params.data])}
+            className="w-8 h-8 flex items-center justify-center rounded-md text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 transition-all duration-300 shadow-sm"
+            title="View Bill"
+          >
+            <FileText className="w-4 h-4" />
+          </button>
+        </div>
+      )
+    }
+  ], []);
+
   return (
     <div className="space-y-7 px-0">
       {/* ── Stat Cards ── */}
@@ -818,141 +1100,29 @@ export default function PurchasedProductsPage() {
           <p className="text-xs opacity-60">Purchase a plan to see it here</p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm bg-white dark:bg-gray-900">
-          {/* Table header */}
-          <div className="grid grid-cols-[1.4fr_1.6fr_1fr_1.2fr_1fr_1fr_0.8fr_0.5fr] gap-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-            {[
-              "Plan Type",
-              "Plan Name",
-              "Amount",
-              "Products",
-              "Start Date",
-              "Expiry",
-              "Status",
-              "Action",
-            ].map((h) => (
-              <div
-                key={h}
-                className={`px-4 py-3.5 text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider ${
-                  h === "Action" ? "text-center" : ""
-                }`}
-              >
-                {h}
-              </div>
-            ))}
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm bg-white dark:bg-gray-900 p-4">
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() => setInvoiceData(selectedRows)}
+              disabled={selectedRows.length === 0}
+              className={`px-4 py-2 flex items-center rounded-md text-sm font-medium transition-all ${
+                selectedRows.length > 0
+                  ? "bg-brand-600 text-white hover:bg-brand-700 shadow-sm"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
+              }`}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Report ({selectedRows.length})
+            </button>
           </div>
-
-          {/* Rows */}
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
-            {filtered.map((row, idx) => {
-              const cfg = PLAN_CONFIG[row.plan_source];
-              return (
-                <div
-                  key={`${row.id}-${idx}`}
-                  className="grid grid-cols-[1.4fr_1.6fr_1fr_1.2fr_1fr_1fr_0.8fr_0.5fr] gap-0 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors duration-150"
-                >
-                  {/* Plan Type */}
-                  <div className="px-4 py-4 flex items-center">
-                    <SourceBadge source={row.plan_source} />
-                  </div>
-
-                  {/* Plan Name */}
-                  <div className="px-4 py-4 flex items-center">
-                    <span className="text-sm text-gray-800 dark:text-gray-200 capitalize">
-                      {row.plan_name}
-                    </span>
-                  </div>
-
-                  {/* Amount */}
-                  <div className="px-4 py-4 flex items-center">
-                    <span className="text-sm text-gray-900 dark:text-gray-100">
-                      ₹{Number(row.amount).toLocaleString("en-IN")}
-                    </span>
-                  </div>
-
-                  {/* Products used / max */}
-                  <div className="px-4 py-4 flex flex-col justify-center gap-0.5">
-                    {row.max_products !== undefined ? (
-                      <>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-gray-700 dark:text-gray-300">
-                            {row.products_used ?? 0}
-                            <span className="text-gray-400">
-                              /{row.max_products}
-                            </span>
-                          </span>
-                        </div>
-                        {/* Mini progress bar */}
-                        <div className="h-1 w-16 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${cfg.dot} opacity-80`}
-                            style={{
-                              width: `${Math.min(
-                                100,
-                                ((row.products_used ?? 0) / row.max_products) *
-                                  100
-                              )}%`,
-                            }}
-                          />
-                        </div>
-                      </>
-                    ) : row.products_used !== undefined ? (
-                      <span className="text-xs text-gray-500">
-                        {row.products_used} products
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-400">—</span>
-                    )}
-                    
-                  </div>
-
-                  {/* Start Date */}
-                  <div className="px-4 py-4 flex items-center">
-                    <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                      <Clock className="w-3 h-3 opacity-60 flex-shrink-0" />
-                      {formatDate(row.start_at)}
-                    </span>
-                  </div>
-
-                  {/* Expiry Date */}
-                  <div className="px-4 py-4 flex items-center">
-                    <span
-                      className={`text-xs flex items-center gap-1.5 ${
-                        row.is_expired
-                          ? "text-red-500"
-                          : "text-gray-500 dark:text-gray-400"
-                      }`}
-                    >
-                      {row.is_expired ? (
-                        <XCircle className="w-3 h-3 flex-shrink-0" />
-                      ) : (
-                        <CheckCircle2 className="w-3 h-3 flex-shrink-0 text-green-500" />
-                      )}
-                      {formatDate(row.expire_at)}
-                    </span>
-                  </div>
-
-                  {/* Status */}
-                  <div className="px-4 py-4 flex items-center">
-                    <StatusBadge
-                      status={row.is_expired ? "expired" : row.status || "active"}
-                    />
-                  </div>
-
-                  {/* Action */}
-                  <div className="px-4 py-4 flex items-center justify-center">
-                    <button
-                      onClick={() => setViewPlan(row)}
-                      className="w-8 h-8 flex items-center justify-center rounded-md text-brand-600 bg-brand-50 hover:bg-brand-100 hover:text-brand-700 transition-all duration-300 group shadow-sm"
-                      title="View Details"
-                    >
-                      <Eye className="w-[1.05rem] h-[1.05rem] group-hover:scale-110 transition-transform duration-300" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <AgGridTable
+            rowData={filtered}
+            columns={columns}
+            loading={loading}
+            showCheckboxes={true}
+            onSelectionChange={(rows) => setSelectedRows(rows)}
+            autoHeight={true}
+          />
         </div>
       )}
 
@@ -961,6 +1131,15 @@ export default function PurchasedProductsPage() {
         <PlanViewModal
           plan={viewPlan}
           onClose={() => setViewPlan(null)}
+        />
+      )}
+
+      {/* ── Invoice Modal ── */}
+      {invoiceData && (
+        <InvoiceModal
+          data={invoiceData}
+          vendorKyc={vendorKyc}
+          onClose={() => setInvoiceData(null)}
         />
       )}
     </div>
