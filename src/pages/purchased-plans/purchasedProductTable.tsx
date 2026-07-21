@@ -582,91 +582,95 @@ const InvoiceModal = ({ data, vendorKyc, onClose }: { data: PlanRow[]; vendorKyc
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm print:bg-transparent print:p-0">
-      <div className="bg-white text-black w-full max-w-4xl max-h-[90vh] overflow-y-auto print:max-h-none print:overflow-visible shadow-2xl relative">
-        <div className="sticky top-0 bg-gray-100 flex justify-end items-center p-4 print:hidden border-b z-10">
-          <button onClick={onClose} className="p-2 bg-gray-200 rounded-md hover:bg-gray-300">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+      <div className="bg-white text-slate-900 w-full max-w-4xl max-h-[90vh] overflow-y-auto print:max-h-none print:overflow-visible shadow-2xl rounded-2xl print:rounded-none relative flex flex-col">
+        <button onClick={onClose} className="absolute top-4 right-4 z-50 p-2 text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-full hover:text-slate-800 transition-all print:hidden">
+          <X className="w-5 h-5" />
+        </button>
         
-        <div className="p-8 print:p-4 relative flex-1">
+        <div className="p-8 print:p-4 relative flex-1 bg-white">
           {vendorKyc?.Documents?.business_logo_image && (
             <div className="absolute top-8 left-8 print:top-4 print:left-4">
               <img src={vendorKyc.Documents.business_logo_image} alt="Business Logo" className="h-16 object-contain" />
             </div>
           )}
-          <div className="text-center mb-6">
-            <p className="text-sm font-semibold uppercase tracking-widest">|| Shree Ganeshay Namah ||</p>
-            <h1 className="text-3xl font-black uppercase mt-1">INVOICE</h1>
-            <div className="text-sm mt-2 uppercase text-center max-w-2xl mx-auto">
+          
+          <div className="absolute top-10 right-16 print:top-4 print:right-4">
+            <img src="/images/logo/logo.webp" alt="Upleex Logo" className="h-14 object-contain" />
+          </div>
+
+          <div className="text-center mb-8">
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400 print:text-black">|| Shree Ganeshay Namah ||</p>
+            <h1 className="text-4xl font-black uppercase mt-2 tracking-tight text-slate-800 print:text-black">INVOICE</h1>
+            <div className="text-sm mt-3 uppercase text-center max-w-2xl mx-auto text-slate-600 print:text-black leading-relaxed">
               {vendorKyc?.ContactDetails?.address && (
-                <>ADDRESS : {vendorKyc.ContactDetails.address}, <br /></>
+                <>{vendorKyc.ContactDetails.address}, <br /></>
               )}
               {vendorKyc?.ContactDetails?.city_name || 'SURAT'}-{vendorKyc?.ContactDetails?.pincode || '395010'}, {vendorKyc?.ContactDetails?.state_name || 'GUJARAT'} 
             </div>
           </div>
 
-          <div className="flex justify-between border-t border-b border-black py-2 mb-4 text-sm font-semibold">
-            <div>
-              <p>Customer : {vendorKyc?.Identity?.business_name || 'VENDOR'}</p>
-              <p>Mob.No. : {vendorKyc?.ContactDetails?.mobile || 'N/A'}</p>
-              
+          <div className="flex justify-between border-y border-slate-200 print:border-black py-4 mb-8 text-sm bg-slate-50 print:bg-transparent px-6 rounded-xl print:rounded-none">
+            <div className="space-y-1">
+              <p><span className="text-slate-500 print:text-black font-medium">Customer :</span> <span className="font-bold text-slate-800 print:text-black uppercase">{vendorKyc?.Identity?.business_name || 'VENDOR'}</span></p>
+              <p><span className="text-slate-500 print:text-black font-medium">Mob.No. :</span> <span className="text-slate-700 print:text-black font-medium">{vendorKyc?.ContactDetails?.mobile || 'N/A'}</span></p>
             </div>
-            <div className="text-right">
-              <p>Bill No: {parseInt(String(data[0].id || data[0]._id).slice(-6), 16) || Math.floor(Math.random() * 1000000)}</p>
-              <p>Date : {new Date().toLocaleDateString("en-GB")}</p>
+            <div className="text-right space-y-1">
+              <p><span className="text-slate-500 print:text-black font-medium">Bill No:</span> <span className="font-bold text-slate-800 print:text-black">{parseInt(String(data[0].id || data[0]._id).slice(-6), 16) || Math.floor(Math.random() * 1000000)}</span></p>
+              <p><span className="text-slate-500 print:text-black font-medium">Date :</span> <span className="text-slate-700 print:text-black font-medium">{new Date().toLocaleDateString("en-GB")}</span></p>
             </div>
           </div>
 
-          <table className="w-full text-sm border-collapse border border-black mb-4">
-            <thead>
-              <tr className="border-b border-black">
-                <th className="border-r border-black p-2 text-left w-12">No.</th>
-                <th className="border-r border-black p-2 text-left">Description</th>
-                <th className="border-r border-black p-2 text-center w-24">Type</th>
-                <th className="border-r border-black p-2 text-right w-24">Rate</th>
-                <th className="border-r border-black p-2 text-right w-24">Tax GST</th>
-                <th className="p-2 text-right w-32">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((item, index) => {
-                const total = Number(item.total_amount) || Number(item.amount) || 0;
-                const gst = Number(item.gst_amount) || 0;
-                const rate = total - gst;
-                return (
-                  <tr key={index} className="border-b border-black last:border-b-0">
-                    <td className="border-r border-black p-2">{index + 1}</td>
-                    <td className="border-r border-black p-2">{item.plan_name} Plan</td>
-                    <td className="border-r border-black p-2 text-center">{item.plan_source}</td>
-                    <td className="border-r border-black p-2 text-right">{rate.toFixed(2)}</td>
-                    <td className="border-r border-black p-2 text-right">{gst.toFixed(2)}</td>
-                    <td className="p-2 text-right">{total.toFixed(2)}</td>
-                  </tr>
-                );
-              })}
-              <tr>
-                <td colSpan={5} className="border-r border-t border-black p-2 text-right font-bold">Bill Total Amount :</td>
-                <td className="border-t border-black p-2 text-right font-bold">{totalAmount.toFixed(2)}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="overflow-hidden rounded-xl border border-slate-200 print:border-black print:rounded-none">
+            <table className="w-full text-sm border-collapse">
+              <thead className="bg-slate-100 print:bg-transparent">
+                <tr className="border-b border-slate-200 print:border-black text-slate-600 print:text-black uppercase text-xs font-bold tracking-wider">
+                  <th className="border-r border-slate-200 print:border-black p-3 text-left w-12">No.</th>
+                  <th className="border-r border-slate-200 print:border-black p-3 text-left">Description</th>
+                  <th className="border-r border-slate-200 print:border-black p-3 text-center w-24">Type</th>
+                  <th className="border-r border-slate-200 print:border-black p-3 text-right w-24">Rate</th>
+                  <th className="border-r border-slate-200 print:border-black p-3 text-right w-24">Tax GST</th>
+                  <th className="p-3 text-right w-32">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="text-slate-700 print:text-black bg-white">
+                {data.map((item, index) => {
+                  const total = Number(item.total_amount) || Number(item.amount) || 0;
+                  const gst = Number(item.gst_amount) || 0;
+                  const rate = total - gst;
+                  return (
+                    <tr key={index} className="border-b border-slate-200 print:border-black hover:bg-slate-50 print:hover:bg-transparent transition-colors">
+                      <td className="border-r border-slate-200 print:border-black p-3">{index + 1}</td>
+                      <td className="border-r border-slate-200 print:border-black p-3 font-medium text-slate-900 print:text-black">{item.plan_name} Plan</td>
+                      <td className="border-r border-slate-200 print:border-black p-3 text-center text-slate-500 print:text-black">{item.plan_source}</td>
+                      <td className="border-r border-slate-200 print:border-black p-3 text-right">{rate.toFixed(2)}</td>
+                      <td className="border-r border-slate-200 print:border-black p-3 text-right">{gst.toFixed(2)}</td>
+                      <td className="p-3 text-right font-semibold text-slate-900 print:text-black">{total.toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
+                <tr className="bg-slate-50 print:bg-transparent">
+                  <td colSpan={5} className="border-r border-t border-slate-200 print:border-black p-4 text-right font-bold text-slate-600 print:text-black uppercase text-xs tracking-wider">Bill Total Amount :</td>
+                  <td className="border-t border-slate-200 print:border-black p-4 text-right font-black text-indigo-600 print:text-black text-base">{totalAmount.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-          <div className="flex justify-between text-xs mt-8">
-            <div>
-              <p>* Goods Once Sold will not be Refunded.</p>
-              <p>* No Guarantee for Cloth, Colour & Work.</p>
-              <p>SUBJECT TO SURAT JURISDICTION</p>
+          <div className="flex justify-between text-xs mt-10 text-slate-500 print:text-black">
+            <div className="space-y-1">
+              <p className="flex items-center gap-2"><span className="text-slate-400">•</span> Goods Once Sold will not be Refunded.</p>
+              <p className="flex items-center gap-2"><span className="text-slate-400">•</span> No Guarantee for Cloth, Colour & Work.</p>
+              <p className="font-semibold text-slate-700 print:text-black mt-2">SUBJECT TO SURAT JURISDICTION</p>
             </div>
-            <div className="text-right pt-4 border-t border-black w-48 mt-4">
-              <p>For, UPLEEX</p>
+            <div className="text-right pt-6 border-t-2 border-slate-200 print:border-black w-48 mt-4">
+              <p className="font-bold text-slate-800 print:text-black uppercase tracking-wider">For, UPLEEX</p>
             </div>
           </div>
         </div>
         
-        <div className="sticky bottom-0 bg-gray-100 p-4 border-t print:hidden flex justify-end z-10">
-          <button onClick={handlePrint} disabled={downloading} className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 shadow-md font-medium">
-            <Printer className="w-4 h-4" /> {downloading ? "Downloading..." : "Download PDF"}
+        <div className="sticky bottom-0 bg-white/90 backdrop-blur-md p-5 border-t border-slate-100 print:hidden flex justify-end z-10 rounded-b-2xl">
+          <button onClick={handlePrint} disabled={downloading} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 shadow-lg shadow-indigo-200 transition-all font-semibold active:scale-95">
+            <Printer className="w-4 h-4" /> {downloading ? "Downloading PDF..." : "Download PDF"}
           </button>
         </div>
       </div>
