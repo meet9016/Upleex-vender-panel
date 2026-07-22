@@ -198,7 +198,7 @@ const endPointApi: EndPointApi = {
     getVendorRentalBoostPurchases: 'rental-boost-plans/vendor/purchases',
 
     // Service Plans
-    getServicePlanOptions: 'service-listing-plans/getall',
+    getServicePlanOptions: 'service-plans/getall',
     postCreateServiceListingPlan: 'service-listing-plans/create',
     getPurchasedServicePlans: 'service-listing-plans/getall',
 
