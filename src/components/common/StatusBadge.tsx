@@ -13,7 +13,7 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
   inactive: { label: "Inactive", className: "text-gray-600 bg-gray-100 border-gray-200" },
   completed: { label: "Completed", className: "text-blue-700 bg-blue-50 border-blue-200" },
   complete: { label: "Completed", className: "text-blue-700 bg-blue-50 border-blue-200" },
-  pending: { label: "Pending", className: "text-amber-700 bg-amber-50 border-amber-200" },
+  pending: { label: "Approve", className: "text-amber-700 bg-amber-50 border-amber-200" },
   draft: { label: "Draft", className: "text-gray-600 bg-gray-100 border-gray-200" },
   new: { label: "New", className: "text-green-700 bg-green-50 border-green-200" },
   successful: { label: "Completed", className: "text-blue-700 bg-blue-50 border-blue-200" },

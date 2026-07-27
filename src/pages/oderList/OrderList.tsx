@@ -17,9 +17,10 @@ import { HiOutlineEye } from 'react-icons/hi';
 import ActionButtons from '@/components/common/ActionButtons';
 import { useRouter } from 'next/navigation';
 import StatusBadge from '../../components/common/StatusBadge';
+import OrderTracking from '../../components/features/OrderTracking';
 import { exportOrdersToExcel, exportOrdersToPDF } from '@/utils/exportUtils';
 import Loader from '@/components/common/Loader';
-import { FaFileInvoice } from 'react-icons/fa';
+import { FaFileInvoice, FaTruck } from 'react-icons/fa';
 import BillingInvoice from '@/components/invoice/BillingInvoice';
 
 function useDebounce<T>(value: T, delay: number = 500): T {
@@ -127,6 +128,7 @@ const OrderList = () => {
   const [selectedOrders, setSelectedOrders] = useState<VendorOrder[]>([]);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [statusNotes, setStatusNotes] = useState('');
   const [searchText, setSearchText] = useState('');
@@ -186,7 +188,7 @@ const OrderList = () => {
     } else {
       // Shipping: hide pending/accepted/completed, show rest but all disabled
       return editStatusOptions
-        .filter((opt) => !SHIPPING_HIDDEN_STATUSES.includes(opt.value.toLowerCase()))
+        .filter((opt) => opt.value.toLowerCase() !== 'pending')
         .map((opt) => ({ ...opt, disabled: true }));
     }
   };
@@ -522,8 +524,8 @@ const OrderList = () => {
     {
       headerName: "Actions",
       field: "actions",
-      width: 140,
-      maxWidth: 140,
+      width: 160,
+      maxWidth: 160,
       suppressSizeToFit: true,
       pinned: "right",
       suppressHeaderMenuButton: true,
@@ -543,6 +545,17 @@ const OrderList = () => {
               type="button"
             >
               <HiOutlineEye size={17} />
+            </button>
+
+            <button
+              onClick={() => {
+                handleViewTracking(params.data);
+              }}
+              className="p-1.5 rounded-lg bg-purple-50 text-purple-600 border border-purple-200 hover:bg-purple-100 transition-all shadow-sm"
+              title="View Tracking"
+              type="button"
+            >
+              <FaTruck size={17} />
             </button>
 
             <button
@@ -833,6 +846,11 @@ const OrderList = () => {
   const handleViewOrder = (order: VendorOrder) => {
     setSelectedOrder(order);
     setShowOrderModal(true);
+  };
+
+  const handleViewTracking = (order: VendorOrder) => {
+    setSelectedOrder(order);
+    setShowTrackingModal(true);
   };
 
   const handleUpdateStatus = (order: VendorOrder) => {
@@ -1384,6 +1402,7 @@ const OrderList = () => {
                     {/* Actions */}
                     <div className="flex items-center justify-end gap-2 px-3 py-2 border-t border-gray-100 dark:border-gray-700">
                       <button onClick={() => handleViewOrder(order)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100"><HiOutlineEye size={15} /></button>
+                      <button onClick={() => handleViewTracking(order)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-purple-50 text-purple-600 border border-purple-100"><FaTruck size={13} /></button>
                       <button onClick={() => { if (isPaid && isCompleted) handleDownloadInvoice(order); }} disabled={!isPaid || !isCompleted} className={`w-8 h-8 flex items-center justify-center rounded-lg border ${isPaid && isCompleted ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-gray-100 text-gray-400 border-gray-200 opacity-60'}`} title="Generate Bill"><FaFileInvoice size={13} /></button>
                       <button onClick={() => handleUpdateStatus(order)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100"><FaEdit size={13} /></button>
                     </div>
@@ -1732,6 +1751,32 @@ const OrderList = () => {
               >
                 {loading ? 'Updating...' : 'Update'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tracking Modal */}
+      {showTrackingModal && selectedOrder && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-9999 p-0 sm:p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowTrackingModal(false);
+            }
+          }}
+        >
+          <div className="relative w-full max-w-3xl">
+            <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl p-4 sm:p-6 shadow-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto">
+              <OrderTracking
+                orderId={selectedOrder.order_id}
+                status={selectedOrder.vendor_status || selectedOrder.order_status || 'pending'}
+                deliveryStatus={(selectedOrder as any).shiprocket_status || ''}
+                trackingNumber={(selectedOrder as any).awb_code || ''}
+                courierPartner={(selectedOrder as any).courier_name || ''}
+                deliveryUpdates={selectedOrder.delivery_tracking?.delivery_updates || []}
+                onClose={() => setShowTrackingModal(false)}
+              />
             </div>
           </div>
         </div>

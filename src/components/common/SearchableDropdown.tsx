@@ -239,7 +239,9 @@ export default function SearchableDropdown({
         onMouseEnter={() => !opt.disabled && setHighlightedIndex(index)}
         className={`px-4 py-2 text-sm flex items-center gap-3 transition
           ${
-            opt.disabled
+            isSelected && opt.disabled
+              ? "opacity-75 cursor-not-allowed bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
+              : opt.disabled
               ? "opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800/50"
               : isSelected
               ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium cursor-pointer"
