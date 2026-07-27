@@ -100,6 +100,10 @@ export default function AddProductPage() {
         isNew: boolean;
         depositAmount: string;
         availableQuantity: string;
+        weight: string;
+        length: string;
+        breadth: string;
+        height: string;
     }>({
         category: null,
         subCategory: null,
@@ -122,6 +126,10 @@ export default function AddProductPage() {
         isNew: false,
         depositAmount: "",
         availableQuantity: "",
+        weight: "0.5",
+        length: "10",
+        breadth: "10",
+        height: "10",
     });
 
     const [mainPreview, setMainPreview] = useState<mainImg[]>([]);
@@ -551,6 +559,10 @@ export default function AddProductPage() {
                         isNew: data.is_new || false,
                         depositAmount: productTypeName === "rent" ? String(data.deposit_amount || "") : "",
                         availableQuantity: String(data.available_quantity || ""),
+                        weight: data.weight !== undefined ? String(data.weight) : "0.5",
+                        length: data.length !== undefined ? String(data.length) : "10",
+                        breadth: data.breadth !== undefined ? String(data.breadth) : "10",
+                        height: data.height !== undefined ? String(data.height) : "10",
                     });
 
                     setSelectedCategory(String(data.category_id || ""));
@@ -912,6 +924,20 @@ export default function AddProductPage() {
             // Add available quantity for sell products
             if (isSell && formData.availableQuantity.trim()) {
                 formdata.append("available_quantity", formData.availableQuantity.trim());
+            }
+
+            // ---------- SHIPPING DIMENSIONS ----------
+            if (formData.weight.trim()) {
+                formdata.append("weight", formData.weight.trim());
+            }
+            if (formData.length.trim()) {
+                formdata.append("length", formData.length.trim());
+            }
+            if (formData.breadth.trim()) {
+                formdata.append("breadth", formData.breadth.trim());
+            }
+            if (formData.height.trim()) {
+                formdata.append("height", formData.height.trim());
             }
 
             // ---------- Sell FLOW ----------
@@ -1354,6 +1380,64 @@ export default function AddProductPage() {
                             </div>
                         </div>
                     )}
+
+                    {/* ================= Shipping Dimensions (for Shiprocket) ================= */}
+                    <div className="lg:col-span-2 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Label className="font-bold text-gray-800 dark:text-gray-100">Shipping Dimensions</Label>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">(For courier shipping calculation)</span>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                                <Label className="font-medium text-gray-700 dark:text-gray-200 mb-1.5 text-sm">Weight (kg)</Label>
+                                <Input
+                                    placeholder="0.5"
+                                    type="number"
+                                    step="0.01"
+                                    min="0.01"
+                                    value={formData.weight}
+                                    onChange={(e) => handleChange("weight", e.target.value)}
+                                    className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                                />
+                            </div>
+                            <div>
+                                <Label className="font-medium text-gray-700 dark:text-gray-200 mb-1.5 text-sm">Length (cm)</Label>
+                                <Input
+                                    placeholder="10"
+                                    type="number"
+                                    step="1"
+                                    min="1"
+                                    value={formData.length}
+                                    onChange={(e) => handleChange("length", e.target.value)}
+                                    className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                                />
+                            </div>
+                            <div>
+                                <Label className="font-medium text-gray-700 dark:text-gray-200 mb-1.5 text-sm">Breadth (cm)</Label>
+                                <Input
+                                    placeholder="10"
+                                    type="number"
+                                    step="1"
+                                    min="1"
+                                    value={formData.breadth}
+                                    onChange={(e) => handleChange("breadth", e.target.value)}
+                                    className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                                />
+                            </div>
+                            <div>
+                                <Label className="font-medium text-gray-700 dark:text-gray-200 mb-1.5 text-sm">Height (cm)</Label>
+                                <Input
+                                    placeholder="10"
+                                    type="number"
+                                    step="1"
+                                    min="1"
+                                    value={formData.height}
+                                    onChange={(e) => handleChange("height", e.target.value)}
+                                    className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                                />
+                            </div>
+                        </div>
+                    </div>
 
                     {/* ================= Row 3: Rent Type ================= */}
                     {selectedListingType === "Rent" && (
