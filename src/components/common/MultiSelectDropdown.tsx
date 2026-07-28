@@ -34,13 +34,15 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
     option.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const normalize = (str: string) => String(str || '').toLowerCase().replace(/_/g, ' ');
+
   const selectedOptions = options.filter(option => 
-    selectedValues.includes(option.value)
+    selectedValues.some(v => normalize(v) === normalize(option.value))
   );
 
   const handleToggleOption = (value: string) => {
-    if (selectedValues.includes(value)) {
-      onChange(selectedValues.filter(v => v !== value));
+    if (selectedValues.some(v => normalize(v) === normalize(value))) {
+      onChange(selectedValues.filter(v => normalize(v) !== normalize(value)));
     } else {
       if (maxSelections && selectedValues.length >= maxSelections) {
         return;
@@ -51,7 +53,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
 
   const handleRemoveOption = (value: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    onChange(selectedValues.filter(v => v !== value));
+    onChange(selectedValues.filter(v => normalize(v) !== normalize(value)));
   };
 
   const handleClearAll = (e: React.MouseEvent) => {
@@ -133,7 +135,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
           <div className="max-h-40 overflow-y-auto">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => {
-                const isSelected = selectedValues.includes(option.value);
+                const isSelected = selectedValues.some(v => normalize(v) === normalize(option.value));
                 const isDisabled = maxSelections && !isSelected && selectedValues.length >= maxSelections;
                 
                 return (

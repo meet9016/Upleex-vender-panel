@@ -53,6 +53,7 @@ interface VendorOrder {
   type?: string;
   order_id: string;
   delivery_type?: string;
+  status?: string; // Shiprocket status like "READY TO SHIP"
   user_id: {
     name: string;
     email: string;
@@ -83,6 +84,8 @@ interface VendorOrder {
   order_status?: string;
   payment_status: string;
   createdAt: string;
+  shiprocket_status?: string;
+  shiprocket_response?: any;
   delivery_tracking?: {
     delivery_updates: Array<{
       status: string;
@@ -149,7 +152,7 @@ const OrderList = () => {
     sku: '',
     status: [] as string[],
   });
-
+  console.log("selectedOrder", selectedOrder);
   const [pendingFilters, setPendingFilters] = useState({
     customer_name: '',
     product_name: '',
@@ -172,8 +175,19 @@ const OrderList = () => {
   // Face to Face orders: only show Pending, Approve (accepted), Complete
   const FACE_TO_FACE_ONLY_STATUSES = ['pending', 'accepted', 'completed'];
 
-  // Shipping orders: hide Pending/Approve/Complete — show rest but all disabled
-  const SHIPPING_HIDDEN_STATUSES = ['pending', 'accepted', 'completed'];
+  // Shiprocket status mapping for Shipping orders (uppercase to match API response)
+  const SHIPROCKET_STATUSES = [
+    { value: 'PENDING', label: 'Pending' },
+    { value: 'READY TO SHIP', label: 'Ready to Ship' },
+    { value: 'PICKUP SCHEDULED', label: 'Pickup Scheduled' },
+    { value: 'PICKED UP', label: 'Picked Up' },
+    { value: 'OUT FOR DELIVERY', label: 'Out for Delivery' },
+    { value: 'DELIVERED', label: 'Delivered' },
+    { value: 'CANCELLED', label: 'Cancelled' },
+    { value: 'RTO INITIATED', label: 'RTO Initiated' },
+    { value: 'RTO DELIVERED', label: 'RTO Delivered' },
+    { value: 'UNDELIVERED', label: 'Undelivered' },
+  ];
 
   const getStatusOptionsForModal = (order: VendorOrder | null) => {
     const isShipping = order?.delivery_type === 'shipping';
@@ -184,11 +198,16 @@ const OrderList = () => {
         .filter((opt) => FACE_TO_FACE_ONLY_STATUSES.includes(opt.value.toLowerCase()))
         .map((opt) => ({ ...opt, disabled: false }));
     } else {
-      // Shipping: hide pending/accepted/completed, show rest but all disabled
-      return editStatusOptions
-        .filter((opt) => !SHIPPING_HIDDEN_STATUSES.includes(opt.value.toLowerCase()))
-        .map((opt) => ({ ...opt, disabled: true }));
+      // Shipping: return Shiprocket statuses
+      return SHIPROCKET_STATUSES.map((opt) => ({ ...opt, disabled: false }));
     }
+  };
+
+  // Get current Shiprocket status from order (from "status" field)
+  const getCurrentShiprocketStatus = (order: VendorOrder | null) => {
+ console.log("order", order)
+    // Shiprocket status comes in "status" field like "READY TO SHIP"
+    return order?.shiprocket_response?.data?.status || order?.shiprocket_status || order?.vendor_status || 'PENDING';
   };
 
   const getCurrentParams = () => {
@@ -232,6 +251,21 @@ const OrderList = () => {
       case 'paid':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'failed':
+        return 'bg-red-100 text-red-800 border-red-200';
+      // Shiprocket statuses
+      case 'label_generated':
+        return 'bg-sky-100 text-sky-800 border-sky-200';
+      case 'pickup_scheduled':
+        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+      case 'in_transit':
+        return 'bg-violet-100 text-violet-800 border-violet-200';
+      case 'rto_initiated':
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'rto_delivered':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'undelivered':
+        return 'bg-rose-100 text-rose-800 border-rose-200';
+      case 'lost':
         return 'bg-red-100 text-red-800 border-red-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -856,7 +890,15 @@ const OrderList = () => {
     };
 
     setSelectedOrder(normalizedOrder);
-    setNewStatus(order.vendor_status || order.order_status || 'pending');
+    
+    // For shipping orders, use shiprocket_status if available
+    const isShipping = order?.delivery_type === 'shipping';
+    if (isShipping) {
+      setNewStatus(getCurrentShiprocketStatus(order));
+    } else {
+      setNewStatus(order.vendor_status || order.order_status || 'pending');
+    }
+    
     setStatusNotes('');
     setShowStatusModal(true);
   };
@@ -1691,6 +1733,22 @@ const OrderList = () => {
                   Order ID: #{selectedOrder?.order_id}
                 </label>
               </div>
+
+              {/* For Shipping Orders - Show current Shiprocket status with checkmark */}
+              {selectedOrder?.delivery_type === 'shipping' && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span className="font-medium">Shiprocket Status: </span>
+                    <StatusBadge status={getCurrentShiprocketStatus(selectedOrder)} />
+                  </div>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                    This status is synced with Shiprocket
+                  </p>
+                </div>
+              )}
 
               <div>
                 <SearchableDropdown

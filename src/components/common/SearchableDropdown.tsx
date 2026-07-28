@@ -58,7 +58,8 @@ export default function SearchableDropdown({
     }
   }, [open]);
 
-  const selectedOption = options.find(o => o.value === value);
+  const normalize = (str: string | null | undefined) => String(str || '').toLowerCase().trim().replace(/_/g, ' ');
+  const selectedOption = options.find(o => normalize(o.value) === normalize(value));
 
   useEffect(() => {
     if (disabled) setOpen(false);
@@ -217,7 +218,7 @@ export default function SearchableDropdown({
       >
    {filteredOptions.length ? (
   filteredOptions.map((opt, index) => {
-    const isSelected = value === opt.value;
+    const isSelected = normalize(value) === normalize(opt.value);
 
     return (
       <div

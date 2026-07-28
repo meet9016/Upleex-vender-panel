@@ -29,14 +29,23 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
   free: { label: "Free", className: "text-green-700 bg-green-50 border-green-200" },
   paid: { label: "Paid", className: "text-blue-700 bg-blue-50 border-blue-200" },
   hold: { label: "Payment Hold", className: "text-amber-700 bg-amber-50 border-amber-200" },
-  '30_percent': { label: "30% Advance", className: "text-purple-700 bg-purple-50 border-purple-200" },
+  '30 percent': { label: "30% Advance", className: "text-purple-700 bg-purple-50 border-purple-200" },
   full: { label: "Full Payment", className: "text-blue-700 bg-blue-50 border-blue-200" },
   failed: { label: "Failed", className: "text-rose-700 bg-rose-50 border-rose-200" },
   released: { label: "Released", className: "text-blue-700 bg-blue-50 border-blue-200" },
+  'ready to ship': { label: "Ready to Ship", className: "text-cyan-700 bg-cyan-50 border-cyan-200" },
+  'label generated': { label: "Label Generated", className: "text-sky-700 bg-sky-50 border-sky-200" },
+  'pickup scheduled': { label: "Pickup Scheduled", className: "text-indigo-700 bg-indigo-50 border-indigo-200" },
+  'pickup generated': { label: "Pickup Generated", className: "text-indigo-700 bg-indigo-50 border-indigo-200" },
+  'in transit': { label: "In Transit", className: "text-violet-700 bg-violet-50 border-violet-200" },
+  'rto initiated': { label: "RTO Initiated", className: "text-amber-700 bg-amber-50 border-amber-200" },
+  'rto delivered': { label: "RTO Delivered", className: "text-orange-700 bg-orange-50 border-orange-200" },
+  'undelivered': { label: "Undelivered", className: "text-rose-700 bg-rose-50 border-rose-200" },
+  'lost': { label: "Lost", className: "text-red-700 bg-red-50 border-red-200" },
 };
 
 export default function StatusBadge({ status }: StatusBadgeProps) {
-  const key = String(status || "").toLowerCase();
+  const key = String(status || "").toLowerCase().replace(/_/g, ' ');
   const config = STATUS_MAP[key] ?? { label: status || "Pending", className: "text-gray-600 bg-gray-100 border-gray-200" };
   const { label, className } = config;
 
