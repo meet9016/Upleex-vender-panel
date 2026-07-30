@@ -260,12 +260,7 @@ const QuoteEditPage = () => {
     try {
       setSubmitting(true);
 
-      // Validation: Prevent delivery status if payment is not paid
-      if (formData.status === 'delivery' && quoteData?.payment_status?.toLowerCase() !== 'paid') {
-        toast.error("Cannot move to delivery. User payment is still pending.");
-        setSubmitting(false);
-        return;
-      }
+
 
       // Use multipart for optional files and dates
       const fd = new FormData();
@@ -286,8 +281,8 @@ const QuoteEditPage = () => {
       } else {
         toast.error(res?.data?.message || "Failed to update quote");
       }
-    } catch (err) {
-      toast.error("Failed to update quote");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to update quote");
     } finally {
       setSubmitting(false); // Set loading false after API call completes
     }
