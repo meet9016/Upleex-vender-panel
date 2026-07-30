@@ -115,7 +115,7 @@ export default function KYCPage() {
     mobile: "",
     address: "",
     pincode: "",
-    country_id: { value: "", label: "" },
+    country_id: { value: "IN", label: "India" },
     state_id: { value: "", label: "" },
     city_id: { value: "", label: "" },
     pancard_number: "",
@@ -144,7 +144,7 @@ export default function KYCPage() {
     pickup_email: "",
     pickup_address: "",
     pickup_pincode: "",
-    pickup_country_id: { value: "", label: "" },
+    pickup_country_id: { value: "IN", label: "India" },
     pickup_state_id: { value: "", label: "" },
     pickup_city_id: { value: "", label: "" },
   });

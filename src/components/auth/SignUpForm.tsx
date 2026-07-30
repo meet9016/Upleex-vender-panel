@@ -70,11 +70,11 @@ export default function SignUpForm() {
     setLoadingCities(true);
 
     try {
-      const res = await api.post(endPointApi.postVendorCityList as string, {
+      const res = await api.post("vendor-india-city-list", {
         page,
         search,
       });
-      const list = res?.data?.data || [];
+      const list = res?.data?.data?.data || [];
 
       if (!Array.isArray(list) || list.length === 0) {
         setHasMoreCities(false);
