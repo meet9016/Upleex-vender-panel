@@ -25,7 +25,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
 
    const handleLogout = () => {
     clearToken();
-    router.push("/signin");
+    window.location.replace("/signin");
   };
   useEffect(() => {
     const loggedInUser = getUser();
