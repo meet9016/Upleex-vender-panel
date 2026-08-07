@@ -380,11 +380,20 @@ const QuoteEditPage = () => {
     );
   }
 
-  // Convert statuses to dropdown options
-  const statusOptions = statuses.map(status => ({
-    label: status.name,
-    value: toEnum(status.name),
-  }));
+  // Convert statuses to dropdown options with Delivery above Completed
+  const customStatusOrder = ['approval', 'reject', 'pending', 'delivery', 'complete'];
+  const statusOptions = statuses
+    .map(status => ({
+      label: status.name,
+      value: toEnum(status.name),
+    }))
+    .sort((a, b) => {
+      const idxA = customStatusOrder.indexOf(a.value);
+      const idxB = customStatusOrder.indexOf(b.value);
+      const orderA = idxA !== -1 ? idxA : 99;
+      const orderB = idxB !== -1 ? idxB : 99;
+      return orderA - orderB;
+    });
 
   // Get filtered status options based on current status
   const availableStatusOptions = getAvailableStatusOptions();
