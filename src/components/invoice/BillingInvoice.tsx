@@ -118,11 +118,11 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white font-sans text-gray-800 leading-tight shadow-xl rounded-xl border border-gray-100 relative overflow-hidden">
+    <div className="max-w-4xl mx-auto p-6 bg-white font-sans text-gray-800 leading-normal shadow-lg rounded-xl border border-gray-200 relative overflow-hidden">
       {onClose && (
         <button
           onClick={onClose}
-          className="absolute top-1 right-2 text-gray-600 hover:text-gray-500 transition-colors no-print z-10 p-2 rounded-full"
+          className="absolute top-2 right-3 text-gray-400 hover:text-gray-600 transition-colors no-print z-10 p-1.5 rounded-full"
           aria-label="Close"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,64 +136,55 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
       
       <div className="print-section">
         {/* Header Section */}
-        <div className="flex justify-between items-start mb-2 pb-4 border-b border-gray-100">
+        <div className="flex justify-between items-start mb-4 pb-4 border-b border-gray-200">
           <div>
             <img src={logoSrc} alt="Upleex" className="h-12 w-auto mb-2 object-contain" onError={(e) => {
               (e.target as HTMLImageElement).src = "/images/logo/logo.webp";
             }} />
-            <div className="text-xl font-black text-gray-900 tracking-tight leading-none">
+            <div className="text-xl font-bold text-gray-900 tracking-tight leading-snug">
               {camelVendorProfile?.businessName || '-'}
             </div>
-            {/* <div className="text-[10px] font-bold text-gray-400 mt-1 flex items-center gap-2">
-               <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded text-[8px]  ">Verified Vendor</span>
-               <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-               <span className={`px-1.5 py-0.5 rounded text-[8px] font-black  border ${
-                 orderStatus.toLowerCase() === 'delivered' || orderStatus.toLowerCase() === 'success' || orderStatus.toLowerCase() === 'complete' || orderStatus.toLowerCase() === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-blue-50 text-blue-600 border-blue-100'
-               }`}>
-                 {orderStatus}
-               </span>
-            </div> */}
           </div>
           <div className="text-right">
-            <h1 className="text-3xl font-black text-gray-900 mb-1 tracking-tight ">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1 tracking-tight">
               {isQuote ? 'Quotation' : 'Tax Invoice'}
             </h1>
             <div className="space-y-0.5">
-              <div className="text-[10px] font-black text-gray-400  ">
-                {isQuote ? 'Quote' : 'Invoice'} #: <span className="text-gray-900 font-mono">
+              <div className="text-xs font-medium text-gray-500">
+                {isQuote ? 'Quote' : 'Invoice'} #: <span className="text-gray-900 font-mono font-bold">
                   {displayId?.includes(',') ? displayId : `#${displayId?.slice(-8).toUpperCase()}`}
                 </span>
               </div>
-              <div className="text-[10px] text-gray-400 font-black  ">Date: {formattedDate}</div>
+              <div className="text-xs text-gray-500 font-medium">Date: {formattedDate}</div>
             </div>
           </div>
         </div>
 
         {/* Info Bars */}
-        <div className="grid grid-cols-4 gap-3 mb-4">
-           <div className="bg-gray-50/50 p-2.5 rounded-lg border border-gray-100/50">
-               <span className="block text-[10px] font-black text-gray-400 ">Place of Supply</span>
-               <span className="text-[10px] font-bold text-gray-700">{camelVendorProfile?.city || '-'} {camelVendorProfile?.state || ''}</span>
+        <div className="grid grid-cols-4 gap-3 mb-5">
+           <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-200/70">
+               <span className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Place of Supply</span>
+               <span className="text-xs font-bold text-gray-800">{camelVendorProfile?.city || '-'} {camelVendorProfile?.state || ''}</span>
            </div>
-           <div className="bg-gray-50/50 p-2.5 rounded-lg border border-gray-100/50">
-               <span className="block text-[10px] font-black text-gray-400 ">Payment Method</span>
-              <span className="text-[10px] font-bold text-gray-700 ">{paymentMethod}</span>
+           <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-200/70">
+               <span className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Payment Method</span>
+              <span className="text-xs font-bold text-gray-800">{paymentMethod}</span>
            </div>
-           <div className="bg-gray-50/50 p-2.5 rounded-lg border border-gray-100/50">
-               <span className="block text-[10px] font-black text-gray-400 ">Customer Payment</span>
-               <span className={`text-[10px] font-black capitalize ${data.paymentStatus?.toLowerCase() === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>
+           <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-200/70">
+               <span className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Customer Payment</span>
+               <span className={`text-xs font-bold capitalize ${data.paymentStatus?.toLowerCase() === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>
                  {data.paymentStatus || 'Pending'}
                </span>
            </div>
            {!isCustomerView && (
-             <div className="bg-gray-50/50 p-2.5 rounded-lg border border-gray-100/50">
-                 <span className="block text-[10px] font-black text-gray-400 ">Admin Payment</span>
+             <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-200/70">
+                 <span className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Admin Payment</span>
                 <div className="flex flex-col">
-                  <span className={`text-[10px] font-black capitalize ${adminPaymentStatus.toLowerCase() === 'completed' || adminPaymentStatus.toLowerCase() === 'paid' || adminPaymentStatus.toLowerCase() === 'released' ? 'text-emerald-600' : 'text-gray-400'}`}>
+                  <span className={`text-xs font-bold capitalize ${adminPaymentStatus.toLowerCase() === 'completed' || adminPaymentStatus.toLowerCase() === 'paid' || adminPaymentStatus.toLowerCase() === 'released' ? 'text-emerald-600' : 'text-gray-500'}`}>
                     {adminPaymentStatus === 'no_payment' ? 'Unprocessed' : adminPaymentStatus}
                   </span>
                   {adminPaymentAmount > 0 && (
-                    <span className="text-[9px] font-bold text-gray-500 mt-0.5">Rs. {adminPaymentAmount.toLocaleString()}</span>
+                    <span className="text-[11px] font-medium text-gray-600 mt-0.5">Rs. {adminPaymentAmount.toLocaleString()}</span>
                   )}
                 </div>
              </div>
@@ -201,42 +192,42 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
         </div>
 
         {/* Addressing Details */}
-        <div className="grid grid-cols-2 gap-8 mb-4">
-          <div className="space-y-3">
-            <h3 className="text-[10px] font-black text-gray-400   border-b border-gray-100 pb-1 w-fit pr-8 ">Seller / Sold By</h3>
-            <div className="text-[12px] space-y-0.5 leading-snug">
-              <p className="font-bold text-gray-900 text-[13px]">{camelVendorProfile?.businessName}</p>
-              <p className='text-gray-500 font-medium'>{camelVendorProfile?.email}</p>
-              <p className='text-gray-500 font-medium'>+91 {camelVendorProfile?.mobile}</p>
-              <p className="text-gray-500 font-medium">{camelVendorProfile?.address}</p>
-              <p className="text-gray-500 font-medium">
+        <div className="grid grid-cols-2 gap-6 mb-5">
+          <div className="space-y-1.5">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200 pb-1 w-fit pr-6">Seller / Sold By</h3>
+            <div className="text-xs space-y-0.5 leading-snug">
+              <p className="font-bold text-gray-900 text-sm">{camelVendorProfile?.businessName}</p>
+              <p className='text-gray-600 font-medium'>{camelVendorProfile?.email}</p>
+              <p className='text-gray-600 font-medium'>+91 {camelVendorProfile?.mobile}</p>
+              <p className="text-gray-600 font-medium">{camelVendorProfile?.address}</p>
+              <p className="text-gray-600 font-medium">
                 {camelVendorProfile?.city}{camelVendorProfile?.city && camelVendorProfile?.state ? ', ' : ''}{camelVendorProfile?.state} - {camelVendorProfile?.pincode}
               </p>
               {camelVendorProfile?.gstNumber && (
                 <div className="pt-1.5 flex items-center gap-1.5">
-                  <span className="text-[9px] font-black bg-gray-100 px-1 py-0.5 rounded text-gray-500 ">GSTIN</span>
-                  <span className="font-mono text-gray-700 font-bold tracking-tight">{camelVendorProfile.gstNumber}</span>
+                  <span className="text-[10px] font-semibold bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">GSTIN</span>
+                  <span className="font-mono text-gray-800 font-bold tracking-tight">{camelVendorProfile.gstNumber}</span>
                 </div>
               )}
             </div>
           </div>
-          <div className="space-y-3 text-right flex flex-col items-end">
-            <h3 className="text-[10px] font-black text-gray-400   border-b border-gray-100 pb-1 w-fit pl-8 ">Buyer / Ship To</h3>
-            <div className="text-[12px] space-y-1 leading-snug text-right">
-              <p className="font-bold text-gray-900 text-[13px] mb-1">{customer?.name || data?.userName || 'Customer'}</p>
-              <div className="flex flex-col items-end gap-0.5 text-gray-500 font-medium">
+          <div className="space-y-1.5 text-right flex flex-col items-end">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200 pb-1 w-fit pl-6">Buyer / Ship To</h3>
+            <div className="text-xs space-y-0.5 leading-snug text-right">
+              <p className="font-bold text-gray-900 text-sm mb-0.5">{customer?.name || data?.userName || 'Customer'}</p>
+              <div className="flex flex-col items-end gap-0.5 text-gray-600 font-medium">
                 <p>{customer?.email || data?.userEmail || 'N/A'}</p>
                 <div className="flex items-center gap-2 justify-end w-max ml-auto">
                    <p>{customer?.phone || customer?.mobile || data?.userPhone || 'N/A'}</p>
                 </div>
               </div>
               {data.shippingAddress ? (
-                <div className="mt-2 text-right">
-                  <span className="text-[9px] font-black bg-blue-50 text-blue-600 px-1 py-0.5 rounded border border-blue-100 uppercase tracking-tighter">Shipping Address</span>
+                <div className="mt-1.5 text-right">
+                  <span className="text-[10px] font-semibold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 uppercase tracking-tight">Shipping Address</span>
                   {typeof data.shippingAddress === 'string' ? (
-                    <p className="text-blue-500 pt-1 text-[11px] font-medium leading-tight max-w-[200px] ml-auto">{data.shippingAddress}</p>
+                    <p className="text-blue-600 pt-1 text-xs font-medium leading-tight max-w-[200px] ml-auto">{data.shippingAddress}</p>
                   ) : (
-                    <div className="text-blue-500 pt-1 text-[11px] font-medium leading-tight max-w-[200px] ml-auto">
+                    <div className="text-blue-600 pt-1 text-xs font-medium leading-tight max-w-[200px] ml-auto">
                       {data.shippingAddress.name && <p>{data.shippingAddress.name}</p>}
                       {data.shippingAddress.phone && <p>{data.shippingAddress.phone}</p>}
                       {data.shippingAddress.addressLine1 && <p>{data.shippingAddress.addressLine1}</p>}
@@ -250,27 +241,27 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
                   )}
                 </div>
               ) : (
-                <p className="text-gray-400 pt-1 text-[10px] ">Standard billing address used for shipping</p>
+                <p className="text-gray-400 pt-1 text-xs font-normal">Standard billing address used for shipping</p>
               )}
             </div>
           </div>
         </div>
 
         {/* Product Table */}
-        <div className="mb-4 rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+        <div className="mb-5 rounded-lg border border-gray-200 overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-900 text-white">
-                <th className="p-3 text-[10px] font-black text-left">Item & Description</th>
-                <th className="p-3 text-[10px] font-black text-left">HSN</th>
-                <th className="p-3 text-[10px] font-black text-left">Type</th>
-                <th className="p-3 text-[10px] font-black text-left">Unit Price</th>
-                <th className="p-3 text-[10px] font-black text-left">Qty</th>
-                <th className="p-3 text-[10px] font-black text-left">GST</th>
-                <th className="p-3 text-[10px] font-black text-left">Net Amount</th>
+                <th className="p-3 text-xs font-semibold uppercase tracking-wider text-left">Item & Description</th>
+                <th className="p-3 text-xs font-semibold uppercase tracking-wider text-left">HSN</th>
+                <th className="p-3 text-xs font-semibold uppercase tracking-wider text-left">Type</th>
+                <th className="p-3 text-xs font-semibold uppercase tracking-wider text-left">Unit Price</th>
+                <th className="p-3 text-xs font-semibold uppercase tracking-wider text-left">Qty</th>
+                <th className="p-3 text-xs font-semibold uppercase tracking-wider text-left">GST</th>
+                <th className="p-3 text-xs font-semibold uppercase tracking-wider text-left">Net Amount</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-200">
               {items.map((item: any, index: number) => {
                 const product = isQuote ? (item.productId || item.product || {}) : (item.productId || {});
                 const name = isQuote ? (product.productName || item.productName) : (product.name || item.productName || item.name);
@@ -286,39 +277,39 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
                 return (
                   <tr key={index} className="hover:bg-gray-50/50 transition-all">
                     <td className="p-3">
-                      <div className="flex gap-3">
+                      <div className="flex gap-2.5 items-center">
                          {/* Thumbnail sync with table */}
                          {(product?.thumbImage || item.thumbImage || product?.productMainImage) && (
-                           <div className="w-10 h-10 rounded border border-gray-100 overflow-hidden flex-shrink-0 no-print">
+                           <div className="w-10 h-10 rounded border border-gray-200 overflow-hidden flex-shrink-0 no-print">
                               <img src={product?.thumbImage || item.thumbImage || product?.productMainImage} alt="" className="w-full h-full object-cover" />
                            </div>
                          )}
                          <div>
-                            <div className="font-bold text-[13px] text-gray-900">{name}</div>
-                            <div className="text-[9px] font-bold text-gray-400  mt-0.5">SKU: {sku}</div>
+                            <div className="font-bold text-xs text-gray-900">{name}</div>
+                            <div className="text-[11px] text-gray-400 mt-0.5">SKU: {sku}</div>
                             {isQuote && item.numberOfDays && (
-                              <div className="mt-1.5 inline-flex items-center gap-1.5 text-[9px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                              <div className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
                                 {item.numberOfDays} {item.productListingTypeName?.toLowerCase() === 'hourly' ? 'HOURS' : 'DAYS'} RENTAL
                               </div>
                             )}
                          </div>
                       </div>
                     </td>
-                    <td className="p-3 text-left text-xs font-bold text-gray-500">{hsn}</td>
+                    <td className="p-3 text-left text-xs text-gray-600 font-medium">{hsn}</td>
                     <td className="p-3 text-left">
-                      <span className={`px-2 py-0.5 rounded-[4px] text-[9px] border font-black   ${
+                      <span className={`px-2 py-0.5 rounded text-[11px] border font-semibold ${
                         typeLabel.toLowerCase() === 'rent' || typeLabel.toLowerCase() === 'rental' ? 'text-blue-600 bg-blue-50 border-blue-100' : 'text-emerald-600 bg-emerald-50 border-emerald-100'
                       }`}>
                         {typeLabel}
                       </span>
                     </td>
-                    <td className="p-3 text-left text-xs font-bold text-gray-600">Rs. {Number(price || 0).toLocaleString()}</td>
-                    <td className="p-3 text-left text-xs font-bold text-gray-600">{qty}</td>
-                    <td className="p-3 text-left text-xs font-bold text-gray-600">
+                    <td className="p-3 text-left text-xs text-gray-700 font-medium">Rs. {Number(price || 0).toLocaleString()}</td>
+                    <td className="p-3 text-left text-xs font-semibold text-gray-900">{qty}</td>
+                    <td className="p-3 text-left text-xs text-gray-700 font-medium">
                       <div>{gstPer}%</div>
                       <div className="text-[10px] text-gray-400">Rs. {Number(gstAmt || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
                     </td>
-                    <td className="p-3 text-left text-xs font-black text-gray-900 tracking-tight">Rs. {Number(rowTotal || 0).toLocaleString()}</td>
+                    <td className="p-3 text-left text-xs font-bold text-gray-900 tracking-tight">Rs. {Number(rowTotal || 0).toLocaleString()}</td>
                   </tr>
                 );
               })}
@@ -327,49 +318,49 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
         </div>
 
         {/* Calculation Section */}
-        <div className="flex justify-between items-start mb-2">
-          <div className="flex-1 mr-12 space-y-4">
-             <div className="bg-gray-900/[0.02] p-4 rounded-xl border border-gray-100 border-dashed">
-                <h4 className="text-[10px] font-black text-gray-900   mb-2">Amount In Words</h4>
-                <p className="text-[11px] font-bold text-gray-500  lowercase first-letter:">{numberToWords(subTotal)}</p>
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex-1 mr-8 space-y-3">
+             <div className="bg-gray-50 p-3.5 rounded-lg border border-gray-200 border-dashed">
+                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-1">Amount In Words</h4>
+                <p className="text-xs font-semibold text-gray-700 capitalize">{numberToWords(subTotal)}</p>
              </div>
              
              <div className="px-1">
-                <h4 className="text-[9px] font-black text-gray-400   mb-1.5">Declaration & Terms</h4>
-                <ul className="text-[9px] text-gray-400 space-y-1 list-none p-0 leading-tight">
-                   <li className="flex gap-2"><span>•</span> This is a valid system-generated document and does not require a physical signature.</li>
-                   <li className="flex gap-2"><span>•</span> {isQuote ? 'Quotation is subject to availability of stock at time of booking.' : 'Return/exchange policies apply as per standard vendor terms.'}</li>
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Declaration & Terms</h4>
+                <ul className="text-[11px] text-gray-500 space-y-0.5 list-none p-0 leading-relaxed font-normal">
+                   <li className="flex gap-1.5"><span>•</span> This is a valid system-generated document and does not require a physical signature.</li>
+                   <li className="flex gap-1.5"><span>•</span> {isQuote ? 'Quotation is subject to availability of stock at time of booking.' : 'Return/exchange policies apply as per standard vendor terms.'}</li>
                 </ul>
              </div>
           </div>
           
-          <div className="w-56 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+          <div className="w-56 bg-gray-50 p-4 rounded-xl border border-gray-200">
             <div className="space-y-2.5">
-              <div className="flex justify-between text-[11px] text-gray-500 font-bold">
+              <div className="flex justify-between text-xs text-gray-600 font-medium">
                 <span>Gross Amount</span>
-                <span className="text-gray-700 font-mono ">Rs. {Number(subtotalExclGst).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                <span className="text-gray-800 font-mono font-semibold">Rs. {Number(subtotalExclGst).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
               </div>
-              <div className="flex justify-between text-[11px] text-gray-500 font-bold">
+              <div className="flex justify-between text-xs text-gray-600 font-medium">
                 <span>Total Tax (GST)</span>
-                <span className="text-gray-700 font-mono ">Rs. {Number(totalGst).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                <span className="text-gray-800 font-mono font-semibold">Rs. {Number(totalGst).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
               </div>
-              <div className="flex justify-between text-[11px] text-gray-500 font-bold">
+              <div className="flex justify-between text-xs text-gray-600 font-medium">
                 <span>Shipping</span>
-                <span className="text-gray-700 font-mono ">Rs. 0.00</span>
+                <span className="text-gray-800 font-mono font-semibold">Rs. 0.00</span>
               </div>
-              <div className="pt-3 border-t border-gray-200 flex justify-between items-center group">
-                <span className="text-[13px] font-black text-gray-900">Total Payable</span>
-                <span className="text-xl font-black text-blue-700 leading-none group-hover:scale-105 transition-transform">Rs. {Number(subTotal).toLocaleString()}</span>
+              <div className="pt-2.5 border-t border-gray-200 flex justify-between items-center">
+                <span className="text-xs font-bold text-gray-900">Total Payable</span>
+                <span className="text-xl font-bold text-blue-700 leading-none">Rs. {Number(subTotal).toLocaleString()}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Standardized Footer */}
-        <div className="text-center pt-6 border-t border-gray-100">
+        <div className="text-center pt-4 border-t border-gray-200">
            <div className="inline-flex flex-col items-center">
-              <span className="text-[10px] font-black  text-gray-900">Thank you for shopping</span>
-              <p className="text-[8px] text-gray-400 font-bold mt-2 tracking-[0.2em]"> info@upleex.com</p>
+              <span className="text-xs font-bold text-gray-900">Thank you for shopping</span>
+              <p className="text-[10px] text-gray-400 font-medium mt-0.5 tracking-wider"> info@upleex.com</p>
            </div>
         </div>
       </div>
@@ -377,7 +368,7 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
       <div className="mt-8 flex justify-center gap-4 print:hidden no-print">
         <button 
           onClick={handleDownload}
-          className="group relative flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-black text-[12px] shadow-xl transition-all hover:scale-[1.02] active:scale-95 overflow-hidden"
+          className="group relative flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-9 py-3.5 rounded-xl font-black text-sm shadow-xl transition-all hover:scale-[1.02] active:scale-95 overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <svg className="w-4 h-4 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
