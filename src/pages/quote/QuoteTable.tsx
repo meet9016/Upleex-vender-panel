@@ -103,7 +103,7 @@ const QuoteTable = () => {
   const handleBulkDownloadPdf = async () => {
     try {
       setInvoiceLoading(true);
-      
+
       // Download each quote invoice separately via backend
       for (const quote of groupedQuotes) {
         const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/invoice/pdf`, {
@@ -118,9 +118,9 @@ const QuoteTable = () => {
             type: 'quote'
           })
         });
-        
+
         if (!response.ok) throw new Error('Failed to generate PDF');
-        
+
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -131,11 +131,11 @@ const QuoteTable = () => {
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-        
+
         // Small delay between downloads
         await new Promise(resolve => setTimeout(resolve, 500));
       }
-      
+
       toast.success('All quotations downloaded successfully!');
     } catch (error) {
       console.error('Error generating bulk PDF:', error);
@@ -158,11 +158,11 @@ const QuoteTable = () => {
       toast.warning('No valid items in selection');
       return;
     }
-    
+
     try {
       setInvoiceLoading(true);
       setIsBulkPrinting(true);
-      
+
       if (!vendorProfile) {
         const profileRes = await api.get(endPointApi.postFetchVendorKYCFormData as string);
         if (profileRes.data?.status == "200") {
@@ -171,7 +171,7 @@ const QuoteTable = () => {
           const contact = getFirstIfArray(data.ContactDetails) || {};
           const identity = getFirstIfArray(data.Identity) || {};
           const documents = getFirstIfArray(data.Documents) || {};
-          
+
           setVendorProfile({
             business_name: identity?.business_name || data.business_name || data.businessName || '',
             gst_number: identity?.gst_number || data.gst_number || '',
@@ -204,7 +204,7 @@ const QuoteTable = () => {
             items: [quote], // Quotes are usually single product, but we treat them as items
             total_price: Number(quote.total_price || quote.calculated_price || 0)
           };
-          groups[userId].quote_id = quote._id; 
+          groups[userId].quote_id = quote._id;
         } else {
           // Append as another item
           groups[userId].items = [...groups[userId].items, quote];
@@ -373,13 +373,13 @@ const QuoteTable = () => {
         customerId = quote.user_id._id || quote.user_id.id || 'unknown';
         customerName = quote.user_id.name || 'Unknown Customer';
         customerEmail = quote.user_id.email || '';
-      } 
+      }
       // Fallback to review_details.user_id if populated
       else if (quote.review_details?.user_id && typeof quote.review_details.user_id === 'object') {
         customerId = quote.review_details.user_id._id || quote.review_details.user_id.id || quote.user_id;
         customerName = quote.review_details.user_id.name || 'Unknown Customer';
         customerEmail = quote.review_details.user_id.email || '';
-      } 
+      }
       // Fallback for string user_id
       else {
         customerId = typeof quote.user_id === 'string' ? quote.user_id : (quote.user_id?._id || 'unknown');
@@ -388,16 +388,16 @@ const QuoteTable = () => {
       console.log("customer fallback resolved:", customerName);
       if (!groups[customerId]) {
 
-         groups[customerId] = {
-           id: customerId,
-           type: 'customer',
-           name: customerName,
-           email: customerEmail,
-           path: [customerId.toString()],
-         };
-         flat.push(groups[customerId]);
+        groups[customerId] = {
+          id: customerId,
+          type: 'customer',
+          name: customerName,
+          email: customerEmail,
+          path: [customerId.toString()],
+        };
+        flat.push(groups[customerId]);
       }
-      
+
       flat.push({
         ...quote,
         type: 'quote',
@@ -432,31 +432,31 @@ const QuoteTable = () => {
             </div>
           );
         }
-        
+
         const imageUrl = data?.product_main_image;
         const productName = data?.product_name;
 
-      return (
-            <div className="flex items-center gap-3 h-full">
-              <div className="flex-shrink-0 relative">
-                {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt={productName}
-                    className="w-9 h-9 object-cover rounded-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer transition-shadow hover:shadow-md hover-zoom-trigger"
-                    onMouseEnter={(e: any) => {
-                      setHoveredImage(imageUrl);
-                      setMousePos({ x: e.clientX, y: e.clientY });
-                    }}
-                    onMouseMove={(e: any) => {
-                      setMousePos({ x: e.clientX, y: e.clientY });
-                    }}
-                    onMouseLeave={() => {
-                      setHoveredImage(null);
-                    }}
-                    onError={(e: any) => {
-                      e.target.onerror = null;
-                      e.target.src = DEFAULT_PLACEHOLDER;
+        return (
+          <div className="flex items-center gap-3 h-full">
+            <div className="flex-shrink-0 relative">
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt={productName}
+                  className="w-9 h-9 object-cover rounded-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer transition-shadow hover:shadow-md hover-zoom-trigger"
+                  onMouseEnter={(e: any) => {
+                    setHoveredImage(imageUrl);
+                    setMousePos({ x: e.clientX, y: e.clientY });
+                  }}
+                  onMouseMove={(e: any) => {
+                    setMousePos({ x: e.clientX, y: e.clientY });
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredImage(null);
+                  }}
+                  onError={(e: any) => {
+                    e.target.onerror = null;
+                    e.target.src = DEFAULT_PLACEHOLDER;
                   }}
                 />
               ) : (
@@ -529,6 +529,41 @@ const QuoteTable = () => {
         cellStyle: { textAlign: "left", fontWeight: "600" },
       },
       {
+        field: "total_price",
+        headerName: "Razorpay Fee (Incl. GST)",
+        minWidth: 155,
+        cellStyle: { textAlign: "left" },
+        cellRenderer: (params: any) => {
+          if (params.data?.type === 'customer') return null;
+          const totalAmt = Number(params.value || 0);
+          const razorpayFee = totalAmt * 0.02;
+          const razorpayGst = razorpayFee * 0.18;
+          const totalCharge = razorpayFee + razorpayGst;
+          return (
+            <div className="text-rose-600 font-bold text-sm">
+              ₹{totalCharge.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          );
+        },
+      },
+      {
+        field: "total_price",
+        headerName: "Admin Balance",
+        minWidth: 130,
+        cellStyle: { textAlign: "left" },
+        cellRenderer: (params: any) => {
+          if (params.data?.type === 'customer') return null;
+          const totalAmt = Number(params.value || 0);
+          const razorpayCharge = totalAmt * 0.02 * 1.18;
+          const adminBalance = totalAmt - razorpayCharge;
+          return (
+            <div className="font-bold text-blue-600 text-sm">
+              ₹{adminBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          );
+        },
+      },
+      {
         field: "status",
         headerName: "Status",
         minWidth: 130,
@@ -537,7 +572,7 @@ const QuoteTable = () => {
           if (params.data?.type === 'customer') return null;
           return (
             <div className="flex items-center h-full">
-               <StatusBadge status={params.value || 'pending'} />
+              <StatusBadge status={params.value || 'pending'} />
             </div>
           );
         },
@@ -712,20 +747,19 @@ const QuoteTable = () => {
             )} */}
 
 
-             <button
-              onClick={() => handleGenerateBill(params.data)}
-              disabled={!(isPaid && isCompleted)}
-              className={`w-8 h-8 flex items-center justify-center rounded-xl shadow-sm transition-all duration-200
-                ${
-                  isPaid && isCompleted
+              <button
+                onClick={() => handleGenerateBill(params.data)}
+                disabled={!(isPaid && isCompleted)}
+                className={`w-8 h-8 flex items-center justify-center rounded-xl shadow-sm transition-all duration-200
+                ${isPaid && isCompleted
                     ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:shadow"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                }`}
-              title="Generate Bill"
-              type="button"
-            >
-              <FaFileInvoice className="text-base" />
-            </button>
+                  }`}
+                title="Generate Bill"
+                type="button"
+              >
+                <FaFileInvoice className="text-base" />
+              </button>
               <ActionButtons
                 onEdit={() => router.push(`/quote/edit/${params.data._id || params.data.id}`)}
                 showDelete={false}
@@ -769,14 +803,14 @@ const QuoteTable = () => {
         const data = profileRes.data.data;
         // Extract KYC details robustly (can be array or single object)
         const getFirstIfArray = (val: any) => Array.isArray(val) ? val[0] : val;
-        
+
         const contact = getFirstIfArray(data.ContactDetails) || {};
         const identity = getFirstIfArray(data.Identity) || {};
         const documents = getFirstIfArray(data.Documents) || {};
         console.log("contact--", contact);
         console.log("identity--", identity);
         setVendorProfile({
-          business_name: identity?.business_name  || data.business_name || data.businessName || '',
+          business_name: identity?.business_name || data.business_name || data.businessName || '',
           gst_number: identity?.gst_number || data.gst_number || '',
           business_logo_image: documents?.business_logo_image || data.business_logo_image || '',
           address: contact?.address || data.address || '',
@@ -1108,7 +1142,7 @@ const QuoteTable = () => {
   const getRowStyle = (params: any) => {
     // If isNew is true -> Light Yellow 
     if (params.data?.isNew === true && String(params.data?.status || '').toLowerCase() === 'pending') {
-      return { backgroundColor: 'rgba(253, 230, 138, 0.4)' }; 
+      return { backgroundColor: 'rgba(253, 230, 138, 0.4)' };
     }
 
     if (!params.data || !params.data.end_date || params.data.end_date === '-') return undefined;
@@ -1463,7 +1497,7 @@ const QuoteTable = () => {
             {quoteData.map((quote: any) => {
               const status = (quote.status || '').toLowerCase();
               const isCompleted = status.includes('complet') || status.includes('success');
-              const isDisabled = ['approval','approved','reject','rejected','complete','completed','delivery'].includes(status);
+              const isDisabled = ['approval', 'approved', 'reject', 'rejected', 'complete', 'completed', 'delivery'].includes(status);
               const isPaid = (quote.payment_status || '').toLowerCase() === 'paid';
               const adminPayment = quote.payment_status_info?.payment_status || 'no_payment';
               const hasPaymentLink = !!quote.razorpay_payment_link;
@@ -1624,26 +1658,26 @@ const QuoteTable = () => {
                 <p className="text-gray-900 dark:text-white font-medium">Preparing your quotation{isBulkPrinting ? 's' : ''}...</p>
               </div>
             ) : isBulkPrinting ? (
-                <div className="space-y-8 relative">
-                   <div className="sticky top-0 z-20 flex justify-end pr-4 pt-4 h-0">
-                      <button
-                        onClick={() => {
-                          setShowInvoiceModal(false);
-                          setIsBulkPrinting(false);
-                        }}
-                        className="bg-white rounded-full p-2 shadow-lg text-gray-400 hover:text-gray-600 transition-colors no-print"
-                      >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                   </div>
+              <div className="space-y-8 relative">
+                <div className="sticky top-0 z-20 flex justify-end pr-4 pt-4 h-0">
+                  <button
+                    onClick={() => {
+                      setShowInvoiceModal(false);
+                      setIsBulkPrinting(false);
+                    }}
+                    className="bg-white rounded-full p-2 shadow-lg text-gray-400 hover:text-gray-600 transition-colors no-print"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
                 <div className="space-y-8">
                   {groupedQuotes.map((quote, idx) => (
                     <div key={idx} className="break-after-page mb-8">
-                      <BillingInvoice 
-                        data={quote} 
-                        vendorProfile={vendorProfile} 
+                      <BillingInvoice
+                        data={quote}
+                        vendorProfile={vendorProfile}
                         type="quote"
                       />
                     </div>
@@ -1652,9 +1686,9 @@ const QuoteTable = () => {
               </div>
             ) : (
               <div className="relative">
-                <BillingInvoice 
-                  data={selectedQuote} 
-                  vendorProfile={vendorProfile} 
+                <BillingInvoice
+                  data={selectedQuote}
+                  vendorProfile={vendorProfile}
                   type="quote"
                   onDownloadPdf={() => {
                     window.print();

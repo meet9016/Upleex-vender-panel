@@ -160,7 +160,7 @@ const OrderList = () => {
     status: [] as string[],
   });
 
-  const activeFilterCount = Object.values(filters).filter(v => 
+  const activeFilterCount = Object.values(filters).filter(v =>
     Array.isArray(v) ? v.length > 0 : v && v.trim() !== ''
   ).length;
 
@@ -205,7 +205,7 @@ const OrderList = () => {
 
   // Get current Shiprocket status from order (from "status" field)
   const getCurrentShiprocketStatus = (order: VendorOrder | null) => {
- console.log("order", order)
+    console.log("order", order)
     // Shiprocket status comes in "status" field like "READY TO SHIP"
     return order?.shiprocket_response?.data?.status || order?.shiprocket_status || order?.vendor_status || 'PENDING';
   };
@@ -382,16 +382,16 @@ const OrderList = () => {
       const customerEmail = customer.email || '';
 
       if (!groups[customerId]) {
-         groups[customerId] = {
-           id: customerId,
-           type: 'customer',
-           name: customerName,
-           email: customerEmail,
-           path: [customerId.toString()],
-         };
-         flat.push(groups[customerId]);
+        groups[customerId] = {
+          id: customerId,
+          type: 'customer',
+          name: customerName,
+          email: customerEmail,
+          path: [customerId.toString()],
+        };
+        flat.push(groups[customerId]);
       }
-      
+
       flat.push({
         ...order,
         type: 'order',
@@ -426,7 +426,7 @@ const OrderList = () => {
             </div>
           );
         }
-        
+
         return (
           <div className="font-mono text-blue-600 font-semibold ml-2">
             #{data?.order_id || '-'}
@@ -505,6 +505,43 @@ const OrderList = () => {
       },
     },
     {
+      headerName: "Razorpay Fee (Incl. GST)",
+      field: "total_amount",
+      minWidth: 155,
+      flex: 1.2,
+      cellStyle: { textAlign: "left" },
+      cellRenderer: (params: any) => {
+        if (params.data?.type === 'customer') return null;
+        const totalAmt = Number(params.value || 0);
+        const razorpayFee = totalAmt * 0.02;
+        const razorpayGst = razorpayFee * 0.18;
+        const totalCharge = razorpayFee + razorpayGst;
+        return (
+          <div className="text-rose-600 font-bold text-sm">
+            ₹{totalCharge.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Admin Balance",
+      field: "total_amount",
+      minWidth: 130,
+      flex: 1,
+      cellStyle: { textAlign: "left" },
+      cellRenderer: (params: any) => {
+        if (params.data?.type === 'customer') return null;
+        const totalAmt = Number(params.value || 0);
+        const razorpayCharge = totalAmt * 0.02 * 1.18;
+        const adminBalance = totalAmt - razorpayCharge;
+        return (
+          <div className="font-bold text-blue-600 text-sm">
+            ₹{adminBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+        );
+      },
+    },
+    {
       headerName: "Order Status",
       field: "vendor_status",
       minWidth: 120,
@@ -565,7 +602,7 @@ const OrderList = () => {
         if (params.data?.type === 'customer') return null;
         const isPaid = params.data.payment_status?.toLowerCase() === 'paid';
         const isCompleted = params.data.vendor_status?.toLowerCase() === 'delivered' || params.data.vendor_status?.toLowerCase() === 'completed';
-        
+
         return (
           <div className="flex items-center justify-left gap-2 h-full">
             <button
@@ -586,11 +623,10 @@ const OrderList = () => {
                 }
               }}
               disabled={!isPaid || !isCompleted}
-              className={`p-1.5 rounded-lg border shadow-sm transition-all ${
-                isPaid && isCompleted 
-                ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100" 
-                : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60"
-              }`}
+              className={`p-1.5 rounded-lg border shadow-sm transition-all ${isPaid && isCompleted
+                  ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
+                  : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60"
+                }`}
               title={isPaid && isCompleted ? "Generate Bill" : "Bill available after Payment & Delivery"}
               type="button"
             >
@@ -649,7 +685,7 @@ const OrderList = () => {
   const handleBulkDownloadPdf = async () => {
     try {
       setInvoiceLoading(true);
-      
+
       // Filter only Paid & Completed orders for bulk download
       const validOrders = groupedOrders.filter(order => {
         const isPaid = order?.payment_status?.toLowerCase() === 'paid';
@@ -677,9 +713,9 @@ const OrderList = () => {
             type: 'order'
           })
         });
-        
+
         if (!response.ok) throw new Error('Failed to generate PDF');
-        
+
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -690,11 +726,11 @@ const OrderList = () => {
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-        
+
         // Small delay between downloads
         await new Promise(resolve => setTimeout(resolve, 500));
       }
-      
+
       toast.success('All invoices downloaded successfully!');
     } catch (error) {
       console.error('Error generating bulk PDF:', error);
@@ -707,7 +743,7 @@ const OrderList = () => {
   const handleBulkInvoiceDownload = async () => {
     // Filter only Paid & Completed orders from selection
     const validSelection = selectedOrders.filter(order => {
-      if (order?.type === 'customer') return false; 
+      if (order?.type === 'customer') return false;
       const isPaid = String(order?.payment_status || '').toLowerCase() === 'paid';
       const isCompleted = ['delivered', 'completed'].includes(String(order?.vendor_status || order?.order_status || '').toLowerCase());
       return isPaid && isCompleted;
@@ -717,11 +753,11 @@ const OrderList = () => {
       toast.warning('No valid Paid & Completed orders in selection');
       return;
     }
-    
+
     try {
       setInvoiceLoading(true);
       setIsBulkPrinting(true);
-      
+
       // Fetch vendor profile if not already fetched
       if (!vendorProfile) {
         const profileRes = await api.get(endPointApi.postFetchVendorKYCFormData as string);
@@ -731,7 +767,7 @@ const OrderList = () => {
           const contact = getFirstIfArray(data.ContactDetails) || {};
           const identity = getFirstIfArray(data.Identity) || {};
           const documents = getFirstIfArray(data.Documents) || {};
-          
+
           setVendorProfile({
             business_name: identity.business_name || data.business_name || '',
             gst_number: identity.gst_number || data.gst_number || '',
@@ -780,7 +816,7 @@ const OrderList = () => {
             total_amount: Number(order.total_amount || 0)
           };
           // If it's a grouped order, we might want to clear specific order IDs or show multiple
-          groups[userId].order_id = order.order_id; 
+          groups[userId].order_id = order.order_id;
         } else {
           // Append items to existing group
           groups[userId].items = [...groups[userId].items, ...(order.items || [])];
@@ -795,7 +831,7 @@ const OrderList = () => {
       const finalGroupedOrders = Object.values(groups);
       setGroupedOrders(finalGroupedOrders);
       setShowInvoiceModal(true);
-      
+
       // We don't trigger print automatically now, user can see preview first
       setTimeout(() => {
         setInvoiceLoading(false);
@@ -838,13 +874,13 @@ const OrderList = () => {
         const data = profileRes.data.data;
         // Extract KYC details robustly (can be array or single object)
         const getFirstIfArray = (val: any) => Array.isArray(val) ? val[0] : val;
-        
+
         const contact = getFirstIfArray(data.ContactDetails) || {};
         const identity = getFirstIfArray(data.Identity) || {};
         const documents = getFirstIfArray(data.Documents) || {};
-        
+
         setVendorProfile({
-          business_name: identity.business_name  || data.business_name || '',
+          business_name: identity.business_name || data.business_name || '',
           gst_number: identity.gst_number || data.gst_number || '',
           business_logo_image: documents.business_logo_image || data.business_logo_image || '',
           address: contact.address || data.address || '',
@@ -890,7 +926,7 @@ const OrderList = () => {
     };
 
     setSelectedOrder(normalizedOrder);
-    
+
     // For shipping orders, use shiprocket_status if available
     const isShipping = order?.delivery_type === 'shipping';
     if (isShipping) {
@@ -898,7 +934,7 @@ const OrderList = () => {
     } else {
       setNewStatus(order.vendor_status || order.order_status || 'pending');
     }
-    
+
     setStatusNotes('');
     setShowStatusModal(true);
   };
@@ -979,8 +1015,8 @@ const OrderList = () => {
       setExcelLoading(true);
       const params = getCurrentParams();
       /* if (activeTab === 'orders') { */
-        await exportOrdersToExcel(params);
-        toast.success('Orders exported to Excel successfully!');
+      await exportOrdersToExcel(params);
+      toast.success('Orders exported to Excel successfully!');
       /* } else {
         await exportPaymentsToExcel(params);
         toast.success('Payments exported to Excel successfully!');
@@ -998,8 +1034,8 @@ const OrderList = () => {
       setPdfLoading(true);
       const params = getCurrentParams();
       /* if (activeTab === 'orders') { */
-        await exportOrdersToPDF(params);
-        toast.success('Orders exported to PDF successfully!');
+      await exportOrdersToPDF(params);
+      toast.success('Orders exported to PDF successfully!');
       /* } else {
         await exportPaymentsToPDF(params);
         toast.success('Payments exported to PDF successfully!');
@@ -1118,7 +1154,7 @@ const OrderList = () => {
             >
               Orders
             </button> */}
-             {/*
+            {/*
             <button
               onClick={() => {
                 setActiveTab('payments');
@@ -1213,7 +1249,7 @@ const OrderList = () => {
                           className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                         />
                       </div>
-                          {/* Order Status Multi-select */}
+                      {/* Order Status Multi-select */}
                       <div className="space-y-1.5">
                         <Label className="text-[13px] font-semibold text-gray-700 dark:text-gray-300">Order Status</Label>
                         <MultiSelectDropdown
@@ -1366,7 +1402,7 @@ const OrderList = () => {
             <div className="grid grid-cols-1 gap-3">
               {vendorOrders.map((order: any) => {
                 const isPaid = (order.payment_status || '').toLowerCase() === 'paid';
-                const isCompleted = ['delivered','completed'].includes((order.vendor_status || '').toLowerCase());
+                const isCompleted = ['delivered', 'completed'].includes((order.vendor_status || '').toLowerCase());
                 const items = order.items || [];
                 const productName = items.map((i: any) => i.product_id?.name || i.product_name || i.name || '-').join(', ');
                 const productImg = items[0]?.product_image || items[0]?.image || '';
@@ -1555,7 +1591,7 @@ const OrderList = () => {
                               src={productImage}
                               alt={productName || 'Product'}
                               className="w-12 h-12 object-cover rounded"
-                            
+
                             />
                           ) : null}
                           <div className={`w-12 h-12 bg-gray-200 dark:bg-gray-500 rounded flex items-center justify-center ${productImage ? 'hidden' : 'flex'}`}>
@@ -1658,7 +1694,7 @@ const OrderList = () => {
                   </button>
                 </div>
                 <div className="flex justify-center mb-4 no-print">
-                  <button 
+                  <button
                     onClick={handleBulkDownloadPdf}
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg transition-all"
                   >
@@ -1674,21 +1710,21 @@ const OrderList = () => {
                       return isPaid && isCompleted;
                     })
                     .map((order, idx) => (
-                    <div key={idx} className="break-after-page mb-8">
-                      <BillingInvoice 
-                        data={order} 
-                        vendorProfile={vendorProfile} 
-                        type="order"
-                      />
-                    </div>
-                  ))}
+                      <div key={idx} className="break-after-page mb-8">
+                        <BillingInvoice
+                          data={order}
+                          vendorProfile={vendorProfile}
+                          type="order"
+                        />
+                      </div>
+                    ))}
                 </div>
               </div>
             ) : (
               <div className="relative">
-                <BillingInvoice 
-                  data={selectedOrder} 
-                  vendorProfile={vendorProfile} 
+                <BillingInvoice
+                  data={selectedOrder}
+                  vendorProfile={vendorProfile}
                   type="order"
                   onDownloadPdf={() => {
                     window.print();
