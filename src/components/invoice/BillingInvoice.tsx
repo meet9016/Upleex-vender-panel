@@ -221,7 +221,13 @@ const BillingInvoice: React.FC<InvoiceProps> = ({ data: rawData, vendorProfile, 
                    <p>{customer?.phone || customer?.mobile || data?.userPhone || 'N/A'}</p>
                 </div>
               </div>
-              {data.shippingAddress ? (
+               {(data?.gstNumber || data?.gst_number) && (
+                 <div className="pt-1.5 flex items-center justify-end gap-1.5">
+                   <span className="text-[10px] font-semibold bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">GSTIN</span>
+                   <span className="font-mono text-gray-800 font-bold tracking-tight">{data.gstNumber || data.gst_number}</span>
+                 </div>
+               )}
+               {data.shippingAddress ? (
                 <div className="mt-1.5 text-right">
                   <span className="text-[10px] font-semibold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 uppercase tracking-tight">Shipping Address</span>
                   {typeof data.shippingAddress === 'string' ? (

@@ -23,6 +23,52 @@ import { useWallet } from "@/context/WalletContext";
 import { FiArrowLeft, FiInfo } from "react-icons/fi";
 import Tooltip from "@/components/common/Tooltip";
 
+const normalizeHashtagInput = (value: string) =>
+    value.replace(/(^|,\s*)(?!#)(?=\S)/g, '$1#');
+
+const fashionSizeGroups: Record<string, { label: string; sizes: string[] }[]> = {
+    menClothing: [
+        { label: "T-Shirt", sizes: ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL", "Free Size", "Custom"] },
+        { label: "Shirt", sizes: ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL", "Free Size", "Custom"] },
+        { label: "Kurta", sizes: ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL", "Free Size", "Custom"] },
+        { label: "Blazer", sizes: ["36", "38", "40", "42", "44", "46", "48", "50", "52", "54", "56", "58", "60", "Custom"] },
+        { label: "Pants", sizes: ["26", "28", "30", "32", "34", "36", "38", "40", "42", "44", "46", "48", "50", "52", "Custom Size", "Free Size"] },
+        { label: "Men's Footwear", sizes: ["5", "6", "7", "8", "9", "10", "11", "12", "13", "14"] },
+    ],
+    womenClothing: [
+        { label: "Tops", sizes: ["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL", "6XL", "Free Size", "Custom"] },
+        { label: "T-Shirts", sizes: ["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL", "6XL", "Free Size", "Custom"] },
+        { label: "Shirts", sizes: ["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL", "6XL", "Free Size", "Custom"] },
+        { label: "Dresses", sizes: ["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL", "6XL", "Free Size", "Custom"] },
+        { label: "Kurtis", sizes: ["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL", "6XL", "Free Size", "Custom"] },
+        { label: "Gowns", sizes: ["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL", "6XL", "Free Size", "Custom"] },
+        { label: "Jeans", sizes: ["24", "26", "28", "30", "32", "34", "36", "38", "40", "42", "44", "Custom"] },
+        { label: "Pants", sizes: ["24", "26", "28", "30", "32", "34", "36", "38", "40", "42", "44", "Custom"] },
+        { label: "Trousers", sizes: ["24", "26", "28", "30", "32", "34", "36", "38", "40", "42", "44", "Custom"] },
+        { label: "Women's Footwear", sizes: ["2", "3", "4", "5", "6", "7", "8", "9", "10"] },
+    ],
+    menFootwear: [{ label: "Men's Footwear", sizes: ["5", "6", "7", "8", "9", "10", "11", "12", "13", "14"] }],
+    womenFootwear: [{ label: "Women's Footwear", sizes: ["2", "3", "4", "5", "6", "7", "8", "9", "10"] }],
+    innerwear: [{ label: "Innerwear", sizes: ["28A", "28B", "28C", "28D", "28DD", "28E", "28F", "30A", "30B", "30C", "30D", "30DD", "30E", "30F", "32A", "32B", "32C", "32D", "32DD", "32E", "32F", "34A", "34B", "34C", "34D", "34DD", "34E", "34F", "36A", "36B", "36C", "36D", "36DD", "36E", "36F", "38A", "38B", "38C", "38D", "38DD", "38E", "38F", "40A", "40B", "40C", "40D", "40DD", "40E", "40F", "42A", "42B", "42C", "42D", "42DD", "42E", "42F", "44A", "44B", "44C", "44D", "44DD", "44E", "44F"] }],
+    jewellery: [{ label: "Ring", sizes: ["6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "Custom"] }],
+    bangles: [{ label: "Bangles", sizes: ["2.0", "2.2", "2.4", "2.6", "2.8", "2.10", "2.12", "2.14", "2.16", "2.18", "Custom"] }],
+};
+
+const getFashionSizeGroups = (subcategoryLabel: string) => {
+    const label = subcategoryLabel.toLowerCase();
+    const isMen = /(^|[^a-z])men([^a-z]|$)/.test(label);
+    const isWomen = /(^|[^a-z])women([^a-z]|$)/.test(label);
+    if (isMen && label.includes('clothing')) return fashionSizeGroups.menClothing;
+    if (isWomen && label.includes('clothing')) return fashionSizeGroups.womenClothing;
+    if (label.includes('innerwear')) return fashionSizeGroups.innerwear;
+    if (label.includes('bangle')) return fashionSizeGroups.bangles;
+    if (label.includes('jewellery') || label.includes('ring')) return fashionSizeGroups.jewellery;
+    if (isMen && label.includes('footwear')) return fashionSizeGroups.menFootwear;
+    if (isWomen && label.includes('footwear')) return fashionSizeGroups.womenFootwear;
+    if (label.includes('footwear')) return [...fashionSizeGroups.menFootwear, ...fashionSizeGroups.womenFootwear];
+    return [];
+};
+
 /* <!-- ========================================================== Types ========================================================== --> */
 
 export interface SelectOption {
@@ -104,6 +150,9 @@ export default function AddProductPage() {
         length: string;
         breadth: string;
         height: string;
+        hashtags: string;
+        fashionItemType: string;
+        selectedSizes: string[];
     }>({
         category: null,
         subCategory: null,
@@ -130,6 +179,9 @@ export default function AddProductPage() {
         length: "10",
         breadth: "10",
         height: "10",
+        hashtags: "",
+        fashionItemType: "",
+        selectedSizes: [],
     });
 
     const [mainPreview, setMainPreview] = useState<mainImg[]>([]);
@@ -563,6 +615,11 @@ export default function AddProductPage() {
                         length: data.length !== undefined ? String(data.length) : "10",
                         breadth: data.breadth !== undefined ? String(data.breadth) : "10",
                         height: data.height !== undefined ? String(data.height) : "10",
+                        hashtags: data.hashtags && Array.isArray(data.hashtags)
+                            ? data.hashtags.map((tag: string) => tag.startsWith('#') ? tag : `#${tag}`).join(", ")
+                            : "",
+                        fashionItemType: data.fashion_item_type || "",
+                        selectedSizes: data.sizes && Array.isArray(data.sizes) ? data.sizes : [],
                     });
 
                     setSelectedCategory(String(data.category_id || ""));
@@ -939,6 +996,22 @@ export default function AddProductPage() {
             if (formData.height.trim()) {
                 formdata.append("height", formData.height.trim());
             }
+            if (formData.hashtags.trim()) {
+                formdata.append("hashtags", formData.hashtags.trim());
+            } else {
+                formdata.append("hashtags", "");
+            }
+
+            // Append optional fashion item type
+            if (formData.fashionItemType) {
+                formdata.append("fashion_item_type", formData.fashionItemType);
+            }
+            if (formData.selectedSizes && formData.selectedSizes.length > 0) {
+                // Send sizes as comma-separated string
+                formdata.append("sizes", formData.selectedSizes.join(','));
+            } else {
+                formdata.append("sizes", "");
+            }
 
             // ---------- Sell FLOW ----------
             if (isSell) {
@@ -1107,6 +1180,8 @@ export default function AddProductPage() {
                                 handleChange("category", val);
                                 setSelectedCategory(val);
                                 handleChange("subCategory", null);
+                                handleChange("fashionItemType", "");
+                                handleChange("selectedSizes", []);
                                 setSelectedSubCategory(null);
                             }}
                         />
@@ -1130,6 +1205,8 @@ export default function AddProductPage() {
                             error={!!validationErrors.subCategory}
                             onChange={(val) => {
                                 handleChange("subCategory", val);
+                                handleChange("fashionItemType", "");
+                                handleChange("selectedSizes", []);
                                 setSelectedSubCategory(val);
                                 // Auto-fill GST when subcategory is selected
                                 const selectedSubCat = subCategoryList.find((s: any) => String(s.value) === String(val));
@@ -1438,6 +1515,96 @@ export default function AddProductPage() {
                             </div>
                         </div>
                     </div>
+
+                    <div className="lg:col-span-2">
+                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Hashtags (Optional)</Label>
+                        <div className="flex flex-col">
+                            <Input
+                                placeholder="Enter hashtags separated by comma (e.g. #mobile, #electronics, #smartphone)"
+                                type="text"
+                                value={formData.hashtags}
+                                infoTooltip="Use commas to separate multiple hashtags. This helps users search for your product."
+                                onChange={(e) => handleChange("hashtags", normalizeHashtagInput(e.target.value))}
+                                className="rounded-lg px-3 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-200 w-full"
+                            />
+                        </div>
+                    </div>
+
+                    {/* ================= Optional Fashion Category Sizing/Gender Fields ================= */}
+                    {(() => {
+                        const isFashion = (() => {
+                            if (formData.category) {
+                                const catObj = categoriesData.find((c: any) => String(c.categories_id || c.id) === String(formData.category));
+                                if (catObj && (catObj.categories_name || catObj.name || '').toLowerCase().includes('fashion')) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        })();
+
+                        if (!isFashion) return null;
+
+                        const selectedSubcategoryLabel = subCategoryList.find(
+                            (option) => String(option.value) === String(formData.subCategory)
+                        )?.label || '';
+                        const availableFashionItems = getFashionSizeGroups(selectedSubcategoryLabel);
+                        const selectedFashionItem = availableFashionItems.find(
+                            (item) => item.label === formData.fashionItemType
+                        );
+
+                        const handleSizeToggle = (size: string) => {
+                            const current = formData.selectedSizes || [];
+                            const updated = current.includes(size) ? current.filter(s => s !== size) : [...current, size];
+                            handleChange("selectedSizes", updated);
+                        };
+
+                        return (
+                            <div className="lg:col-span-2 p-5 bg-amber-50/40 dark:bg-gray-800/60 rounded-2xl border border-amber-200 dark:border-gray-700 shadow-sm space-y-4">
+                                <h3 className="font-bold text-gray-800 dark:text-white text-md">Fashion Custom Attributes</h3>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                        <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-1.5">Item Type (Optional)</Label>
+                                        <SearchableDropdown
+                                            searchable
+                                            options={availableFashionItems.map((item) => ({ value: item.label, label: item.label }))}
+                                            value={formData.fashionItemType}
+                                            placeholder={availableFashionItems.length ? "Select item type" : "Select a fashion subcategory first"}
+                                            onChange={(value) => {
+                                                handleChange("fashionItemType", value);
+                                                handleChange("selectedSizes", []);
+                                            }}
+                                        />
+                                    </div>
+
+                                    {selectedFashionItem && (
+                                        <div>
+                                            <Label className="font-semibold text-gray-700 dark:text-gray-200 mb-1.5">Available Sizes (Optional)</Label>
+                                            <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-auto pr-1">
+                                                    {selectedFashionItem.sizes.map((sz) => {
+                                                        const isSelected = (formData.selectedSizes || []).includes(sz);
+                                                        return (
+                                                            <button
+                                                                key={sz}
+                                                                type="button"
+                                                                onClick={() => handleSizeToggle(sz)}
+                                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                                                                    isSelected
+                                                                        ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                                                                        : 'bg-white hover:bg-slate-50 border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300'
+                                                                }`}
+                                                            >
+                                                                {sz}
+                                                            </button>
+                                                        );
+                                                    })}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     {/* ================= Row 3: Rent Type ================= */}
                     {selectedListingType === "Rent" && (

@@ -77,6 +77,8 @@ interface VendorOrder {
     quantity: number;
     price?: number;
     product_price?: number;
+    selected_size?: string;
+    note?: string;
   }>;
   total_amount: number;
   payment_type?: string;
@@ -468,6 +470,39 @@ const OrderList = () => {
         return (
           <div className="text-gray-800 dark:text-white text-sm">
             {productNames || '-'}
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Customer Note",
+      field: "items",
+      minWidth: 150,
+      flex: 1,
+      cellStyle: { textAlign: "left" },
+      cellRenderer: (params: any) => {
+        if (params.data?.type === 'customer') return null;
+        const items = params.value || [];
+        const notes = items.map((item: any) => item.note || '').filter(Boolean).join('; ');
+        return (
+          <div className="text-amber-600 dark:text-amber-400 text-xs font-medium italic">
+            {notes || '-'}
+          </div>
+        );
+      },
+    },
+    {
+      headerName: "Customer GSTIN",
+      field: "gst_number",
+      minWidth: 150,
+      flex: 1,
+      cellStyle: { textAlign: "left" },
+      cellRenderer: (params: any) => {
+        if (params.data?.type === 'customer') return null;
+        const gstin = params.data?.gst_number || params.data?.user_id?.gst_number || '-';
+        return (
+          <div className="text-blue-600 dark:text-blue-400 text-xs font-semibold">
+            {gstin}
           </div>
         );
       },
@@ -1424,6 +1459,20 @@ const OrderList = () => {
                         </div>
                         <p className="text-[11px] text-gray-500 mt-0.5"><b>{order.user_id?.name || 'Customer'} </b>({order.user_id?.email || 'N/A'})</p>
                         {skus && <p className="text-[10px] text-gray-400 font-mono mt-0.5">SKU: {skus}</p>}
+                        {(order.gst_number || order.user_id?.gst_number) && (
+                          <p className="text-[10px] text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-900 mt-1 inline-block">
+                            <b>GSTIN:</b> {order.gst_number || order.user_id?.gst_number}
+                          </p>
+                        )}
+                        {items.some((i: any) => i.note) && (
+                          <div className="mt-1.5 space-y-1">
+                            {items.map((i: any, idx: number) => i.note ? (
+                              <p key={idx} className="text-[10px] text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded border border-amber-100 dark:border-amber-900 truncate">
+                                <b>Note:</b> {i.note}
+                              </p>
+                            ) : null)}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1548,6 +1597,14 @@ const OrderList = () => {
                       })}
                     </p>
                   </div>
+                  {(selectedOrder.gst_number || selectedOrder.user_id?.gst_number) && (
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Customer GSTIN</p>
+                      <p className="font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded inline-block">
+                        {selectedOrder.gst_number || selectedOrder.user_id?.gst_number}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1600,6 +1657,14 @@ const OrderList = () => {
                           <div>
                             <p className="font-medium text-gray-800 dark:text-white">{productName || 'Unknown Product'}</p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">Qty: {itemQuantity}</p>
+                            {item.selected_size && (
+                              <p className="text-xs font-semibold text-blue-600 dark:text-blue-300">Size: {item.selected_size}</p>
+                            )}
+                            {item.note && (
+                              <p className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded border border-amber-100 dark:border-amber-900 mt-1 max-w-md">
+                                <b>Note: </b> {item.note}
+                              </p>
+                            )}
                           </div>
                         </div>
                         <p className="font-semibold text-gray-800 dark:text-white">₹{Number(itemPrice * itemQuantity).toLocaleString()}</p>
