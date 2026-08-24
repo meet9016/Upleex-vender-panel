@@ -19,13 +19,11 @@ import PageLoader from "../common/PageLoader";
 type FormData = {
   mobile: string;
   otp: string;
-  gst_number: string;
 };
 
 interface ErrorState {
   mobile?: string;
   otp?: string;
-  gst_number?: string;
 }
 
 export default function SignInForm() {
@@ -37,7 +35,6 @@ export default function SignInForm() {
   const [formData, setFormData] = useState<FormData>({
     mobile: "",
     otp: "",
-    gst_number: "",
   });
   const [otpSent, setOtpSent] = useState(false);
 
@@ -165,9 +162,6 @@ export default function SignInForm() {
     if (!formData.otp) {
       newErrors.otp = "OTP is required";
     }
-    if (formData.gst_number && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(formData.gst_number)) {
-      newErrors.gst_number = "Enter a valid 15-character GSTIN";
-    }
     if (Object.keys(newErrors).length > 0) {
       setError(newErrors);
       return;
@@ -177,7 +171,6 @@ export default function SignInForm() {
       const res = await api.post(`${endPointApi.login}`, {
         number: formData.mobile,
         otp: formData.otp,
-        gst_number: formData.gst_number || undefined
       });
 
       if (res.data.status == 200) {
@@ -286,23 +279,6 @@ export default function SignInForm() {
                 {error.mobile && (
                   <p className="error-message">{error.mobile}</p>
                 )}
-              </div>
-
-              {/* Optional GST number */}
-              <div>
-                <Label>GST Number (Optional)</Label>
-                <Input
-                  name="gst_number"
-                  placeholder="Enter GSTIN (15 characters)"
-                  value={formData.gst_number}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15).toUpperCase();
-                    setFormData((prev) => ({ ...prev, gst_number: value }));
-                    setError((prev) => ({ ...prev, gst_number: '' }));
-                  }}
-                  error={!!error.gst_number}
-                />
-                {error.gst_number && <p className="error-message">{error.gst_number}</p>}
               </div>
 
               {/* OTP */}
